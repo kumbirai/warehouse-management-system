@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Role Removed</title>
+</head>
+<body>
+<div th:fragment="content">
+    <h2>Role Removed from Your Account</h2>
+    <p>Hello <span th:text="${userName ?: username}">User</span>,</p>
+    <p>The role <strong th:text="${roleName}">Role</strong> has been removed from your account.</p>
+
+    <div class="info-box">
+        <p><strong>Role Removal Details:</strong></p>
+        <ul>
+            <li><strong>Role:</strong> <span th:text="${roleName}">role</span></li>
+            <li th:if="${removedAt}"><strong>Removed On:</strong> <span th:text="${removedAt}">date</span></li>
+            <li th:if="${tenantName}"><strong>Tenant:</strong> <span th:text="${tenantName}">tenant</span></li>
+        </ul>
+    </div>
+
+    <p>You may need to log out and log back in for the changes to take effect. Some features that were previously available may no longer be accessible.</p>
+    <p>If you have any questions about this role removal, please contact your system administrator.</p>
+    <p>Best regards,<br>WMS Team</p>
+</div>
+</body>
+</html>
+

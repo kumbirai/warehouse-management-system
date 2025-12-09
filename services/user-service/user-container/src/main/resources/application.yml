@@ -1,0 +1,187 @@
+server:
+  port: 8088
+  forward-headers-strategy: native # Required for proxy (e.g., Nginx, API Gateway) to correctly resolve client IP and HTTPS
+  max-http-header-size: 8KB # Limit header size to prevent header-based attacks
+  max-http-post-size: 1MB # Limit request body size
+  compression:
+    enabled: true # Enable response compression
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
+    min-response-size: 1024 # Compress responses larger than 1KB
+
+spring:
+  application:
+    name: user-service
+  
+  # Database Configuration
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/wms_user_db}
+    username: ${DATABASE_USERNAME:${DB_USER:postgres}}
+    password: ${DATABASE_PASSWORD:${DB_PASSWORD:secret}}
+    driver-class-name: org.postgresql.Driver
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false  # Explicitly disable open-in-view for production readiness
+    properties:
+      hibernate:
+        # Dialect is auto-detected, no need to specify explicitly
+        format_sql: true
+        # Configure tenant-aware physical naming strategy for dynamic schema resolution
+        physical_naming_strategy: com.ccbsa.wms.common.dataaccess.naming.TenantAwarePhysicalNamingStrategy
+  
+  # Flyway Configuration
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    
+    # Producer Configuration
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      enable-idempotence: true
+      compression-type: snappy
+      batch-size: 16384
+      linger-ms: 10
+      buffer-memory: 33554432
+      max-in-flight-requests-per-connection: 5
+      properties:
+        spring.json.add.type.headers: false
+    
+    # Consumer Configuration (if needed for future event consumption)
+    consumer:
+      group-id: ${spring.application.name}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 500
+      max-poll-interval-ms: 300000
+      session-timeout-ms: 30000
+      heartbeat-interval-ms: 3000
+      properties:
+        spring.json.trusted.packages: "*"
+    
+    # Listener Configuration
+    listener:
+      ack-mode: manual_immediate
+      type: batch
+      concurrency: 3
+      poll-timeout: 3000
+    
+    # Error Handling Configuration
+    error-handling:
+      max-retries: 3
+      initial-interval: 1000
+      multiplier: 2.0
+      max-interval: 10000
+      dead-letter-topic-suffix: .dlq
+  
+  # Keycloak Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:7080/realms/wms-realm}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:7080/realms/wms-realm/protocol/openid-connect/certs}
+
+# Keycloak Admin Client Configuration
+keycloak:
+  admin:
+    serverUrl: ${KEYCLOAK_SERVER_URL:http://localhost:7080}
+    adminRealm: ${KEYCLOAK_ADMIN_REALM:master}
+    adminUsername: ${KEYCLOAK_ADMIN_USERNAME:admin}
+    adminPassword: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+    adminClientId: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
+    defaultRealm: ${KEYCLOAK_DEFAULT_REALM:wms-realm}
+    clientSecret: ${KEYCLOAK_CLIENT_SECRET:B4iTgRx7eWL9NVV2AmnzCZj0Lix5EM6E}
+    connectionTimeout: 5000
+    socketTimeout: 5000
+
+# Tenant Service Configuration
+tenant:
+  service:
+    url: ${TENANT_SERVICE_URL:http://localhost:8089}
+
+# Application Security Configuration
+app:
+  security:
+    cookie:
+      # Secure cookie flag (should be true in production with HTTPS)
+      secure: ${COOKIE_SECURE:true}
+      # SameSite attribute: Strict, Lax, or None
+      # Strict: Cookie not sent on cross-site requests (most secure, recommended)
+      # Lax: Cookie sent on top-level navigation (balanced)
+      # None: Cookie sent on all requests (requires Secure=true)
+      same-site: ${COOKIE_SAME_SITE:Strict}
+      # Max age in seconds (24 hours = 86400 seconds)
+      max-age-seconds: ${COOKIE_MAX_AGE_SECONDS:86400}
+
+# Eureka Client Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: false
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  info:
+    env:
+      enabled: true
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.ccbsa.wms.user: INFO
+    com.ccbsa.wms.user.application: DEBUG
+    com.ccbsa.wms.user.config.UserServiceSecurityConfig: DEBUG
+    # org.springframework.security: DEBUG
+    # org.springframework.security.web: DEBUG
+    # org.springframework.security.web.FilterChainProxy: TRACE
+    # org.springframework.security.web.DefaultSecurityFilterChain: DEBUG
+    # org.springframework.web.filter.CorsFilter: DEBUG
+    # org.springframework.security.web.access.intercept.AuthorizationFilter: DEBUG
+    org.springframework.web: INFO
+    org.keycloak: WARN
+    org.springframework.kafka: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"
+  file:
+    name: ${LOG_FILE:./logs/user-service.log}
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+

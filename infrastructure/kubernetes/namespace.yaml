@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wms-system
+  labels:
+    name: wms-system
+    environment: production
+

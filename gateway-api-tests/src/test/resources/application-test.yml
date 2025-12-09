@@ -1,0 +1,18 @@
+# Test configuration for Gateway API Tests
+gateway:
+  base-url: ${GATEWAY_BASE_URL:https://localhost:8080/api/v1}
+  timeout-seconds: ${GATEWAY_TIMEOUT:30}
+
+# Test user credentials (should be set via environment variables)
+test:
+  users:
+    system-admin:
+      username: ${TEST_SYSTEM_ADMIN_USERNAME:testuser@cm-sol.co.za}
+      password: ${TEST_SYSTEM_ADMIN_PASSWORD:Password123@}
+    tenant-admin:
+      username: ${TEST_TENANT_ADMIN_USERNAME:testuser1@cm-sol.co.za}
+      password: ${TEST_TENANT_ADMIN_PASSWORD:Password123@}
+    regular-user:
+      username: ${TEST_REGULAR_USER_USERNAME:testuser2@cm-sol.co.za}
+      password: ${TEST_REGULAR_USER_PASSWORD:Password123@}
+

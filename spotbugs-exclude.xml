@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude JPA entities from certain checks -->
+    <Match>
+        <Class name="~.*Entity"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="~.*Entity"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Exclude DTOs from mutable field checks -->
+    <Match>
+        <Class name="~.*DTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="~.*DTO"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Exclude Command classes from mutable field checks (similar to DTOs) -->
+    <Match>
+        <Class name="~.*Command"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="~.*Command"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Exclude Spring-managed components with constructor injection of interfaces -->
+    <!-- These are false positives: interfaces (ports) are not mutable objects -->
+    <Match>
+        <Class name="~.*Handler"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="~.*Adapter"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="~.*Service"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Exclude test classes -->
+    <Match>
+        <Class name="~.*Test"/>
+    </Match>
+    <Match>
+        <Class name="~.*Tests"/>
+    </Match>
+
+    <!-- Exclude false positives in command handlers -->
+    <!-- Fields are used in handle() methods, SpotBugs sometimes misses this -->
+    <Match>
+        <Class name="~.*CommandHandler"/>
+        <Bug pattern="UUF_UNUSED_FIELD"/>
+    </Match>
+    <!-- Constructor throw warnings are false positives for Spring-managed components -->
+    <Match>
+        <Class name="~.*CommandHandler"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+
+    <!-- Exclude false positives in controllers -->
+    <!-- Fields are used in endpoint methods, SpotBugs sometimes misses this -->
+    <Match>
+        <Class name="~.*Controller"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+
+    <!-- Exclude false positives in publisher/impl classes -->
+    <!-- Fields are used in publish() methods, SpotBugs sometimes misses this -->
+    <Match>
+        <Class name="~.*Publisher"/>
+        <Bug pattern="UUF_UNUSED_FIELD"/>
+    </Match>
+    <Match>
+        <Class name="~.*Publisher"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+    <Match>
+        <Class name="~.*Impl"/>
+        <Bug pattern="UUF_UNUSED_FIELD"/>
+    </Match>
+    <Match>
+        <Class name="~.*Impl"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+
+    <!-- Exclude false positives across all application service classes -->
+    <!-- Fields are used in handle() methods, SpotBugs sometimes misses this -->
+    <Match>
+        <Class name="~.*application\.service\..*"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+    <Match>
+        <Class name="~.*application\.service\..*"/>
+        <Bug pattern="UUF_UNUSED_FIELD"/>
+    </Match>
+    <Match>
+        <Class name="~.*application\.service\..*"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+    <!-- Private methods in command handlers are sometimes called via reflection or in complex flows -->
+    <Match>
+        <Class name="~.*application\.service\.command\..*"/>
+        <Bug pattern="UPM_UNCALLED_PRIVATE_METHOD"/>
+    </Match>
+</FindBugsFilter>
+

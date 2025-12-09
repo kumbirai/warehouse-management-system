@@ -1,0 +1,14 @@
+# Exclude everything except the JAR file in target/
+target/*
+!target/*.jar
+.git/
+.gitignore
+.idea/
+*.iml
+*.log
+logs/
+.DS_Store
+*.swp
+*.swo
+*~
+

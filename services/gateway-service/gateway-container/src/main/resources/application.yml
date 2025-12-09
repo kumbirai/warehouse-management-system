@@ -1,0 +1,287 @@
+server:
+  port: 8080
+  ssl:
+    enabled: true
+    key-store: classpath:ssl/gateway-keystore.p12
+    key-store-password: changeit
+    key-store-type: PKCS12
+    key-alias: gateway
+
+spring:
+  application:
+    name: gateway-service
+  
+  cloud:
+    gateway:
+      # HTTP client configuration for load-balanced routes
+      httpclient:
+        connect-timeout: 5000  # 5 seconds connection timeout
+        response-timeout: 30s  # 30 seconds response timeout (matches frontend timeout)
+        pool:
+          type: ELASTIC
+          max-connections: 500
+          max-idle-time: 30s
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
+          routes:
+            # User Service (BFF)
+            - id: user-service-bff
+              uri: lb://user-service
+              predicates:
+                - Path=/api/v1/bff/**
+              filters:
+                - StripPrefix=2
+                # BFF endpoints are public (login/refresh/logout) or authenticated (me)
+                # Higher rate limits for BFF endpoints to handle frontend polling/retries
+                # Note: These limits are high because BFF endpoints are critical for user experience
+                # and the frontend may make multiple requests during initialization
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 500
+                    redis-rate-limiter.burstCapacity: 1000
+                    key-resolver: "#{@keyResolver}"
+                # BFF endpoints don't need tenant validation (login/refresh/logout are public, me is user-specific)
+            
+            # User Service (User Management)
+            - id: user-service
+              uri: lb://user-service
+              predicates:
+                - Path=/api/v1/users/**
+              filters:
+                - StripPrefix=2
+                - name: TenantValidationFilter
+                - name: TenantContextFilter
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 100
+                    redis-rate-limiter.burstCapacity: 200
+                    key-resolver: "#{@keyResolver}"
+            
+            # Tenant Service
+            - id: tenant-service
+              uri: lb://tenant-service
+              predicates:
+                - Path=/api/v1/tenants/**
+              filters:
+                - name: TenantValidationFilter
+                - name: TenantContextFilter
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 50
+                    redis-rate-limiter.burstCapacity: 100
+                    key-resolver: "#{@keyResolver}"
+            
+            # Stock Management Service
+            - id: stock-management-service
+              uri: lb://stock-management-service
+              predicates:
+                - Path=/api/v1/stock-management/**
+              filters:
+                - StripPrefix=2
+                - name: TenantValidationFilter
+                - name: TenantContextFilter
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 100
+                    redis-rate-limiter.burstCapacity: 200
+                    redis-rate-limiter.requestedTokens: 1
+                    key-resolver: "#{@keyResolver}"
+            
+            # Location Management Service
+            - id: location-management-service
+              uri: lb://location-management-service
+              predicates:
+                - Path=/api/v1/location-management/**
+              filters:
+                - StripPrefix=2
+                - name: TenantValidationFilter
+                - name: TenantContextFilter
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 100
+                    redis-rate-limiter.burstCapacity: 200
+                    key-resolver: "#{@keyResolver}"
+            
+            # Product Service
+            - id: product-service
+              uri: lb://product-service
+              predicates:
+                - Path=/api/v1/products/**
+              filters:
+                - StripPrefix=2
+                - name: TenantValidationFilter
+                - name: TenantContextFilter
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 100
+                    redis-rate-limiter.burstCapacity: 200
+                    key-resolver: "#{@keyResolver}"
+            
+            # Picking Service
+            - id: picking-service
+              uri: lb://picking-service
+              predicates:
+                - Path=/api/v1/picking/**
+              filters:
+                - StripPrefix=2
+                - name: TenantValidationFilter
+                - name: TenantContextFilter
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 100
+                    redis-rate-limiter.burstCapacity: 200
+                    key-resolver: "#{@keyResolver}"
+            
+            # Returns Service
+            - id: returns-service
+              uri: lb://returns-service
+              predicates:
+                - Path=/api/v1/returns/**
+              filters:
+                - StripPrefix=2
+                - name: TenantValidationFilter
+                - name: TenantContextFilter
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 100
+                    redis-rate-limiter.burstCapacity: 200
+                    key-resolver: "#{@keyResolver}"
+            
+            # Reconciliation Service
+            - id: reconciliation-service
+              uri: lb://reconciliation-service
+              predicates:
+                - Path=/api/v1/reconciliation/**
+              filters:
+                - StripPrefix=2
+                - name: TenantValidationFilter
+                - name: TenantContextFilter
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 100
+                    redis-rate-limiter.burstCapacity: 200
+                    key-resolver: "#{@keyResolver}"
+            
+            # Integration Service (internal only)
+            - id: integration-service
+              uri: lb://integration-service
+              predicates:
+                - Path=/api/v1/integration/**
+              filters:
+                - StripPrefix=2
+                - name: TenantValidationFilter
+                - name: TenantContextFilter
+          
+          default-filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+                key-resolver: "#{@keyResolver}"
+
+          # Global CORS configuration for Spring Cloud Gateway
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origins:
+                  - "http://localhost:3000"
+                  - "https://localhost:3000"
+                  - "http://localhost:5173"
+                  - "https://localhost:5173"
+                  - "http://192.168.50.30:3000"
+                  - "https://192.168.50.30:3000"
+                allowed-methods:
+                  - GET
+                  - POST
+                  - PUT
+                  - PATCH
+                  - DELETE
+                  - OPTIONS
+                allowed-headers:
+                  - "*"
+                allow-credentials: true
+                max-age: 3600
+  
+  # Keycloak Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:7080/realms/wms-realm}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:7080/realms/wms-realm/protocol/openid-connect/certs}
+  
+  # Redis Configuration for Rate Limiting
+  # Note: Rate limiting will gracefully degrade when Redis is unavailable
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+      # Allow graceful degradation if Redis is unavailable
+      reactive:
+        timeout: 2000ms
+
+# Eureka Client Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: false
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
+  endpoint:
+    health:
+      show-details: always
+  health:
+    redis:
+      enabled: false  # Disable Redis health check to prevent startup failures
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.ccbsa.wms.gateway: DEBUG
+    com.ccbsa.wms.gateway.application: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.gateway.handler.RoutePredicateHandlerMapping: DEBUG
+    org.springframework.cloud.gateway.filter.NettyRoutingFilter: TRACE
+    org.springframework.cloud.gateway.filter.ReactiveLoadBalancerClientFilter: TRACE
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.web.cors: DEBUG
+    org.keycloak: WARN
+    reactor.netty: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"
+  file:
+    name: ${LOG_FILE:./logs/gateway-service.log}
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30

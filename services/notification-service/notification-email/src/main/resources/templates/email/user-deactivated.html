@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Account Deactivated</title>
+</head>
+<body>
+<div th:fragment="content">
+    <h2>Account Deactivated</h2>
+    <p>Hello <span th:text="${userName ?: username}">User</span>,</p>
+    <p>Your account has been deactivated and you will no longer be able to access the Warehouse Management System.</p>
+
+    <div class="info-box">
+        <p><strong>Account Status:</strong></p>
+        <ul>
+            <li><strong>Status:</strong> Deactivated</li>
+            <li th:if="${deactivatedAt}"><strong>Deactivated On:</strong> <span th:text="${deactivatedAt}">date</span></li>
+            <li th:if="${tenantName}"><strong>Tenant:</strong> <span th:text="${tenantName}">tenant</span></li>
+        </ul>
+    </div>
+
+    <p>If you believe this is an error or have questions about your account status, please contact your system administrator immediately.</p>
+    <p>Best regards,<br>WMS Team</p>
+</div>
+</body>
+</html>
+

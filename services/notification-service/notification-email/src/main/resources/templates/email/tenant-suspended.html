@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tenant Suspended</title>
+</head>
+<body>
+<div th:fragment="content">
+    <h2>Tenant Account Suspended</h2>
+    <p>Hello,</p>
+    <p>Your tenant account has been suspended. Access to the Warehouse Management System has been temporarily restricted.</p>
+
+    <div class="info-box">
+        <p><strong>Tenant Details:</strong></p>
+        <ul>
+            <li><strong>Tenant ID:</strong> <span th:text="${tenantId}">tenant-id</span></li>
+            <li th:if="${tenantName}"><strong>Tenant Name:</strong> <span th:text="${tenantName}">name</span></li>
+            <li th:if="${tenantStatus}"><strong>Status:</strong> <span th:text="${tenantStatus}">status</span></li>
+            <li th:if="${tenantEmail}"><strong>Contact Email:</strong> <span th:text="${tenantEmail}">email</span></li>
+            <li th:if="${tenantPhone}"><strong>Contact Phone:</strong> <span th:text="${tenantPhone}">phone</span></li>
+            <li th:if="${tenantAddress}"><strong>Address:</strong> <span th:text="${tenantAddress}">address</span></li>
+            <li th:if="${createdAt}"><strong>Created On:</strong> <span th:text="${createdAt}">date</span></li>
+            <li th:if="${sentAt}"><strong>Suspended On:</strong> <span th:text="${sentAt}">date</span></li>
+            <li th:if="${reason}"><strong>Reason:</strong> <span th:text="${reason}">reason</span></li>
+        </ul>
+    </div>
+
+    <p>All users associated with this tenant will not be able to access the system until the suspension is lifted.</p>
+    <p>If you have questions about this suspension or need to resolve any issues, please contact our support team immediately.</p>
+    <p>Best regards,<br>WMS Team</p>
+</div>
+</body>
+</html>
+

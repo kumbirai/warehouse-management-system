@@ -1,0 +1,7 @@
+-- Flyway Migration: V3__Insert_initial_data.sql
+-- Inserts initial reference data if needed
+-- 
+-- Currently no initial data is required for the user service.
+-- This file is kept for consistency and future use.
+-- 
+-- Users are created dynamically through the application, not via migration scripts.

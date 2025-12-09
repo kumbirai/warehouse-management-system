@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wms-kafka-config
+  namespace: wms-system
+  labels:
+    app: wms-kafka-config
+    component: messaging
+data:
+  # Bootstrap servers for Kafka cluster
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"
+  
+  # Spring Kafka Configuration
+  # Producer Configuration (Production-Grade)
+  spring.kafka.bootstrap-servers: "kafka-service:9092"
+  spring.kafka.producer.key-serializer: "org.apache.kafka.common.serialization.StringSerializer"
+  spring.kafka.producer.value-serializer: "org.springframework.kafka.support.serializer.JsonSerializer"
+  spring.kafka.producer.acks: "all"
+  spring.kafka.producer.retries: "3"
+  spring.kafka.producer.enable-idempotence: "true"
+  spring.kafka.producer.compression-type: "snappy"
+  spring.kafka.producer.batch-size: "16384"
+  spring.kafka.producer.linger-ms: "10"
+  spring.kafka.producer.buffer-memory: "33554432"
+  spring.kafka.producer.max-in-flight-requests-per-connection: "5"
+  spring.kafka.producer.properties.spring.json.add.type.headers: "false"
+  
+  # Consumer Configuration (Production-Grade)
+  spring.kafka.consumer.key-deserializer: "org.apache.kafka.common.serialization.StringDeserializer"
+  spring.kafka.consumer.value-deserializer: "org.springframework.kafka.support.serializer.JsonDeserializer"
+  spring.kafka.consumer.auto-offset-reset: "earliest"
+  spring.kafka.consumer.enable-auto-commit: "false"
+  spring.kafka.consumer.max-poll-records: "500"
+  spring.kafka.consumer.max-poll-interval-ms: "300000"
+  spring.kafka.consumer.session-timeout-ms: "30000"
+  spring.kafka.consumer.heartbeat-interval-ms: "3000"
+  spring.kafka.consumer.properties.spring.json.trusted.packages: "*"
+  
+  # Listener Configuration
+  spring.kafka.listener.ack-mode: "manual_immediate"
+  spring.kafka.listener.type: "batch"
+  spring.kafka.listener.concurrency: "3"
+  spring.kafka.listener.poll-timeout: "3000"
+  
+  # Error Handling Configuration
+  spring.kafka.error-handling.max-retries: "3"
+  spring.kafka.error-handling.initial-interval: "1000"
+  spring.kafka.error-handling.multiplier: "2.0"
+  spring.kafka.error-handling.max-interval: "10000"
+  spring.kafka.error-handling.dead-letter-topic-suffix: ".dlq"
+
