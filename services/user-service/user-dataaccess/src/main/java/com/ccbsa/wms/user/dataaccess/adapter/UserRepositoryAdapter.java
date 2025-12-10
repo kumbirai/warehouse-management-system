@@ -29,6 +29,7 @@ import com.ccbsa.wms.user.domain.core.valueobject.LastName;
 import com.ccbsa.wms.user.domain.core.valueobject.UserStatus;
 import com.ccbsa.wms.user.domain.core.valueobject.Username;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
@@ -84,20 +85,14 @@ public class UserRepositoryAdapter implements UserRepository {
         String schemaName = schemaResolver.resolveSchema();
         logger.info("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
 
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
         // Set the search_path explicitly on the database connection
         // This ensures Hibernate uses the correct schema even if naming strategy caching occurs
         // Note: This sets the search_path for the current transaction
         Session session = entityManager.unwrap(Session.class);
-        session.doWork(connection -> {
-            try (java.sql.Statement stmt = connection.createStatement()) {
-                String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
-                logger.debug("Setting search_path to: {}", schemaName);
-                stmt.execute(setSchemaSql);
-            } catch (SQLException e) {
-                logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
-                throw new RuntimeException("Failed to set database schema", e);
-            }
-        });
+        setSearchPath(session, schemaName);
 
         // Check if entity already exists to handle optimistic locking correctly
         Optional<UserEntity> existingEntity = jpaRepository.findById(user.getId().getValue());
@@ -117,19 +112,59 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     /**
-     * Escapes a PostgreSQL identifier to prevent SQL injection.
+     * Validates that a schema name matches expected patterns to prevent SQL injection.
      * <p>
-     * PostgreSQL identifiers should be quoted if they contain special characters
-     * or are case-sensitive. For our schema names (which follow a pattern),
-     * we can safely quote them.
+     * Schema names must match one of these patterns:
+     * - 'public' (for legacy users)
+     * - 'tenant_*_schema' (for tenant-specific schemas)
      *
-     * @param identifier The identifier to escape
-     * @return Escaped identifier
+     * @param schemaName The schema name to validate
+     * @throws IllegalArgumentException if schema name does not match expected patterns
      */
-    private String escapeIdentifier(String identifier) {
-        // Quote the identifier to handle any special characters
-        // Replace any existing quotes to prevent injection
-        return String.format("\"%s\"", identifier.replace("\"", "\"\""));
+    private void validateSchemaName(String schemaName) {
+        if (schemaName == null || schemaName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Schema name cannot be null or empty");
+        }
+
+        // Allow 'public' schema
+        if ("public".equals(schemaName)) {
+            return;
+        }
+
+        // Allow tenant schemas matching pattern: tenant_*_schema
+        // Pattern: starts with 'tenant_', ends with '_schema', contains only alphanumeric and underscores
+        if (schemaName.matches("^tenant_[a-zA-Z0-9_]+_schema$")) {
+            return;
+        }
+
+        throw new IllegalArgumentException(
+                String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName));
+    }
+
+    /**
+     * Sets the PostgreSQL search_path for the current database connection.
+     * <p>
+     * This method sets the search_path to the specified schema name.
+     * The schema name must be validated before calling this method.
+     *
+     * @param session    Hibernate session
+     * @param schemaName Validated schema name
+     */
+    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
+            justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " +
+                    "and properly escaped using escapeIdentifier() method. " +
+                    "PostgreSQL SET search_path command does not support parameterized queries.")
+    private void setSearchPath(Session session, String schemaName) {
+        session.doWork(connection -> {
+            try (java.sql.Statement stmt = connection.createStatement()) {
+                String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
+                logger.debug("Setting search_path to: {}", schemaName);
+                stmt.execute(setSchemaSql);
+            } catch (SQLException e) {
+                logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
+                throw new RuntimeException("Failed to set database schema", e);
+            }
+        });
     }
 
     /**
@@ -151,6 +186,22 @@ public class UserRepositoryAdapter implements UserRepository {
         entity.setLastModifiedAt(user.getLastModifiedAt());
         // Version is managed by JPA - don't set it manually
         // The version from the domain object should match the entity's current version
+    }
+
+    /**
+     * Escapes a PostgreSQL identifier to prevent SQL injection.
+     * <p>
+     * PostgreSQL identifiers should be quoted if they contain special characters
+     * or are case-sensitive. For our schema names (which follow a pattern),
+     * we can safely quote them.
+     *
+     * @param identifier The identifier to escape
+     * @return Escaped identifier
+     */
+    private String escapeIdentifier(String identifier) {
+        // Quote the identifier to handle any special characters
+        // Replace any existing quotes to prevent injection
+        return String.format("\"%s\"", identifier.replace("\"", "\"\""));
     }
 
     /**
