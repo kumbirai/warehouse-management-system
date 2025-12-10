@@ -55,6 +55,28 @@ public interface UserRepository {
     List<User> findAll();
 
     /**
+     * Finds all users across all tenant schemas (for SYSTEM_ADMIN only).
+     * <p>
+     * This method queries users from all tenant schemas in the database.
+     * It is used when SYSTEM_ADMIN wants to list users from all tenants.
+     *
+     * @param status Optional user status filter. If null, returns all users regardless of status.
+     * @return List of all users across all tenant schemas
+     */
+    List<User> findAllAcrossTenants(com.ccbsa.wms.user.domain.core.valueobject.UserStatus status);
+
+    /**
+     * Finds a user by ID across all tenant schemas (for SYSTEM_ADMIN only).
+     * <p>
+     * This method queries all tenant schemas to find a user by ID.
+     * It is used when SYSTEM_ADMIN needs to find a user without knowing which tenant they belong to.
+     *
+     * @param userId User identifier
+     * @return User if found, empty otherwise
+     */
+    Optional<User> findByIdAcrossTenants(UserId userId);
+
+    /**
      * Finds a user by username.
      *
      * @param username Username value object

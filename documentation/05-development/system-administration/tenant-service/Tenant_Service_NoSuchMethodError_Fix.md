@@ -32,7 +32,7 @@ The service needs to be fully rebuilt and restarted to ensure all compiled class
 
 2. **Clean and rebuild the service:**
    ```bash
-   cd /home/coach/Dev/Java/warehouse-application-system
+   cd /home/coach/Dev/Java/warehouse-management-system
    mvn clean install -DskipTests -pl services/tenant-service -am
    ```
 

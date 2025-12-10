@@ -263,7 +263,7 @@ public class NotificationCreatedEventListener {
             try {
                 return NotificationType.valueOf((String) typeObj);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Invalid NotificationType: " + typeObj, e);
+                throw new IllegalArgumentException(String.format("Invalid NotificationType: %s", typeObj), e);
             }
         } else if (typeObj instanceof Map) {
             // Type might be serialized as a value object with a "value" field
@@ -274,12 +274,12 @@ public class NotificationCreatedEventListener {
                 try {
                     return NotificationType.valueOf((String) valueObj);
                 } catch (IllegalArgumentException e) {
-                    throw new IllegalArgumentException("Invalid NotificationType: " + valueObj, e);
+                    throw new IllegalArgumentException(String.format("Invalid NotificationType: %s", valueObj), e);
                 }
             }
         }
 
-        throw new IllegalArgumentException("Unsupported type format: " + typeObj.getClass().getName());
+        throw new IllegalArgumentException(String.format("Unsupported type format: %s", typeObj.getClass().getName()));
     }
 
     /**

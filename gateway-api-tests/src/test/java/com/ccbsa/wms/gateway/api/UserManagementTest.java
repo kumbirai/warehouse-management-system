@@ -63,13 +63,11 @@ class UserManagementTest extends BaseIntegrationTest {
             String responseBody = new String(responseBodyBytes, java.nio.charset.StandardCharsets.UTF_8);
             JsonNode response = objectMapper.readTree(responseBody);
             JsonNode data = response.get("data");
-            if (data != null && data.has("content")) {
-                JsonNode content = data.get("content");
-                if (content.isArray()) {
-                    for (JsonNode tenant : content) {
-                        if (tenant.has("status") && "ACTIVE".equals(tenant.get("status").asText())) {
-                            return tenant.get("tenantId").asText();
-                        }
+            if (data != null && data.isArray()) {
+                // data is already an array (List<TenantSummaryResponse>)
+                for (JsonNode tenant : data) {
+                    if (tenant.has("status") && "ACTIVE".equals(tenant.get("status").asText())) {
+                        return tenant.get("tenantId").asText();
                     }
                 }
             }

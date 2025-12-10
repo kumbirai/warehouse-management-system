@@ -51,7 +51,7 @@ development tools, CI/CD pipeline configuration, and local development setup.
 ### Root Project Structure
 
 ```
-warehouse-application-system/
+warehouse-management-system/
 ├── pom.xml                          # Root POM (parent)
 ├── README.md                        # Project README
 ├── .gitignore                       # Git ignore rules
@@ -210,7 +210,7 @@ frontend-app/
     <modelVersion>4.0.0</modelVersion>
     
     <groupId>com.ccbsa.wms</groupId>
-    <artifactId>warehouse-application-system</artifactId>
+    <artifactId>warehouse-management-system</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     

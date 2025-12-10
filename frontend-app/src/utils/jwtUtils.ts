@@ -12,15 +12,15 @@
  */
 
 interface JwtPayload {
-    exp?: number; // Expiration time (Unix timestamp)
-    iat?: number; // Issued at time
-    sub?: string; // Subject (user ID)
-    tenant_id?: string; // Tenant ID
-    realm_access?: {
-        roles?: string[];
-    };
+  exp?: number; // Expiration time (Unix timestamp)
+  iat?: number; // Issued at time
+  sub?: string; // Subject (user ID)
+  tenant_id?: string; // Tenant ID
+  realm_access?: {
+    roles?: string[];
+  };
 
-    [key: string]: unknown;
+  [key: string]: unknown;
 }
 
 /**
@@ -30,20 +30,20 @@ interface JwtPayload {
  * @returns Decoded payload or null if invalid
  */
 export function decodeJwt(token: string): JwtPayload | null {
-    try {
-        const parts = token.split('.');
-        if (parts.length !== 3) {
-            return null;
-        }
-
-        // Decode the payload (second part)
-        const payload = parts[1];
-        const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
-        return JSON.parse(decoded) as JwtPayload;
-    } catch (error) {
-        // Invalid token format
-        return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return null;
     }
+
+    // Decode the payload (second part)
+    const payload = parts[1];
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decoded) as JwtPayload;
+  } catch (error) {
+    // Invalid token format
+    return null;
+  }
 }
 
 /**
@@ -53,17 +53,17 @@ export function decodeJwt(token: string): JwtPayload | null {
  * @returns true if token is expired or invalid, false otherwise
  */
 export function isTokenExpired(token: string): boolean {
-    const payload = decodeJwt(token);
-    if (!payload || !payload.exp) {
-        return true; // Consider invalid tokens as expired
-    }
+  const payload = decodeJwt(token);
+  if (!payload || !payload.exp) {
+    return true; // Consider invalid tokens as expired
+  }
 
-    // Check if token is expired (with 60 second buffer for clock skew)
-    const expirationTime = payload.exp * 1000; // Convert to milliseconds
-    const currentTime = Date.now();
-    const bufferTime = 60 * 1000; // 60 seconds buffer
+  // Check if token is expired (with 60 second buffer for clock skew)
+  const expirationTime = payload.exp * 1000; // Convert to milliseconds
+  const currentTime = Date.now();
+  const bufferTime = 60 * 1000; // 60 seconds buffer
 
-    return currentTime >= (expirationTime - bufferTime);
+  return currentTime >= expirationTime - bufferTime;
 }
 
 /**
@@ -73,12 +73,12 @@ export function isTokenExpired(token: string): boolean {
  * @returns Expiration time in milliseconds, or null if invalid
  */
 export function getTokenExpirationTime(token: string): number | null {
-    const payload = decodeJwt(token);
-    if (!payload || !payload.exp) {
-        return null;
-    }
+  const payload = decodeJwt(token);
+  if (!payload || !payload.exp) {
+    return null;
+  }
 
-    return payload.exp * 1000; // Convert to milliseconds
+  return payload.exp * 1000; // Convert to milliseconds
 }
 
 /**
@@ -92,23 +92,23 @@ export function getTokenExpirationTime(token: string): number | null {
  * @returns true if token should be refreshed, false otherwise
  */
 export function shouldRefreshToken(token: string, refreshWindowPercent: number = 80): boolean {
-    const payload = decodeJwt(token);
-    if (!payload || !payload.exp || !payload.iat) {
-        return true; // Invalid token should be refreshed
-    }
+  const payload = decodeJwt(token);
+  if (!payload || !payload.exp || !payload.iat) {
+    return true; // Invalid token should be refreshed
+  }
 
-    const issuedAt = payload.iat * 1000; // Convert to milliseconds
-    const expirationTime = payload.exp * 1000; // Convert to milliseconds
-    const currentTime = Date.now();
+  const issuedAt = payload.iat * 1000; // Convert to milliseconds
+  const expirationTime = payload.exp * 1000; // Convert to milliseconds
+  const currentTime = Date.now();
 
-    // Calculate token lifetime
-    const tokenLifetime = expirationTime - issuedAt;
+  // Calculate token lifetime
+  const tokenLifetime = expirationTime - issuedAt;
 
-    // Calculate refresh threshold (e.g., 80% of lifetime)
-    const refreshThreshold = issuedAt + (tokenLifetime * refreshWindowPercent / 100);
+  // Calculate refresh threshold (e.g., 80% of lifetime)
+  const refreshThreshold = issuedAt + (tokenLifetime * refreshWindowPercent) / 100;
 
-    // Check if we're past the refresh threshold
-    return currentTime >= refreshThreshold;
+  // Check if we're past the refresh threshold
+  return currentTime >= refreshThreshold;
 }
 
 /**
@@ -118,16 +118,16 @@ export function shouldRefreshToken(token: string, refreshWindowPercent: number =
  * @returns Time remaining in milliseconds, or null if invalid/expired
  */
 export function getTimeUntilExpiration(token: string): number | null {
-    const payload = decodeJwt(token);
-    if (!payload || !payload.exp) {
-        return null;
-    }
+  const payload = decodeJwt(token);
+  if (!payload || !payload.exp) {
+    return null;
+  }
 
-    const expirationTime = payload.exp * 1000; // Convert to milliseconds
-    const currentTime = Date.now();
-    const timeRemaining = expirationTime - currentTime;
+  const expirationTime = payload.exp * 1000; // Convert to milliseconds
+  const currentTime = Date.now();
+  const timeRemaining = expirationTime - currentTime;
 
-    return timeRemaining > 0 ? timeRemaining : null;
+  return timeRemaining > 0 ? timeRemaining : null;
 }
 
 /**
@@ -137,8 +137,8 @@ export function getTimeUntilExpiration(token: string): number | null {
  * @returns Tenant ID or null if not present
  */
 export function getTenantIdFromToken(token: string): string | null {
-    const payload = decodeJwt(token);
-    return payload?.tenant_id ?? null;
+  const payload = decodeJwt(token);
+  return payload?.tenant_id ?? null;
 }
 
 /**
@@ -148,8 +148,8 @@ export function getTenantIdFromToken(token: string): string | null {
  * @returns User ID (subject) or null if not present
  */
 export function getUserIdFromToken(token: string): string | null {
-    const payload = decodeJwt(token);
-    return payload?.sub ?? null;
+  const payload = decodeJwt(token);
+  return payload?.sub ?? null;
 }
 
 /**
@@ -159,7 +159,6 @@ export function getUserIdFromToken(token: string): string | null {
  * @returns Array of roles or empty array if not present
  */
 export function getRolesFromToken(token: string): string[] {
-    const payload = decodeJwt(token);
-    return payload?.realm_access?.roles ?? [];
+  const payload = decodeJwt(token);
+  return payload?.realm_access?.roles ?? [];
 }
-

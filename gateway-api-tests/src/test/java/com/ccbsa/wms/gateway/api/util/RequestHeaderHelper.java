@@ -5,42 +5,48 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import com.ccbsa.wms.gateway.api.helper.AuthenticationHelper;
 
 /**
- * Helper utility for adding required headers to authenticated requests.
+ * Helper utility for authenticated requests.
+ * 
+ * <p>Note: This helper does NOT manually add X-Tenant-Id, X-User-Id, or X-Role headers.
+ * The gateway (TenantValidationFilter + TenantContextFilter) automatically injects these
+ * headers from the JWT token. This ensures tests accurately simulate production behavior
+ * where the frontend does not send these headers.
+ * 
+ * <p>Headers injected by gateway:
+ * <ul>
+ *   <li>X-Tenant-Id - From JWT tenant_id claim</li>
+ *   <li>X-User-Id - From JWT sub (subject) claim</li>
+ *   <li>X-Role - From JWT realm_access.roles claim (comma-separated)</li>
+ * </ul>
  */
 public final class RequestHeaderHelper {
-
-    private static final String X_TENANT_ID_HEADER = "X-Tenant-Id";
 
     private RequestHeaderHelper() {
         // Utility class
     }
 
     /**
-     * Adds X-Tenant-Id header to a WebTestClient request spec if needed.
-     *
-     * <p>Adds the header if:
-     * - Tenant ID is present in the JWT token
-     * - User is not SYSTEM_ADMIN (SYSTEM_ADMIN users can bypass tenant validation)
+     * Returns the request spec as-is.
+     * 
+     * <p>This method exists for backward compatibility with existing tests.
+     * The gateway automatically injects required headers (X-Tenant-Id, X-User-Id, X-Role)
+     * from the JWT token, so no manual header addition is needed.
+     * 
+     * <p>Tests should rely on the gateway to inject headers, just like the frontend does.
+     * This ensures tests accurately simulate production behavior.
      *
      * @param requestSpec The WebTestClient request spec builder
-     * @param authHelper  Authentication helper to extract tenant ID and check roles
-     * @param accessToken The JWT access token
-     * @return Request spec with X-Tenant-Id header added if needed
+     * @param authHelper  Authentication helper (unused, kept for backward compatibility)
+     * @param accessToken The JWT access token (unused, kept for backward compatibility)
+     * @return Request spec unchanged (gateway will inject headers)
      */
-    @SuppressWarnings("unchecked")
     public static <T extends WebTestClient.RequestHeadersSpec<?>> T addTenantHeaderIfNeeded(
             T requestSpec,
-            AuthenticationHelper authHelper,
-            String accessToken) {
-
-        String tenantId = authHelper.getTenantIdFromToken(accessToken);
-        boolean isSystemAdmin = authHelper.isSystemAdminUser(accessToken);
-
-        // Add X-Tenant-Id header if tenant ID is present and user is not SYSTEM_ADMIN
-        if (tenantId != null && !tenantId.isEmpty() && !isSystemAdmin) {
-            return (T) requestSpec.header(X_TENANT_ID_HEADER, tenantId);
-        }
-
+            @SuppressWarnings("unused") AuthenticationHelper authHelper,
+            @SuppressWarnings("unused") String accessToken) {
+        // Gateway automatically injects X-Tenant-Id, X-User-Id, and X-Role headers
+        // from the JWT token via TenantValidationFilter and TenantContextFilter.
+        // No manual header addition needed - tests should simulate production behavior.
         return requestSpec;
     }
 }

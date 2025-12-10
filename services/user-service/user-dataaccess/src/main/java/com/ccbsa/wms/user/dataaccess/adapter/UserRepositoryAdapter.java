@@ -1,13 +1,23 @@
 package com.ccbsa.wms.user.dataaccess.adapter;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.hibernate.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
+import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
 import com.ccbsa.wms.user.application.service.port.repository.UserRepository;
 import com.ccbsa.wms.user.dataaccess.entity.UserEntity;
 import com.ccbsa.wms.user.dataaccess.jpa.UserJpaRepository;
@@ -19,6 +29,9 @@ import com.ccbsa.wms.user.domain.core.valueobject.LastName;
 import com.ccbsa.wms.user.domain.core.valueobject.UserStatus;
 import com.ccbsa.wms.user.domain.core.valueobject.Username;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 /**
  * Repository Adapter: UserRepositoryAdapter
  * <p>
@@ -27,17 +40,65 @@ import com.ccbsa.wms.user.domain.core.valueobject.Username;
  */
 @Repository
 public class UserRepositoryAdapter implements UserRepository {
+    private static final Logger logger = LoggerFactory.getLogger(UserRepositoryAdapter.class);
+
     private final UserJpaRepository jpaRepository;
     private final UserEntityMapper mapper;
+    private final JdbcTemplate jdbcTemplate;
+    private final TenantSchemaResolver schemaResolver;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public UserRepositoryAdapter(UserJpaRepository jpaRepository,
-                                 UserEntityMapper mapper) {
+                                 UserEntityMapper mapper,
+                                 JdbcTemplate jdbcTemplate,
+                                 TenantSchemaResolver schemaResolver) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
+        this.jdbcTemplate = jdbcTemplate;
+        this.schemaResolver = schemaResolver;
     }
 
     @Override
     public void save(User user) {
+        // Verify TenantContext is set before saving (critical for schema resolution)
+        com.ccbsa.common.domain.valueobject.TenantId tenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
+        if (tenantId == null) {
+            logger.error("TenantContext is not set when saving user! User will be saved to wrong schema. User tenantId: {}",
+                    user.getTenantId() != null ? user.getTenantId().getValue() : "null");
+            throw new IllegalStateException("TenantContext must be set before saving user. Expected tenantId: " +
+                    (user.getTenantId() != null ? user.getTenantId().getValue() : "null"));
+        }
+
+        // Verify tenantId matches
+        if (!tenantId.getValue().equals(user.getTenantId().getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, User: {}",
+                    tenantId.getValue(), user.getTenantId().getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match user tenantId");
+        }
+
+        logger.info("Saving user with TenantContext set to: {}", tenantId.getValue());
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.info("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
+
+        // Set the search_path explicitly on the database connection
+        // This ensures Hibernate uses the correct schema even if naming strategy caching occurs
+        // Note: This sets the search_path for the current transaction
+        Session session = entityManager.unwrap(Session.class);
+        session.doWork(connection -> {
+            try (java.sql.Statement stmt = connection.createStatement()) {
+                String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
+                logger.debug("Setting search_path to: {}", schemaName);
+                stmt.execute(setSchemaSql);
+            } catch (SQLException e) {
+                logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
+                throw new RuntimeException("Failed to set database schema", e);
+            }
+        });
+
         // Check if entity already exists to handle optimistic locking correctly
         Optional<UserEntity> existingEntity = jpaRepository.findById(user.getId().getValue());
 
@@ -51,6 +112,24 @@ public class UserRepositoryAdapter implements UserRepository {
             UserEntity entity = mapper.toEntity(user);
             jpaRepository.save(entity);
         }
+
+        logger.info("User saved successfully to schema: '{}'", schemaName);
+    }
+
+    /**
+     * Escapes a PostgreSQL identifier to prevent SQL injection.
+     * <p>
+     * PostgreSQL identifiers should be quoted if they contain special characters
+     * or are case-sensitive. For our schema names (which follow a pattern),
+     * we can safely quote them.
+     *
+     * @param identifier The identifier to escape
+     * @return Escaped identifier
+     */
+    private String escapeIdentifier(String identifier) {
+        // Quote the identifier to handle any special characters
+        // Replace any existing quotes to prevent injection
+        return String.format("\"%s\"", identifier.replace("\"", "\"\""));
     }
 
     /**
@@ -128,6 +207,174 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public List<User> findAllAcrossTenants(UserStatus status) {
+        logger.info("Finding all users across all tenant schemas with status={}", status);
+
+        try {
+            // 1. Get all tenant schemas from information_schema using JdbcTemplate (bypasses Hibernate)
+            List<String> tenantSchemas = getTenantSchemas();
+            logger.info("Found {} tenant schemas: {}", tenantSchemas.size(), tenantSchemas);
+
+            if (tenantSchemas.isEmpty()) {
+                logger.warn("No tenant schemas found - returning empty list");
+                return List.of();
+            }
+
+            // 2. Build UNION query dynamically
+            String sql = buildCrossSchemaQuery(tenantSchemas, status);
+            logger.info("Generated cross-schema SQL query (length={})", sql.length());
+            logger.info("SQL query: {}", sql);
+
+            // 3. Execute query using JdbcTemplate (bypasses Hibernate naming strategy)
+            // Note: When status filter is applied, we need to pass the status value for each UNION part
+            List<UserEntity> entities;
+            if (status != null) {
+                // For UNION queries with WHERE clauses, we need to pass the parameter for each UNION part
+                // Since each SELECT has a WHERE status = ?, we need to pass status.name() multiple times
+                Object[] params = new Object[tenantSchemas.size()];
+                for (int i = 0; i < tenantSchemas.size(); i++) {
+                    params[i] = status.name();
+                }
+                entities = jdbcTemplate.query(sql, new UserEntityRowMapper(), params);
+            } else {
+                entities = jdbcTemplate.query(sql, new UserEntityRowMapper());
+            }
+
+            logger.info("Retrieved {} users from all tenant schemas", entities.size());
+
+            // 4. Map to domain objects
+            return entities.stream()
+                    .map(mapper::toDomain)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Error executing cross-schema query: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to query users across tenant schemas", e);
+        }
+    }
+
+    /**
+     * Retrieves all tenant schemas from the database.
+     * <p>
+     * Queries information_schema.schemata to find all schemas matching the pattern
+     * 'tenant_%_schema', and also includes the 'public' schema (for legacy users
+     * that may have been created before schema-per-tenant was fully implemented).
+     * Uses JdbcTemplate to bypass Hibernate's naming strategy.
+     *
+     * @return List of schema names (tenant schemas + public schema)
+     */
+    private List<String> getTenantSchemas() {
+        String sql = """
+                SELECT schema_name
+                FROM information_schema.schemata
+                WHERE schema_name LIKE 'tenant_%_schema'
+                   OR schema_name = 'public'
+                ORDER BY schema_name
+                """;
+
+        return jdbcTemplate.queryForList(sql, String.class);
+    }
+
+    /**
+     * Builds a UNION query to query users from all tenant schemas.
+     * <p>
+     * The query structure:
+     * SELECT user_id, tenant_id, username, email_address, first_name, last_name,
+     * keycloak_user_id, status, created_at, last_modified_at, version
+     * FROM tenant_schema1.users
+     * UNION ALL
+     * SELECT user_id, tenant_id, username, email_address, first_name, last_name,
+     * keycloak_user_id, status, created_at, last_modified_at, version
+     * FROM tenant_schema2.users
+     * ...
+     * WHERE status = ? (if status filter is provided - using ? for JdbcTemplate)
+     *
+     * @param schemas List of tenant schema names
+     * @param status  Optional status filter
+     * @return SQL query string
+     */
+    private String buildCrossSchemaQuery(List<String> schemas, UserStatus status) {
+        if (schemas.isEmpty()) {
+            throw new IllegalArgumentException("At least one schema is required");
+        }
+
+        // Explicitly list all columns to ensure proper JPA entity mapping
+        String columns = "user_id, tenant_id, username, email_address, first_name, last_name, " +
+                "keycloak_user_id, status, created_at, last_modified_at, version";
+
+        StringBuilder sql = new StringBuilder();
+        List<String> unionParts = new ArrayList<>();
+
+        // Build UNION ALL parts for each schema
+        for (String schema : schemas) {
+            // Escape schema name to prevent SQL injection
+            String escapedSchema = escapeIdentifier(schema);
+            if (status != null) {
+                // Apply status filter to each SELECT statement using ? placeholder for JdbcTemplate
+                unionParts.add(String.format("SELECT %s FROM %s.users WHERE status = ?",
+                        columns, escapedSchema));
+            } else {
+                unionParts.add(String.format("SELECT %s FROM %s.users", columns, escapedSchema));
+            }
+        }
+
+        // Combine with UNION ALL
+        sql.append(String.join(" UNION ALL ", unionParts));
+
+        return sql.toString();
+    }
+
+    @Override
+    public Optional<User> findByIdAcrossTenants(com.ccbsa.common.domain.valueobject.UserId userId) {
+        logger.debug("Finding user by ID across all tenant schemas: userId={}", userId.getValue());
+
+        try {
+            // 1. Get all tenant schemas
+            List<String> tenantSchemas = getTenantSchemas();
+            if (tenantSchemas.isEmpty()) {
+                logger.warn("No tenant schemas found - returning empty");
+                return Optional.empty();
+            }
+
+            // 2. Build UNION query with WHERE user_id = ?
+            String columns = "user_id, tenant_id, username, email_address, first_name, last_name, " +
+                    "keycloak_user_id, status, created_at, last_modified_at, version";
+
+            List<String> unionParts = new ArrayList<>();
+            for (String schema : tenantSchemas) {
+                String escapedSchema = escapeIdentifier(schema);
+                unionParts.add(String.format("SELECT %s FROM %s.users WHERE user_id = ?", columns, escapedSchema));
+            }
+
+            String sql = String.join(" UNION ALL ", unionParts);
+            logger.debug("Generated cross-schema findById SQL query");
+
+            // 3. Execute query - need to pass userId for each UNION part
+            Object[] params = new Object[tenantSchemas.size()];
+            for (int i = 0; i < tenantSchemas.size(); i++) {
+                params[i] = userId.getValue();
+            }
+
+            List<UserEntity> entities = jdbcTemplate.query(sql, new UserEntityRowMapper(), params);
+
+            if (entities.isEmpty()) {
+                logger.debug("User not found across any tenant schema: userId={}", userId.getValue());
+                return Optional.empty();
+            }
+
+            if (entities.size() > 1) {
+                logger.warn("Found {} users with same ID across schemas (should not happen): userId={}",
+                        entities.size(), userId.getValue());
+            }
+
+            // 4. Map to domain object
+            return Optional.of(mapper.toDomain(entities.get(0)));
+        } catch (Exception e) {
+            logger.error("Error finding user by ID across tenant schemas: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to find user across tenant schemas", e);
+        }
+    }
+
+    @Override
     public List<User> findByTenantIdAndStatus(TenantId tenantId, UserStatus status) {
         UserEntity.UserStatus entityStatus = UserEntity.UserStatus.valueOf(status.name());
         return jpaRepository.findByTenantIdAndStatus(tenantId.getValue(), entityStatus)
@@ -155,6 +402,38 @@ public class UserRepositoryAdapter implements UserRepository {
     public Optional<User> findByKeycloakUserId(String keycloakUserId) {
         return jpaRepository.findByKeycloakUserId(keycloakUserId)
                 .map(mapper::toDomain);
+    }
+
+    /**
+     * RowMapper for UserEntity to map ResultSet rows to UserEntity objects.
+     */
+    private static class UserEntityRowMapper implements RowMapper<UserEntity> {
+        @Override
+        public UserEntity mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
+            UserEntity entity = new UserEntity();
+            entity.setUserId(rs.getString("user_id"));
+            entity.setTenantId(rs.getString("tenant_id"));
+            entity.setUsername(rs.getString("username"));
+            entity.setEmailAddress(rs.getString("email_address"));
+            entity.setFirstName(rs.getString("first_name"));
+            entity.setLastName(rs.getString("last_name"));
+            entity.setKeycloakUserId(rs.getString("keycloak_user_id"));
+
+            String statusStr = rs.getString("status");
+            if (statusStr != null) {
+                entity.setStatus(UserEntity.UserStatus.valueOf(statusStr));
+            }
+
+            entity.setCreatedAt(rs.getTimestamp("created_at") != null
+                    ? rs.getTimestamp("created_at").toLocalDateTime()
+                    : null);
+            entity.setLastModifiedAt(rs.getTimestamp("last_modified_at") != null
+                    ? rs.getTimestamp("last_modified_at").toLocalDateTime()
+                    : null);
+            entity.setVersion(rs.getLong("version"));
+
+            return entity;
+        }
     }
 }
 

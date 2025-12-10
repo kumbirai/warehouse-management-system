@@ -249,7 +249,7 @@ public class TenantActivatedEventListener {
             return aggregateIdObj.toString();
         }
 
-        throw new IllegalArgumentException("tenantId is required but missing in event. Available keys: " + eventData.keySet());
+        throw new IllegalArgumentException(String.format("tenantId is required but missing in event. Available keys: %s", eventData.keySet()));
     }
 
     /**

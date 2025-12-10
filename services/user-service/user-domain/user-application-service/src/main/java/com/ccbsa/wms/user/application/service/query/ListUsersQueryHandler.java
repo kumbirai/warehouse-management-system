@@ -48,23 +48,17 @@ public class ListUsersQueryHandler {
         // 1. Load users from repository
         List<User> users;
         if (query.getTenantId() != null) {
-            // Filter by tenant ID
+            // Filter by tenant ID (single tenant query)
             if (query.getStatus() != null) {
                 users = userRepository.findByTenantIdAndStatus(query.getTenantId(), query.getStatus());
             } else {
                 users = userRepository.findByTenantId(query.getTenantId());
             }
         } else {
-            // SYSTEM_ADMIN can query all users (tenantId is null)
+            // SYSTEM_ADMIN can query all users across all tenant schemas (tenantId is null)
             // Note: This is only reached if user has SYSTEM_ADMIN role (enforced by @PreAuthorize)
-            if (query.getStatus() != null) {
-                // Filter all users by status
-                users = userRepository.findAll().stream()
-                        .filter(user -> user.getStatus() == query.getStatus())
-                        .collect(Collectors.toList());
-            } else {
-                users = userRepository.findAll();
-            }
+            // Use findAllAcrossTenants to query across all tenant schemas
+            users = userRepository.findAllAcrossTenants(query.getStatus());
         }
 
         // 2. Apply pagination

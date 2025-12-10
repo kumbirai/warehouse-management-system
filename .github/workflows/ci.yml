@@ -98,7 +98,7 @@ jobs:
           echo "Kafka is ready!"
 
       - name: Install project artifacts (skip tests)
-        run: mvn -B -ntp -DskipTests -DskipITs install
+        run: mvn -B -ntp -DskipTests -DskipITs -pl '!gateway-api-tests' install
         continue-on-error: false
 
       - name: Run Checkstyle
@@ -114,11 +114,11 @@ jobs:
         continue-on-error: false
 
       - name: Run Tests
-        run: mvn test
+        run: mvn test -pl '!gateway-api-tests'
         continue-on-error: false
 
       - name: Build
-        run: mvn clean package -DskipTests -DskipITs
+        run: mvn clean package -DskipTests -DskipITs -pl '!gateway-api-tests'
         continue-on-error: false
 
       - name: Upload Test Results

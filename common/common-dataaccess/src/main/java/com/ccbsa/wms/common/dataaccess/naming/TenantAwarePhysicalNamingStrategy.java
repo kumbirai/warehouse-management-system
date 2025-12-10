@@ -69,12 +69,21 @@ public class TenantAwarePhysicalNamingStrategy implements PhysicalNamingStrategy
                 TenantSchemaResolver resolver = getTenantSchemaResolver();
                 if (resolver != null) {
                     String resolvedSchema = resolver.resolveSchema();
+                    // Log schema resolution for debugging
+                    org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TenantAwarePhysicalNamingStrategy.class);
+                    logger.info("Resolved schema '{}' to '{}'", PLACEHOLDER_SCHEMA, resolvedSchema);
                     return Identifier.toIdentifier(resolvedSchema, identifier.isQuoted());
+                } else {
+                    org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TenantAwarePhysicalNamingStrategy.class);
+                    logger.warn("TenantSchemaResolver not available - using default schema");
                 }
             } catch (IllegalStateException e) {
                 // Tenant context not set - this can happen during schema validation at startup
                 // Return null to use default schema (public) where Flyway creates tables
                 // The actual tenant schema will be resolved at runtime when tenant context is available
+                org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TenantAwarePhysicalNamingStrategy.class);
+                logger.warn("Tenant context not set when resolving schema '{}': {}. Using default schema (public).",
+                        PLACEHOLDER_SCHEMA, e.getMessage());
                 return null;
             }
         }

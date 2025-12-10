@@ -180,7 +180,7 @@ public class UserDeactivatedEventListener {
     private TenantId extractTenantId(Map<String, Object> eventData) {
         Object tenantIdObj = eventData.get("tenantId");
         if (tenantIdObj == null) {
-            throw new IllegalArgumentException("tenantId is required but missing in event. Available keys: " + eventData.keySet());
+            throw new IllegalArgumentException(String.format("tenantId is required but missing in event. Available keys: %s", eventData.keySet()));
         }
 
         // Handle value object serialization (Map with "value" field)

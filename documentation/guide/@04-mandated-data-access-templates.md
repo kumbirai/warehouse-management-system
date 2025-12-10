@@ -2,20 +2,24 @@
 
 ## Warehouse Management System Integration - CCBSA LDP System
 
-**Document Version:** 1.0  
-**Date:** 2025-01  
+**Document Version:** 1.1
+**Date:** 2025-12-09
 **Status:** Approved
+**Related:** [Production-Grade Caching Strategy](../caching/README.md)
 
 ---
 
 ## Overview
 
-Templates for the **Data Access** module (`{service}-dataaccess`). Implements repository adapters and data adapters with JPA.
+Templates for the **Data Access** module (`{service}-dataaccess`). Implements repository adapters and data adapters with JPA and **mandatory** distributed caching.
 
 **Key Distinction:**
 
 - **Repository Adapters** - Implement repository ports for aggregate persistence (write model)
 - **Data Adapters** - Implement data ports for read model queries (projections/views)
+- **Cached Repository Adapters** - **MANDATORY** decorator pattern for distributed caching with Redis
+
+**⚠️ IMPORTANT:** Caching is **NOT OPTIONAL**. All services MUST implement cached repository adapters following the [Production-Grade Caching Strategy](../caching/README.md).
 
 ---
 
@@ -26,20 +30,24 @@ The Data Access module (`{service}-dataaccess`) follows a strict package structu
 ```
 com.ccbsa.wms.{service}.dataaccess/
 ├── adapter/                           # Repository and data adapters
-│   ├── {DomainObject}RepositoryAdapter.java      # Implements repository port (write model)
-│   └── {DomainObject}ViewRepositoryAdapter.java  # Implements data port (read model)
+│   ├── {DomainObject}RepositoryAdapter.java              # Base JPA repository adapter (write model)
+│   ├── Cached{DomainObject}RepositoryAdapter.java        # MANDATORY: Cached decorator (@Primary)
+│   └── {DomainObject}ViewRepositoryAdapter.java          # Implements data port (read model)
 ├── entity/                            # JPA entities (infrastructure layer)
-│   ├── {DomainObject}Entity.java                 # Aggregate entity (write model)
-│   └── {DomainObject}ViewEntity.java              # View entity (read model)
+│   ├── {DomainObject}Entity.java                         # Aggregate entity (write model)
+│   └── {DomainObject}ViewEntity.java                     # View entity (read model)
 ├── mapper/                            # Entity mappers
-│   ├── {DomainObject}EntityMapper.java            # Domain ↔ JPA entity mapper
-│   └── {DomainObject}ViewEntityMapper.java       # View ↔ JPA view entity mapper
-├── jpa/                               # JPA repositories
-│   ├── {DomainObject}JpaRepository.java          # Aggregate JPA repository
-│   └── {DomainObject}ViewJpaRepository.java       # View JPA repository
-└── cache/                             # Cache decorators (optional)
-    └── Cached{DomainObject}RepositoryAdapter.java
+│   ├── {DomainObject}EntityMapper.java                   # Domain ↔ JPA entity mapper
+│   └── {DomainObject}ViewEntityMapper.java               # View ↔ JPA view entity mapper
+└── jpa/                               # JPA repositories
+    ├── {DomainObject}JpaRepository.java                  # Aggregate JPA repository
+    └── {DomainObject}ViewJpaRepository.java              # View JPA repository
 ```
+
+**⚠️ BREAKING CHANGE from v1.0:**
+- `cache/` package removed - cached adapters now in `adapter/` package
+- `Cached{DomainObject}RepositoryAdapter` is **MANDATORY** (not optional)
+- Cached adapter annotated with `@Primary` to be injected by default
 
 **Package Naming Convention:**
 
@@ -51,11 +59,10 @@ com.ccbsa.wms.{service}.dataaccess/
 
 | Package   | Responsibility      | Contains                                                                                            |
 |-----------|---------------------|-----------------------------------------------------------------------------------------------------|
-| `adapter` | Repository adapters | Implements repository ports (write model) and data ports (read model), annotated with `@Repository` |
+| `adapter` | Repository adapters | Base JPA adapters + **MANDATORY** cached decorators (@Primary), implements repository/data ports   |
 | `entity`  | JPA entities        | JPA annotated entities for persistence, separate from domain entities                               |
 | `mapper`  | Entity mappers      | Converts between JPA entities and domain entities, annotated with `@Component`                      |
 | `jpa`     | JPA repositories    | Spring Data JPA repository interfaces, extends `JpaRepository<Entity, ID>`                          |
-| `cache`   | Cache decorators    | Decorator pattern implementations for caching, wraps repository adapters                            |
 
 **Important Package Rules:**
 
@@ -64,6 +71,7 @@ com.ccbsa.wms.{service}.dataaccess/
 - **Entity separation**: JPA entities separate from domain entities
 - **Mapper responsibility**: Mappers handle conversion between infrastructure and domain
 - **Multi-tenant**: Entities use tenant-aware schema resolution
+- **Caching MANDATORY**: All repository adapters MUST have cached decorator with `@Primary` annotation
 
 ---
 
@@ -96,6 +104,16 @@ com.ccbsa.wms.{service}.dataaccess/
 - Event handlers update view entities from domain events
 - Eventual consistency between write and read models
 - Projection listeners process events to update views
+
+**Caching Principles (MANDATORY):**
+
+- **Performance**: Distributed caching with Redis is mandatory for all services
+- **Decorator Pattern**: Cached adapters wrap base adapters transparently
+- **Cache Invalidation**: Event-driven invalidation via Kafka domain events
+- **Multi-Tenant Isolation**: Cache keys prefixed with tenant ID
+- **Write-Through**: Writes update database and cache immediately
+- **Cache-Aside**: Reads check cache first, then database on miss
+- **See:** [Production-Grade Caching Strategy](../caching/README.md)
 
 ---
 
@@ -629,10 +647,208 @@ public NotificationEntity toEntity(Notification notification) {
 
 ---
 
+## Cached Repository Adapter Template (MANDATORY)
+
+**⚠️ NEW REQUIREMENT:** All repository adapters MUST have a cached decorator implementation.
+
+See [Production-Grade Caching Strategy](../caching/README.md) for complete implementation guide.
+
+### Cached Adapter Structure
+
+```java
+package com.ccbsa.wms.{service}.dataaccess.adapter;
+
+import com.ccbsa.common.cache.decorator.CachedRepositoryDecorator;
+import com.ccbsa.common.cache.key.CacheNamespace;
+import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.wms.{service}.application.service.port.repository.{DomainObject}Repository;
+import com.ccbsa.wms.{service}.domain.core.entity.{DomainObject};
+import com.ccbsa.wms.{service}.domain.core.valueobject.{DomainObject}Id;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Repository;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Cached {DomainObject} Repository Adapter.
+ * <p>
+ * MANDATORY: Decorates {DomainObject}RepositoryAdapter with Redis caching.
+ * Implements cache-aside pattern for reads and write-through for writes.
+ * <p>
+ * Cache Configuration:
+ * - Namespace: "{domain-objects}"
+ * - TTL: Configured via application.yml (default: 30 minutes)
+ * - Eviction: LRU (configured in Redis)
+ * <p>
+ * Spring Configuration:
+ * - @Primary: Ensures this adapter is injected instead of base adapter
+ * - @Repository: Marks as Spring Data repository component
+ */
+@Repository
+@Primary
+public class Cached{DomainObject}RepositoryAdapter
+        extends CachedRepositoryDecorator<{DomainObject}, {DomainObject}Id>
+        implements {DomainObject}Repository {
+
+    private final {DomainObject}RepositoryAdapter baseRepository;
+
+    public Cached{DomainObject}RepositoryAdapter(
+            {DomainObject}RepositoryAdapter baseRepository,
+            RedisTemplate<String, Object> redisTemplate,
+            MeterRegistry meterRegistry
+    ) {
+        super(
+            baseRepository,
+            redisTemplate,
+            CacheNamespace.{DOMAIN_OBJECTS}.getValue(),
+            Duration.ofMinutes(30), // TTL from config
+            meterRegistry
+        );
+        this.baseRepository = baseRepository;
+    }
+
+    @Override
+    public Optional<{DomainObject}> findByTenantIdAndId(TenantId tenantId, {DomainObject}Id id) {
+        return findWithCache(
+            tenantId,
+            id.getValue(),
+            entityId -> baseRepository.findByTenantIdAndId(tenantId, id)
+        );
+    }
+
+    @Override
+    public List<{DomainObject}> findByTenantId(TenantId tenantId) {
+        // Collections NOT cached to avoid cache bloat
+        return baseRepository.findByTenantId(tenantId);
+    }
+
+    @Override
+    public void save({DomainObject} {domainObject}) {
+        // Write-through: Save to database + update cache
+        baseRepository.save({domainObject});
+
+        saveWithCache(
+            {domainObject}.getTenantId(),
+            {domainObject}.getId().getValue(),
+            {domainObject},
+            obj -> obj // Already saved
+        );
+    }
+
+    @Override
+    public void deleteById({DomainObject}Id id) {
+        throw new UnsupportedOperationException(
+            "deleteById without tenantId not supported in multi-tenant context"
+        );
+    }
+
+    @Override
+    public boolean existsById({DomainObject}Id id) {
+        return baseRepository.existsById(id);
+    }
+}
+```
+
+### Cache Invalidation Listener Template (MANDATORY)
+
+All services MUST implement event-driven cache invalidation.
+
+```java
+package com.ccbsa.wms.{service}.cache;
+
+import com.ccbsa.common.cache.invalidation.CacheInvalidationEventListener;
+import com.ccbsa.common.cache.invalidation.LocalCacheInvalidator;
+import com.ccbsa.common.cache.key.CacheNamespace;
+import com.ccbsa.wms.{service}.domain.event.{DomainObject}CreatedEvent;
+import com.ccbsa.wms.{service}.domain.event.{DomainObject}UpdatedEvent;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
+
+/**
+ * {Service} Cache Invalidation Listener.
+ * <p>
+ * MANDATORY: Listens to {service} domain events and invalidates affected caches.
+ * <p>
+ * Invalidation Strategy:
+ * - {DomainObject}CreatedEvent: No invalidation (cache-aside pattern)
+ * - {DomainObject}UpdatedEvent: Invalidate entity + collections
+ */
+@Component
+public class {DomainObject}CacheInvalidationListener extends CacheInvalidationEventListener {
+
+    public {DomainObject}CacheInvalidationListener(LocalCacheInvalidator cacheInvalidator) {
+        super(cacheInvalidator);
+    }
+
+    @KafkaListener(
+        topics = "{service}-events",
+        groupId = "{service}-cache-invalidation",
+        containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void handle{DomainObject}Event(Object event) {
+        if (event instanceof {DomainObject}CreatedEvent created) {
+            // No invalidation - cache-aside pattern
+            log.debug("{DomainObject} created, no cache invalidation needed");
+        } else if (event instanceof {DomainObject}UpdatedEvent updated) {
+            // Invalidate entity cache and all collection caches
+            invalidateForEvent(updated, CacheNamespace.{DOMAIN_OBJECTS}.getValue());
+        }
+    }
+}
+```
+
+### Configuration Template (MANDATORY)
+
+Add to `application.yml`:
+
+```yaml
+# Cache Configuration (MANDATORY)
+wms:
+  cache:
+    enabled: true
+    default-ttl-minutes: 30
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+    cache-configs:
+      {domain-objects}:
+        ttl-minutes: 30  # Adjust based on data change frequency
+
+# Spring Cache Configuration
+spring:
+  cache:
+    type: redis
+    redis:
+      time-to-live: 1800000  # 30 minutes
+```
+
+### Implementation Checklist
+
+For each service, you MUST implement:
+
+- ✅ `Cached{DomainObject}RepositoryAdapter` extending `CachedRepositoryDecorator`
+- ✅ Annotate with `@Primary` to ensure injection over base adapter
+- ✅ `{DomainObject}CacheInvalidationListener` extending `CacheInvalidationEventListener`
+- ✅ Subscribe to `{service}-events` Kafka topic
+- ✅ Configure cache TTL in `application.yml`
+- ✅ Write unit tests for cache hit/miss scenarios
+- ✅ Add to `CacheNamespace` enum in `common-cache` module
+
+**See:** [Production-Grade Caching Strategy](../caching/README.md) for complete implementation guide, testing strategy, and monitoring setup.
+
+---
+
 **Document Control**
 
 - **Version History:**
     - v1.0 (2025-01) - Initial template creation
     - v1.1 (2025-12) - Added optimistic locking version field handling pattern
+    - v1.1 (2025-12-09) - **BREAKING CHANGE**: Made caching MANDATORY, added cached adapter templates
 - **Review Cycle:** Review when data access patterns change
+- **Related Documentation:** [Production-Grade Caching Strategy](../caching/README.md)
 

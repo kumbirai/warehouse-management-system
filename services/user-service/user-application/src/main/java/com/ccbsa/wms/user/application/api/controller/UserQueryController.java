@@ -1,9 +1,13 @@
 package com.ccbsa.wms.user.application.api.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -11,8 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ccbsa.common.application.api.ApiMeta;
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.application.api.ApiResponseBuilder;
+import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.user.application.api.dto.UserResponse;
 import com.ccbsa.wms.user.application.api.mapper.UserMapper;
 import com.ccbsa.wms.user.application.service.query.GetUserQueryHandler;
@@ -61,12 +68,78 @@ public class UserQueryController {
     public ResponseEntity<ApiResponse<List<UserResponse>>> listUsers(
             @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "1") Integer page,
             @RequestParam(required = false, defaultValue = "20") Integer size) {
+        // Extract user roles from SecurityContext
+        boolean isTenantAdmin = isTenantAdmin();
+
+        // Enforce tenant isolation based on role
+        String resolvedTenantId = tenantId;
+        if (isTenantAdmin) {
+            // TENANT_ADMIN can only query their own tenant (from TenantContext, not request header)
+            TenantId contextTenantId = TenantContext.getTenantId();
+            if (contextTenantId != null) {
+                resolvedTenantId = contextTenantId.getValue();
+            } else {
+                // If tenant context is not set, this is a security issue
+                throw new IllegalStateException("Tenant context not set for TENANT_ADMIN user");
+            }
+        }
+        // SYSTEM_ADMIN can use tenantId from header (or null for all tenants)
+
+        // Convert 1-indexed page from frontend to 0-indexed for backend processing
+        // Frontend uses 1-indexed pages (page 1 = first page), backend uses 0-indexed for array slicing
+        int zeroIndexedPage = page != null && page > 0 ? page - 1 : 0;
+
         ListUsersQueryResult result = listUsersQueryHandler.handle(
-                mapper.toListUsersQuery(tenantId, status, page, size));
+                mapper.toListUsersQuery(resolvedTenantId, status, zeroIndexedPage, size));
         List<UserResponse> responses = mapper.toUserResponseList(result);
-        return ApiResponseBuilder.ok(responses);
+
+        // Build pagination metadata (using 1-indexed page for response)
+        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(
+                page != null && page > 0 ? page : 1,
+                size != null && size > 0 ? size : 20,
+                result.getTotalCount());
+        ApiMeta meta = ApiMeta.builder().pagination(pagination).build();
+
+        return ApiResponseBuilder.ok(responses, null, meta);
+    }
+
+    /**
+     * Checks if the current user has TENANT_ADMIN role.
+     *
+     * @return true if user has TENANT_ADMIN role, false otherwise
+     */
+    private boolean isTenantAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
+            return false;
+        }
+
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        return hasRole(jwt, "TENANT_ADMIN");
+    }
+
+    /**
+     * Checks if the JWT token contains the specified role.
+     *
+     * @param jwt  The JWT token
+     * @param role The role to check for
+     * @return true if the role is present, false otherwise
+     */
+    private boolean hasRole(Jwt jwt, String role) {
+        Object realmAccess = jwt.getClaim("realm_access");
+        if (realmAccess instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
+            Object rolesObj = realmAccessMap.get("roles");
+            if (rolesObj instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<String> roles = (List<String>) rolesObj;
+                return roles.contains(role);
+            }
+        }
+        return false;
     }
 }
 

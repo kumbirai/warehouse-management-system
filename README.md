@@ -24,7 +24,7 @@ This system follows:
 ## Project Structure
 
 ```
-warehouse-application-system/
+warehouse-management-system/
 ├── common/                          # Common modules
 │   ├── common-domain/              # Common domain base classes
 │   ├── common-messaging/           # Common messaging infrastructure
@@ -68,8 +68,8 @@ warehouse-application-system/
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/kumbirai/warehouse-application-system.git
-cd warehouse-application-system
+git clone https://github.com/kumbirai/warehouse-management-system.git
+cd warehouse-management-system
 ```
 
 ### 2. Set Up Environment
