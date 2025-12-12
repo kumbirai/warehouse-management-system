@@ -150,21 +150,31 @@ public class UserRepositoryAdapter implements UserRepository {
      * @param session    Hibernate session
      * @param schemaName Validated schema name
      */
+    private void setSearchPath(Session session, String schemaName) {
+        session.doWork(connection -> executeSetSearchPath(connection, schemaName));
+    }
+
+    /**
+     * Executes the SET search_path SQL command.
+     * <p>
+     * This method is separated to allow proper SpotBugs annotation placement.
+     *
+     * @param connection Database connection
+     * @param schemaName Validated and escaped schema name
+     */
     @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
             justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " +
                     "and properly escaped using escapeIdentifier() method. " +
                     "PostgreSQL SET search_path command does not support parameterized queries.")
-    private void setSearchPath(Session session, String schemaName) {
-        session.doWork(connection -> {
-            try (java.sql.Statement stmt = connection.createStatement()) {
-                String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
-                logger.debug("Setting search_path to: {}", schemaName);
-                stmt.execute(setSchemaSql);
-            } catch (SQLException e) {
-                logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
-                throw new RuntimeException("Failed to set database schema", e);
-            }
-        });
+    private void executeSetSearchPath(java.sql.Connection connection, String schemaName) {
+        try (java.sql.Statement stmt = connection.createStatement()) {
+            String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
+            logger.debug("Setting search_path to: {}", schemaName);
+            stmt.execute(setSchemaSql);
+        } catch (SQLException e) {
+            logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
+            throw new RuntimeException("Failed to set database schema", e);
+        }
     }
 
     /**
