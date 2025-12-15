@@ -68,7 +68,8 @@ public class UserCreatedEventListener {
             String username = extractUsername(eventData);
 
             logger.info("Received UserCreatedEvent: userId={}, tenantId={}, email={}, eventId={}, eventDataKeys={}",
-                    aggregateId, tenantId.getValue(), recipientEmail.getValue(), extractEventId(eventData), eventData.keySet());
+                    aggregateId, tenantId.getValue(), recipientEmail.getValue(),
+                    extractEventId(eventData), eventData.keySet());
 
             // Set tenant context for multi-tenant schema resolution
             TenantContext.setTenantId(tenantId);
@@ -79,7 +80,8 @@ public class UserCreatedEventListener {
                         .recipientUserId(UserId.of(aggregateId))
                         .recipientEmail(recipientEmail)
                         .title(Title.of("Welcome to WMS"))
-                        .message(Message.of(String.format("Welcome! Your account has been created. Username: %s", username)))
+                        .message(Message.of(String.format(
+                                "Welcome! Your account has been created. Username: %s", username)))
                         .type(NotificationType.USER_CREATED)
                         .build();
 
@@ -181,7 +183,9 @@ public class UserCreatedEventListener {
     private TenantId extractTenantId(Map<String, Object> eventData) {
         Object tenantIdObj = eventData.get("tenantId");
         if (tenantIdObj == null) {
-            throw new IllegalArgumentException(String.format("tenantId is required but missing in event. Available keys: %s", eventData.keySet()));
+            throw new IllegalArgumentException(String.format(
+                    "tenantId is required but missing in event. Available keys: %s",
+                    eventData.keySet()));
         }
 
         // Handle value object serialization (Map with "value" field)

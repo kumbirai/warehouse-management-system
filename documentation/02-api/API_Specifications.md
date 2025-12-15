@@ -11,6 +11,8 @@
 - [Service Architecture Document](../architecture/Service_Architecture_Document.md)
 - [Domain Model Design](../architecture/Domain_Model_Design.md)
 - [Project Roadmap](../project-management/project-roadmap.md)
+- [CSV Format Specification](CSV_Format_Specification.md)
+- [D365 Entity Mapping Guide](D365_Entity_Mapping_Guide.md)
 
 ---
 
@@ -538,6 +540,41 @@ POST /consignments/{consignmentId}/confirm
 GET /consignments?status=RECEIVED&warehouseId=wh-123&page=1&size=20
 ```
 
+#### Upload Consignment Data via CSV
+
+```
+POST /consignments/upload-csv
+Content-Type: multipart/form-data
+```
+
+**Request:**
+
+- `file`: CSV file (multipart/form-data)
+- See [CSV Format Specification](CSV_Format_Specification.md) for file format
+
+**Response:** `200 OK`
+
+```json
+{
+  "data": {
+    "uploadId": "upload-123",
+    "fileName": "consignments_20251115_103000.csv",
+    "totalRows": 100,
+    "validRows": 95,
+    "invalidRows": 5,
+    "status": "COMPLETED",
+    "errors": [
+      {
+        "row": 3,
+        "column": "ProductCode",
+        "message": "Product code 'PROD-999' does not exist",
+        "value": "PROD-999"
+      }
+    ]
+  }
+}
+```
+
 ### Stock Items
 
 #### Get Stock Item
@@ -764,6 +801,41 @@ GET /products/by-barcode/{barcode}
 GET /products?search=coca&page=1&size=20
 ```
 
+#### Upload Product Master Data via CSV
+
+```
+POST /products/upload-csv
+Content-Type: multipart/form-data
+```
+
+**Request:**
+
+- `file`: CSV file (multipart/form-data)
+- See [CSV Format Specification](CSV_Format_Specification.md) for file format
+
+**Response:** `200 OK`
+
+```json
+{
+  "data": {
+    "uploadId": "upload-123",
+    "fileName": "products_20251115_103000.csv",
+    "totalRows": 50,
+    "validRows": 48,
+    "invalidRows": 2,
+    "status": "COMPLETED",
+    "errors": [
+      {
+        "row": 5,
+        "column": "PrimaryBarcode",
+        "message": "Barcode '1234567890123' is not a valid format",
+        "value": "1234567890123"
+      }
+    ]
+  }
+}
+```
+
 #### Sync Products from D365
 
 ```
@@ -832,6 +904,41 @@ GET /picking-lists/{pickingListId}
 
 ```
 GET /picking-lists?status=PENDING&warehouseId=wh-123
+```
+
+#### Upload Picking List via CSV
+
+```
+POST /picking-lists/upload-csv
+Content-Type: multipart/form-data
+```
+
+**Request:**
+
+- `file`: CSV file (multipart/form-data)
+- See [CSV Format Specification](CSV_Format_Specification.md) for file format
+
+**Response:** `200 OK`
+
+```json
+{
+  "data": {
+    "uploadId": "upload-123",
+    "fileName": "picking_lists_20251115_103000.csv",
+    "totalRows": 200,
+    "validRows": 195,
+    "invalidRows": 5,
+    "status": "COMPLETED",
+    "errors": [
+      {
+        "row": 10,
+        "column": "ProductCode",
+        "message": "Product code 'PROD-999' does not exist",
+        "value": "PROD-999"
+      }
+    ]
+  }
+}
 ```
 
 ### Loads

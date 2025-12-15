@@ -39,7 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * serialization/deserialization with type information.
  */
 @Configuration
-@Import({ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class})
+@Import( {ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class})
 public class ProductServiceConfiguration {
 
     @Value("${spring.kafka.bootstrap-servers:localhost:9092}")

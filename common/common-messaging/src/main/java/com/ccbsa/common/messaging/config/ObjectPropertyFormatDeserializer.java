@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * Jackson uses PROPERTY format (@class property in JSON) instead of the default WRAPPER_ARRAY format.
  * <p>
  * This is critical for cross-service event consumption where events are serialized with
+ *
  * @class property (PROPERTY format) but need to be deserialized as Map&lt;String, Object&gt;
  * for loose coupling and flexibility.
  * <p>
@@ -66,13 +67,13 @@ public class ObjectPropertyFormatDeserializer extends JsonDeserializer<Object> {
      */
     private Map<String, Object> convertToMap(JsonNode node) {
         Map<String, Object> map = new HashMap<>();
-        
+
         if (node.isObject()) {
             Iterator<String> fieldNames = node.fieldNames();
             while (fieldNames.hasNext()) {
                 String key = fieldNames.next();
                 JsonNode value = node.get(key);
-                
+
                 if (value.isObject()) {
                     map.put(key, convertToMap(value));
                 } else if (value.isArray()) {
@@ -93,7 +94,7 @@ public class ObjectPropertyFormatDeserializer extends JsonDeserializer<Object> {
                 }
             }
         }
-        
+
         return map;
     }
 
@@ -105,7 +106,7 @@ public class ObjectPropertyFormatDeserializer extends JsonDeserializer<Object> {
      */
     private List<Object> convertToArray(JsonNode node) {
         List<Object> list = new ArrayList<>();
-        
+
         if (node.isArray()) {
             for (JsonNode element : node) {
                 if (element.isObject()) {
@@ -127,7 +128,7 @@ public class ObjectPropertyFormatDeserializer extends JsonDeserializer<Object> {
                 }
             }
         }
-        
+
         return list;
     }
 }

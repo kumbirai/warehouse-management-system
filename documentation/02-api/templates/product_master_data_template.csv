@@ -1,0 +1,5 @@
+ProductCode,ProductName,ProductDescription,PrimaryBarcode,SecondaryBarcode,UnitOfMeasure,ProductType,IsPerishable,DefaultExpiryDays,Category,Brand,Weight,Volume,IsActive
+PROD-001,Coca Cola 500ml,Coca Cola Soft Drink 500ml,6001067101234,,BOTTLE,ITEM,true,365,Beverages,Coca Cola,0.5,0.5,true
+PROD-002,Sprite 500ml,Sprite Soft Drink 500ml,6001067101235,,BOTTLE,ITEM,true,365,Beverages,Sprite,0.5,0.5,true
+PROD-003,Fanta Orange 500ml,Fanta Orange Soft Drink 500ml,6001067101236,,BOTTLE,ITEM,true,365,Beverages,Fanta,0.5,0.5,true
+

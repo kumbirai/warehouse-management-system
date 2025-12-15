@@ -1,0 +1,6 @@
+LoadNumber,OrderNumber,OrderLineNumber,ProductCode,Quantity,CustomerCode,CustomerName,Priority,RequestedDeliveryDate,WarehouseId,CustomerAddress,CustomerPhone,SpecialInstructions,SalesOrderDate,RouteNumber
+LOAD-2025-001,ORD-001,1,PROD-001,50,CUST-001,ABC Store,HIGH,2025-11-20,WH-001,"123 Main St, Johannesburg",+27123456789,Handle with care,2025-11-15,ROUTE-01
+LOAD-2025-001,ORD-001,2,PROD-002,75,CUST-001,ABC Store,HIGH,2025-11-20,WH-001,"123 Main St, Johannesburg",+27123456789,Handle with care,2025-11-15,ROUTE-01
+LOAD-2025-001,ORD-002,1,PROD-003,100,CUST-002,XYZ Supermarket,MEDIUM,2025-11-21,WH-001,"456 Oak Ave, Cape Town",+27987654321,Urgent delivery,2025-11-16,ROUTE-02
+LOAD-2025-002,ORD-003,1,PROD-001,25,CUST-003,Corner Shop,LOW,2025-11-22,WH-001,"789 Pine Rd, Durban",+27555666777,Standard delivery,2025-11-17,ROUTE-03
+

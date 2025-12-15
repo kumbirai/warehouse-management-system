@@ -2,7 +2,7 @@
 
 ## Warehouse Management System Integration - CCBSA LDP System
 
-**Document Version:** 1.0  
+**Document Version:** 2.0  
 **Date:** 2025-11  
 **Status:** Draft  
 **Related Documents:**
@@ -29,27 +29,29 @@ This document tracks the progress and implementation status of all user stories 
 
 | Status      | Story Count | Story Points |
 |-------------|-------------|--------------|
-| Not Started | 52          | ~350         |
+| Not Started | 58          | ~380         |
 | In Progress | 0           | 0            |
 | In Review   | 0           | 0            |
 | Done        | 0           | 0            |
 | Blocked     | 0           | 0            |
 | Deferred    | 0           | 0            |
-| **Total**   | **52**      | **~350**     |
+| **Total**   | **58**      | **~380**     |
 
 ---
 
 ## Epic 1: Stock Consignment Management
 
-| Story ID | Title                              | Priority    | Points | Status      | Assigned To | Sprint | Notes |
-|----------|------------------------------------|-------------|--------|-------------|-------------|--------|-------|
-| US-1.1.1 | Ingest Consignment Data from D365  | Must Have   | 8      | Not Started | -           | -      | -     |
-| US-1.1.2 | Validate Consignment Data          | Must Have   | 5      | Not Started | -           | -      | -     |
-| US-1.1.3 | Create Stock Consignment           | Must Have   | 8      | Not Started | -           | -      | -     |
-| US-1.1.4 | Confirm Consignment Receipt        | Must Have   | 5      | Not Started | -           | -      | -     |
-| US-1.1.5 | Handle Partial Consignment Receipt | Should Have | 5      | Not Started | -           | -      | -     |
+| Story ID | Title                                | Priority    | Points | Status      | Assigned To | Sprint | Notes |
+|----------|--------------------------------------|-------------|--------|-------------|-------------|--------|-------|
+| US-1.1.1 | Upload Consignment Data via CSV File | Must Have   | 8      | Not Started | -           | -      | -     |
+| US-1.1.2 | Manual Consignment Data Entry via UI | Must Have   | 8      | Not Started | -           | -      | -     |
+| US-1.1.3 | Ingest Consignment Data from D365    | Should Have | 8      | Not Started | -           | -      | -     |
+| US-1.1.4 | Validate Consignment Data            | Must Have   | 5      | Not Started | -           | -      | -     |
+| US-1.1.5 | Create Stock Consignment             | Must Have   | 8      | Not Started | -           | -      | -     |
+| US-1.1.6 | Confirm Consignment Receipt          | Must Have   | 5      | Not Started | -           | -      | -     |
+| US-1.1.7 | Handle Partial Consignment Receipt   | Should Have | 5      | Not Started | -           | -      | -     |
 
-**Epic Total:** 5 stories, 31 points
+**Epic Total:** 7 stories, 47 points
 
 ---
 
@@ -83,13 +85,15 @@ This document tracks the progress and implementation status of all user stories 
 
 ## Epic 4: Product Identification
 
-| Story ID | Title                                     | Priority  | Points | Status      | Assigned To | Sprint | Notes |
-|----------|-------------------------------------------|-----------|--------|-------------|-------------|--------|-------|
-| US-4.1.1 | Synchronize Product Master Data from D365 | Must Have | 8      | Not Started | -           | -      | -     |
-| US-4.1.2 | Validate Product Barcode                  | Must Have | 5      | Not Started | -           | -      | -     |
-| US-4.1.3 | Scan Product Barcode                      | Must Have | 5      | Not Started | -           | -      | -     |
+| Story ID | Title                                     | Priority    | Points | Status      | Assigned To | Sprint | Notes |
+|----------|-------------------------------------------|-------------|--------|-------------|-------------|--------|-------|
+| US-4.1.1 | Upload Product Master Data via CSV File   | Must Have   | 8      | Not Started | -           | -      | -     |
+| US-4.1.2 | Manual Product Master Data Entry via UI   | Must Have   | 8      | Not Started | -           | -      | -     |
+| US-4.1.3 | Synchronize Product Master Data from D365 | Should Have | 8      | Not Started | -           | -      | -     |
+| US-4.1.4 | Validate Product Barcode                  | Must Have   | 5      | Not Started | -           | -      | -     |
+| US-4.1.5 | Scan Product Barcode                      | Must Have   | 5      | Not Started | -           | -      | -     |
 
-**Epic Total:** 3 stories, 18 points
+**Epic Total:** 5 stories, 34 points
 
 ---
 
@@ -107,28 +111,30 @@ This document tracks the progress and implementation status of all user stories 
 
 ## Epic 6: Picking List Management
 
-| Story ID | Title                         | Priority  | Points | Status      | Assigned To | Sprint | Notes |
-|----------|-------------------------------|-----------|--------|-------------|-------------|--------|-------|
-| US-6.1.1 | Ingest Picking List from D365 | Must Have | 8      | Not Started | -           | -      | -     |
-| US-6.1.2 | Create Picking List           | Must Have | 5      | Not Started | -           | -      | -     |
-| US-6.2.1 | Plan Picking Locations        | Must Have | 13     | Not Started | -           | -      | -     |
-| US-6.2.2 | Map Orders to Loads           | Must Have | 5      | Not Started | -           | -      | -     |
-| US-6.3.1 | Execute Picking Task          | Must Have | 8      | Not Started | -           | -      | -     |
-| US-6.3.2 | Complete Picking              | Must Have | 5      | Not Started | -           | -      | -     |
+| Story ID | Title                            | Priority    | Points | Status      | Assigned To | Sprint | Notes |
+|----------|----------------------------------|-------------|--------|-------------|-------------|--------|-------|
+| US-6.1.1 | Upload Picking List via CSV File | Must Have   | 8      | Not Started | -           | -      | -     |
+| US-6.1.2 | Manual Picking List Entry via UI | Must Have   | 8      | Not Started | -           | -      | -     |
+| US-6.1.3 | Ingest Picking List from D365    | Should Have | 8      | Not Started | -           | -      | -     |
+| US-6.1.4 | Create Picking List              | Must Have   | 5      | Not Started | -           | -      | -     |
+| US-6.2.1 | Plan Picking Locations           | Must Have   | 13     | Not Started | -           | -      | -     |
+| US-6.2.2 | Map Orders to Loads              | Must Have   | 5      | Not Started | -           | -      | -     |
+| US-6.3.1 | Execute Picking Task             | Must Have   | 8      | Not Started | -           | -      | -     |
+| US-6.3.2 | Complete Picking                 | Must Have   | 5      | Not Started | -           | -      | -     |
 
-**Epic Total:** 6 stories, 44 points
+**Epic Total:** 8 stories, 60 points
 
 ---
 
 ## Epic 7: Returns Management
 
-| Story ID | Title                            | Priority  | Points | Status      | Assigned To | Sprint | Notes |
-|----------|----------------------------------|-----------|--------|-------------|-------------|--------|-------|
-| US-7.1.1 | Handle Partial Order Acceptance  | Must Have | 8      | Not Started | -           | -      | -     |
-| US-7.2.1 | Process Full Order Return        | Must Have | 5      | Not Started | -           | -      | -     |
-| US-7.3.1 | Handle Damage-in-Transit Returns | Must Have | 5      | Not Started | -           | -      | -     |
-| US-7.4.1 | Assign Return Location           | Must Have | 5      | Not Started | -           | -      | -     |
-| US-7.5.1 | Reconcile Returns with D365      | Must Have | 5      | Not Started | -           | -      | -     |
+| Story ID | Title                            | Priority    | Points | Status      | Assigned To | Sprint | Notes |
+|----------|----------------------------------|-------------|--------|-------------|-------------|--------|-------|
+| US-7.1.1 | Handle Partial Order Acceptance  | Must Have   | 8      | Not Started | -           | -      | -     |
+| US-7.2.1 | Process Full Order Return        | Must Have   | 5      | Not Started | -           | -      | -     |
+| US-7.3.1 | Handle Damage-in-Transit Returns | Must Have   | 5      | Not Started | -           | -      | -     |
+| US-7.4.1 | Assign Return Location           | Must Have   | 5      | Not Started | -           | -      | -     |
+| US-7.5.1 | Reconcile Returns with D365      | Should Have | 5      | Not Started | -           | -      | -     |
 
 **Epic Total:** 5 stories, 28 points
 
@@ -136,13 +142,13 @@ This document tracks the progress and implementation status of all user stories 
 
 ## Epic 8: Reconciliation
 
-| Story ID | Title                                     | Priority  | Points | Status      | Assigned To | Sprint | Notes |
-|----------|-------------------------------------------|-----------|--------|-------------|-------------|--------|-------|
-| US-8.1.1 | Generate Electronic Stock Count Worksheet | Must Have | 8      | Not Started | -           | -      | -     |
-| US-8.1.2 | Perform Stock Count Entry                 | Must Have | 8      | Not Started | -           | -      | -     |
-| US-8.1.3 | Complete Stock Count                      | Must Have | 5      | Not Started | -           | -      | -     |
-| US-8.2.1 | Investigate Stock Count Variances         | Must Have | 5      | Not Started | -           | -      | -     |
-| US-8.3.1 | Reconcile Stock Counts with D365          | Must Have | 8      | Not Started | -           | -      | -     |
+| Story ID | Title                                     | Priority    | Points | Status      | Assigned To | Sprint | Notes |
+|----------|-------------------------------------------|-------------|--------|-------------|-------------|--------|-------|
+| US-8.1.1 | Generate Electronic Stock Count Worksheet | Must Have   | 8      | Not Started | -           | -      | -     |
+| US-8.1.2 | Perform Stock Count Entry                 | Must Have   | 8      | Not Started | -           | -      | -     |
+| US-8.1.3 | Complete Stock Count                      | Must Have   | 5      | Not Started | -           | -      | -     |
+| US-8.2.1 | Investigate Stock Count Variances         | Must Have   | 5      | Not Started | -           | -      | -     |
+| US-8.3.1 | Reconcile Stock Counts with D365          | Should Have | 8      | Not Started | -           | -      | -     |
 
 **Epic Total:** 5 stories, 34 points
 
@@ -150,13 +156,13 @@ This document tracks the progress and implementation status of all user stories 
 
 ## Epic 9: Integration Requirements
 
-| Story ID | Title                                 | Priority  | Points | Status      | Assigned To | Sprint | Notes |
-|----------|---------------------------------------|-----------|--------|-------------|-------------|--------|-------|
-| US-9.1.1 | D365 Integration Setup                | Must Have | 13     | Not Started | -           | -      | -     |
-| US-9.1.2 | Send Consignment Confirmation to D365 | Must Have | 5      | Not Started | -           | -      | -     |
-| US-9.1.3 | Send Returns Data to D365             | Must Have | 5      | Not Started | -           | -      | -     |
-| US-9.1.4 | Send Reconciliation Data to D365      | Must Have | 5      | Not Started | -           | -      | -     |
-| US-9.1.5 | Send Restock Request to D365          | Must Have | 3      | Not Started | -           | -      | -     |
+| Story ID | Title                                 | Priority    | Points | Status      | Assigned To | Sprint | Notes |
+|----------|---------------------------------------|-------------|--------|-------------|-------------|--------|-------|
+| US-9.1.1 | D365 Integration Setup                | Should Have | 13     | Not Started | -           | -      | -     |
+| US-9.1.2 | Send Consignment Confirmation to D365 | Should Have | 5      | Not Started | -           | -      | -     |
+| US-9.1.3 | Send Returns Data to D365             | Should Have | 5      | Not Started | -           | -      | -     |
+| US-9.1.4 | Send Reconciliation Data to D365      | Should Have | 5      | Not Started | -           | -      | -     |
+| US-9.1.5 | Send Restock Request to D365          | Should Have | 3      | Not Started | -           | -      | -     |
 
 **Epic Total:** 5 stories, 31 points
 
@@ -186,11 +192,11 @@ This document tracks the progress and implementation status of all user stories 
 **Stories:**
 
 - US-3.1.1: Create Warehouse Location with Barcode (5)
-- US-4.1.1: Synchronize Product Master Data from D365 (8)
-- US-9.1.1: D365 Integration Setup (13)
+- US-4.1.1: Upload Product Master Data via CSV File (8)
+- US-4.1.2: Manual Product Master Data Entry via UI (8)
 - US-NFR-3.1: Authentication and Authorization (8)
 
-**Total Points:** 34
+**Total Points:** 29
 
 ---
 
@@ -200,12 +206,13 @@ This document tracks the progress and implementation status of all user stories 
 
 **Stories:**
 
-- US-1.1.1: Ingest Consignment Data from D365 (8)
-- US-1.1.2: Validate Consignment Data (5)
-- US-1.1.3: Create Stock Consignment (8)
-- US-4.1.2: Validate Product Barcode (5)
+- US-1.1.1: Upload Consignment Data via CSV File (8)
+- US-1.1.2: Manual Consignment Data Entry via UI (8)
+- US-1.1.4: Validate Consignment Data (5)
+- US-1.1.5: Create Stock Consignment (8)
+- US-4.1.4: Validate Product Barcode (5)
 
-**Total Points:** 26
+**Total Points:** 34
 
 ---
 
@@ -218,7 +225,7 @@ This document tracks the progress and implementation status of all user stories 
 - US-2.1.1: Classify Stock by Expiration Date (5)
 - US-2.1.2: Assign Locations Based on FEFO Principles (8)
 - US-3.2.1: Assign Location to Stock (8)
-- US-1.1.4: Confirm Consignment Receipt (5)
+- US-1.1.6: Confirm Consignment Receipt (5)
 
 **Total Points:** 26
 
@@ -246,12 +253,13 @@ This document tracks the progress and implementation status of all user stories 
 
 **Stories:**
 
-- US-6.1.1: Ingest Picking List from D365 (8)
-- US-6.1.2: Create Picking List (5)
+- US-6.1.1: Upload Picking List via CSV File (8)
+- US-6.1.2: Manual Picking List Entry via UI (8)
+- US-6.1.4: Create Picking List (5)
 - US-6.2.1: Plan Picking Locations (13)
 - US-6.2.2: Map Orders to Loads (5)
 
-**Total Points:** 31
+**Total Points:** 39
 
 ---
 
@@ -326,8 +334,8 @@ This document tracks the progress and implementation status of all user stories 
 **Stories:**
 
 - US-3.1.2: Scan Location Barcode (5)
-- US-4.1.3: Scan Product Barcode (5)
-- US-1.1.5: Handle Partial Consignment Receipt (5)
+- US-4.1.5: Scan Product Barcode (5)
+- US-1.1.7: Handle Partial Consignment Receipt (5)
 - US-NFR-4.2: Accessibility Compliance (8)
 - US-NFR-4.3: Multi-Language Support (5)
 - US-NFR-1.1: Response Time Requirements (8)
@@ -343,11 +351,11 @@ This document tracks the progress and implementation status of all user stories 
 
 | Sprint    | Planned Points | Completed Points | Velocity |
 |-----------|----------------|------------------|----------|
-| Sprint 1  | 34             | 0                | -        |
-| Sprint 2  | 26             | 0                | -        |
+| Sprint 1  | 29             | 0                | -        |
+| Sprint 2  | 34             | 0                | -        |
 | Sprint 3  | 26             | 0                | -        |
 | Sprint 4  | 28             | 0                | -        |
-| Sprint 5  | 31             | 0                | -        |
+| Sprint 5  | 39             | 0                | -        |
 | Sprint 6  | 26             | 0                | -        |
 | Sprint 7  | 28             | 0                | -        |
 | Sprint 8  | 34             | 0                | -        |
@@ -368,13 +376,16 @@ None
 
 1. **Foundation Layer:**
     - US-3.1.1 (Locations) - No dependencies
-    - US-4.1.1 (Products) - Depends on US-9.1.1 (D365 Integration)
-    - US-9.1.1 (D365 Integration) - No dependencies
+    - US-4.1.1 (Products CSV Upload) - No dependencies
+    - US-4.1.2 (Products Manual Entry) - No dependencies
+    - US-4.1.3 (Products D365 Sync) - Depends on US-9.1.1 (D365 Integration, optional)
 
 2. **Stock Receipt Layer:**
-    - US-1.1.1 (Ingest) - Depends on US-9.1.1
-    - US-1.1.2 (Validate) - Depends on US-1.1.1, US-4.1.1
-    - US-1.1.3 (Create) - Depends on US-1.1.2, US-3.2.1
+    - US-1.1.1 (CSV Upload) - Depends on US-4.1.4 (Product Barcode Validation)
+    - US-1.1.2 (Manual Entry) - Depends on US-4.1.4 (Product Barcode Validation)
+    - US-1.1.3 (D365 Ingest) - Depends on US-9.1.1 (D365 Integration, optional)
+    - US-1.1.4 (Validate) - Depends on US-1.1.1, US-1.1.2, US-4.1.4
+    - US-1.1.5 (Create) - Depends on US-1.1.4, US-3.2.1
 
 3. **Stock Classification Layer:**
     - US-2.1.1 (Classify) - Depends on US-1.1.3

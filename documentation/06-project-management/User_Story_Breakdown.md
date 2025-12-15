@@ -2,7 +2,7 @@
 
 ## Warehouse Management System Integration - CCBSA LDP System
 
-**Document Version:** 1.0  
+**Document Version:** 2.0  
 **Date:** 2025-11  
 **Status:** Draft  
 **Related Documents:**
@@ -25,10 +25,10 @@
 6. [Epic 4: Product Identification](#epic-4-product-identification)
 7. [Epic 5: Stock Level Management](#epic-5-stock-level-management)
 8. [Epic 6: Picking List Management](#epic-6-picking-list-management)
-7. [Epic 7: Returns Management](#epic-7-returns-management)
-8. [Epic 8: Reconciliation](#epic-8-reconciliation)
-9. [Epic 9: Integration Requirements](#epic-9-integration-requirements)
-10. [Non-Functional Requirements](#non-functional-requirements)
+9. [Epic 7: Returns Management](#epic-7-returns-management)
+10. [Epic 8: Reconciliation](#epic-8-reconciliation)
+11. [Epic 9: Integration Requirements](#epic-9-integration-requirements)
+12. [Non-Functional Requirements](#non-functional-requirements)
 
 ---
 
@@ -38,6 +38,16 @@
 
 This document breaks down the Business Requirements Document (BRD) functional requirements into implementable user stories. Each user story follows the standard format: "As
 a [role], I want [goal] so that [benefit]."
+
+### Data Ingestion Strategy
+
+The system supports multiple data ingestion methods for flexibility and operational resilience:
+
+1. **CSV File Upload** (Priority: Must Have) - Primary method for bulk data entry
+2. **Manual Data Entry via UI** (Priority: Must Have) - For individual records and corrections
+3. **D365 Integration** (Priority: Should Have) - Automated integration for future enhancement
+
+These methods are implemented in parallel, with CSV upload and manual entry taking precedence over D365 integration.
 
 ### User Story Structure
 
@@ -107,20 +117,108 @@ Epics align with BRD Functional Requirements:
 **Epic ID:** EPIC-1  
 **BRD Reference:** FR-1  
 **Service:** Stock Management Service  
-**Description:** Manage incoming stock consignment from D365, validate receipt, and confirm consignment.
+**Description:** Manage incoming stock consignment from multiple sources (CSV upload, manual entry, D365), validate receipt, and confirm consignment.
 
-### US-1.1.1: Ingest Consignment Data from D365
+### US-1.1.1: Upload Consignment Data via CSV File
 
 **Story ID:** US-1.1.1  
-**Title:** Ingest Consignment Data from D365  
+**Title:** Upload Consignment Data via CSV File  
 **Epic:** Stock Consignment Management  
-**Service:** Stock Management Service (Integration Service)  
+**Service:** Stock Management Service  
 **Priority:** Must Have  
 **Story Points:** 8
 
 **As a** warehouse operator  
+**I want** to upload stock consignment data via CSV file  
+**So that** I can efficiently import bulk consignment information
+
+**Acceptance Criteria:**
+
+- [ ] AC1: System accepts CSV file uploads through web interface
+- [ ] AC2: CSV format includes: product codes, quantities, expiration dates, consignment reference numbers, timestamps
+- [ ] AC3: System validates CSV file format and required columns before processing
+- [ ] AC4: System provides clear error messages for invalid CSV data
+- [ ] AC5: System processes CSV file and creates consignment records
+- [ ] AC6: System displays upload progress and completion status
+- [ ] AC7: System supports CSV file sizes up to 10MB
+- [ ] AC8: System logs all CSV upload events for audit
+
+**Technical Notes:**
+
+- REST API endpoint: `POST /consignments/upload-csv`
+- Multipart file upload support
+- CSV parsing library (OpenCSV or Apache Commons CSV)
+- Validate CSV structure and data types
+- Process CSV rows and create `StockConsignment` aggregates
+- Publish `ConsignmentDataReceivedEvent` to Kafka for each valid row
+- Handle validation errors and provide detailed feedback
+
+**Dependencies:**
+
+- US-4.1.2: Validate Product Barcode (for product validation)
+
+**Related BRD Requirements:**
+
+- FR-1.1: Incoming Stock Ingestion
+
+---
+
+### US-1.1.2: Manual Consignment Data Entry via UI
+
+**Story ID:** US-1.1.2  
+**Title:** Manual Consignment Data Entry via UI  
+**Epic:** Stock Consignment Management  
+**Service:** Stock Management Service  
+**Priority:** Must Have  
+**Story Points:** 8
+
+**As a** warehouse operator  
+**I want** to manually enter consignment data through the UI  
+**So that** I can create individual consignment records or correct data
+
+**Acceptance Criteria:**
+
+- [ ] AC1: System provides form-based UI for consignment data entry
+- [ ] AC2: Form includes fields: consignment reference, product code, quantity, expiration date, received timestamp
+- [ ] AC3: System validates required fields and data formats in real-time
+- [ ] AC4: System supports adding multiple line items to a single consignment
+- [ ] AC5: System validates product codes against master data
+- [ ] AC6: System provides autocomplete/suggestions for product codes
+- [ ] AC7: System allows saving draft consignments for later completion
+- [ ] AC8: System provides clear validation error messages
+- [ ] AC9: System publishes `ConsignmentDataReceivedEvent` after successful entry
+
+**Technical Notes:**
+
+- Frontend: React form component with validation
+- REST API endpoint: `POST /consignments`
+- Real-time validation using Product Service API
+- Support for multi-line item entry
+- Draft saving using localStorage or backend draft storage
+- Publish domain event after successful creation
+
+**Dependencies:**
+
+- US-4.1.2: Validate Product Barcode (for product validation)
+
+**Related BRD Requirements:**
+
+- FR-1.1: Incoming Stock Ingestion
+
+---
+
+### US-1.1.3: Ingest Consignment Data from D365
+
+**Story ID:** US-1.1.3  
+**Title:** Ingest Consignment Data from D365  
+**Epic:** Stock Consignment Management  
+**Service:** Stock Management Service (Integration Service)  
+**Priority:** Should Have  
+**Story Points:** 8
+
+**As a** warehouse operator  
 **I want** the system to automatically ingest stock consignment data from D365  
-**So that** I don't have to manually enter consignment information
+**So that** I don't have to manually enter consignment information when D365 integration is available
 
 **Acceptance Criteria:**
 
@@ -140,6 +238,7 @@ Epics align with BRD Functional Requirements:
 **Dependencies:**
 
 - US-4.1.1: Product Master Data Synchronization (for product validation)
+- US-9.1.1: D365 Integration Setup
 
 **Related BRD Requirements:**
 
@@ -147,9 +246,9 @@ Epics align with BRD Functional Requirements:
 
 ---
 
-### US-1.1.2: Validate Consignment Data
+### US-1.1.4: Validate Consignment Data
 
-**Story ID:** US-1.1.2  
+**Story ID:** US-1.1.4  
 **Title:** Validate Consignment Data  
 **Epic:** Stock Consignment Management  
 **Service:** Stock Management Service  
@@ -178,8 +277,9 @@ Epics align with BRD Functional Requirements:
 
 **Dependencies:**
 
-- US-1.1.1: Ingest Consignment Data from D365
-- US-4.1.1: Product Master Data Synchronization
+- US-1.1.1: Upload Consignment Data via CSV File
+- US-1.1.2: Manual Consignment Data Entry via UI
+- US-4.1.2: Validate Product Barcode
 
 **Related BRD Requirements:**
 
@@ -187,9 +287,9 @@ Epics align with BRD Functional Requirements:
 
 ---
 
-### US-1.1.3: Create Stock Consignment
+### US-1.1.5: Create Stock Consignment
 
-**Story ID:** US-1.1.3  
+**Story ID:** US-1.1.5  
 **Title:** Create Stock Consignment  
 **Epic:** Stock Consignment Management  
 **Service:** Stock Management Service  
@@ -218,7 +318,7 @@ Epics align with BRD Functional Requirements:
 
 **Dependencies:**
 
-- US-1.1.2: Validate Consignment Data
+- US-1.1.4: Validate Consignment Data
 - US-3.2.1: Assign Location to Stock
 
 **Related BRD Requirements:**
@@ -227,9 +327,9 @@ Epics align with BRD Functional Requirements:
 
 ---
 
-### US-1.1.4: Confirm Consignment Receipt
+### US-1.1.6: Confirm Consignment Receipt
 
-**Story ID:** US-1.1.4  
+**Story ID:** US-1.1.6  
 **Title:** Confirm Consignment Receipt  
 **Epic:** Stock Consignment Management  
 **Service:** Stock Management Service  
@@ -238,7 +338,7 @@ Epics align with BRD Functional Requirements:
 
 **As a** warehouse operator  
 **I want** to confirm receipt of consigned stock  
-**So that** D365 is notified of successful receipt
+**So that** the system records successful receipt and can notify D365 if integrated
 
 **Acceptance Criteria:**
 
@@ -247,20 +347,20 @@ Epics align with BRD Functional Requirements:
 - [ ] AC3: System records confirmation timestamp
 - [ ] AC4: System includes received quantities, received date/time, location assignments in confirmation
 - [ ] AC5: System publishes `StockConsignmentConfirmedEvent`
-- [ ] AC6: System sends confirmation to D365 within 2 minutes of confirmation
+- [ ] AC6: System sends confirmation to D365 within 2 minutes of confirmation (if D365 integration enabled)
 - [ ] AC7: System handles partial receipts
 
 **Technical Notes:**
 
 - Call `stockConsignment.confirm()` method
-- Integration Service consumes `StockConsignmentConfirmedEvent`
-- Send confirmation to D365 via OData API
+- Integration Service consumes `StockConsignmentConfirmedEvent` (optional if D365 enabled)
+- Send confirmation to D365 via OData API (if D365 integration enabled)
 - Handle retry logic for D365 API failures
 
 **Dependencies:**
 
-- US-1.1.3: Create Stock Consignment
-- US-9.1.1: Send Consignment Confirmation to D365
+- US-1.1.5: Create Stock Consignment
+- US-9.1.2: Send Consignment Confirmation to D365 (optional, if D365 integration enabled)
 
 **Related BRD Requirements:**
 
@@ -268,9 +368,9 @@ Epics align with BRD Functional Requirements:
 
 ---
 
-### US-1.1.5: Handle Partial Consignment Receipt
+### US-1.1.7: Handle Partial Consignment Receipt
 
-**Story ID:** US-1.1.5  
+**Story ID:** US-1.1.7  
 **Title:** Handle Partial Consignment Receipt  
 **Epic:** Stock Consignment Management  
 **Service:** Stock Management Service  
@@ -297,7 +397,7 @@ Epics align with BRD Functional Requirements:
 
 **Dependencies:**
 
-- US-1.1.4: Confirm Consignment Receipt
+- US-1.1.6: Confirm Consignment Receipt
 
 **Related BRD Requirements:**
 
@@ -342,7 +442,7 @@ Epics align with BRD Functional Requirements:
 
 **Dependencies:**
 
-- US-1.1.3: Create Stock Consignment
+- US-1.1.5: Create Stock Consignment
 
 **Related BRD Requirements:**
 
@@ -715,20 +815,108 @@ Epics align with BRD Functional Requirements:
 **Epic ID:** EPIC-4  
 **BRD Reference:** FR-4  
 **Service:** Product Service  
-**Description:** Manage product master data and barcode validation.
+**Description:** Manage product master data from multiple sources (CSV upload, manual entry, D365) and barcode validation.
 
-### US-4.1.1: Synchronize Product Master Data from D365
+### US-4.1.1: Upload Product Master Data via CSV File
 
 **Story ID:** US-4.1.1  
-**Title:** Synchronize Product Master Data from D365  
+**Title:** Upload Product Master Data via CSV File  
 **Epic:** Product Identification  
-**Service:** Product Service (Integration Service)  
+**Service:** Product Service  
 **Priority:** Must Have  
 **Story Points:** 8
 
 **As a** system administrator  
+**I want** to upload product master data via CSV file  
+**So that** I can efficiently import bulk product information
+
+**Acceptance Criteria:**
+
+- [ ] AC1: System accepts CSV file uploads through web interface
+- [ ] AC2: CSV format includes: product codes, descriptions, barcodes, unit of measure
+- [ ] AC3: System validates CSV file format and required columns before processing
+- [ ] AC4: System provides clear error messages for invalid CSV data
+- [ ] AC5: System processes CSV file and creates/updates product records
+- [ ] AC6: System displays upload progress and completion status
+- [ ] AC7: System supports CSV file sizes up to 10MB
+- [ ] AC8: System logs all CSV upload events for audit
+- [ ] AC9: System publishes `ProductCreatedEvent`, `ProductUpdatedEvent` for changes
+
+**Technical Notes:**
+
+- REST API endpoint: `POST /products/upload-csv`
+- Multipart file upload support
+- CSV parsing library (OpenCSV or Apache Commons CSV)
+- Validate CSV structure and data types
+- Process CSV rows and create/update `Product` aggregates
+- Handle product updates (match by product code)
+- Publish domain events for changes
+
+**Dependencies:**
+
+- None (foundational)
+
+**Related BRD Requirements:**
+
+- FR-4.2: Product Master Data Synchronization
+
+---
+
+### US-4.1.2: Manual Product Master Data Entry via UI
+
+**Story ID:** US-4.1.2  
+**Title:** Manual Product Master Data Entry via UI  
+**Epic:** Product Identification  
+**Service:** Product Service  
+**Priority:** Must Have  
+**Story Points:** 8
+
+**As a** system administrator  
+**I want** to manually enter product master data through the UI  
+**So that** I can create individual product records or correct data
+
+**Acceptance Criteria:**
+
+- [ ] AC1: System provides form-based UI for product data entry
+- [ ] AC2: Form includes fields: product code, description, barcode(s), unit of measure
+- [ ] AC3: System validates required fields and data formats in real-time
+- [ ] AC4: System validates product code uniqueness
+- [ ] AC5: System supports adding multiple barcodes per product (primary and secondary)
+- [ ] AC6: System provides clear validation error messages
+- [ ] AC7: System allows saving draft products for later completion
+- [ ] AC8: System publishes `ProductCreatedEvent` or `ProductUpdatedEvent` after successful entry
+
+**Technical Notes:**
+
+- Frontend: React form component with validation
+- REST API endpoint: `POST /products` and `PUT /products/{productCode}`
+- Real-time validation for product code uniqueness
+- Support for multiple barcodes per product
+- Draft saving using localStorage or backend draft storage
+- Publish domain event after successful creation/update
+
+**Dependencies:**
+
+- None (foundational)
+
+**Related BRD Requirements:**
+
+- FR-4.2: Product Master Data Synchronization
+
+---
+
+### US-4.1.3: Synchronize Product Master Data from D365
+
+**Story ID:** US-4.1.3  
+**Title:** Synchronize Product Master Data from D365  
+**Epic:** Product Identification  
+**Service:** Product Service (Integration Service)  
+**Priority:** Should Have  
+**Story Points:** 8
+
+**As a** system administrator  
 **I want** product master data to be synchronized from D365  
-**So that** product information is always up to date
+**So that** product information is always up to date when D365 integration is available
 
 **Acceptance Criteria:**
 
@@ -757,9 +945,9 @@ Epics align with BRD Functional Requirements:
 
 ---
 
-### US-4.1.2: Validate Product Barcode
+### US-4.1.4: Validate Product Barcode
 
-**Story ID:** US-4.1.2  
+**Story ID:** US-4.1.4  
 **Title:** Validate Product Barcode  
 **Epic:** Product Identification  
 **Service:** Product Service  
@@ -788,7 +976,8 @@ Epics align with BRD Functional Requirements:
 
 **Dependencies:**
 
-- US-4.1.1: Synchronize Product Master Data from D365
+- US-4.1.1: Upload Product Master Data via CSV File
+- US-4.1.2: Manual Product Master Data Entry via UI
 
 **Related BRD Requirements:**
 
@@ -796,9 +985,9 @@ Epics align with BRD Functional Requirements:
 
 ---
 
-### US-4.1.3: Scan Product Barcode
+### US-4.1.5: Scan Product Barcode
 
-**Story ID:** US-4.1.3  
+**Story ID:** US-4.1.5  
 **Title:** Scan Product Barcode  
 **Epic:** Product Identification  
 **Service:** Product Service (Frontend)  
@@ -827,7 +1016,7 @@ Epics align with BRD Functional Requirements:
 
 **Dependencies:**
 
-- US-4.1.2: Validate Product Barcode
+- US-4.1.4: Validate Product Barcode
 - Frontend barcode scanning implementation
 
 **Related BRD Requirements:**
@@ -873,7 +1062,7 @@ Epics align with BRD Functional Requirements:
 
 **Dependencies:**
 
-- US-1.1.3: Create Stock Consignment
+- US-1.1.5: Create Stock Consignment
 - US-3.3.1: Track Stock Movement
 
 **Related BRD Requirements:**
@@ -937,7 +1126,7 @@ Epics align with BRD Functional Requirements:
 
 - [ ] AC1: System automatically generates restock request when stock falls below minimum
 - [ ] AC2: Restock request includes: product code, current quantity, minimum quantity, requested quantity, priority
-- [ ] AC3: Request is sent to D365 for processing
+- [ ] AC3: Request is sent to D365 for processing (if D365 integration enabled)
 - [ ] AC4: System tracks restock request status
 - [ ] AC5: System prevents duplicate restock requests
 
@@ -946,13 +1135,13 @@ Epics align with BRD Functional Requirements:
 - `StockLevel.checkMinimumThreshold()` method
 - Generate `RestockRequestGeneratedEvent` when threshold breached
 - Calculate requested quantity (maximum - current)
-- Integration Service consumes event and sends to D365
+- Integration Service consumes event and sends to D365 (if D365 integration enabled)
 - Track request status to prevent duplicates
 
 **Dependencies:**
 
 - US-5.1.2: Enforce Minimum and Maximum Stock Levels
-- US-9.1.5: Send Restock Request to D365
+- US-9.1.5: Send Restock Request to D365 (optional, if D365 integration enabled)
 
 **Related BRD Requirements:**
 
@@ -965,20 +1154,109 @@ Epics align with BRD Functional Requirements:
 **Epic ID:** EPIC-6  
 **BRD Reference:** FR-6  
 **Service:** Picking Service  
-**Description:** Manage picking lists, load planning, order-to-load mapping, and picking execution.
+**Description:** Manage picking lists from multiple sources (CSV upload, manual entry, D365), load planning, order-to-load mapping, and picking execution.
 
-### US-6.1.1: Ingest Picking List from D365
+### US-6.1.1: Upload Picking List via CSV File
 
 **Story ID:** US-6.1.1  
-**Title:** Ingest Picking List from D365  
+**Title:** Upload Picking List via CSV File  
 **Epic:** Picking List Management  
-**Service:** Picking Service (Integration Service)  
+**Service:** Picking Service  
 **Priority:** Must Have  
 **Story Points:** 8
 
 **As a** warehouse operator  
+**I want** to upload picking lists via CSV file  
+**So that** I can efficiently import bulk picking list information
+
+**Acceptance Criteria:**
+
+- [ ] AC1: System accepts CSV file uploads through web interface
+- [ ] AC2: CSV format includes: load number, order numbers, customer information, products, quantities, priorities
+- [ ] AC3: System validates CSV file format and required columns before processing
+- [ ] AC4: System provides clear error messages for invalid CSV data
+- [ ] AC5: System processes CSV file and creates picking list records
+- [ ] AC6: System displays upload progress and completion status
+- [ ] AC7: System supports CSV file sizes up to 10MB
+- [ ] AC8: System logs all CSV upload events for audit
+- [ ] AC9: System publishes `PickingListReceivedEvent`
+
+**Technical Notes:**
+
+- REST API endpoint: `POST /picking-lists/upload-csv`
+- Multipart file upload support
+- CSV parsing library (OpenCSV or Apache Commons CSV)
+- Validate CSV structure and data types
+- Process CSV rows and create `PickingList` aggregates
+- Publish domain event after successful creation
+
+**Dependencies:**
+
+- None (foundational)
+
+**Related BRD Requirements:**
+
+- FR-6.1: Picking List Ingestion
+
+---
+
+### US-6.1.2: Manual Picking List Entry via UI
+
+**Story ID:** US-6.1.2  
+**Title:** Manual Picking List Entry via UI  
+**Epic:** Picking List Management  
+**Service:** Picking Service  
+**Priority:** Must Have  
+**Story Points:** 8
+
+**As a** warehouse operator  
+**I want** to manually enter picking lists through the UI  
+**So that** I can create individual picking list records or correct data
+
+**Acceptance Criteria:**
+
+- [ ] AC1: System provides form-based UI for picking list data entry
+- [ ] AC2: Form includes fields: load number, order numbers, customer information, products, quantities, priorities
+- [ ] AC3: System validates required fields and data formats in real-time
+- [ ] AC4: System supports adding multiple orders to a single load
+- [ ] AC5: System supports adding multiple products per order
+- [ ] AC6: System validates product codes against master data
+- [ ] AC7: System provides autocomplete/suggestions for product codes and customer information
+- [ ] AC8: System allows saving draft picking lists for later completion
+- [ ] AC9: System provides clear validation error messages
+- [ ] AC10: System publishes `PickingListReceivedEvent` after successful entry
+
+**Technical Notes:**
+
+- Frontend: React form component with validation
+- REST API endpoint: `POST /picking-lists`
+- Real-time validation using Product Service API
+- Support for multi-order and multi-product entry
+- Draft saving using localStorage or backend draft storage
+- Publish domain event after successful creation
+
+**Dependencies:**
+
+- US-4.1.4: Validate Product Barcode (for product validation)
+
+**Related BRD Requirements:**
+
+- FR-6.1: Picking List Ingestion
+
+---
+
+### US-6.1.3: Ingest Picking List from D365
+
+**Story ID:** US-6.1.3  
+**Title:** Ingest Picking List from D365  
+**Epic:** Picking List Management  
+**Service:** Picking Service (Integration Service)  
+**Priority:** Should Have  
+**Story Points:** 8
+
+**As a** warehouse operator  
 **I want** picking lists to be automatically ingested from D365  
-**So that** I can start picking operations immediately
+**So that** I can start picking operations immediately when D365 integration is available
 
 **Acceptance Criteria:**
 
@@ -1005,9 +1283,9 @@ Epics align with BRD Functional Requirements:
 
 ---
 
-### US-6.1.2: Create Picking List
+### US-6.1.4: Create Picking List
 
-**Story ID:** US-6.1.2  
+**Story ID:** US-6.1.4  
 **Title:** Create Picking List  
 **Epic:** Picking List Management  
 **Service:** Picking Service  
@@ -1035,7 +1313,8 @@ Epics align with BRD Functional Requirements:
 
 **Dependencies:**
 
-- US-6.1.1: Ingest Picking List from D365
+- US-6.1.1: Upload Picking List via CSV File
+- US-6.1.2: Manual Picking List Entry via UI
 
 **Related BRD Requirements:**
 
@@ -1074,7 +1353,7 @@ Epics align with BRD Functional Requirements:
 
 **Dependencies:**
 
-- US-6.1.2: Create Picking List
+- US-6.1.4: Create Picking List
 - US-2.1.4: Prevent Picking of Expired Stock
 - US-3.2.1: Assign Location to Stock
 
@@ -1114,7 +1393,7 @@ Epics align with BRD Functional Requirements:
 
 **Dependencies:**
 
-- US-6.1.2: Create Picking List
+- US-6.1.4: Create Picking List
 
 **Related BRD Requirements:**
 
@@ -1366,16 +1645,16 @@ Epics align with BRD Functional Requirements:
 **Title:** Reconcile Returns with D365  
 **Epic:** Returns Management  
 **Service:** Returns Service, Integration Service  
-**Priority:** Must Have  
+**Priority:** Should Have  
 **Story Points:** 5
 
 **As a** warehouse operator  
 **I want** returns to be reconciled with D365  
-**So that** D365 has accurate return information
+**So that** D365 has accurate return information when D365 integration is available
 
 **Acceptance Criteria:**
 
-- [ ] AC1: System reconciles returns and updates D365
+- [ ] AC1: System reconciles returns and updates D365 (if D365 integration enabled)
 - [ ] AC2: Reconciliation includes: returned quantities, condition, location assignment, reason codes
 - [ ] AC3: System handles reconciliation errors and retries
 - [ ] AC4: System maintains reconciliation audit trail
@@ -1383,15 +1662,15 @@ Epics align with BRD Functional Requirements:
 
 **Technical Notes:**
 
-- Integration Service consumes `ReturnReconciledEvent`
-- Send returns data to D365 via OData API
+- Integration Service consumes `ReturnReconciledEvent` (optional if D365 enabled)
+- Send returns data to D365 via OData API (if D365 integration enabled)
 - Handle retry logic for failures
 - Maintain reconciliation status
 
 **Dependencies:**
 
 - US-7.4.1: Assign Return Location
-- US-9.1.3: Send Returns Data to D365
+- US-9.1.3: Send Returns Data to D365 (optional, if D365 integration enabled)
 
 **Related BRD Requirements:**
 
@@ -1404,7 +1683,7 @@ Epics align with BRD Functional Requirements:
 **Epic ID:** EPIC-8  
 **BRD Reference:** FR-8  
 **Service:** Reconciliation Service  
-**Description:** Manage daily stock counts, variance identification, and reconciliation with D365.
+**Description:** Manage daily stock counts, variance identification, and reconciliation with D365 (optional).
 
 ### US-8.1.1: Generate Electronic Stock Count Worksheet
 
@@ -1481,7 +1760,7 @@ Epics align with BRD Functional Requirements:
 
 - US-8.1.1: Generate Electronic Stock Count Worksheet
 - US-3.1.2: Scan Location Barcode
-- US-4.1.3: Scan Product Barcode
+- US-4.1.5: Scan Product Barcode
 
 **Related BRD Requirements:**
 
@@ -1572,35 +1851,35 @@ Epics align with BRD Functional Requirements:
 **Title:** Reconcile Stock Counts with D365  
 **Epic:** Reconciliation  
 **Service:** Reconciliation Service, Integration Service  
-**Priority:** Must Have  
+**Priority:** Should Have  
 **Story Points:** 8
 
 **As a** warehouse manager  
 **I want** stock counts to be reconciled with D365  
-**So that** D365 has accurate inventory information
+**So that** D365 has accurate inventory information when D365 integration is available
 
 **Acceptance Criteria:**
 
-- [ ] AC1: System reconciles stock counts with D365
+- [ ] AC1: System reconciles stock counts with D365 (if D365 integration enabled)
 - [ ] AC2: Reconciliation includes: product codes, quantities, locations, variance reasons
-- [ ] AC3: System sends reconciliation data to D365
+- [ ] AC3: System sends reconciliation data to D365 (if D365 integration enabled)
 - [ ] AC4: System handles reconciliation approval workflow if required
 - [ ] AC5: System updates local stock levels based on reconciliation
 - [ ] AC6: System publishes `ReconciliationCompletedEvent`
-- [ ] AC7: System automatically updates D365 within 1 hour of reconciliation completion
+- [ ] AC7: System automatically updates D365 within 1 hour of reconciliation completion (if D365 integration enabled)
 
 **Technical Notes:**
 
 - Create `Reconciliation` aggregate
-- Integration Service consumes `ReconciliationCompletedEvent`
-- Send reconciliation data to D365 via OData API
+- Integration Service consumes `ReconciliationCompletedEvent` (optional if D365 enabled)
+- Send reconciliation data to D365 via OData API (if D365 integration enabled)
 - Handle approval workflow if required by D365
 - Update local stock levels after D365 confirmation
 
 **Dependencies:**
 
 - US-8.2.1: Investigate Stock Count Variances
-- US-9.1.4: Send Reconciliation Data to D365
+- US-9.1.4: Send Reconciliation Data to D365 (optional, if D365 integration enabled)
 
 **Related BRD Requirements:**
 
@@ -1614,7 +1893,7 @@ Epics align with BRD Functional Requirements:
 **Epic ID:** EPIC-9  
 **BRD Reference:** FR-9  
 **Service:** Integration Service  
-**Description:** Provide bidirectional integration with D365 Finance and Operations.
+**Description:** Provide bidirectional integration with D365 Finance and Operations (optional, lower priority).
 
 ### US-9.1.1: D365 Integration Setup
 
@@ -1622,12 +1901,12 @@ Epics align with BRD Functional Requirements:
 **Title:** D365 Integration Setup  
 **Epic:** Integration Requirements  
 **Service:** Integration Service  
-**Priority:** Must Have  
+**Priority:** Should Have  
 **Story Points:** 13
 
 **As a** system administrator  
 **I want** to set up D365 integration  
-**So that** the system can communicate with D365
+**So that** the system can communicate with D365 when needed
 
 **Acceptance Criteria:**
 
@@ -1662,16 +1941,16 @@ Epics align with BRD Functional Requirements:
 **Title:** Send Consignment Confirmation to D365  
 **Epic:** Integration Requirements  
 **Service:** Integration Service  
-**Priority:** Must Have  
+**Priority:** Should Have  
 **Story Points:** 5
 
 **As a** system  
 **I want** to send consignment confirmations to D365  
-**So that** D365 knows stock has been received
+**So that** D365 knows stock has been received when D365 integration is enabled
 
 **Acceptance Criteria:**
 
-- [ ] AC1: System sends consignment confirmation to D365 within 2 minutes of confirmation
+- [ ] AC1: System sends consignment confirmation to D365 within 2 minutes of confirmation (if D365 integration enabled)
 - [ ] AC2: Confirmation includes: received quantities, received date/time, location assignments
 - [ ] AC3: System handles D365 API errors with retry logic
 - [ ] AC4: System tracks confirmation status
@@ -1679,7 +1958,7 @@ Epics align with BRD Functional Requirements:
 
 **Technical Notes:**
 
-- Consume `StockConsignmentConfirmedEvent` from Kafka
+- Consume `StockConsignmentConfirmedEvent` from Kafka (optional if D365 enabled)
 - Transform to D365 OData API format
 - Send via D365 API client
 - Handle retries and errors
@@ -1687,7 +1966,7 @@ Epics align with BRD Functional Requirements:
 **Dependencies:**
 
 - US-9.1.1: D365 Integration Setup
-- US-1.1.4: Confirm Consignment Receipt
+- US-1.1.6: Confirm Consignment Receipt
 
 **Related BRD Requirements:**
 
@@ -1701,23 +1980,23 @@ Epics align with BRD Functional Requirements:
 **Title:** Send Returns Data to D365  
 **Epic:** Integration Requirements  
 **Service:** Integration Service  
-**Priority:** Must Have  
+**Priority:** Should Have  
 **Story Points:** 5
 
 **As a** system  
 **I want** to send returns data to D365  
-**So that** D365 has accurate return information
+**So that** D365 has accurate return information when D365 integration is enabled
 
 **Acceptance Criteria:**
 
-- [ ] AC1: System sends returns data to D365 after reconciliation
+- [ ] AC1: System sends returns data to D365 after reconciliation (if D365 integration enabled)
 - [ ] AC2: Returns data includes: returned quantities, condition, location assignment, reason codes
 - [ ] AC3: System handles reconciliation errors and retries
 - [ ] AC4: System maintains reconciliation audit trail
 
 **Technical Notes:**
 
-- Consume `ReturnReconciledEvent` from Kafka
+- Consume `ReturnReconciledEvent` from Kafka (optional if D365 enabled)
 - Transform to D365 OData API format
 - Send via D365 API client
 - Handle retries and errors
@@ -1739,16 +2018,16 @@ Epics align with BRD Functional Requirements:
 **Title:** Send Reconciliation Data to D365  
 **Epic:** Integration Requirements  
 **Service:** Integration Service  
-**Priority:** Must Have  
+**Priority:** Should Have  
 **Story Points:** 5
 
 **As a** system  
 **I want** to send reconciliation data to D365  
-**So that** D365 has accurate inventory counts
+**So that** D365 has accurate inventory counts when D365 integration is enabled
 
 **Acceptance Criteria:**
 
-- [ ] AC1: System sends reconciliation data to D365 within 1 hour of reconciliation completion
+- [ ] AC1: System sends reconciliation data to D365 within 1 hour of reconciliation completion (if D365 integration enabled)
 - [ ] AC2: Reconciliation data includes: product codes, quantities, locations, variance reasons
 - [ ] AC3: System handles update failures and retries
 - [ ] AC4: System maintains update status tracking
@@ -1756,7 +2035,7 @@ Epics align with BRD Functional Requirements:
 
 **Technical Notes:**
 
-- Consume `ReconciliationCompletedEvent` from Kafka
+- Consume `ReconciliationCompletedEvent` from Kafka (optional if D365 enabled)
 - Transform to D365 OData API format
 - Send via D365 API client
 - Handle retries and errors
@@ -1780,23 +2059,23 @@ Epics align with BRD Functional Requirements:
 **Title:** Send Restock Request to D365  
 **Epic:** Integration Requirements  
 **Service:** Integration Service  
-**Priority:** Must Have  
+**Priority:** Should Have  
 **Story Points:** 3
 
 **As a** system  
 **I want** to send restock requests to D365  
-**So that** D365 can process restock orders
+**So that** D365 can process restock orders when D365 integration is enabled
 
 **Acceptance Criteria:**
 
-- [ ] AC1: System sends restock request to D365 when stock falls below minimum
+- [ ] AC1: System sends restock request to D365 when stock falls below minimum (if D365 integration enabled)
 - [ ] AC2: Restock request includes: product code, current quantity, minimum quantity, requested quantity, priority
 - [ ] AC3: System handles D365 API errors with retry logic
 - [ ] AC4: System tracks restock request status
 
 **Technical Notes:**
 
-- Consume `RestockRequestGeneratedEvent` from Kafka
+- Consume `RestockRequestGeneratedEvent` from Kafka (optional if D365 enabled)
 - Transform to D365 OData API format
 - Send via D365 API client
 - Handle retries and errors
@@ -2032,29 +2311,49 @@ Epics align with BRD Functional Requirements:
 
 ### Story Count by Epic
 
-- **Epic 1:** Stock Consignment Management - 5 stories
+- **Epic 1:** Stock Consignment Management - 7 stories (CSV upload, manual entry, D365 ingestion)
 - **Epic 2:** Stock Classification and Expiration Management - 4 stories
 - **Epic 3:** Warehouse Location Management - 6 stories
-- **Epic 4:** Product Identification - 3 stories
+- **Epic 4:** Product Identification - 5 stories (CSV upload, manual entry, D365 sync)
 - **Epic 5:** Stock Level Management - 3 stories
-- **Epic 6:** Picking List Management - 6 stories
+- **Epic 6:** Picking List Management - 8 stories (CSV upload, manual entry, D365 ingestion)
 - **Epic 7:** Returns Management - 5 stories
 - **Epic 8:** Reconciliation - 5 stories
-- **Epic 9:** Integration Requirements - 5 stories
+- **Epic 9:** Integration Requirements - 5 stories (D365 integration, lower priority)
 - **Non-Functional Requirements:** 6 stories
 
-**Total:** 52 user stories
+**Total:** 58 user stories
 
 ### Priority Distribution
 
-- **Must Have:** 48 stories
-- **Should Have:** 1 story
+- **Must Have:** 50 stories
+- **Should Have:** 8 stories (D365 integration related)
 - **Could Have:** 0 stories
 - **Won't Have:** 0 stories (MVP scope)
 
 ### Estimated Story Points
 
-**Total Story Points:** ~350 points (estimated)
+**Total Story Points:** ~380 points (estimated)
+
+### Data Ingestion Methods Summary
+
+The system supports three parallel data ingestion methods:
+
+1. **CSV File Upload** (Must Have) - Implemented in:
+    - Epic 1: Stock Consignment (US-1.1.1)
+    - Epic 4: Product Master Data (US-4.1.1)
+    - Epic 6: Picking Lists (US-6.1.1)
+
+2. **Manual Data Entry via UI** (Must Have) - Implemented in:
+    - Epic 1: Stock Consignment (US-1.1.2)
+    - Epic 4: Product Master Data (US-4.1.2)
+    - Epic 6: Picking Lists (US-6.1.2)
+
+3. **D365 Integration** (Should Have) - Implemented in:
+    - Epic 1: Stock Consignment (US-1.1.3)
+    - Epic 4: Product Master Data (US-4.1.3)
+    - Epic 6: Picking Lists (US-6.1.3)
+    - Epic 9: All D365 integration stories (US-9.1.1 through US-9.1.5)
 
 ---
 
@@ -2063,4 +2362,3 @@ Epics align with BRD Functional Requirements:
 - **Version History:** This document will be version controlled with change tracking
 - **Review Cycle:** This document will be reviewed weekly during planning phase
 - **Distribution:** This document will be distributed to all project team members
-

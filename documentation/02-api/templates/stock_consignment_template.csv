@@ -1,0 +1,5 @@
+ConsignmentReference,ProductCode,Quantity,ExpirationDate,BatchNumber,ReceivedDate,ReceivedBy,WarehouseId,SerialNumber,ManufacturingDate,SupplierCode,PurchaseOrderNumber,Notes
+CONS-2025-001,PROD-001,100,2026-06-30,BATCH-001,2025-11-15T10:00:00Z,John Doe,WH-001,,2025-11-01,SUP-001,PO-2025-001,Initial consignment
+CONS-2025-001,PROD-002,150,2026-07-15,BATCH-002,2025-11-15T10:00:00Z,John Doe,WH-001,,2025-11-01,SUP-001,PO-2025-001,Initial consignment
+CONS-2025-002,PROD-003,200,2026-08-01,BATCH-003,2025-11-15T11:30:00Z,Jane Smith,WH-001,,2025-11-05,SUP-002,PO-2025-002,Second consignment
+
