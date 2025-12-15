@@ -45,6 +45,7 @@ com.ccbsa.wms.{service}.dataaccess/
 ```
 
 **⚠️ BREAKING CHANGE from v1.0:**
+
 - `cache/` package removed - cached adapters now in `adapter/` package
 - `Cached{DomainObject}RepositoryAdapter` is **MANDATORY** (not optional)
 - Cached adapter annotated with `@Primary` to be injected by default
@@ -57,12 +58,12 @@ com.ccbsa.wms.{service}.dataaccess/
 
 **Package Responsibilities:**
 
-| Package   | Responsibility      | Contains                                                                                            |
-|-----------|---------------------|-----------------------------------------------------------------------------------------------------|
-| `adapter` | Repository adapters | Base JPA adapters + **MANDATORY** cached decorators (@Primary), implements repository/data ports   |
-| `entity`  | JPA entities        | JPA annotated entities for persistence, separate from domain entities                               |
-| `mapper`  | Entity mappers      | Converts between JPA entities and domain entities, annotated with `@Component`                      |
-| `jpa`     | JPA repositories    | Spring Data JPA repository interfaces, extends `JpaRepository<Entity, ID>`                          |
+| Package   | Responsibility      | Contains                                                                                         |
+|-----------|---------------------|--------------------------------------------------------------------------------------------------|
+| `adapter` | Repository adapters | Base JPA adapters + **MANDATORY** cached decorators (@Primary), implements repository/data ports |
+| `entity`  | JPA entities        | JPA annotated entities for persistence, separate from domain entities                            |
+| `mapper`  | Entity mappers      | Converts between JPA entities and domain entities, annotated with `@Component`                   |
+| `jpa`     | JPA repositories    | Spring Data JPA repository interfaces, extends `JpaRepository<Entity, ID>`                       |
 
 **Important Package Rules:**
 

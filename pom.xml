@@ -26,6 +26,8 @@
         <postgresql.version>42.7.2</postgresql.version>
         <flyway.version>11.11.2</flyway.version>
         <keycloak.version>25.0.0</keycloak.version>
+        <spring-data-redis.version>3.2.0</spring-data-redis.version>
+        <lettuce.version>6.3.0.RELEASE</lettuce.version>
 
         <junit.version>5.10.1</junit.version>
         <mockito.version>5.10.0</mockito.version>
@@ -56,6 +58,7 @@
         <module>common/common-security</module>
         <module>common/common-keycloak</module>
         <module>common/common-dataaccess</module>
+        <module>common/common-cache</module>
         <module>services/gateway-service</module>
         <module>services/eureka-server</module>
         <module>services/user-service</module>

@@ -2,7 +2,10 @@ package com.ccbsa.wms.user.application.api.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -127,7 +130,7 @@ public class UserCommandController {
         TenantId previousTenantId = TenantContext.getTenantId();
 
         // Log context setting for debugging
-        org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserCommandController.class);
+        Logger logger = LoggerFactory.getLogger(UserCommandController.class);
         logger.info("Setting TenantContext to '{}' before creating user (previous: {})",
                 tenantIdToSet.getValue(), previousTenantId != null ? previousTenantId.getValue() : "null");
 
@@ -222,9 +225,9 @@ public class UserCommandController {
      * @return Response entity
      */
     private <T> ResponseEntity<ApiResponse<T>> executeWithTenantContext(
-            String tenantId, UserId userId, java.util.function.Supplier<ResponseEntity<ApiResponse<T>>> operation) {
+            String tenantId, UserId userId, Supplier<ResponseEntity<ApiResponse<T>>> operation) {
         boolean isTenantAdmin = isTenantAdmin();
-        org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserCommandController.class);
+        Logger logger = LoggerFactory.getLogger(UserCommandController.class);
 
         // Resolve tenantId: TENANT_ADMIN uses their own tenant from TenantContext
         String resolvedTenantId = tenantId;

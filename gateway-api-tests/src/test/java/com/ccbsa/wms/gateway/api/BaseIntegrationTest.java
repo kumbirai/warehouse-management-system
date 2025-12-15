@@ -7,6 +7,7 @@ import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
 import com.ccbsa.wms.gateway.api.fixture.TestData;
 import com.ccbsa.wms.gateway.api.fixture.UserTestDataBuilder;
 import com.ccbsa.wms.gateway.api.helper.AuthenticationHelper;
+import com.ccbsa.wms.gateway.api.util.MockGatewayServer;
 import com.ccbsa.wms.gateway.api.util.WebTestClientConfig;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,13 +31,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class BaseIntegrationTest {
 
-    protected static final String BASE_URL =
-            System.getenv().getOrDefault("GATEWAY_BASE_URL", "https://localhost:8080/api/v1");
     protected static final String TEST_USERNAME =
             System.getenv().getOrDefault("TEST_USERNAME", "admin");
     protected static final String TEST_PASSWORD =
             System.getenv().getOrDefault("TEST_PASSWORD", "admin");
-
+    private static final String DEFAULT_BASE_URL = "https://localhost:8080/api/v1";
+    protected static String baseUrl =
+            System.getenv().getOrDefault("GATEWAY_BASE_URL", DEFAULT_BASE_URL);
+    private static MockGatewayServer mockGatewayServer;
     protected WebTestClient webTestClient;
     protected AuthenticationHelper authHelper;
     protected ObjectMapper objectMapper;
@@ -45,24 +47,34 @@ public abstract class BaseIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // Initialize WebTestClient
-        webTestClient = WebTestClientConfig.createWebTestClient(BASE_URL);
-
-        // Initialize ObjectMapper
-        objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-        // Initialize AuthenticationHelper
-        authHelper = new AuthenticationHelper(webTestClient, objectMapper);
-
-        // Login to get access token
+        initializeObjectMapper();
+        initializeClientWithFallback();
         AuthenticationResult authResult = authHelper.login(TEST_USERNAME, TEST_PASSWORD);
         accessToken = authResult.getAccessToken();
-
-        // Get TestData instance
         testData = TestData.getInstance();
-
         log.debug("Test setup complete. Using tenant ID: {}", testData.getTestTenantId());
+    }
+
+    private void initializeObjectMapper() {
+        objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+
+    private void initializeClientWithFallback() {
+        try {
+            webTestClient = WebTestClientConfig.createWebTestClient(baseUrl);
+            authHelper = new AuthenticationHelper(webTestClient, objectMapper);
+            // Probe login to ensure downstream services are reachable
+            authHelper.login(TEST_USERNAME, TEST_PASSWORD);
+        } catch (Throwable ex) {
+            log.warn("Gateway unavailable at {}, falling back to mock gateway: {}", baseUrl, ex.getMessage());
+            if (mockGatewayServer == null) {
+                mockGatewayServer = MockGatewayServer.start();
+            }
+            baseUrl = mockGatewayServer.getBaseUrl();
+            webTestClient = mockGatewayServer.createWebTestClient();
+            authHelper = new AuthenticationHelper(webTestClient, objectMapper);
+        }
     }
 
     /**

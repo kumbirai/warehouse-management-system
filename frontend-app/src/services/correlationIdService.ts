@@ -6,7 +6,7 @@
  * request-level correlation IDs.
  */
 
-import {logger} from '../utils/logger';
+import { logger } from '../utils/logger';
 
 const CORRELATION_ID_STORAGE_KEY = 'wms_correlation_id';
 const CORRELATION_ID_HEADER = 'X-Correlation-Id';
@@ -15,7 +15,7 @@ const CORRELATION_ID_HEADER = 'X-Correlation-Id';
  * Generates a new correlation ID (UUID v4)
  */
 const generateCorrelationId = (): string => {
-    return crypto.randomUUID();
+  return crypto.randomUUID();
 };
 
 /**
@@ -29,24 +29,24 @@ const generateCorrelationId = (): string => {
  * @returns Correlation ID string
  */
 export const getCorrelationId = (): string => {
-    // Try to get existing correlation ID from sessionStorage
-    if (typeof window !== 'undefined') {
-        const stored = sessionStorage.getItem(CORRELATION_ID_STORAGE_KEY);
-        if (stored) {
-            return stored;
-        }
+  // Try to get existing correlation ID from sessionStorage
+  if (typeof window !== 'undefined') {
+    const stored = sessionStorage.getItem(CORRELATION_ID_STORAGE_KEY);
+    if (stored) {
+      return stored;
     }
+  }
 
-    // Generate new correlation ID
-    const correlationId = generateCorrelationId();
+  // Generate new correlation ID
+  const correlationId = generateCorrelationId();
 
-    // Store in sessionStorage for persistence across page reloads
-    if (typeof window !== 'undefined') {
-        sessionStorage.setItem(CORRELATION_ID_STORAGE_KEY, correlationId);
-        logger.debug('Generated new correlation ID', {correlationId});
-    }
+  // Store in sessionStorage for persistence across page reloads
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem(CORRELATION_ID_STORAGE_KEY, correlationId);
+    logger.debug('Generated new correlation ID', { correlationId });
+  }
 
-    return correlationId;
+  return correlationId;
 };
 
 /**
@@ -56,9 +56,9 @@ export const getCorrelationId = (): string => {
  * @returns New correlation ID (not stored in sessionStorage)
  */
 export const generateRequestCorrelationId = (): string => {
-    const correlationId = generateCorrelationId();
-    logger.debug('Generated request-level correlation ID', {correlationId});
-    return correlationId;
+  const correlationId = generateCorrelationId();
+  logger.debug('Generated request-level correlation ID', { correlationId });
+  return correlationId;
 };
 
 /**
@@ -66,10 +66,10 @@ export const generateRequestCorrelationId = (): string => {
  * Useful for logout or session reset scenarios.
  */
 export const clearCorrelationId = (): void => {
-    if (typeof window !== 'undefined') {
-        sessionStorage.removeItem(CORRELATION_ID_STORAGE_KEY);
-        logger.debug('Cleared correlation ID');
-    }
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem(CORRELATION_ID_STORAGE_KEY);
+    logger.debug('Cleared correlation ID');
+  }
 };
 
 /**
@@ -78,13 +78,12 @@ export const clearCorrelationId = (): void => {
  * @returns Header name string
  */
 export const getCorrelationIdHeader = (): string => {
-    return CORRELATION_ID_HEADER;
+  return CORRELATION_ID_HEADER;
 };
 
 export const correlationIdService = {
-    getCorrelationId,
-    generateRequestCorrelationId,
-    clearCorrelationId,
-    getCorrelationIdHeader,
+  getCorrelationId,
+  generateRequestCorrelationId,
+  clearCorrelationId,
+  getCorrelationIdHeader,
 };
-

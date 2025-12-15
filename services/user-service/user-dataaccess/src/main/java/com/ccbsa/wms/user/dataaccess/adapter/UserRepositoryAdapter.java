@@ -22,6 +22,7 @@ import com.ccbsa.wms.user.application.service.port.repository.UserRepository;
 import com.ccbsa.wms.user.dataaccess.entity.UserEntity;
 import com.ccbsa.wms.user.dataaccess.jpa.UserJpaRepository;
 import com.ccbsa.wms.user.dataaccess.mapper.UserEntityMapper;
+import com.ccbsa.wms.user.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.user.domain.core.entity.User;
 import com.ccbsa.wms.user.domain.core.valueobject.FirstName;
 import com.ccbsa.wms.user.domain.core.valueobject.KeycloakUserId;
@@ -47,6 +48,7 @@ public class UserRepositoryAdapter implements UserRepository {
     private final UserEntityMapper mapper;
     private final JdbcTemplate jdbcTemplate;
     private final TenantSchemaResolver schemaResolver;
+    private final TenantSchemaProvisioner schemaProvisioner;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -54,11 +56,13 @@ public class UserRepositoryAdapter implements UserRepository {
     public UserRepositoryAdapter(UserJpaRepository jpaRepository,
                                  UserEntityMapper mapper,
                                  JdbcTemplate jdbcTemplate,
-                                 TenantSchemaResolver schemaResolver) {
+                                 TenantSchemaResolver schemaResolver,
+                                 TenantSchemaProvisioner schemaProvisioner) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
         this.jdbcTemplate = jdbcTemplate;
         this.schemaResolver = schemaResolver;
+        this.schemaProvisioner = schemaProvisioner;
     }
 
     @Override
@@ -84,6 +88,9 @@ public class UserRepositoryAdapter implements UserRepository {
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
         logger.info("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
 
         // Validate schema name format before use
         validateSchemaName(schemaName);
@@ -155,6 +162,27 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     /**
+     * Updates an existing JPA entity from domain object.
+     * Preserves JPA managed state and version for optimistic locking.
+     *
+     * @param entity Existing JPA entity (managed)
+     * @param user   Domain user object
+     */
+    private void updateEntityFromDomain(UserEntity entity, User user) {
+        entity.setTenantId(user.getTenantId().getValue());
+        entity.setUsername(user.getUsername().getValue());
+        entity.setEmailAddress(user.getEmail().getValue());
+        entity.setFirstName(user.getFirstName().map(FirstName::getValue).orElse(null));
+        entity.setLastName(user.getLastName().map(LastName::getValue).orElse(null));
+        entity.setKeycloakUserId(user.getKeycloakUserId().map(KeycloakUserId::getValue).orElse(null));
+        entity.setStatus(mapToEntityStatus(user.getStatus()));
+        entity.setCreatedAt(user.getCreatedAt());
+        entity.setLastModifiedAt(user.getLastModifiedAt());
+        // Version is managed by JPA - don't set it manually
+        // The version from the domain object should match the entity's current version
+    }
+
+    /**
      * Executes the SET search_path SQL command.
      * <p>
      * This method is separated to allow proper SpotBugs annotation placement.
@@ -178,24 +206,16 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     /**
-     * Updates an existing JPA entity from domain object.
-     * Preserves JPA managed state and version for optimistic locking.
+     * Maps domain UserStatus to JPA entity UserStatus enum.
      *
-     * @param entity Existing JPA entity (managed)
-     * @param user   Domain user object
+     * @param domainStatus Domain status
+     * @return JPA entity status
      */
-    private void updateEntityFromDomain(UserEntity entity, User user) {
-        entity.setTenantId(user.getTenantId().getValue());
-        entity.setUsername(user.getUsername().getValue());
-        entity.setEmailAddress(user.getEmail().getValue());
-        entity.setFirstName(user.getFirstName().map(FirstName::getValue).orElse(null));
-        entity.setLastName(user.getLastName().map(LastName::getValue).orElse(null));
-        entity.setKeycloakUserId(user.getKeycloakUserId().map(KeycloakUserId::getValue).orElse(null));
-        entity.setStatus(mapToEntityStatus(user.getStatus()));
-        entity.setCreatedAt(user.getCreatedAt());
-        entity.setLastModifiedAt(user.getLastModifiedAt());
-        // Version is managed by JPA - don't set it manually
-        // The version from the domain object should match the entity's current version
+    private UserEntity.UserStatus mapToEntityStatus(UserStatus domainStatus) {
+        if (domainStatus == null) {
+            throw new IllegalArgumentException("UserStatus cannot be null");
+        }
+        return UserEntity.UserStatus.valueOf(domainStatus.name());
     }
 
     /**
@@ -212,19 +232,6 @@ public class UserRepositoryAdapter implements UserRepository {
         // Quote the identifier to handle any special characters
         // Replace any existing quotes to prevent injection
         return String.format("\"%s\"", identifier.replace("\"", "\"\""));
-    }
-
-    /**
-     * Maps domain UserStatus to JPA entity UserStatus enum.
-     *
-     * @param domainStatus Domain status
-     * @return JPA entity status
-     */
-    private UserEntity.UserStatus mapToEntityStatus(UserStatus domainStatus) {
-        if (domainStatus == null) {
-            throw new IllegalArgumentException("UserStatus cannot be null");
-        }
-        return UserEntity.UserStatus.valueOf(domainStatus.name());
     }
 
     @Override

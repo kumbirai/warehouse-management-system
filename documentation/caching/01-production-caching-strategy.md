@@ -11,7 +11,8 @@
 
 ## Executive Summary
 
-This document defines the **mandatory** production-grade distributed caching strategy for the Warehouse Management System (WMS). Caching is **not optional** and must be implemented across all services to ensure:
+This document defines the **mandatory** production-grade distributed caching strategy for the Warehouse Management System (WMS). Caching is **not optional** and must be implemented
+across all services to ensure:
 
 - **Performance**: Sub-100ms response times for frequently accessed data
 - **Scalability**: Reduced database load supporting 10,000+ concurrent users
@@ -54,11 +55,13 @@ This caching strategy is designed to maintain strict adherence to:
 
 ### 1.1 Purpose
 
-This document establishes the mandatory caching infrastructure and patterns for the WMS. All services MUST implement distributed caching to meet production-grade performance requirements.
+This document establishes the mandatory caching infrastructure and patterns for the WMS. All services MUST implement distributed caching to meet production-grade performance
+requirements.
 
 ### 1.2 Scope
 
 **In Scope:**
+
 - Distributed caching infrastructure (Redis)
 - Cache abstraction layer in common modules
 - Tenant-aware cache key generation
@@ -68,6 +71,7 @@ This document establishes the mandatory caching infrastructure and patterns for 
 - Monitoring and observability
 
 **Out of Scope:**
+
 - HTTP response caching (handled by API Gateway)
 - Browser caching (frontend concern)
 - CDN caching (infrastructure layer)
@@ -152,14 +156,14 @@ Application Service → Port Interface ← Cached Adapter → Base Adapter → D
 
 **Separate Caching Strategies for Write and Read Models:**
 
-| Aspect | Write Model (Commands) | Read Model (Queries) |
-|--------|------------------------|----------------------|
-| **Cache Strategy** | Write-through cache | Read-through cache with TTL |
-| **Invalidation** | Immediate on write | Event-driven eventual consistency |
-| **TTL** | Short (5-15 minutes) | Longer (30-60 minutes) |
-| **Cache Keys** | Aggregate ID based | Query parameter based |
-| **Consistency** | Strong (write-through) | Eventual (event-driven) |
-| **Example** | `tenant:123:user:uuid` | `tenant:123:users:active:page:0` |
+| Aspect             | Write Model (Commands) | Read Model (Queries)              |
+|--------------------|------------------------|-----------------------------------|
+| **Cache Strategy** | Write-through cache    | Read-through cache with TTL       |
+| **Invalidation**   | Immediate on write     | Event-driven eventual consistency |
+| **TTL**            | Short (5-15 minutes)   | Longer (30-60 minutes)            |
+| **Cache Keys**     | Aggregate ID based     | Query parameter based             |
+| **Consistency**    | Strong (write-through) | Eventual (event-driven)           |
+| **Example**        | `tenant:123:user:uuid` | `tenant:123:users:active:page:0`  |
 
 **Write Model Caching:**
 
@@ -273,13 +277,13 @@ Redis Keyspace Structure:
 
 ### 3.1 Core Technologies
 
-| Component | Technology | Version | Justification |
-|-----------|-----------|---------|---------------|
-| **Cache Store** | Redis | 7.x | Industry-standard, high-performance, supports advanced data structures |
-| **Client Library** | Spring Data Redis | 3.x | Native Spring Boot integration, connection pooling |
-| **Cache Abstraction** | Spring Cache | 6.x | Declarative caching, provider-agnostic |
-| **Serialization** | Jackson JSON | 2.15+ | Existing dependency, type-safe, human-readable |
-| **Connection Pool** | Lettuce | 6.x | Default Spring Data Redis client, async/reactive support |
+| Component             | Technology        | Version | Justification                                                          |
+|-----------------------|-------------------|---------|------------------------------------------------------------------------|
+| **Cache Store**       | Redis             | 7.x     | Industry-standard, high-performance, supports advanced data structures |
+| **Client Library**    | Spring Data Redis | 3.x     | Native Spring Boot integration, connection pooling                     |
+| **Cache Abstraction** | Spring Cache      | 6.x     | Declarative caching, provider-agnostic                                 |
+| **Serialization**     | Jackson JSON      | 2.15+   | Existing dependency, type-safe, human-readable                         |
+| **Connection Pool**   | Lettuce           | 6.x     | Default Spring Data Redis client, async/reactive support               |
 
 ### 3.2 Redis Deployment Architecture
 

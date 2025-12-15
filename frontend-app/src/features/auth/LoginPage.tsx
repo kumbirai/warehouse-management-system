@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, Container, Link, Paper, TextField, Typography } from '@mui/material';
 import axios from 'axios';
@@ -13,9 +13,30 @@ export const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const loginInProgressRef = useRef(false);
+  const loginSuccessRef = useRef(false);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !loginSuccessRef.current) {
+      console.log('[LoginPage] User already authenticated, redirecting to dashboard');
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Navigate to dashboard when authentication state becomes true after successful login
+  useEffect(() => {
+    if (loginSuccessRef.current && isAuthenticated) {
+      console.log('[LoginPage] Login successful, navigating to dashboard', {
+        isAuthenticated,
+        loginSuccess: loginSuccessRef.current,
+      });
+      loginSuccessRef.current = false;
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,8 +51,14 @@ export const LoginPage = () => {
     loginInProgressRef.current = true;
 
     try {
+      console.log('[LoginPage] Calling login function');
       await login(username, password);
-      navigate('/dashboard');
+      console.log('[LoginPage] Login function completed successfully, setting loginSuccessRef');
+      // Mark login as successful - navigation will happen via useEffect when isAuthenticated becomes true
+      loginSuccessRef.current = true;
+      console.log(
+        '[LoginPage] loginSuccessRef set to true, waiting for isAuthenticated to become true'
+      );
     } catch (err) {
       let errorMessage = 'Invalid username or password. Please try again.';
 
@@ -62,6 +89,7 @@ export const LoginPage = () => {
       }
 
       setError(errorMessage);
+      loginSuccessRef.current = false; // Reset on error
     } finally {
       setIsLoading(false);
       loginInProgressRef.current = false;

@@ -10,7 +10,8 @@
 
 ## Overview
 
-This document defines the **mandatory** decorator pattern for implementing cached repository adapters. The decorator pattern ensures caching is transparent to the application layer while maintaining clean hexagonal architecture principles.
+This document defines the **mandatory** decorator pattern for implementing cached repository adapters. The decorator pattern ensures caching is transparent to the application layer
+while maintaining clean hexagonal architecture principles.
 
 **Key Principle:** Caching is an **infrastructure concern** and must be implemented using the decorator pattern to avoid polluting domain and application layers.
 
@@ -693,12 +694,14 @@ class CachedUserRepositoryAdapterTest {
 ### 6.1 When to Cache
 
 **DO Cache:**
+
 - ✅ Single entity lookups by ID (high read frequency)
 - ✅ Reference data (products, locations, rarely changing)
 - ✅ User sessions and permissions (frequently accessed)
 - ✅ Configuration data (tenant settings, feature flags)
 
 **DON'T Cache:**
+
 - ❌ Large collections (>1000 items) - use pagination instead
 - ❌ Real-time data (stock levels, order status) - short TTL only
 - ❌ Transient data (cart contents) - use session storage
@@ -706,13 +709,13 @@ class CachedUserRepositoryAdapterTest {
 
 ### 6.2 TTL Guidelines
 
-| Data Type | TTL | Rationale |
-|-----------|-----|-----------|
-| User entities | 15 minutes | Moderate change frequency, frequent access |
-| Product catalog | 60 minutes | Low change frequency, high read frequency |
-| Stock levels | 5 minutes | High change frequency, eventual consistency acceptable |
-| User permissions | 60 minutes | Low change frequency, security-critical |
-| Tenant configuration | 30 minutes | Rare changes, moderate access frequency |
+| Data Type            | TTL        | Rationale                                              |
+|----------------------|------------|--------------------------------------------------------|
+| User entities        | 15 minutes | Moderate change frequency, frequent access             |
+| Product catalog      | 60 minutes | Low change frequency, high read frequency              |
+| Stock levels         | 5 minutes  | High change frequency, eventual consistency acceptable |
+| User permissions     | 60 minutes | Low change frequency, security-critical                |
+| Tenant configuration | 30 minutes | Rare changes, moderate access frequency                |
 
 ### 6.3 Error Handling
 
@@ -741,6 +744,7 @@ try {
 **End of Section 4**
 
 Next sections will cover:
+
 - Multi-Tenant Caching Patterns
 - Cache Warming
 - Monitoring and Observability

@@ -10,9 +10,11 @@
 
 ## Overview
 
-This document defines the **mandatory** event-driven cache invalidation strategy. Cache invalidation is critical for maintaining data consistency across distributed services in a CQRS architecture.
+This document defines the **mandatory** event-driven cache invalidation strategy. Cache invalidation is critical for maintaining data consistency across distributed services in a
+CQRS architecture.
 
-**Core Principle:** Cache invalidation is **event-driven**, leveraging the existing Kafka infrastructure to ensure eventual consistency between write models (database) and read models (cache).
+**Core Principle:** Cache invalidation is **event-driven**, leveraging the existing Kafka infrastructure to ensure eventual consistency between write models (database) and read
+models (cache).
 
 ---
 
@@ -74,6 +76,7 @@ public void save(User user) {
 ```
 
 **Cache State After Write:**
+
 - ✅ Single entity cache updated immediately (strong consistency)
 - ⏳ Collection/query caches invalidated asynchronously (eventual consistency)
 
@@ -138,12 +141,12 @@ public class UserEventListener {
 
 **Kafka Topic Structure:**
 
-| Service | Topic Name | Events Published |
-|---------|-----------|------------------|
-| User Service | `user-events` | `UserCreatedEvent`, `UserUpdatedEvent`, `UserDeactivatedEvent`, `UserRoleAssignedEvent` |
-| Tenant Service | `tenant-events` | `TenantCreatedEvent`, `TenantActivatedEvent`, `TenantDeactivatedEvent` |
-| Product Service | `product-events` | `ProductCreatedEvent`, `ProductUpdatedEvent`, `ProductDiscontinuedEvent` |
-| Stock Service | `stock-events` | `StockConsignmentCreatedEvent`, `StockLevelUpdatedEvent` |
+| Service         | Topic Name       | Events Published                                                                        |
+|-----------------|------------------|-----------------------------------------------------------------------------------------|
+| User Service    | `user-events`    | `UserCreatedEvent`, `UserUpdatedEvent`, `UserDeactivatedEvent`, `UserRoleAssignedEvent` |
+| Tenant Service  | `tenant-events`  | `TenantCreatedEvent`, `TenantActivatedEvent`, `TenantDeactivatedEvent`                  |
+| Product Service | `product-events` | `ProductCreatedEvent`, `ProductUpdatedEvent`, `ProductDiscontinuedEvent`                |
+| Stock Service   | `stock-events`   | `StockConsignmentCreatedEvent`, `StockLevelUpdatedEvent`                                |
 
 ---
 
@@ -191,12 +194,12 @@ public class ProductEventListener {
 
 **Cascade Invalidation Rules:**
 
-| Event | Originating Service | Affected Caches | Services to Invalidate |
-|-------|---------------------|-----------------|------------------------|
-| `UserUpdatedEvent` | user-service | users, user-roles, user-permissions | user-service, notification-service |
-| `ProductUpdatedEvent` | product-service | products, stock-consignments, stock-levels | product-service, stock-service |
-| `TenantDeactivatedEvent` | tenant-service | ALL tenant caches | ALL services |
-| `LocationUpdatedEvent` | location-service | locations, stock-consignments | location-service, stock-service |
+| Event                    | Originating Service | Affected Caches                            | Services to Invalidate             |
+|--------------------------|---------------------|--------------------------------------------|------------------------------------|
+| `UserUpdatedEvent`       | user-service        | users, user-roles, user-permissions        | user-service, notification-service |
+| `ProductUpdatedEvent`    | product-service     | products, stock-consignments, stock-levels | product-service, stock-service     |
+| `TenantDeactivatedEvent` | tenant-service      | ALL tenant caches                          | ALL services                       |
+| `LocationUpdatedEvent`   | location-service    | locations, stock-consignments              | location-service, stock-service    |
 
 ---
 
@@ -550,16 +553,17 @@ public class UserCacheInvalidationListener extends CacheInvalidationEventListene
 
 ### 5.1 Invalidation Matrix
 
-| Event Type | Invalidation Scope | Consistency Model | Latency |
-|------------|-------------------|-------------------|---------|
-| **Write-Through** (same service) | Single entity + immediate write to cache | Strong | <10ms |
-| **Event-Driven** (cross-service) | Entity + collections via Kafka events | Eventual | 50-200ms |
-| **Cascade** (dependent caches) | Multiple namespaces via event listeners | Eventual | 50-200ms |
-| **Tenant Deactivation** | All tenant caches (pattern match) | Eventual | 100-500ms |
+| Event Type                       | Invalidation Scope                       | Consistency Model | Latency   |
+|----------------------------------|------------------------------------------|-------------------|-----------|
+| **Write-Through** (same service) | Single entity + immediate write to cache | Strong            | <10ms     |
+| **Event-Driven** (cross-service) | Entity + collections via Kafka events    | Eventual          | 50-200ms  |
+| **Cascade** (dependent caches)   | Multiple namespaces via event listeners  | Eventual          | 50-200ms  |
+| **Tenant Deactivation**          | All tenant caches (pattern match)        | Eventual          | 100-500ms |
 
 ### 5.2 Best Practices
 
 **DO:**
+
 - ✅ Use write-through caching for single entity writes
 - ✅ Publish domain events after successful database commits
 - ✅ Invalidate collections conservatively (entire namespace)
@@ -567,6 +571,7 @@ public class UserCacheInvalidationListener extends CacheInvalidationEventListene
 - ✅ Log all invalidation operations for debugging
 
 **DON'T:**
+
 - ❌ Don't invalidate caches before database commit (risk of stale data)
 - ❌ Don't use pattern matching for high-frequency invalidation (performance)
 - ❌ Don't invalidate global caches without careful consideration
@@ -577,6 +582,7 @@ public class UserCacheInvalidationListener extends CacheInvalidationEventListene
 **End of Section 3**
 
 Next sections will cover:
+
 - Repository Adapter Decorator Pattern
 - Multi-Tenant Caching Patterns
 - Cache Warming

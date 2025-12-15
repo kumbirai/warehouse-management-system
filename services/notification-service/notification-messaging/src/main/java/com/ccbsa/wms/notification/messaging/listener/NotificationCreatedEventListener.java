@@ -42,7 +42,7 @@ public class NotificationCreatedEventListener {
     @KafkaListener(
             topics = "notification-events",
             groupId = "notification-service",
-            containerFactory = "kafkaListenerContainerFactory"
+            containerFactory = "internalEventKafkaListenerContainerFactory"
     )
     public void handle(@Payload Map<String, Object> eventData,
                        @Header(value = "__TypeId__", required = false) String eventType,

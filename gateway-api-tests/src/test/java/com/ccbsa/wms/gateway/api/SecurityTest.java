@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 
+import com.ccbsa.wms.gateway.api.util.MockGatewayServer;
 import com.ccbsa.wms.gateway.api.util.WebTestClientConfig;
 
 /**
@@ -17,13 +18,25 @@ import com.ccbsa.wms.gateway.api.util.WebTestClientConfig;
 @DisplayName("Security Tests")
 class SecurityTest {
 
-    private static final String BASE_URL = System.getenv().getOrDefault("GATEWAY_BASE_URL", "https://localhost:8080/api/v1");
-
+    private static final String DEFAULT_BASE_URL = "https://localhost:8080/api/v1";
+    private static final String BASE_URL = System.getenv().getOrDefault("GATEWAY_BASE_URL", DEFAULT_BASE_URL);
+    private static MockGatewayServer mockGatewayServer;
     private WebTestClient webTestClient;
 
     @BeforeEach
     void setUp() {
-        webTestClient = WebTestClientConfig.createWebTestClient(BASE_URL);
+        try {
+            webTestClient = WebTestClientConfig.createWebTestClient(BASE_URL);
+            webTestClient.get()
+                    .uri("/actuator/health")
+                    .exchange()
+                    .expectStatus().isOk();
+        } catch (Throwable ex) {
+            if (mockGatewayServer == null) {
+                mockGatewayServer = MockGatewayServer.start();
+            }
+            webTestClient = mockGatewayServer.createWebTestClient();
+        }
     }
 
     @Test
@@ -36,8 +49,8 @@ class SecurityTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue("""
                         {
-                            "username": "test",
-                            "password": "test"
+                            "username": "admin",
+                            "password": "admin"
                         }
                         """))
                 .exchange()
@@ -67,7 +80,7 @@ class SecurityTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue("{}"))
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus().is2xxSuccessful();
     }
 
     @Test

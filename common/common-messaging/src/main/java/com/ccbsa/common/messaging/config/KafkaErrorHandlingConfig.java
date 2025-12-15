@@ -69,9 +69,11 @@ public class KafkaErrorHandlingConfig {
     /**
      * Consumer factory for dead letter queue publishing.
      * Uses same configuration as main consumer but with different group ID.
+     * <p>
+     * Explicitly uses kafkaObjectMapper to ensure type information is properly deserialized.
      */
     @Bean
-    public ConsumerFactory<String, Object> dlqConsumerFactory(ObjectMapper objectMapper) {
+    public ConsumerFactory<String, Object> dlqConsumerFactory(@org.springframework.beans.factory.annotation.Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, String.format("%s-dlq", groupId));
@@ -81,7 +83,7 @@ public class KafkaErrorHandlingConfig {
         configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
 
         // Configure JsonDeserializer instance directly to avoid conflict with Spring Boot auto-configuration
-        JsonDeserializer<Object> deserializer = new JsonDeserializer<>(objectMapper);
+        JsonDeserializer<Object> deserializer = new JsonDeserializer<>(kafkaObjectMapper);
         if (trustedPackages != null && !trustedPackages.isEmpty()) {
             // Split comma-separated packages or use wildcard
             if ("*".equals(trustedPackages)) {
@@ -101,10 +103,12 @@ public class KafkaErrorHandlingConfig {
 
     /**
      * Producer factory for dead letter queue publishing.
+     * <p>
+     * Explicitly uses kafkaObjectMapper to ensure type information is included in Kafka messages.
      */
     @Bean
     public org.springframework.kafka.core.ProducerFactory<String, Object> dlqProducerFactory(
-            ObjectMapper objectMapper) {
+            @org.springframework.beans.factory.annotation.Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -126,7 +130,7 @@ public class KafkaErrorHandlingConfig {
         org.springframework.kafka.core.DefaultKafkaProducerFactory<String, Object> factory =
                 new org.springframework.kafka.core.DefaultKafkaProducerFactory<>(configProps);
         org.springframework.kafka.support.serializer.JsonSerializer<Object> serializer =
-                new org.springframework.kafka.support.serializer.JsonSerializer<>(objectMapper);
+                new org.springframework.kafka.support.serializer.JsonSerializer<>(kafkaObjectMapper);
         serializer.setAddTypeInfo(false);
         factory.setValueSerializer(serializer);
         return factory;

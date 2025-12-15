@@ -23,7 +23,8 @@ import com.ccbsa.common.keycloak.config.KeycloakConfig;
  */
 @SpringBootApplication(scanBasePackages = {"com.ccbsa.wms.user",
         "com.ccbsa.common.keycloak",
-        "com.ccbsa.wms.common.security"})
+        "com.ccbsa.wms.common.security",
+        "com.ccbsa.common.cache"})
 @EnableConfigurationProperties(KeycloakConfig.class)
 @EnableJpaRepositories(basePackages = "com.ccbsa.wms.user.dataaccess.jpa")
 @EntityScan(basePackages = "com.ccbsa.wms.user.dataaccess.entity")

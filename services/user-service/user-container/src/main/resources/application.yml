@@ -93,6 +93,15 @@ spring:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:7080/realms/wms-realm}
           jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:7080/realms/wms-realm/protocol/openid-connect/certs}
+  
+  # Cache Configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 1800000    # Default TTL: 30 minutes (in milliseconds)
+      cache-null-values: false
+      use-key-prefix: true
+      key-prefix: "wms:"
 
 # Keycloak Admin Client Configuration
 keycloak:
@@ -136,8 +145,27 @@ eureka:
   instance:
     prefer-ip-address: false
     hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    appname: ${spring.application.name}  # Use lowercase app name to match LoadBalancer service resolution
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
+
+# Cache Configuration
+wms:
+  cache:
+    enabled: true
+    default-ttl-minutes: 30
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+    cache-configs:
+      users:
+        ttl-minutes: 15        # User entities cached for 15 minutes
+      user-roles:
+        ttl-minutes: 30        # Role assignments cached for 30 minutes
+      user-permissions:
+        ttl-minutes: 60        # Permissions cached for 1 hour (rarely change)
 
 # Management endpoints
 management:

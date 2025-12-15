@@ -39,7 +39,7 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     @Override
     public Notification save(Notification notification) {
         // Check if entity already exists to handle version correctly
-        java.util.Optional<NotificationEntity> existingEntity =
+        Optional<NotificationEntity> existingEntity =
                 jpaRepository.findByTenantIdAndId(
                         notification.getTenantId().getValue(),
                         notification.getId().getValue()

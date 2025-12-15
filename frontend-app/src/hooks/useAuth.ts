@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { authService } from '../services/authService';
+import { authService, UserContext } from '../services/authService';
 import { correlationIdService } from '../services/correlationIdService';
 import { clearUser, setLoading, setUser } from '../store/authSlice';
 import { RootState } from '../store';
@@ -83,9 +83,18 @@ export const useAuth = () => {
         try {
           if (authService.isAuthenticated()) {
             // Use stored context first to avoid unnecessary API calls
-            const storedContext = authService.getStoredUserContext();
-            if (storedContext) {
-              dispatch(setUser(storedContext));
+            let storedContext: UserContext | null = null;
+            try {
+              storedContext = authService.getStoredUserContext();
+              if (storedContext) {
+                dispatch(setUser(storedContext));
+              }
+            } catch (error) {
+              // Handle any unexpected errors from getStoredUserContext gracefully
+              logger.warn('Error retrieving stored user context, will fetch from API', {
+                error: error instanceof Error ? error.message : String(error),
+              });
+              // Continue to fetch from API
             }
 
             // Then fetch fresh context in background
@@ -138,12 +147,22 @@ export const useAuth = () => {
             }
           } else {
             // No token - check for stored user context (shouldn't happen, but handle gracefully)
-            const storedContext = authService.getStoredUserContext();
-            if (storedContext) {
-              // Stored context without token - clear it
+            try {
+              const storedContext = authService.getStoredUserContext();
+              if (storedContext) {
+                // Stored context without token - clear it
+                authService.logout();
+                dispatch(clearUser());
+              } else {
+                dispatch(clearUser());
+              }
+            } catch (error) {
+              // Handle any unexpected errors from getStoredUserContext gracefully
+              logger.warn('Error retrieving stored user context during cleanup', {
+                error: error instanceof Error ? error.message : String(error),
+              });
+              // Clear auth state anyway since we don't have a token
               authService.logout();
-              dispatch(clearUser());
-            } else {
               dispatch(clearUser());
             }
           }
@@ -179,18 +198,45 @@ export const useAuth = () => {
   }, [dispatch]);
 
   const login = async (username: string, password: string) => {
-    const response = await authService.login({ username, password });
-    // Refresh token is now in httpOnly cookie (set by backend)
-    // Only access token needs to be stored (in memory)
-    authService.storeTokens(
-      response.accessToken,
-      response.refreshToken || '' // May be null (stored in cookie by backend)
-    );
-    authService.storeUserContext(response.userContext);
-    // Reset global flag on successful login to ensure fresh state
-    globalAuthInitialized = true;
-    dispatch(setUser(response.userContext));
-    return response;
+    try {
+      logger.debug('Starting login process', { username });
+      const response = await authService.login({ username, password });
+
+      logger.debug('Login response received, storing tokens and user context', {
+        hasAccessToken: !!response.accessToken,
+        hasUserContext: !!response.userContext,
+        userId: response.userContext?.userId,
+        username: response.userContext?.username,
+        roles: response.userContext?.roles,
+      });
+
+      // Refresh token is now in httpOnly cookie (set by backend)
+      // Only access token needs to be stored (in memory)
+      authService.storeTokens(
+        response.accessToken,
+        response.refreshToken || '' // May be null (stored in cookie by backend)
+      );
+      authService.storeUserContext(response.userContext);
+
+      logger.debug('Tokens and user context stored, updating Redux state');
+
+      // Reset global flag on successful login to ensure fresh state
+      globalAuthInitialized = true;
+      dispatch(setUser(response.userContext));
+
+      logger.info('Login completed successfully, Redux state updated', {
+        userId: response.userContext.userId,
+        username: response.userContext.username,
+      });
+
+      return response;
+    } catch (error) {
+      logger.error('Login failed in useAuth hook', {
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
   };
 
   const logout = async () => {

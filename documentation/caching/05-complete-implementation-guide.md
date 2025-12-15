@@ -27,6 +27,7 @@ Examples:
 **Tenant Context Resolution:**
 
 The `TenantContext` (from `common-security` module) automatically extracts tenant ID from:
+
 1. JWT token claims (`tenant_id` claim)
 2. Request headers (`X-Tenant-ID` header as fallback)
 3. ThreadLocal storage (set by security filter)
@@ -431,12 +432,12 @@ log.error("Cache eviction failed for key: {}", cacheKey, e); // Error for critic
 
 **Alert Thresholds:**
 
-| Metric | Threshold | Severity | Action |
-|--------|-----------|----------|--------|
-| Cache hit ratio | < 70% | Warning | Review cache TTL and warming strategy |
-| Cache hit ratio | < 50% | Critical | Investigate cache invalidation or key generation |
-| Redis connection failures | > 5/min | Critical | Check Redis cluster health |
-| Cache operation latency | > 50ms | Warning | Review Redis cluster performance |
+| Metric                    | Threshold | Severity | Action                                           |
+|---------------------------|-----------|----------|--------------------------------------------------|
+| Cache hit ratio           | < 70%     | Warning  | Review cache TTL and warming strategy            |
+| Cache hit ratio           | < 50%     | Critical | Investigate cache invalidation or key generation |
+| Redis connection failures | > 5/min   | Critical | Check Redis cluster health                       |
+| Cache operation latency   | > 50ms    | Warning  | Review Redis cluster performance                 |
 
 ---
 
@@ -447,33 +448,34 @@ log.error("Cache eviction failed for key: {}", cacheKey, e); // Error for critic
 **Tasks:**
 
 1. ✅ Add Maven dependencies to parent POM
-   - `spring-boot-starter-data-redis`
-   - `spring-boot-starter-cache`
-   - `lettuce-core`
+    - `spring-boot-starter-data-redis`
+    - `spring-boot-starter-cache`
+    - `lettuce-core`
 
 2. ✅ Create `common-cache` module
-   - Package structure
-   - `CacheConfiguration` class
-   - `CacheProperties` configuration
-   - `TenantAwareCacheKeyGenerator`
-   - `CacheKeyGenerator` utility
+    - Package structure
+    - `CacheConfiguration` class
+    - `CacheProperties` configuration
+    - `TenantAwareCacheKeyGenerator`
+    - `CacheKeyGenerator` utility
 
 3. ✅ Implement base decorator
-   - `CachedRepositoryDecorator` base class
-   - `LocalCacheInvalidator`
-   - `CacheInvalidationEventListener` base class
+    - `CachedRepositoryDecorator` base class
+    - `LocalCacheInvalidator`
+    - `CacheInvalidationEventListener` base class
 
 4. ✅ Configure Redis connection
-   - Lettuce client configuration
-   - Connection pooling
-   - Health checks
+    - Lettuce client configuration
+    - Connection pooling
+    - Health checks
 
 5. ✅ Add metrics and monitoring
-   - Micrometer integration
-   - Cache health indicator
-   - Logging configuration
+    - Micrometer integration
+    - Cache health indicator
+    - Logging configuration
 
 **Deliverables:**
+
 - `common-cache` module with all base classes
 - Redis connectivity working in dev environment
 - Health check endpoint responding
@@ -483,27 +485,27 @@ log.error("Cache eviction failed for key: {}", cacheKey, e); // Error for critic
 **Tasks per Service:**
 
 1. ✅ Create cached repository adapter
-   - Extend `CachedRepositoryDecorator`
-   - Annotate with `@Primary`
-   - Implement all repository methods
+    - Extend `CachedRepositoryDecorator`
+    - Annotate with `@Primary`
+    - Implement all repository methods
 
 2. ✅ Create cache invalidation listener
-   - Extend `CacheInvalidationEventListener`
-   - Subscribe to domain events topic
-   - Implement invalidation logic
+    - Extend `CacheInvalidationEventListener`
+    - Subscribe to domain events topic
+    - Implement invalidation logic
 
 3. ✅ Add cache warming service
-   - Extend `CacheWarmingService`
-   - Implement startup warming logic
+    - Extend `CacheWarmingService`
+    - Implement startup warming logic
 
 4. ✅ Configure cache properties
-   - Add `wms.cache` configuration to `application.yml`
-   - Configure per-cache TTL
+    - Add `wms.cache` configuration to `application.yml`
+    - Configure per-cache TTL
 
 5. ✅ Write unit tests
-   - Test cache hit/miss scenarios
-   - Test write-through operations
-   - Test invalidation logic
+    - Test cache hit/miss scenarios
+    - Test write-through operations
+    - Test invalidation logic
 
 **Priority Order:**
 
@@ -519,24 +521,24 @@ log.error("Cache eviction failed for key: {}", cacheKey, e); // Error for critic
 **Tasks:**
 
 1. ✅ Integration testing
-   - End-to-end cache flow testing
-   - Cross-service invalidation testing
-   - Multi-tenant isolation testing
+    - End-to-end cache flow testing
+    - Cross-service invalidation testing
+    - Multi-tenant isolation testing
 
 2. ✅ Performance testing
-   - Load testing with cache enabled
-   - Measure cache hit ratio
-   - Measure response time improvement
+    - Load testing with cache enabled
+    - Measure cache hit ratio
+    - Measure response time improvement
 
 3. ✅ Failure scenario testing
-   - Redis unavailable scenarios
-   - Cache poisoning detection
-   - Stale data scenarios
+    - Redis unavailable scenarios
+    - Cache poisoning detection
+    - Stale data scenarios
 
 4. ✅ Monitoring validation
-   - Verify metrics collection
-   - Test health check endpoints
-   - Validate alert thresholds
+    - Verify metrics collection
+    - Test health check endpoints
+    - Validate alert thresholds
 
 **Success Criteria:**
 
@@ -550,51 +552,51 @@ log.error("Cache eviction failed for key: {}", cacheKey, e); // Error for critic
 **Pre-Deployment:**
 
 1. ✅ Deploy Redis cluster
-   - 3 master shards
-   - 3 replicas
-   - 3 Sentinel nodes
+    - 3 master shards
+    - 3 replicas
+    - 3 Sentinel nodes
 
 2. ✅ Configure production settings
-   - Redis password authentication
-   - TLS encryption (if required)
-   - Firewall rules
+    - Redis password authentication
+    - TLS encryption (if required)
+    - Firewall rules
 
 3. ✅ Set up monitoring
-   - Prometheus metrics scraping
-   - Grafana dashboards
-   - Alert rules in AlertManager
+    - Prometheus metrics scraping
+    - Grafana dashboards
+    - Alert rules in AlertManager
 
 **Deployment Strategy:**
 
 1. **Canary Deployment** (10% traffic)
-   - Deploy user-service with caching
-   - Monitor for 24 hours
-   - Validate cache hit ratio and performance
+    - Deploy user-service with caching
+    - Monitor for 24 hours
+    - Validate cache hit ratio and performance
 
 2. **Gradual Rollout** (25%, 50%, 100%)
-   - Increase traffic percentage
-   - Monitor metrics at each stage
-   - Rollback plan ready
+    - Increase traffic percentage
+    - Monitor metrics at each stage
+    - Rollback plan ready
 
 3. **Full Production** (100% traffic)
-   - All services with caching enabled
-   - Continuous monitoring
-   - Performance baseline established
+    - All services with caching enabled
+    - Continuous monitoring
+    - Performance baseline established
 
 **Post-Deployment:**
 
 1. ✅ Monitor for 1 week
-   - Cache hit ratio trends
-   - Response time improvements
-   - Error rates
+    - Cache hit ratio trends
+    - Response time improvements
+    - Error rates
 
 2. ✅ Tune cache TTL based on metrics
-   - Adjust TTL for different cache types
-   - Balance consistency vs. performance
+    - Adjust TTL for different cache types
+    - Balance consistency vs. performance
 
 3. ✅ Document lessons learned
-   - Update implementation guide
-   - Share best practices with team
+    - Update implementation guide
+    - Share best practices with team
 
 ---
 
@@ -686,13 +688,13 @@ thresholds:
 
 **Performance Metrics:**
 
-| Metric | Without Cache | With Cache | Improvement |
-|--------|---------------|------------|-------------|
-| P50 Response Time | 150ms | 30ms | 80% |
-| P95 Response Time | 500ms | 80ms | 84% |
-| P99 Response Time | 1200ms | 150ms | 87.5% |
-| Database Queries/sec | 1000 | 200 | 80% reduction |
-| Throughput (req/sec) | 500 | 2000 | 4x increase |
+| Metric               | Without Cache | With Cache | Improvement   |
+|----------------------|---------------|------------|---------------|
+| P50 Response Time    | 150ms         | 30ms       | 80%           |
+| P95 Response Time    | 500ms         | 80ms       | 84%           |
+| P99 Response Time    | 1200ms        | 150ms      | 87.5%         |
+| Database Queries/sec | 1000          | 200        | 80% reduction |
+| Throughput (req/sec) | 500           | 2000       | 4x increase   |
 
 ---
 
@@ -703,17 +705,20 @@ thresholds:
 **Issue: Low Cache Hit Ratio**
 
 **Symptoms:**
+
 - Cache hit ratio < 50%
 - High database load
 - Slow response times
 
 **Root Causes:**
+
 1. Cache TTL too short (frequent evictions)
 2. Cache keys not matching (incorrect key generation)
 3. Excessive cache invalidation (too aggressive)
 4. Insufficient cache warming
 
 **Resolution:**
+
 1. Review cache TTL configuration
 2. Debug cache key generation (enable TRACE logging)
 3. Audit invalidation listeners (check for unnecessary invalidations)
@@ -724,15 +729,18 @@ thresholds:
 **Issue: Stale Data in Cache**
 
 **Symptoms:**
+
 - Users see outdated information
 - Cache not invalidated after updates
 
 **Root Causes:**
+
 1. Event-driven invalidation not working (Kafka listener not consuming)
 2. Cache invalidation logic missing for some events
 3. Write-through cache update skipped
 
 **Resolution:**
+
 1. Check Kafka consumer health (consumer lag metrics)
 2. Review invalidation listener implementation
 3. Verify write-through logic in cached repository adapter
@@ -742,16 +750,19 @@ thresholds:
 **Issue: Redis Connection Failures**
 
 **Symptoms:**
+
 - Cache operations failing
 - Health check DOWN
 - Errors in logs: `RedisConnectionException`
 
 **Root Causes:**
+
 1. Redis server unavailable
 2. Network connectivity issues
 3. Authentication failure (wrong password)
 
 **Resolution:**
+
 1. Check Redis server status: `redis-cli PING`
 2. Verify network connectivity: `telnet redis-host 6379`
 3. Check credentials in `application.yml`
@@ -789,13 +800,16 @@ thresholds:
 ## Document Control
 
 **Version History:**
+
 - v1.0 (2025-12-09) - Initial complete implementation guide
 - Future: Update based on production learnings
 
 **Review Cycle:**
+
 - Review quarterly or when caching patterns change
 
 **Approval:**
+
 - Software Architect: [Pending]
 - DevOps Lead: [Pending]
 - Security Team: [Pending]

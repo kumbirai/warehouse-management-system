@@ -2,16 +2,27 @@ package com.ccbsa.wms.user.application.api.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * DTO: LoginResponse
  * <p>
  * Response DTO for successful login containing tokens and user context.
  */
 public final class LoginResponse {
+    @JsonProperty("accessToken")
     private String accessToken;
+
+    @JsonProperty("refreshToken")
     private String refreshToken;
+
+    @JsonProperty("tokenType")
     private String tokenType;
+
+    @JsonProperty("expiresIn")
     private int expiresIn;
+
+    @JsonProperty("userContext")
     private UserContext userContext;
 
     public LoginResponse() {
@@ -96,12 +107,25 @@ public final class LoginResponse {
      * User context information extracted from JWT token.
      */
     public static final class UserContext {
+        @JsonProperty("userId")
         private String userId;
+
+        @JsonProperty("username")
         private String username;
+
+        @JsonProperty("tenantId")
         private String tenantId;
+
+        @JsonProperty("roles")
         private List<String> roles = List.of();
+
+        @JsonProperty("email")
         private String email;
+
+        @JsonProperty("firstName")
         private String firstName;
+
+        @JsonProperty("lastName")
         private String lastName;
 
         public UserContext() {

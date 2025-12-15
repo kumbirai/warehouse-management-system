@@ -14,15 +14,15 @@ spring:
   cloud:
     gateway:
       # HTTP client configuration for load-balanced routes
-      httpclient:
-        connect-timeout: 5000  # 5 seconds connection timeout
-        response-timeout: 30s  # 30 seconds response timeout (matches frontend timeout)
-        pool:
-          type: ELASTIC
-          max-connections: 500
-          max-idle-time: 30s
       server:
         webflux:
+          httpclient:
+            connect-timeout: 5000  # 5 seconds connection timeout
+            response-timeout: 30s  # 30 seconds response timeout (matches frontend timeout)
+            pool:
+              type: ELASTIC
+              max-connections: 500
+              max-idle-time: 30s
           discovery:
             locator:
               enabled: true

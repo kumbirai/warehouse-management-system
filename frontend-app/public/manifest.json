@@ -8,11 +8,7 @@
   "theme_color": "#1976d2",
   "orientation": "portrait-primary",
   "icons": [],
-  "categories": [
-    "business",
-    "productivity"
-  ],
+  "categories": ["business", "productivity"],
   "screenshots": [],
   "shortcuts": []
 }
-

@@ -10,11 +10,13 @@
 
 ## Overview
 
-This document defines the **mandatory** common module infrastructure for caching. All caching components are centralized in the `common-cache` module to enforce DRY principles and ensure consistent behavior across services.
+This document defines the **mandatory** common module infrastructure for caching. All caching components are centralized in the `common-cache` module to enforce DRY principles and
+ensure consistent behavior across services.
 
 **Module Location:** `/common/common-cache/`
 
 **Module Dependencies:**
+
 - `common-domain` - For `TenantId`, `DomainEvent` base classes
 - `common-application` - For `CorrelationContext`, `RequestContext`
 - `common-security` - For `TenantContext` (tenant-aware cache keys)
@@ -759,6 +761,7 @@ public enum CacheNamespace {
 **End of Section 2**
 
 This section establishes the common infrastructure for caching. Next sections will cover:
+
 - Cache Invalidation Strategy
 - Repository Adapter Decorator Pattern
 - Multi-Tenant Caching Patterns

@@ -157,6 +157,37 @@ The frontend application provides the user interface with CQRS compliance. This 
 - **End-to-End Tracing**: Correlation ID flows from frontend → gateway → services → events → event consumers
 - **Logging**: Correlation ID included in all logs (frontend MDC, backend MDC) for log correlation
 
+### 7. ObjectMapper Separation Strategy (CRITICAL)
+
+**PRODUCTION-GRADE REQUIREMENT**: All services MUST maintain explicit separation of ObjectMapper configurations.
+
+- **REST API ObjectMapper** (`@Primary`):
+    - Built from `Jackson2ObjectMapperBuilder` in `WebMvcConfig`
+    - NO type information included (clean JSON for frontend)
+    - Used automatically by Spring MVC for HTTP message conversion
+    - Configured in `@06-mandated-container-templates.md`
+
+- **Kafka ObjectMapper** (`kafkaObjectMapper`):
+    - Provided by `KafkaConfig` in `common-messaging` module
+    - Includes type information (@class property) for polymorphic event deserialization
+    - MUST be imported via `@Import(KafkaConfig.class)` in service configuration
+    - MUST be injected with `@Qualifier("kafkaObjectMapper")` in all Kafka-related beans
+    - Configured in `@05-mandated-messaging-templates.md`
+
+- **Redis Cache ObjectMapper** (`redisCacheObjectMapper`):
+    - Provided by `CacheConfiguration` in `common-cache` module
+    - Includes type information for polymorphic cache value deserialization
+    - MUST be injected with `@Qualifier("redisCacheObjectMapper")` in cache-related beans
+
+**Key Principles:**
+
+- Never use `@Primary` for Kafka or Redis ObjectMappers
+- Always use explicit `@Qualifier` for named ObjectMapper beans
+- REST API ObjectMapper is the only `@Primary` ObjectMapper (for HTTP default)
+- Clear separation ensures no type information leaks into REST API responses
+
+**See**: `documentation/05-development/ObjectMapper_Separation_Strategy.md` for complete implementation details.
+
 ## Implementation Checklist
 
 ### Domain Core Module
@@ -221,6 +252,10 @@ The frontend application provides the user interface with CQRS compliance. This 
 - [ ] Main application class annotated with `@SpringBootApplication`
 - [ ] Configuration classes for database, Kafka, security
 - [ ] Health indicators for monitoring
+- [ ] `WebMvcConfig` with `@Primary ObjectMapper` for REST API (NO type information)
+- [ ] `Jackson2ObjectMapperBuilder` configured without type information
+- [ ] `KafkaConfig` imported via `@Import(KafkaConfig.class)` if using Kafka
+- [ ] All Kafka beans use `@Qualifier("kafkaObjectMapper")` for ObjectMapper injection
 - [ ] Metrics exposed via Actuator
 - [ ] Multi-tenant configuration resolver
 - [ ] Dependency injection configured properly

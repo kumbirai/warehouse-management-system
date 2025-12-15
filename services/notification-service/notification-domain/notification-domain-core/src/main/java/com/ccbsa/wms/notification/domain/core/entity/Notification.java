@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import com.ccbsa.common.domain.TenantAwareAggregateRoot;
 import com.ccbsa.common.domain.valueobject.EmailAddress;
+import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent;
 import com.ccbsa.wms.notification.domain.core.valueobject.Message;
@@ -207,7 +208,7 @@ public class Notification extends TenantAwareAggregateRoot<NotificationId> {
             return this;
         }
 
-        public Builder tenantId(com.ccbsa.common.domain.valueobject.TenantId tenantId) {
+        public Builder tenantId(TenantId tenantId) {
             notification.setTenantId(tenantId);
             return this;
         }

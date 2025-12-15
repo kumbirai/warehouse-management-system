@@ -12,14 +12,14 @@ A comprehensive production-grade distributed caching strategy for the Warehouse 
 
 ### 1. Core Documentation (5 Documents)
 
-| Document | Purpose | Lines of Code/Config |
-|----------|---------|---------------------|
-| [01-production-caching-strategy.md](./01-production-caching-strategy.md) | Architectural overview, principles, technology stack | ~300 |
-| [02-common-module-infrastructure.md](./02-common-module-infrastructure.md) | Common cache module with all base classes | ~600 |
-| [03-cache-invalidation-strategy.md](./03-cache-invalidation-strategy.md) | Event-driven cache invalidation patterns | ~400 |
-| [04-repository-adapter-decorator-pattern.md](./04-repository-adapter-decorator-pattern.md) | Decorator pattern implementation | ~500 |
-| [05-complete-implementation-guide.md](./05-complete-implementation-guide.md) | Multi-tenant caching, warming, monitoring, roadmap | ~700 |
-| [README.md](./README.md) | Navigation and quick start guide | ~200 |
+| Document                                                                                   | Purpose                                              | Lines of Code/Config |
+|--------------------------------------------------------------------------------------------|------------------------------------------------------|----------------------|
+| [01-production-caching-strategy.md](./01-production-caching-strategy.md)                   | Architectural overview, principles, technology stack | ~300                 |
+| [02-common-module-infrastructure.md](./02-common-module-infrastructure.md)                 | Common cache module with all base classes            | ~600                 |
+| [03-cache-invalidation-strategy.md](./03-cache-invalidation-strategy.md)                   | Event-driven cache invalidation patterns             | ~400                 |
+| [04-repository-adapter-decorator-pattern.md](./04-repository-adapter-decorator-pattern.md) | Decorator pattern implementation                     | ~500                 |
+| [05-complete-implementation-guide.md](./05-complete-implementation-guide.md)               | Multi-tenant caching, warming, monitoring, roadmap   | ~700                 |
+| [README.md](./README.md)                                                                   | Navigation and quick start guide                     | ~200                 |
 
 **Total:** ~2,700 lines of comprehensive documentation
 
@@ -70,12 +70,12 @@ Per service (6 templates × N services):
 ### 3. Updated Documentation
 
 - **[@04-mandated-data-access-templates.md](../guide/@04-mandated-data-access-templates.md)**
-  - Updated from v1.0 to v1.1
-  - Made caching MANDATORY (not optional)
-  - Added cached adapter templates
-  - Added cache invalidation listener templates
-  - Added configuration templates
-  - Added implementation checklist
+    - Updated from v1.0 to v1.1
+    - Made caching MANDATORY (not optional)
+    - Added cached adapter templates
+    - Added cache invalidation listener templates
+    - Added configuration templates
+    - Added implementation checklist
 
 ---
 
@@ -86,6 +86,7 @@ Per service (6 templates × N services):
 **Decision:** Caching is no longer optional. All services MUST implement distributed caching.
 
 **Rationale:**
+
 - Performance requirement: Sub-100ms response times
 - Scalability requirement: Support 10,000+ concurrent users
 - Database load reduction: 70-80% fewer queries
@@ -96,6 +97,7 @@ Per service (6 templates × N services):
 **Decision:** Use decorator pattern to wrap repository adapters.
 
 **Rationale:**
+
 - ✅ Maintains clean hexagonal architecture
 - ✅ Domain layer remains cache-agnostic
 - ✅ Application layer unaware of caching
@@ -107,6 +109,7 @@ Per service (6 templates × N services):
 **Decision:** Cache invalidation driven by Kafka domain events.
 
 **Rationale:**
+
 - ✅ Aligns with existing event-driven architecture
 - ✅ Decouples services (no direct calls)
 - ✅ Asynchronous and scalable
@@ -118,6 +121,7 @@ Per service (6 templates × N services):
 **Decision:** Tenant-aware cache key generation with `tenant:{id}:` prefix.
 
 **Rationale:**
+
 - ✅ Extends existing schema-per-tenant isolation
 - ✅ Prevents cross-tenant data leakage
 - ✅ Aligns with security requirements
@@ -128,6 +132,7 @@ Per service (6 templates × N services):
 **Decision:** Redis Cluster with Sentinel for high availability.
 
 **Rationale:**
+
 - ✅ Production-grade reliability
 - ✅ Automatic failover
 - ✅ Horizontal scalability
@@ -142,6 +147,7 @@ Per service (6 templates × N services):
 **Owner:** Platform Team
 
 **Tasks:**
+
 1. Create `common-cache` module
 2. Add Maven dependencies to parent POM
 3. Implement all base classes from templates
@@ -156,6 +162,7 @@ Per service (6 templates × N services):
 **Owner:** Service Teams
 
 **Priority Order:**
+
 1. User Service (highest traffic)
 2. Product Service (reference data)
 3. Stock Management Service (real-time data)
@@ -164,6 +171,7 @@ Per service (6 templates × N services):
 6. Notification Service
 
 **Per Service Tasks:**
+
 1. Create `CachedRepositoryAdapter` with `@Primary`
 2. Create `CacheInvalidationListener`
 3. Create `CacheWarmingService`
@@ -178,6 +186,7 @@ Per service (6 templates × N services):
 **Owner:** QA Team + DevOps
 
 **Tasks:**
+
 1. Integration testing (end-to-end cache flow)
 2. Performance testing with k6
 3. Failure scenario testing (Redis unavailable)
@@ -192,6 +201,7 @@ Per service (6 templates × N services):
 **Owner:** DevOps Team
 
 **Tasks:**
+
 1. Deploy Redis Cluster (3 masters + 3 replicas + 3 Sentinels)
 2. Configure production settings (TLS, passwords, firewall)
 3. Set up monitoring (Prometheus, Grafana)
@@ -209,24 +219,24 @@ Per service (6 templates × N services):
 
 ### Performance Metrics
 
-| Metric | Target | Measurement Method |
-|--------|--------|-------------------|
-| Cache Hit Ratio | > 80% | Micrometer metrics |
-| P50 Response Time | < 30ms | Load testing (k6) |
-| P95 Response Time | < 100ms | Load testing (k6) |
-| P99 Response Time | < 200ms | Load testing (k6) |
-| Database Load Reduction | > 70% | Query count metrics |
-| Throughput Increase | > 3x | Requests/second |
+| Metric                  | Target  | Measurement Method  |
+|-------------------------|---------|---------------------|
+| Cache Hit Ratio         | > 80%   | Micrometer metrics  |
+| P50 Response Time       | < 30ms  | Load testing (k6)   |
+| P95 Response Time       | < 100ms | Load testing (k6)   |
+| P99 Response Time       | < 200ms | Load testing (k6)   |
+| Database Load Reduction | > 70%   | Query count metrics |
+| Throughput Increase     | > 3x    | Requests/second     |
 
 ### Quality Metrics
 
-| Metric | Target | Validation Method |
-|--------|--------|------------------|
-| Test Coverage | > 85% | JaCoCo |
-| Zero Stale Data | 100% | Integration tests |
-| Graceful Degradation | 100% | Failure scenario tests |
-| Multi-Tenant Isolation | 100% | Security tests |
-| Documentation Coverage | 100% | All templates provided |
+| Metric                 | Target | Validation Method      |
+|------------------------|--------|------------------------|
+| Test Coverage          | > 85%  | JaCoCo                 |
+| Zero Stale Data        | 100%   | Integration tests      |
+| Graceful Degradation   | 100%   | Failure scenario tests |
+| Multi-Tenant Isolation | 100%   | Security tests         |
+| Documentation Coverage | 100%   | All templates provided |
 
 ---
 
@@ -264,6 +274,7 @@ Per service (6 templates × N services):
 **Description:** Stale data persists in cache after database updates.
 
 **Mitigation:**
+
 - ✅ Event-driven invalidation ensures consistency
 - ✅ TTL provides automatic expiration
 - ✅ Write-through pattern updates cache immediately
@@ -274,6 +285,7 @@ Per service (6 templates × N services):
 **Description:** Redis cluster failure breaks application.
 
 **Mitigation:**
+
 - ✅ Graceful degradation - cache failures fall back to database
 - ✅ High availability - Redis Sentinel auto-failover
 - ✅ Health checks - detect issues before user impact
@@ -284,6 +296,7 @@ Per service (6 templates × N services):
 **Description:** Different tenants or entities share cache keys.
 
 **Mitigation:**
+
 - ✅ Mandatory tenant prefix on all keys
 - ✅ UUID-based entity IDs prevent collisions
 - ✅ Namespace enum prevents typos
@@ -294,6 +307,7 @@ Per service (6 templates × N services):
 **Description:** Caching overhead slows down writes.
 
 **Mitigation:**
+
 - ✅ Write-through pattern minimizes latency
 - ✅ Async invalidation doesn't block writes
 - ✅ Metrics track write performance
@@ -305,14 +319,14 @@ Per service (6 templates × N services):
 
 ### Metrics to Monitor
 
-| Metric | Dashboard | Alert Threshold |
-|--------|-----------|-----------------|
-| `cache.hits` | Grafana | N/A |
-| `cache.misses` | Grafana | N/A |
-| `cache.hit.ratio` | Grafana | < 70% (warning), < 50% (critical) |
-| `cache.evictions` | Grafana | > 1000/min (warning) |
-| `redis.connection.failures` | Grafana | > 5/min (critical) |
-| `cache.operation.latency` | Grafana | > 50ms P95 (warning) |
+| Metric                      | Dashboard | Alert Threshold                   |
+|-----------------------------|-----------|-----------------------------------|
+| `cache.hits`                | Grafana   | N/A                               |
+| `cache.misses`              | Grafana   | N/A                               |
+| `cache.hit.ratio`           | Grafana   | < 70% (warning), < 50% (critical) |
+| `cache.evictions`           | Grafana   | > 1000/min (warning)              |
+| `redis.connection.failures` | Grafana   | > 5/min (critical)                |
+| `cache.operation.latency`   | Grafana   | > 50ms P95 (warning)              |
 
 ### Health Checks
 
@@ -327,35 +341,35 @@ Per service (6 templates × N services):
 ### Immediate Actions (This Week)
 
 1. **Platform Team:**
-   - Review and approve all documentation
-   - Create `common-cache` module skeleton
-   - Add Maven dependencies to parent POM
+    - Review and approve all documentation
+    - Create `common-cache` module skeleton
+    - Add Maven dependencies to parent POM
 
 2. **Service Teams:**
-   - Review caching strategy documentation
-   - Identify cache candidates in each service
-   - Attend caching implementation workshop
+    - Review caching strategy documentation
+    - Identify cache candidates in each service
+    - Attend caching implementation workshop
 
 3. **DevOps Team:**
-   - Provision Redis cluster for staging
-   - Set up Grafana dashboards for cache metrics
-   - Configure AlertManager rules
+    - Provision Redis cluster for staging
+    - Set up Grafana dashboards for cache metrics
+    - Configure AlertManager rules
 
 ### Week 1 Actions
 
 1. **Platform Team:**
-   - Implement all common-cache base classes
-   - Write unit tests for common components
-   - Deploy to development environment
+    - Implement all common-cache base classes
+    - Write unit tests for common components
+    - Deploy to development environment
 
 2. **Service Teams:**
-   - Begin Phase 2 implementation (user-service first)
-   - Follow templates for cached adapters
-   - Write unit tests
+    - Begin Phase 2 implementation (user-service first)
+    - Follow templates for cached adapters
+    - Write unit tests
 
 3. **DevOps Team:**
-   - Deploy Redis cluster to staging
-   - Configure monitoring and alerting
+    - Deploy Redis cluster to staging
+    - Configure monitoring and alerting
 
 ---
 
@@ -412,6 +426,7 @@ For questions, contact:
 **Estimated Effort:** 5 weeks (1 week per phase + 1 week contingency)
 
 **Estimated Team Size:**
+
 - Platform Team: 2 developers
 - Service Teams: 6 developers (1 per service)
 - DevOps: 1 engineer

@@ -1,5 +1,6 @@
 package com.ccbsa.wms.user.application.api.controller;
 
+import java.util.Map;
 import java.util.Objects;
 
 import org.springframework.http.ResponseEntity;
@@ -156,7 +157,7 @@ public class BffAuthController {
     @Operation(summary = "Logout",
             description = "Logs out the current user and clears refresh token cookie")
     public ResponseEntity<ApiResponse<Void>> logout(
-            @RequestBody(required = false) java.util.Map<String, Object> body,
+            @RequestBody(required = false) Map<String, Object> body,
             HttpServletResponse httpResponse) {
         // Clear refresh token cookie
         cookieUtil.removeRefreshTokenCookie(httpResponse);

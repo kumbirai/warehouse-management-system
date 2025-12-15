@@ -8,17 +8,16 @@ import {UserDashboard} from '../features/user/UserDashboard';
  * Routes users to appropriate dashboard based on their role.
  */
 export const DashboardRouter = () => {
-    const {isSystemAdmin, isUser} = useAuth();
+  const { isSystemAdmin, isUser } = useAuth();
 
-    if (isSystemAdmin()) {
-        return <AdminDashboard/>;
-    }
+  if (isSystemAdmin()) {
+    return <AdminDashboard />;
+  }
 
-    if (isUser()) {
-        return <UserDashboard/>;
-    }
+  if (isUser()) {
+    return <UserDashboard />;
+  }
 
-    // Default fallback - redirect to landing page if no matching role
-    return <Navigate to="/" replace/>;
+  // Default fallback - redirect to landing page if no matching role
+  return <Navigate to="/" replace />;
 };
-

@@ -13,39 +13,39 @@ This directory contains comprehensive documentation for implementing **mandatory
 ### Core Strategy Documents
 
 1. **[01-production-caching-strategy.md](./01-production-caching-strategy.md)**
-   - Executive summary and architectural principles
-   - Technology stack (Redis, Spring Cache, Lettuce)
-   - Domain-Driven Design, Clean Hexagonal Architecture, CQRS, and Event-Driven alignment
-   - Multi-tenant isolation principles
+    - Executive summary and architectural principles
+    - Technology stack (Redis, Spring Cache, Lettuce)
+    - Domain-Driven Design, Clean Hexagonal Architecture, CQRS, and Event-Driven alignment
+    - Multi-tenant isolation principles
 
 2. **[02-common-module-infrastructure.md](./02-common-module-infrastructure.md)**
-   - `common-cache` module structure
-   - Maven dependencies and configuration
-   - Redis connection factory setup
-   - Tenant-aware cache key generation
-   - Cache configuration classes and properties
+    - `common-cache` module structure
+    - Maven dependencies and configuration
+    - Redis connection factory setup
+    - Tenant-aware cache key generation
+    - Cache configuration classes and properties
 
 3. **[03-cache-invalidation-strategy.md](./03-cache-invalidation-strategy.md)**
-   - Write-through invalidation (same service)
-   - Event-driven invalidation (cross-service)
-   - Cascade invalidation (dependent caches)
-   - Local cache invalidator implementation
-   - Service-specific event listeners
+    - Write-through invalidation (same service)
+    - Event-driven invalidation (cross-service)
+    - Cascade invalidation (dependent caches)
+    - Local cache invalidator implementation
+    - Service-specific event listeners
 
 4. **[04-repository-adapter-decorator-pattern.md](./04-repository-adapter-decorator-pattern.md)**
-   - Decorator pattern architecture
-   - Base cached repository decorator
-   - Service-specific adapter implementations
-   - Configuration and bean wiring
-   - Unit testing strategies
+    - Decorator pattern architecture
+    - Base cached repository decorator
+    - Service-specific adapter implementations
+    - Configuration and bean wiring
+    - Unit testing strategies
 
 5. **[05-complete-implementation-guide.md](./05-complete-implementation-guide.md)**
-   - Multi-tenant caching patterns
-   - Cache warming strategies
-   - Monitoring and observability
-   - Implementation roadmap (4-phase plan)
-   - Testing strategy
-   - Troubleshooting guide
+    - Multi-tenant caching patterns
+    - Cache warming strategies
+    - Monitoring and observability
+    - Implementation roadmap (4-phase plan)
+    - Testing strategy
+    - Troubleshooting guide
 
 ---
 
@@ -102,30 +102,33 @@ Caching is **NOT OPTIONAL**. All services must implement:
 
 ### Technology Standards
 
-| Component | Technology | Version | Purpose |
-|-----------|-----------|---------|---------|
-| Cache Store | Redis | 7.x | Distributed in-memory cache |
-| Client Library | Lettuce | 6.x | Async Redis client |
-| Abstraction | Spring Cache | 6.x | Provider-agnostic caching API |
-| Serialization | Jackson JSON | 2.15+ | Type-safe serialization |
+| Component      | Technology   | Version | Purpose                       |
+|----------------|--------------|---------|-------------------------------|
+| Cache Store    | Redis        | 7.x     | Distributed in-memory cache   |
+| Client Library | Lettuce      | 6.x     | Async Redis client            |
+| Abstraction    | Spring Cache | 6.x     | Provider-agnostic caching API |
+| Serialization  | Jackson JSON | 2.15+   | Type-safe serialization       |
 
 ---
 
 ## Implementation Roadmap
 
 ### Phase 1: Common Infrastructure (Week 1)
+
 - Create `common-cache` module
 - Configure Redis connection
 - Implement base decorator and key generator
 - Add metrics and health checks
 
 ### Phase 2: Service Implementation (Week 2-3)
+
 - Implement cached repository adapters per service
 - Create cache invalidation listeners
 - Add cache warming services
 - Write unit tests
 
 **Priority Order:**
+
 1. User Service
 2. Product Service
 3. Stock Management Service
@@ -134,12 +137,14 @@ Caching is **NOT OPTIONAL**. All services must implement:
 6. Notification Service
 
 ### Phase 3: Testing and Validation (Week 4)
+
 - Integration testing
 - Performance testing
 - Failure scenario testing
 - Monitoring validation
 
 ### Phase 4: Production Deployment (Week 5)
+
 - Deploy Redis cluster
 - Canary deployment (10% → 100%)
 - Monitor and tune
@@ -151,21 +156,21 @@ Caching is **NOT OPTIONAL**. All services must implement:
 
 ### Performance Targets
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Cache Hit Ratio | > 80% | Micrometer metrics |
-| P95 Response Time | < 100ms | Load testing |
-| Database Load Reduction | > 70% | Query metrics |
-| Throughput Increase | > 3x | k6 load tests |
+| Metric                  | Target  | Measurement        |
+|-------------------------|---------|--------------------|
+| Cache Hit Ratio         | > 80%   | Micrometer metrics |
+| P95 Response Time       | < 100ms | Load testing       |
+| Database Load Reduction | > 70%   | Query metrics      |
+| Throughput Increase     | > 3x    | k6 load tests      |
 
 ### Quality Targets
 
-| Metric | Target | Validation |
-|--------|--------|------------|
-| Test Coverage | > 85% | JaCoCo |
-| Zero Stale Data | 100% | Integration tests |
-| Graceful Degradation | 100% | Failure scenario tests |
-| Multi-Tenant Isolation | 100% | Security tests |
+| Metric                 | Target | Validation             |
+|------------------------|--------|------------------------|
+| Test Coverage          | > 85%  | JaCoCo                 |
+| Zero Stale Data        | 100%   | Integration tests      |
+| Graceful Degradation   | 100%   | Failure scenario tests |
+| Multi-Tenant Isolation | 100%   | Security tests         |
 
 ---
 
@@ -206,6 +211,7 @@ For questions or clarifications:
 **Review Cycle:** Quarterly or when caching patterns change
 
 **Approval:**
+
 - Software Architect: [Pending]
 - DevOps Lead: [Pending]
 - Development Team Lead: [Pending]

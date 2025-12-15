@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,7 @@ import org.springframework.util.backoff.BackOff;
 import org.springframework.util.backoff.ExponentialBackOff;
 import org.springframework.web.client.RestTemplate;
 
+import com.ccbsa.common.messaging.config.KafkaConfig;
 import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
 import com.ccbsa.wms.common.security.ServiceSecurityConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * Notification Service Configuration
  * <p>
  * Imports common security configuration for JWT validation and tenant context.
+ * Imports Kafka configuration for messaging infrastructure (provides kafkaObjectMapper bean).
  * Imports common data access configuration for multi-tenant schema resolution.
  * <p>
  * The {@link MultiTenantDataAccessConfig} provides the {@link com.ccbsa.wms.common.dataaccess.TenantSchemaResolver}
@@ -37,7 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * used by Hibernate for dynamic schema resolution.
  */
 @Configuration
-@Import( {ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class})
+@Import( {ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class})
 public class NotificationServiceConfiguration {
 
     @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
@@ -83,12 +86,14 @@ public class NotificationServiceConfiguration {
      * while enabling proper typed deserialization.
      * <p>
      * Uses ErrorHandlingDeserializer to gracefully handle deserialization errors.
+     * <p>
+     * Explicitly uses kafkaObjectMapper to ensure type information is properly deserialized.
      *
-     * @param objectMapper ObjectMapper for JSON deserialization (configured with JsonTypeInfo)
+     * @param kafkaObjectMapper Kafka ObjectMapper for JSON deserialization (configured with JsonTypeInfo)
      * @return Consumer factory configured for typed deserialization
      */
     @Bean("externalEventConsumerFactory")
-    public ConsumerFactory<String, Object> externalEventConsumerFactory(ObjectMapper objectMapper) {
+    public ConsumerFactory<String, Object> externalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service");
@@ -105,7 +110,7 @@ public class NotificationServiceConfiguration {
 
         // Configure JsonDeserializer to use @class property from JSON payload
         // ObjectMapper is configured with JsonTypeInfo mixin to include @class property
-        JsonDeserializer<Object> jsonDeserializer = new JsonDeserializer<>(Object.class, objectMapper);
+        JsonDeserializer<Object> jsonDeserializer = new JsonDeserializer<>(Object.class, kafkaObjectMapper);
         jsonDeserializer.addTrustedPackages("*");
         // Use @class property from JSON payload, not type headers
         jsonDeserializer.setUseTypeHeaders(false);
@@ -184,12 +189,14 @@ public class NotificationServiceConfiguration {
      * Uses typed deserialization with @class property from JSON payload.
      * The ObjectMapper is configured with JsonTypeInfo to include @class property,
      * allowing proper typed deserialization of internal events.
+     * <p>
+     * Explicitly uses kafkaObjectMapper to ensure type information is properly deserialized.
      *
-     * @param objectMapper ObjectMapper for JSON deserialization (configured with JsonTypeInfo)
+     * @param kafkaObjectMapper Kafka ObjectMapper for JSON deserialization (configured with JsonTypeInfo)
      * @return Consumer factory configured for internal events with typed deserialization
      */
     @Bean("internalEventConsumerFactory")
-    public ConsumerFactory<String, Object> internalEventConsumerFactory(ObjectMapper objectMapper) {
+    public ConsumerFactory<String, Object> internalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service");
@@ -205,7 +212,7 @@ public class NotificationServiceConfiguration {
 
         // Configure JsonDeserializer to use @class property from JSON payload
         // ObjectMapper is configured with JsonTypeInfo mixin to include @class property
-        JsonDeserializer<Object> jsonDeserializer = new JsonDeserializer<>(Object.class, objectMapper);
+        JsonDeserializer<Object> jsonDeserializer = new JsonDeserializer<>(Object.class, kafkaObjectMapper);
         jsonDeserializer.addTrustedPackages("*");
         // Use @class property from JSON payload, not type headers
         jsonDeserializer.setUseTypeHeaders(false);
@@ -224,14 +231,14 @@ public class NotificationServiceConfiguration {
     /**
      * Listener container factory for internal notification events.
      * <p>
-     * Overrides the default kafkaListenerContainerFactory from common config to handle
-     * internal events (NotificationCreatedEvent) properly with error handling.
+     * Uses the internalEventConsumerFactory to handle NotificationCreatedEvent with
+     * production-grade error handling without overriding the common factory bean.
      *
      * @param internalEventConsumerFactory Consumer factory for internal events
      * @return Listener container factory
      */
-    @Bean("kafkaListenerContainerFactory")
-    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(
+    @Bean("internalEventKafkaListenerContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory<String, Object> internalEventKafkaListenerContainerFactory(
             ConsumerFactory<String, Object> internalEventConsumerFactory) {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();

@@ -20,6 +20,62 @@ import com.fasterxml.jackson.databind.JsonNode;
 @DisplayName("User Management API Tests")
 class UserManagementTest extends BaseIntegrationTest {
 
+    @Test
+    @DisplayName("Should list users with valid authentication")
+    void shouldListUsers() {
+        // When/Then
+        RequestHeaderHelper.addTenantHeaderIfNeeded(
+                        webTestClient
+                                .get()
+                                .uri("/users?page=0&size=10")
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
+                        authHelper,
+                        accessToken)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.data").exists();
+    }
+
+    @Test
+    @DisplayName("Should get user by ID with valid authentication")
+    void shouldGetUserById() {
+        // Given - Create a real user
+        String testUserId = createActiveUser();
+
+        // When/Then
+        RequestHeaderHelper.addTenantHeaderIfNeeded(
+                        webTestClient
+                                .get()
+                                .uri(String.format("/users/%s", testUserId))
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
+                        authHelper,
+                        accessToken)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.data.userId").isEqualTo(testUserId);
+    }
+
+    /**
+     * Creates a user in ACTIVE status using an active tenant.
+     * Overrides the base class method to ensure an active tenant is used.
+     *
+     * @return User ID
+     */
+    @Override
+    protected String createActiveUser() {
+        String activeTenantId = findOrCreateActiveTenant();
+        return userBuilder()
+                .withTenantId(activeTenantId)
+                .withStatus(UserTestDataBuilder.UserStatus.ACTIVE)
+                .build();
+    }
+
     /**
      * Finds an active tenant or creates one if none exists.
      * First attempts to find an active tenant from the list of tenants.
@@ -136,77 +192,6 @@ class UserManagementTest extends BaseIntegrationTest {
         return tenantId;
     }
 
-    /**
-     * Creates a user in ACTIVE status using an active tenant.
-     * Overrides the base class method to ensure an active tenant is used.
-     *
-     * @return User ID
-     */
-    @Override
-    protected String createActiveUser() {
-        String activeTenantId = findOrCreateActiveTenant();
-        return userBuilder()
-                .withTenantId(activeTenantId)
-                .withStatus(UserTestDataBuilder.UserStatus.ACTIVE)
-                .build();
-    }
-
-    /**
-     * Creates a user in INACTIVE status using an active tenant.
-     * Overrides the base class method to ensure an active tenant is used.
-     *
-     * @return User ID
-     */
-    @Override
-    protected String createInactiveUser() {
-        String activeTenantId = findOrCreateActiveTenant();
-        return userBuilder()
-                .withTenantId(activeTenantId)
-                .withStatus(UserTestDataBuilder.UserStatus.INACTIVE)
-                .build();
-    }
-
-    @Test
-    @DisplayName("Should list users with valid authentication")
-    void shouldListUsers() {
-        // When/Then
-        RequestHeaderHelper.addTenantHeaderIfNeeded(
-                        webTestClient
-                                .get()
-                                .uri("/users?page=0&size=10")
-                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
-                        authHelper,
-                        accessToken)
-                .exchange()
-                .expectStatus().isOk()
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.data").exists();
-    }
-
-    @Test
-    @DisplayName("Should get user by ID with valid authentication")
-    void shouldGetUserById() {
-        // Given - Create a real user
-        String testUserId = createActiveUser();
-
-        // When/Then
-        RequestHeaderHelper.addTenantHeaderIfNeeded(
-                        webTestClient
-                                .get()
-                                .uri(String.format("/users/%s", testUserId))
-                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
-                        authHelper,
-                        accessToken)
-                .exchange()
-                .expectStatus().isOk()
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.data.userId").isEqualTo(testUserId);
-    }
-
     @Test
     @DisplayName("Should create user with valid authentication")
     void shouldCreateUser() {
@@ -293,6 +278,21 @@ class UserManagementTest extends BaseIntegrationTest {
                         accessToken)
                 .exchange()
                 .expectStatus().isNoContent();
+    }
+
+    /**
+     * Creates a user in INACTIVE status using an active tenant.
+     * Overrides the base class method to ensure an active tenant is used.
+     *
+     * @return User ID
+     */
+    @Override
+    protected String createInactiveUser() {
+        String activeTenantId = findOrCreateActiveTenant();
+        return userBuilder()
+                .withTenantId(activeTenantId)
+                .withStatus(UserTestDataBuilder.UserStatus.INACTIVE)
+                .build();
     }
 
     @Test
