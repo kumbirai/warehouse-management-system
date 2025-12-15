@@ -1,8 +1,10 @@
 package com.ccbsa.common.messaging.config;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -101,8 +103,8 @@ public class ObjectPropertyFormatDeserializer extends JsonDeserializer<Object> {
      * @param node The JsonNode array to convert
      * @return List representation of the JSON array
      */
-    private java.util.List<Object> convertToArray(JsonNode node) {
-        java.util.List<Object> list = new java.util.ArrayList<>();
+    private List<Object> convertToArray(JsonNode node) {
+        List<Object> list = new ArrayList<>();
         
         if (node.isArray()) {
             for (JsonNode element : node) {

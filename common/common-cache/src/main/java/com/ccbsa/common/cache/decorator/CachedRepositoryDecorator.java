@@ -3,6 +3,8 @@ package com.ccbsa.common.cache.decorator;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,7 +104,7 @@ public abstract class CachedRepositoryDecorator<T, ID> {
      */
     @SuppressWarnings("unchecked")
     protected Optional<T> findWithCache(TenantId tenantId, UUID entityId,
-                                        java.util.function.Function<UUID, Optional<T>> databaseLoader) {
+                                        Function<UUID, Optional<T>> databaseLoader) {
         // 1. Generate cache key
         String cacheKey = CacheKeyGenerator.forEntity(tenantId, cacheNamespace, entityId);
 
@@ -150,7 +152,7 @@ public abstract class CachedRepositoryDecorator<T, ID> {
      * 3. Return saved entity
      */
     protected T saveWithCache(TenantId tenantId, UUID entityId, T entity,
-                              java.util.function.Function<T, T> databaseSaver) {
+                              Function<T, T> databaseSaver) {
         // 1. Save to database first (source of truth)
         T savedEntity = databaseSaver.apply(entity);
 
@@ -177,7 +179,7 @@ public abstract class CachedRepositoryDecorator<T, ID> {
      * 2. Evict from cache
      */
     protected void deleteWithCache(TenantId tenantId, UUID entityId,
-                                   java.util.function.Consumer<UUID> databaseDeleter) {
+                                   Consumer<UUID> databaseDeleter) {
         // 1. Delete from database first
         databaseDeleter.accept(entityId);
 
