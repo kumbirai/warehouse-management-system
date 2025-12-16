@@ -1,5 +1,7 @@
 package com.ccbsa.common.cache.invalidation;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +64,7 @@ public abstract class CacheInvalidationEventListener {
         // Strategy 1: Invalidate single entity if event contains aggregate ID
         if (event.getAggregateId() != null) {
             try {
-                java.util.UUID aggregateId = java.util.UUID.fromString(event.getAggregateId());
+                UUID aggregateId = UUID.fromString(event.getAggregateId());
                 cacheInvalidator.invalidateEntity(tenantId, namespace, aggregateId);
             } catch (IllegalArgumentException e) {
                 log.warn("Invalid aggregate ID format in event: {}", event.getAggregateId());

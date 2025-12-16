@@ -1,0 +1,47 @@
+import { useState, useEffect } from 'react';
+import { locationService } from '../services/locationService';
+import { Location } from '../types/location';
+import { logger } from '../../../utils/logger';
+
+export interface UseLocationResult {
+  location: Location | null;
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => Promise<void>;
+}
+
+export const useLocation = (locationId: string, tenantId: string): UseLocationResult => {
+  const [location, setLocation] = useState<Location | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchLocation = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await locationService.getLocation(locationId, tenantId);
+      
+      if (response.success && response.data) {
+        setLocation(response.data);
+      } else {
+        throw new Error(response.error?.message || 'Failed to fetch location');
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to fetch location');
+      logger.error('Error fetching location:', error);
+      setError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (locationId && tenantId) {
+      fetchLocation();
+    }
+  }, [locationId, tenantId]);
+
+  return { location, isLoading, error, refetch: fetchLocation };
+};
+

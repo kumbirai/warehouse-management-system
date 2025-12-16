@@ -28,6 +28,10 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+    # Repair checksum on validation failure (development only)
+    # Set FLYWAY_REPAIR_ON_MIGRATE=true to enable automatic repair
+    # In production, use: mvn flyway:repair or flyway repair command
+    repair-on-migrate: ${FLYWAY_REPAIR_ON_MIGRATE:false}
   
   # Kafka Configuration
   kafka:

@@ -60,7 +60,7 @@ public class KafkaHealthIndicator implements HealthIndicator {
             try {
                 String clusterId = clusterResult.clusterId().get(5, TimeUnit.SECONDS);
                 details.put("clusterId", clusterId);
-            } catch (java.lang.InterruptedException | ExecutionException | TimeoutException e) {
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 logger.warn("Could not retrieve cluster ID: {}", e.getMessage());
                 details.put("clusterId", "unknown");
             }
@@ -70,7 +70,7 @@ public class KafkaHealthIndicator implements HealthIndicator {
                 String controller = clusterResult.controller().get(5, TimeUnit.SECONDS)
                         .idString();
                 details.put("controller", controller);
-            } catch (java.lang.InterruptedException | ExecutionException | TimeoutException e) {
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 logger.warn("Could not retrieve controller: {}", e.getMessage());
             }
 
@@ -78,7 +78,7 @@ public class KafkaHealthIndicator implements HealthIndicator {
             try {
                 int nodeCount = clusterResult.nodes().get(5, TimeUnit.SECONDS).size();
                 details.put("nodeCount", nodeCount);
-            } catch (java.lang.InterruptedException | ExecutionException | TimeoutException e) {
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 logger.warn("Could not retrieve node count: {}", e.getMessage());
             }
 

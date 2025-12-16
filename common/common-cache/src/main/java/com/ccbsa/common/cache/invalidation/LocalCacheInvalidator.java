@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -31,14 +30,11 @@ public class LocalCacheInvalidator {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCacheInvalidator.class);
 
-    private final CacheManager cacheManager;
     private final RedisTemplate<String, Object> redisTemplate;
 
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "RedisTemplate is a Spring-managed bean that is thread-safe and immutable after initialization. It is safe to "
             + "store the reference.")
-    public LocalCacheInvalidator(CacheManager cacheManager,
-                                 RedisTemplate<String, Object> redisTemplate) {
-        this.cacheManager = cacheManager;
+    public LocalCacheInvalidator(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 

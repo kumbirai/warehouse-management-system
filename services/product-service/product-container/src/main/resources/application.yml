@@ -22,6 +22,7 @@ spring:
       hibernate:
         # Dialect is auto-detected, no need to specify explicitly
         format_sql: true
+        physical_naming_strategy: com.ccbsa.wms.common.dataaccess.naming.TenantAwarePhysicalNamingStrategy
   
   # Flyway Configuration
   flyway:

@@ -25,7 +25,6 @@ import org.springframework.web.server.adapter.HttpWebHandlerAdapter;
 import com.ccbsa.wms.gateway.api.dto.LoginRequest;
 import com.ccbsa.wms.gateway.api.dto.LoginResponse;
 import com.ccbsa.wms.gateway.api.dto.UserContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -45,7 +44,6 @@ public final class MockGatewayServer implements AutoCloseable {
     private static final String DEFAULT_PASSWORD = "Password123@";
     private static final Duration RESPONSE_TIMEOUT = Duration.ofSeconds(30);
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final Map<String, TenantRecord> tenants = new ConcurrentHashMap<>();
     private final Map<String, UserRecord> users = new ConcurrentHashMap<>();
     private final Map<String, TokenRecord> accessTokens = new ConcurrentHashMap<>();
@@ -188,9 +186,8 @@ public final class MockGatewayServer implements AutoCloseable {
     }
 
     private Mono<ServerResponse> handleRefresh(ServerRequest request) {
-        String refreshToken = request.cookies().getFirst("refreshToken") != null
-                ? request.cookies().getFirst("refreshToken").getValue()
-                : null;
+        var refreshTokenCookie = request.cookies().getFirst("refreshToken");
+        String refreshToken = refreshTokenCookie != null ? refreshTokenCookie.getValue() : null;
         TokenRecord existing = refreshToken != null ? refreshTokens.get(refreshToken) : null;
         UserRecord user = existing != null ? users.get(existing.userId()) : users.values().stream().findFirst().orElse(null);
         if (user == null) {
