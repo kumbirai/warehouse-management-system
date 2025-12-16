@@ -70,7 +70,7 @@ public final class UploadProductCsvResult {
         }
 
         public Builder errors(List<ProductCsvError> errors) {
-            this.errors = errors;
+            this.errors = errors != null ? List.copyOf(errors) : null;
             return this;
         }
 

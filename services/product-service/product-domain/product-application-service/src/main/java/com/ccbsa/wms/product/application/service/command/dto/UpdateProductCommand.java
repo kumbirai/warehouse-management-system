@@ -100,7 +100,7 @@ public final class UpdateProductCommand {
         }
 
         public Builder secondaryBarcodes(List<ProductBarcode> secondaryBarcodes) {
-            this.secondaryBarcodes = secondaryBarcodes;
+            this.secondaryBarcodes = secondaryBarcodes != null ? List.copyOf(secondaryBarcodes) : null;
             return this;
         }
 
