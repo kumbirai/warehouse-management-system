@@ -60,7 +60,7 @@ export const ProductList = ({ products, isLoading, error }: ProductListProps) =>
           </TableRow>
         </TableHead>
         <TableBody>
-          {products.map((product) => (
+          {products.map(product => (
             <TableRow
               key={product.productId}
               hover
@@ -80,4 +80,3 @@ export const ProductList = ({ products, isLoading, error }: ProductListProps) =>
     </TableContainer>
   );
 };
-

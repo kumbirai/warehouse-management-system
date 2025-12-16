@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { productService } from '../services/productService';
 import { Product } from '../types/product';
 import { logger } from '../../../utils/logger';
@@ -21,12 +21,16 @@ export const useProduct = (productId: string, tenantId: string): UseProductResul
 
     try {
       const response = await productService.getProduct(productId, tenantId);
-      
-      if (response.success && response.data) {
-        setProduct(response.data);
-      } else {
-        throw new Error(response.error?.message || 'Failed to fetch product');
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to fetch product');
       }
+
+      if (!response.data) {
+        throw new Error('Invalid response from server');
+      }
+
+      setProduct(response.data);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to fetch product');
       logger.error('Error fetching product:', error);
@@ -44,4 +48,3 @@ export const useProduct = (productId: string, tenantId: string): UseProductResul
 
   return { product, isLoading, error, refetch: fetchProduct };
 };
-

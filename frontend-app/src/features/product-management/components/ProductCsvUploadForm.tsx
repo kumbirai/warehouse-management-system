@@ -2,7 +2,6 @@ import {
   Alert,
   Box,
   Button,
-  CircularProgress,
   LinearProgress,
   Paper,
   Table,
@@ -13,8 +12,8 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { useState, useRef } from 'react';
-import { UploadProductCsvResponse, ProductCsvError } from '../types/product';
+import { useRef, useState } from 'react';
+import { ProductCsvError, UploadProductCsvResponse } from '../types/product';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 interface ProductCsvUploadFormProps {
@@ -137,8 +136,8 @@ export const ProductCsvUploadForm = ({ onUpload, isLoading }: ProductCsvUploadFo
               Upload Complete
             </Typography>
             <Typography variant="body2">
-              Total Rows: {uploadResult.totalRows} | Created: {uploadResult.createdCount} |
-              Updated: {uploadResult.updatedCount} | Errors: {uploadResult.errorCount}
+              Total Rows: {uploadResult.totalRows} | Created: {uploadResult.createdCount} | Updated:{' '}
+              {uploadResult.updatedCount} | Errors: {uploadResult.errorCount}
             </Typography>
           </Alert>
 
@@ -171,11 +170,7 @@ export const ProductCsvUploadForm = ({ onUpload, isLoading }: ProductCsvUploadFo
       )}
 
       <Box sx={{ display: 'flex', gap: 2 }}>
-        <Button
-          variant="contained"
-          onClick={handleUpload}
-          disabled={!selectedFile || isLoading}
-        >
+        <Button variant="contained" onClick={handleUpload} disabled={!selectedFile || isLoading}>
           {isLoading ? 'Uploading...' : 'Upload CSV'}
         </Button>
         <Button variant="outlined" onClick={handleClear} disabled={isLoading}>
@@ -185,4 +180,3 @@ export const ProductCsvUploadForm = ({ onUpload, isLoading }: ProductCsvUploadFo
     </Paper>
   );
 };
-

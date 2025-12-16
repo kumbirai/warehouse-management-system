@@ -23,12 +23,7 @@ export const ProductCreatePage = () => {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <ProductForm
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-        isSubmitting={isLoading}
-      />
+      <ProductForm onSubmit={handleSubmit} onCancel={handleCancel} isSubmitting={isLoading} />
     </Container>
   );
 };
-

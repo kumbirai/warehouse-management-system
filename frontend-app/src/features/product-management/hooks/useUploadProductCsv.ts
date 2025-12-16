@@ -30,18 +30,22 @@ export const useUploadProductCsv = (): UseUploadProductCsvResult => {
       }
 
       const response = await productService.uploadProductCsv(file, tenantId);
-      
-      if (response.success && response.data) {
-        logger.info('CSV uploaded successfully', {
-          totalRows: response.data.totalRows,
-          createdCount: response.data.createdCount,
-          updatedCount: response.data.updatedCount,
-          errorCount: response.data.errorCount,
-        });
-        return response.data;
-      } else {
-        throw new Error(response.error?.message || 'Failed to upload CSV');
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to upload CSV');
       }
+
+      if (!response.data) {
+        throw new Error('Invalid response from server');
+      }
+
+      logger.info('CSV uploaded successfully', {
+        totalRows: response.data.totalRows,
+        createdCount: response.data.createdCount,
+        updatedCount: response.data.updatedCount,
+        errorCount: response.data.errorCount,
+      });
+      return response.data;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to upload CSV');
       logger.error('Error uploading CSV:', error);
@@ -54,4 +58,3 @@ export const useUploadProductCsv = (): UseUploadProductCsvResult => {
 
   return { uploadCsv, isLoading, error };
 };
-

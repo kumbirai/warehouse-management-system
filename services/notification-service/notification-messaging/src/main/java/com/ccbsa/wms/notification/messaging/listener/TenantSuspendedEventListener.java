@@ -13,15 +13,15 @@ import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.application.context.CorrelationContext;
 import com.ccbsa.common.domain.valueobject.EmailAddress;
+import com.ccbsa.common.domain.valueobject.Message;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.common.domain.valueobject.Title;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.notification.application.service.command.CreateNotificationCommandHandler;
 import com.ccbsa.wms.notification.application.service.command.dto.CreateNotificationCommand;
 import com.ccbsa.wms.notification.application.service.port.service.TenantServicePort;
-import com.ccbsa.wms.notification.domain.core.valueobject.Message;
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
-import com.ccbsa.wms.notification.domain.core.valueobject.Title;
 
 /**
  * Event Listener: TenantSuspendedEventListener

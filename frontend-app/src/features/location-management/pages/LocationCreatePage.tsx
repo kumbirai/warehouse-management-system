@@ -23,12 +23,7 @@ export const LocationCreatePage = () => {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <LocationForm
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-        isSubmitting={isLoading}
-      />
+      <LocationForm onSubmit={handleSubmit} onCancel={handleCancel} isSubmitting={isLoading} />
     </Container>
   );
 };
-

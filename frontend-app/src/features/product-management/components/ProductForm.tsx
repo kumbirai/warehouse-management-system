@@ -13,7 +13,7 @@ import {
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CreateProductRequest, UnitOfMeasure } from '../types/product';
+import { CreateProductRequest } from '../types/product';
 import { useCheckProductCodeUniqueness } from '../hooks/useCheckProductCodeUniqueness';
 import { useAuth } from '../../../hooks/useAuth';
 import { useEffect, useState } from 'react';
@@ -24,10 +24,7 @@ const productSchema = z.object({
     .string()
     .min(1, 'Product code is required')
     .max(50, 'Product code cannot exceed 50 characters')
-    .regex(
-      /^[A-Za-z0-9_-]+$/,
-      'Product code must be alphanumeric with hyphens/underscores only'
-    ),
+    .regex(/^[A-Za-z0-9_-]+$/, 'Product code must be alphanumeric with hyphens/underscores only'),
   description: z
     .string()
     .min(1, 'Description is required')
@@ -137,7 +134,11 @@ export const ProductForm = ({
               required
               disabled={isUpdate}
               error={!!errors.productCode || !!productCodeError}
-              helperText={errors.productCode?.message || productCodeError || (isCheckingUniqueness ? 'Checking...' : '')}
+              helperText={
+                errors.productCode?.message ||
+                productCodeError ||
+                (isCheckingUniqueness ? 'Checking...' : '')
+              }
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -203,10 +204,10 @@ export const ProductForm = ({
             <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
               <TextField
                 value={newSecondaryBarcode}
-                onChange={(e) => setNewSecondaryBarcode(e.target.value)}
+                onChange={e => setNewSecondaryBarcode(e.target.value)}
                 label="Add Secondary Barcode"
                 size="small"
-                onKeyPress={(e) => {
+                onKeyPress={e => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
                     handleAddSecondaryBarcode();
@@ -245,7 +246,13 @@ export const ProductForm = ({
                 variant="contained"
                 disabled={isSubmitting || !!productCodeError || isCheckingUniqueness}
               >
-                {isSubmitting ? (isUpdate ? 'Updating...' : 'Creating...') : (isUpdate ? 'Update Product' : 'Create Product')}
+                {isSubmitting
+                  ? isUpdate
+                    ? 'Updating...'
+                    : 'Creating...'
+                  : isUpdate
+                    ? 'Update Product'
+                    : 'Create Product'}
               </Button>
             </Box>
           </Grid>
@@ -254,4 +261,3 @@ export const ProductForm = ({
     </Paper>
   );
 };
-

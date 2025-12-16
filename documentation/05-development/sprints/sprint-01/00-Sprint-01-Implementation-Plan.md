@@ -52,6 +52,7 @@ Establish foundational infrastructure and core domain models to support warehous
 **Priority:** Must Have
 
 **Acceptance Criteria:**
+
 - System allows creation of location with unique barcode identifier
 - Barcode format follows CCBSA standards
 - System validates barcode uniqueness
@@ -69,6 +70,7 @@ Establish foundational infrastructure and core domain models to support warehous
 **Priority:** Must Have
 
 **Acceptance Criteria:**
+
 - System accepts CSV file uploads through web interface
 - CSV format includes: product codes, descriptions, barcodes, unit of measure
 - System validates CSV file format and required columns before processing
@@ -89,6 +91,7 @@ Establish foundational infrastructure and core domain models to support warehous
 **Priority:** Must Have
 
 **Acceptance Criteria:**
+
 - System provides form-based UI for product data entry
 - Form includes fields: product code, description, barcode(s), unit of measure
 - System validates required fields and data formats in real-time
@@ -268,6 +271,7 @@ Frontend (React)
 ### Location Management Service
 
 **Responsibilities:**
+
 - Manage warehouse location master data
 - Generate and validate location barcodes
 - Store location coordinates and metadata
@@ -275,11 +279,13 @@ Frontend (React)
 
 **Database:** `location_management_db`  
 **Events Published:**
+
 - `LocationCreatedEvent`
 - `LocationBarcodeUpdatedEvent`
 - `LocationStatusChangedEvent`
 
 **Events Consumed:**
+
 - None (foundational service)
 
 ---
@@ -287,6 +293,7 @@ Frontend (React)
 ### Product Service
 
 **Responsibilities:**
+
 - Manage product master data
 - Validate product barcodes
 - Support multiple barcode formats
@@ -294,11 +301,13 @@ Frontend (React)
 
 **Database:** `product_db`  
 **Events Published:**
+
 - `ProductCreatedEvent`
 - `ProductUpdatedEvent`
 - `ProductBarcodeUpdatedEvent`
 
 **Events Consumed:**
+
 - None (reference data service)
 
 **Note:** Product Service is a **reference data service** that other services query synchronously for validation.
@@ -325,12 +334,14 @@ Frontend (React)
 **Purpose:** Mimic frontend calls to backend through gateway
 
 **Test Structure:**
+
 - Base test class with authentication setup
 - Test data builders for realistic test data
 - Request/response validation
 - Error scenario testing
 
 **Test Coverage:**
+
 - Location creation through gateway
 - Product CSV upload through gateway
 - Product manual entry through gateway
@@ -346,97 +357,97 @@ Frontend (React)
 ### Phase 1: Backend Domain Models (Days 1-3)
 
 1. **Location Management Service Domain Core**
-   - Location aggregate root
-   - LocationBarcode value object
-   - LocationCreatedEvent
-   - Business logic validation
+    - Location aggregate root
+    - LocationBarcode value object
+    - LocationCreatedEvent
+    - Business logic validation
 
 2. **Product Service Domain Core**
-   - Product aggregate root
-   - ProductCode value object
-   - Barcode value object
-   - ProductCreatedEvent, ProductUpdatedEvent
-   - Business logic validation
+    - Product aggregate root
+    - ProductCode value object
+    - Barcode value object
+    - ProductCreatedEvent, ProductUpdatedEvent
+    - Business logic validation
 
 ### Phase 2: Backend Application Services (Days 4-6)
 
 1. **Location Management Application Service**
-   - CreateLocationCommandHandler
-   - GetLocationQueryHandler
-   - Repository ports
-   - Event publisher ports
+    - CreateLocationCommandHandler
+    - GetLocationQueryHandler
+    - Repository ports
+    - Event publisher ports
 
 2. **Product Service Application Service**
-   - CreateProductCommandHandler
-   - UpdateProductCommandHandler
-   - UploadProductCsvCommandHandler
-   - GetProductQueryHandler
-   - ListProductsQueryHandler
-   - Repository ports
-   - Event publisher ports
+    - CreateProductCommandHandler
+    - UpdateProductCommandHandler
+    - UploadProductCsvCommandHandler
+    - GetProductQueryHandler
+    - ListProductsQueryHandler
+    - Repository ports
+    - Event publisher ports
 
 ### Phase 3: Backend Infrastructure (Days 7-9)
 
 1. **Location Management Data Access**
-   - LocationEntity (JPA)
-   - LocationRepositoryAdapter
-   - Entity mappers
-   - Database migrations
+    - LocationEntity (JPA)
+    - LocationRepositoryAdapter
+    - Entity mappers
+    - Database migrations
 
 2. **Product Service Data Access**
-   - ProductEntity (JPA)
-   - ProductBarcodeEntity (JPA)
-   - ProductRepositoryAdapter
-   - Entity mappers
-   - Database migrations
+    - ProductEntity (JPA)
+    - ProductBarcodeEntity (JPA)
+    - ProductRepositoryAdapter
+    - Entity mappers
+    - Database migrations
 
 3. **Messaging**
-   - Event publishers
-   - Event listeners (if needed)
-   - Kafka configuration
+    - Event publishers
+    - Event listeners (if needed)
+    - Kafka configuration
 
 ### Phase 4: Backend REST API (Days 10-11)
 
 1. **Location Management REST API**
-   - LocationCommandController
-   - LocationQueryController
-   - DTOs and mappers
-   - Exception handlers
+    - LocationCommandController
+    - LocationQueryController
+    - DTOs and mappers
+    - Exception handlers
 
 2. **Product Service REST API**
-   - ProductCommandController
-   - ProductQueryController
-   - DTOs and mappers
-   - Exception handlers
-   - CSV upload endpoint
+    - ProductCommandController
+    - ProductQueryController
+    - DTOs and mappers
+    - Exception handlers
+    - CSV upload endpoint
 
 ### Phase 5: Frontend Implementation (Days 12-14)
 
 1. **Location Management UI**
-   - Location creation form
-   - Location list view
-   - Location detail view
-   - Barcode display
+    - Location creation form
+    - Location list view
+    - Location detail view
+    - Barcode display
 
 2. **Product Management UI**
-   - Product creation form
-   - Product list view
-   - Product detail view
-   - CSV upload component
-   - Product barcode management
+    - Product creation form
+    - Product list view
+    - Product detail view
+    - CSV upload component
+    - Product barcode management
 
 ### Phase 6: Gateway API Tests (Day 15)
 
 1. **Location Management Tests**
-   - Create location tests
-   - Get location tests
-   - Error scenario tests
+    - Create location tests
+    - Get location tests
+    - Error scenario tests
 
 2. **Product Service Tests**
-   - Create product tests
-   - CSV upload tests
-   - Get product tests
-   - Error scenario tests
+    - Create product tests
+    - CSV upload tests
+    - Get product tests
+    - Error scenario tests
 
 ---
 
@@ -476,31 +487,31 @@ Frontend (React)
 ### Technical Risks
 
 1. **Barcode Format Validation**
-   - **Risk:** CCBSA barcode standards may be complex
-   - **Mitigation:** Start with basic validation, extend as needed
-   - **Contingency:** Use regex patterns for format validation
+    - **Risk:** CCBSA barcode standards may be complex
+    - **Mitigation:** Start with basic validation, extend as needed
+    - **Contingency:** Use regex patterns for format validation
 
 2. **CSV Parsing Performance**
-   - **Risk:** Large CSV files may cause performance issues
-   - **Mitigation:** Implement streaming CSV parser
-   - **Contingency:** Add file size limits and batch processing
+    - **Risk:** Large CSV files may cause performance issues
+    - **Mitigation:** Implement streaming CSV parser
+    - **Contingency:** Add file size limits and batch processing
 
 3. **Event Publishing Reliability**
-   - **Risk:** Events may not be published reliably
-   - **Mitigation:** Use Kafka with idempotent producers
-   - **Contingency:** Implement event publishing retry logic
+    - **Risk:** Events may not be published reliably
+    - **Mitigation:** Use Kafka with idempotent producers
+    - **Contingency:** Implement event publishing retry logic
 
 ### Integration Risks
 
 1. **Gateway Routing**
-   - **Risk:** Gateway may not route correctly to new services
-   - **Mitigation:** Test routing early in development
-   - **Contingency:** Verify Eureka service registration
+    - **Risk:** Gateway may not route correctly to new services
+    - **Mitigation:** Test routing early in development
+    - **Contingency:** Verify Eureka service registration
 
 2. **Frontend-Backend Integration**
-   - **Risk:** API contracts may not match
-   - **Mitigation:** Use OpenAPI/Swagger for contract definition
-   - **Contingency:** Update DTOs to match frontend needs
+    - **Risk:** API contracts may not match
+    - **Mitigation:** Use OpenAPI/Swagger for contract definition
+    - **Contingency:** Update DTOs to match frontend needs
 
 ---
 

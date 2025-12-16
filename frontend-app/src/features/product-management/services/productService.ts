@@ -3,12 +3,12 @@ import { ApiResponse } from '../../../types/api';
 import {
   CreateProductRequest,
   CreateProductResponse,
+  Product,
+  ProductCodeUniquenessResponse,
+  ProductListFilters,
   UpdateProductRequest,
   UpdateProductResponse,
-  Product,
-  ProductListFilters,
   UploadProductCsvResponse,
-  ProductCodeUniquenessResponse,
 } from '../types/product';
 import { logger } from '../../../utils/logger';
 
@@ -127,5 +127,44 @@ export const productService = {
     );
     return response.data;
   },
-};
 
+  /**
+   * Validates a product barcode.
+   */
+  async validateBarcode(
+    barcode: string,
+    tenantId: string
+  ): Promise<
+    ApiResponse<{
+      valid: boolean;
+      productInfo?: {
+        productId: string;
+        productCode: string;
+        description: string;
+        primaryBarcode: string;
+      };
+      barcodeFormat: string;
+    }>
+  > {
+    const response = await apiClient.get<
+      ApiResponse<{
+        valid: boolean;
+        productInfo?: {
+          productId: string;
+          productCode: string;
+          description: string;
+          primaryBarcode: string;
+        };
+        barcodeFormat: string;
+      }>
+    >(`${PRODUCT_BASE_PATH}/validate-barcode`, {
+      params: {
+        barcode,
+      },
+      headers: {
+        'X-Tenant-Id': tenantId,
+      },
+    });
+    return response.data;
+  },
+};

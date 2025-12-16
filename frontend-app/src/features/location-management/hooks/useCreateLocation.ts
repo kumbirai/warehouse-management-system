@@ -21,13 +21,17 @@ export const useCreateLocation = (): UseCreateLocationResult => {
 
     try {
       const response = await locationService.createLocation(request, tenantId);
-      
-      if (response.success && response.data) {
-        logger.info('Location created successfully', { locationId: response.data.locationId });
-        navigate(`/locations/${response.data.locationId}`);
-      } else {
-        throw new Error(response.error?.message || 'Failed to create location');
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to create location');
       }
+
+      if (!response.data) {
+        throw new Error('Invalid response from server');
+      }
+
+      logger.info('Location created successfully', { locationId: response.data.locationId });
+      navigate(`/locations/${response.data.locationId}`);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to create location');
       logger.error('Error creating location:', error);
@@ -40,4 +44,3 @@ export const useCreateLocation = (): UseCreateLocationResult => {
 
   return { createLocation, isLoading, error };
 };
-

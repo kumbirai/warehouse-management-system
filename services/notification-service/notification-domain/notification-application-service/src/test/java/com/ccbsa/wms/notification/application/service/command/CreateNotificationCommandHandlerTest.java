@@ -16,16 +16,16 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.ccbsa.common.domain.DomainEvent;
+import com.ccbsa.common.domain.valueobject.Message;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.common.domain.valueobject.Title;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.notification.application.service.command.dto.CreateNotificationCommand;
 import com.ccbsa.wms.notification.application.service.port.messaging.NotificationEventPublisher;
 import com.ccbsa.wms.notification.application.service.port.repository.NotificationRepository;
 import com.ccbsa.wms.notification.domain.core.entity.Notification;
 import com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent;
-import com.ccbsa.wms.notification.domain.core.valueobject.Message;
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
-import com.ccbsa.wms.notification.domain.core.valueobject.Title;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;

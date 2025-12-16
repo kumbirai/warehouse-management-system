@@ -10,6 +10,9 @@ import { TenantDetailPage } from './features/tenant-management/pages/TenantDetai
 import { UserListPage } from './features/user-management/pages/UserListPage';
 import { UserCreatePage } from './features/user-management/pages/UserCreatePage';
 import { UserDetailPage } from './features/user-management/pages/UserDetailPage';
+import { CreateConsignmentPage } from './features/stock-management/pages/CreateConsignmentPage';
+import { ConsignmentCsvUploadPage } from './features/stock-management/pages/ConsignmentCsvUploadPage';
+import { ConsignmentDetailPage } from './features/stock-management/pages/ConsignmentDetailPage';
 
 function App() {
   return (
@@ -70,6 +73,30 @@ function App() {
         element={
           <ProtectedRoute requiredRoles={['SYSTEM_ADMIN', 'TENANT_ADMIN', 'USER']}>
             <UserDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/consignments/create"
+        element={
+          <ProtectedRoute requiredRoles={['ADMIN', 'MANAGER', 'OPERATOR']}>
+            <CreateConsignmentPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/consignments/upload-csv"
+        element={
+          <ProtectedRoute requiredRoles={['ADMIN', 'MANAGER', 'OPERATOR']}>
+            <ConsignmentCsvUploadPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/consignments/:consignmentId"
+        element={
+          <ProtectedRoute requiredRoles={['ADMIN', 'MANAGER', 'OPERATOR']}>
+            <ConsignmentDetailPage />
           </ProtectedRoute>
         }
       />

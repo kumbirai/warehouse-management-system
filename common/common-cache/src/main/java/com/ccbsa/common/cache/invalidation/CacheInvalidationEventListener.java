@@ -1,5 +1,6 @@
 package com.ccbsa.common.cache.invalidation;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -7,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.ccbsa.common.domain.DomainEvent;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.wms.common.security.TenantContext;
 
 /**
  * Base class for event-driven cache invalidation listeners.
@@ -88,7 +90,7 @@ public abstract class CacheInvalidationEventListener {
     protected TenantId extractTenantId(DomainEvent<?> event) {
         // Strategy 1: Check for getTenantId() method (UserEvent, ProductEvent, etc.)
         try {
-            java.lang.reflect.Method getTenantIdMethod = event.getClass().getMethod("getTenantId");
+            Method getTenantIdMethod = event.getClass().getMethod("getTenantId");
             Object tenantIdObj = getTenantIdMethod.invoke(event);
             if (tenantIdObj instanceof TenantId tenantId) {
                 return tenantId;
@@ -113,7 +115,7 @@ public abstract class CacheInvalidationEventListener {
 
         // Strategy 3: Fallback - try to get from TenantContext (may not be available in async context)
         try {
-            TenantId tenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
+            TenantId tenantId = TenantContext.getTenantId();
             if (tenantId != null) {
                 return tenantId;
             }

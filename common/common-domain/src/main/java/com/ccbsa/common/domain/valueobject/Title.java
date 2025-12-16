@@ -1,12 +1,18 @@
-package com.ccbsa.wms.notification.domain.core.valueobject;
+package com.ccbsa.common.domain.valueobject;
 
 import java.util.Objects;
 
 /**
  * Value Object: Title
  * <p>
- * Represents the notification title.
+ * Represents a title for notifications, events, or other domain concepts.
  * Immutable and self-validating.
+ * <p>
+ * This is a shared value object used across multiple services.
+ * Business Rules:
+ * - Title cannot be null or empty
+ * - Maximum length: 200 characters
+ * - Automatically trimmed
  */
 public final class Title {
     private final String value;
@@ -19,7 +25,7 @@ public final class Title {
      */
     private Title(String value) {
         validate(value);
-        this.value = value;
+        this.value = value.trim();
     }
 
     /**
@@ -32,7 +38,7 @@ public final class Title {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("Title cannot be null or empty");
         }
-        if (value.length() > 200) {
+        if (value.trim().length() > 200) {
             throw new IllegalArgumentException("Title cannot exceed 200 characters");
         }
     }

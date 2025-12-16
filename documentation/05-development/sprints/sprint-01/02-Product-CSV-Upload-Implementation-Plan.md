@@ -62,6 +62,7 @@
 **Component:** `ProductCsvUploadForm.tsx`
 
 **Features:**
+
 - **File Input** - Drag and drop or file picker
 - **File Validation** - Client-side validation (size, format)
 - **Upload Progress** - Progress bar showing upload percentage
@@ -70,6 +71,7 @@
 - **Success Summary** - Show number of products created/updated
 
 **UI Flow:**
+
 1. User navigates to "Products" → "Upload CSV"
 2. User selects CSV file (drag and drop or file picker)
 3. System validates file client-side (size, format)
@@ -77,13 +79,14 @@
 5. User clicks "Upload"
 6. System shows upload progress
 7. System processes file and shows results:
-   - Number of products created
-   - Number of products updated
-   - Number of errors (if any)
-   - List of errors with row numbers
+    - Number of products created
+    - Number of products updated
+    - Number of errors (if any)
+    - List of errors with row numbers
 8. User can download error report (CSV with errors)
 
 **Error Handling:**
+
 - File too large (>10MB) - Show error immediately
 - Invalid format - Show format requirements
 - Validation errors - Show row-by-row errors
@@ -94,6 +97,7 @@
 **Component:** `UploadProgress.tsx`
 
 **Features:**
+
 - Progress bar (0-100%)
 - Status message ("Uploading...", "Processing...", "Complete")
 - Estimated time remaining
@@ -105,15 +109,15 @@
 
 ### Required Columns
 
-| Column Name | Type | Required | Description | Example |
-|------------|------|----------|-------------|---------|
-| product_code | String | Yes | Unique product identifier | "PROD-001" |
-| description | String | Yes | Product description | "Coca-Cola 330ml Can" |
-| primary_barcode | String | Yes | Primary barcode (EAN-13, Code 128, etc.) | "6001067101234" |
-| unit_of_measure | String | Yes | Unit of measure | "EA", "CS", "PK" |
-| secondary_barcode | String | No | Secondary barcode | "6001067101235" |
-| category | String | No | Product category | "Beverages" |
-| brand | String | No | Product brand | "Coca-Cola" |
+| Column Name       | Type   | Required | Description                              | Example               |
+|-------------------|--------|----------|------------------------------------------|-----------------------|
+| product_code      | String | Yes      | Unique product identifier                | "PROD-001"            |
+| description       | String | Yes      | Product description                      | "Coca-Cola 330ml Can" |
+| primary_barcode   | String | Yes      | Primary barcode (EAN-13, Code 128, etc.) | "6001067101234"       |
+| unit_of_measure   | String | Yes      | Unit of measure                          | "EA", "CS", "PK"      |
+| secondary_barcode | String | No       | Secondary barcode                        | "6001067101235"       |
+| category          | String | No       | Product category                         | "Beverages"           |
+| brand             | String | No       | Product brand                            | "Coca-Cola"           |
 
 ### CSV Template
 
@@ -171,6 +175,7 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
 ### Value Objects
 
 **ProductId:**
+
 ```java
 public final class ProductId {
     private final UUID value;
@@ -181,6 +186,7 @@ public final class ProductId {
 ```
 
 **ProductCode:**
+
 ```java
 public final class ProductCode {
     private final String value;
@@ -192,6 +198,7 @@ public final class ProductCode {
 ```
 
 **ProductBarcode:**
+
 ```java
 public final class ProductBarcode {
     private final String value;
@@ -204,6 +211,7 @@ public final class ProductBarcode {
 ```
 
 **UnitOfMeasure:**
+
 ```java
 public enum UnitOfMeasure {
     EA,    // Each
@@ -217,6 +225,7 @@ public enum UnitOfMeasure {
 ### Domain Events
 
 **ProductCreatedEvent:**
+
 ```java
 public class ProductCreatedEvent extends ProductEvent<Product> {
     private final ProductCode productCode;
@@ -228,6 +237,7 @@ public class ProductCreatedEvent extends ProductEvent<Product> {
 ```
 
 **ProductUpdatedEvent:**
+
 ```java
 public class ProductUpdatedEvent extends ProductEvent<Product> {
     private final ProductCode productCode;
@@ -246,6 +256,7 @@ public class ProductUpdatedEvent extends ProductEvent<Product> {
 **Module:** `product-domain/product-domain-core`
 
 **Files to Create:**
+
 1. `Product.java` - Aggregate root
 2. `ProductId.java` - Value object
 3. `ProductCode.java` - Value object
@@ -261,6 +272,7 @@ public class ProductUpdatedEvent extends ProductEvent<Product> {
 **Module:** `product-domain/product-application-service`
 
 **Command Handler:**
+
 ```java
 @Component
 public class UploadProductCsvCommandHandler {
@@ -358,6 +370,7 @@ public class UploadProductCsvCommandHandler {
 ```
 
 **CSV Parser:**
+
 ```java
 @Component
 public class ProductCsvParser {
@@ -394,6 +407,7 @@ public class ProductCsvParser {
 ```
 
 **Port Interfaces:**
+
 ```java
 // Repository Port
 public interface ProductRepository {
@@ -416,6 +430,7 @@ public interface ProductEventPublisher extends EventPublisher {
 **Module:** `product-dataaccess`
 
 **JPA Entity:**
+
 ```java
 @Entity
 @Table(name = "products", schema = "tenant_schema")
@@ -480,6 +495,7 @@ public class ProductBarcodeEntity {
 ```
 
 **Database Migration:**
+
 ```sql
 -- V1__Create_products_table.sql
 CREATE TABLE IF NOT EXISTS products (
@@ -519,6 +535,7 @@ CREATE INDEX idx_product_barcodes_barcode ON product_barcodes(barcode);
 **Module:** `product-application`
 
 **Command Controller:**
+
 ```java
 @RestController
 @RequestMapping("/api/v1/product-service/products")
@@ -571,6 +588,7 @@ public class ProductCommandController {
 ```
 
 **DTOs:**
+
 ```java
 // UploadProductCsvResultDTO
 public class UploadProductCsvResultDTO {
@@ -652,6 +670,7 @@ export const productApiClient = new ProductApiClient();
 ### React Components
 
 **CSV Upload Form:**
+
 ```typescript
 // frontend-app/src/features/product/commands/ProductCsvUploadForm.tsx
 export const ProductCsvUploadForm: React.FC = () => {
@@ -844,18 +863,21 @@ export const ProductCsvUploadForm: React.FC = () => {
 ### Unit Tests
 
 **Domain Core:**
+
 - Product aggregate creation
 - Product code validation
 - Barcode format validation
 - Business logic methods
 
 **Application Service:**
+
 - CSV parser logic
 - Command handler logic
 - Row validation logic
 - Error handling
 
 **Data Access:**
+
 - Repository adapter operations
 - Entity mapping
 
@@ -940,17 +962,17 @@ class ProductCsvUploadTest extends BaseIntegrationTest {
 
 ## Acceptance Criteria Validation
 
-| AC | Description | Validation Method |
-|----|-------------|-------------------|
-| AC1 | System accepts CSV file uploads through web interface | Integration test + Frontend test |
-| AC2 | CSV format includes required columns | Unit test + Integration test |
-| AC3 | System validates CSV file format and required columns | Unit test + Integration test |
-| AC4 | System provides clear error messages for invalid CSV data | Integration test + Frontend test |
-| AC5 | System processes CSV file and creates/updates product records | Integration test |
-| AC6 | System displays upload progress and completion status | Frontend test |
-| AC7 | System supports CSV file sizes up to 10MB | Integration test |
-| AC8 | System logs all CSV upload events for audit | Integration test |
-| AC9 | System publishes ProductCreatedEvent, ProductUpdatedEvent | Integration test |
+| AC  | Description                                                   | Validation Method                |
+|-----|---------------------------------------------------------------|----------------------------------|
+| AC1 | System accepts CSV file uploads through web interface         | Integration test + Frontend test |
+| AC2 | CSV format includes required columns                          | Unit test + Integration test     |
+| AC3 | System validates CSV file format and required columns         | Unit test + Integration test     |
+| AC4 | System provides clear error messages for invalid CSV data     | Integration test + Frontend test |
+| AC5 | System processes CSV file and creates/updates product records | Integration test                 |
+| AC6 | System displays upload progress and completion status         | Frontend test                    |
+| AC7 | System supports CSV file sizes up to 10MB                     | Integration test                 |
+| AC8 | System logs all CSV upload events for audit                   | Integration test                 |
+| AC9 | System publishes ProductCreatedEvent, ProductUpdatedEvent     | Integration test                 |
 
 ---
 

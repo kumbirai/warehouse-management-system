@@ -34,14 +34,14 @@ class LocationManagementTest extends BaseIntegrationTest {
                 .build();
 
         RequestHeaderHelper.addTenantHeaderIfNeeded(
-                webTestClient
-                        .post()
-                        .uri("/location-management/locations")
-                        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(Mono.just(createLocationRequest), Map.class),
-                authHelper,
-                accessToken)
+                        webTestClient
+                                .post()
+                                .uri("/location-management/locations")
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(Mono.just(createLocationRequest), Map.class),
+                        authHelper,
+                        accessToken)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -67,14 +67,14 @@ class LocationManagementTest extends BaseIntegrationTest {
                 .build();
 
         RequestHeaderHelper.addTenantHeaderIfNeeded(
-                webTestClient
-                        .post()
-                        .uri("/location-management/locations")
-                        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(Mono.just(createLocationRequest), Map.class),
-                authHelper,
-                accessToken)
+                        webTestClient
+                                .post()
+                                .uri("/location-management/locations")
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(Mono.just(createLocationRequest), Map.class),
+                        authHelper,
+                        accessToken)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody()
@@ -91,12 +91,12 @@ class LocationManagementTest extends BaseIntegrationTest {
 
         // Then retrieve it
         RequestHeaderHelper.addTenantHeaderIfNeeded(
-                webTestClient
-                        .get()
-                        .uri(String.format("/location-management/locations/%s", locationId))
-                        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
-                authHelper,
-                accessToken)
+                        webTestClient
+                                .get()
+                                .uri(String.format("/location-management/locations/%s", locationId))
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
+                        authHelper,
+                        accessToken)
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -105,36 +105,6 @@ class LocationManagementTest extends BaseIntegrationTest {
                 .jsonPath("$.data.locationId").isEqualTo(locationId)
                 .jsonPath("$.data.barcode").exists()
                 .jsonPath("$.data.coordinates").exists();
-    }
-
-    @Test
-    @DisplayName("Should return 404 for non-existent location")
-    void shouldReturn404ForNonExistentLocation() {
-        String nonExistentId = "00000000-0000-0000-0000-000000000000";
-
-        RequestHeaderHelper.addTenantHeaderIfNeeded(
-                webTestClient
-                        .get()
-                        .uri(String.format("/location-management/locations/%s", nonExistentId))
-                        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
-                authHelper,
-                accessToken)
-                .exchange()
-                .expectStatus().isNotFound();
-    }
-
-    @Test
-    @DisplayName("Should require authentication")
-    void shouldRequireAuthentication() {
-        Map<String, Object> createLocationRequest = new HashMap<>();
-
-        webTestClient
-                .post()
-                .uri("/location-management/locations")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(createLocationRequest), Map.class)
-                .exchange()
-                .expectStatus().isUnauthorized();
     }
 
     /**
@@ -146,14 +116,14 @@ class LocationManagementTest extends BaseIntegrationTest {
         Map<String, Object> request = LocationTestDataBuilder.createDefault();
 
         byte[] responseBody = RequestHeaderHelper.addTenantHeaderIfNeeded(
-                webTestClient
-                        .post()
-                        .uri("/location-management/locations")
-                        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(Mono.just(request), Map.class),
-                authHelper,
-                accessToken)
+                        webTestClient
+                                .post()
+                                .uri("/location-management/locations")
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(Mono.just(request), Map.class),
+                        authHelper,
+                        accessToken)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody()
@@ -180,6 +150,36 @@ class LocationManagementTest extends BaseIntegrationTest {
         } catch (Exception e) {
             throw new RuntimeException("Failed to extract location ID from response", e);
         }
+    }
+
+    @Test
+    @DisplayName("Should return 404 for non-existent location")
+    void shouldReturn404ForNonExistentLocation() {
+        String nonExistentId = "00000000-0000-0000-0000-000000000000";
+
+        RequestHeaderHelper.addTenantHeaderIfNeeded(
+                        webTestClient
+                                .get()
+                                .uri(String.format("/location-management/locations/%s", nonExistentId))
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
+                        authHelper,
+                        accessToken)
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+    @Test
+    @DisplayName("Should require authentication")
+    void shouldRequireAuthentication() {
+        Map<String, Object> createLocationRequest = new HashMap<>();
+
+        webTestClient
+                .post()
+                .uri("/location-management/locations")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(createLocationRequest), Map.class)
+                .exchange()
+                .expectStatus().isUnauthorized();
     }
 }
 

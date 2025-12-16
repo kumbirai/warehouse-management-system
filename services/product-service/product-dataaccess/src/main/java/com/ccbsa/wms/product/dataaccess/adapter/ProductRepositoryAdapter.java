@@ -128,6 +128,26 @@ public class ProductRepositoryAdapter implements ProductRepository {
     }
 
     @Override
+    public Optional<Product> findByBarcodeAndTenantId(String barcode, TenantId tenantId) {
+        // First check primary barcode
+        Optional<ProductEntity> primaryBarcodeProduct =
+                jpaRepository.findByTenantIdAndPrimaryBarcode(tenantId.getValue(), barcode);
+        if (primaryBarcodeProduct.isPresent()) {
+            return primaryBarcodeProduct.map(mapper::toDomain);
+        }
+
+        // Then check secondary barcodes
+        Optional<ProductBarcodeEntity> secondaryBarcode =
+                barcodeJpaRepository.findByBarcodeAndTenantId(barcode, tenantId.getValue());
+        if (secondaryBarcode.isPresent()) {
+            ProductEntity productEntity = secondaryBarcode.get().getProduct();
+            return Optional.of(mapper.toDomain(productEntity));
+        }
+
+        return Optional.empty();
+    }
+
+    @Override
     public List<Product> findByTenantId(TenantId tenantId) {
         return jpaRepository.findByTenantId(tenantId.getValue()).stream()
                 .map(mapper::toDomain)

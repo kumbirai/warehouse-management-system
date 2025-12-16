@@ -25,48 +25,21 @@ public final class ProductTestDataBuilder {
         this.secondaryBarcodes = new ArrayList<>();
     }
 
-    public static ProductTestDataBuilder builder() {
-        return new ProductTestDataBuilder();
-    }
-
-    public ProductTestDataBuilder productCode(String productCode) {
-        this.productCode = productCode;
-        return this;
-    }
-
-    public ProductTestDataBuilder description(String description) {
-        this.description = description;
-        return this;
-    }
-
-    public ProductTestDataBuilder primaryBarcode(String primaryBarcode) {
-        this.primaryBarcode = primaryBarcode;
-        return this;
-    }
-
-    public ProductTestDataBuilder unitOfMeasure(String unitOfMeasure) {
-        this.unitOfMeasure = unitOfMeasure;
-        return this;
-    }
-
-    public ProductTestDataBuilder secondaryBarcode(String secondaryBarcode) {
-        this.secondaryBarcodes.add(secondaryBarcode);
-        return this;
-    }
-
-    public ProductTestDataBuilder secondaryBarcodes(List<String> secondaryBarcodes) {
-        this.secondaryBarcodes = secondaryBarcodes != null ? new ArrayList<>(secondaryBarcodes) : new ArrayList<>();
-        return this;
-    }
-
-    public ProductTestDataBuilder category(String category) {
-        this.category = category;
-        return this;
-    }
-
-    public ProductTestDataBuilder brand(String brand) {
-        this.brand = brand;
-        return this;
+    /**
+     * Creates a default product with all required fields.
+     *
+     * @return Map with default product data
+     */
+    public static Map<String, Object> createDefault() {
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        return builder()
+                .productCode("PROD-TEST-" + timestamp)
+                .description("Test product created by ProductTestDataBuilder")
+                .primaryBarcode("600106710" + timestamp.substring(Math.max(0, timestamp.length() - 3)))
+                .unitOfMeasure("EA")
+                .category("Test Category")
+                .brand("Test Brand")
+                .build();
     }
 
     /**
@@ -100,21 +73,48 @@ public final class ProductTestDataBuilder {
         return request;
     }
 
-    /**
-     * Creates a default product with all required fields.
-     *
-     * @return Map with default product data
-     */
-    public static Map<String, Object> createDefault() {
-        String timestamp = String.valueOf(System.currentTimeMillis());
-        return builder()
-                .productCode("PROD-TEST-" + timestamp)
-                .description("Test product created by ProductTestDataBuilder")
-                .primaryBarcode("600106710" + timestamp.substring(Math.max(0, timestamp.length() - 3)))
-                .unitOfMeasure("EA")
-                .category("Test Category")
-                .brand("Test Brand")
-                .build();
+    public ProductTestDataBuilder brand(String brand) {
+        this.brand = brand;
+        return this;
+    }
+
+    public ProductTestDataBuilder category(String category) {
+        this.category = category;
+        return this;
+    }
+
+    public ProductTestDataBuilder unitOfMeasure(String unitOfMeasure) {
+        this.unitOfMeasure = unitOfMeasure;
+        return this;
+    }
+
+    public ProductTestDataBuilder primaryBarcode(String primaryBarcode) {
+        this.primaryBarcode = primaryBarcode;
+        return this;
+    }
+
+    public ProductTestDataBuilder description(String description) {
+        this.description = description;
+        return this;
+    }
+
+    public ProductTestDataBuilder productCode(String productCode) {
+        this.productCode = productCode;
+        return this;
+    }
+
+    public static ProductTestDataBuilder builder() {
+        return new ProductTestDataBuilder();
+    }
+
+    public ProductTestDataBuilder secondaryBarcode(String secondaryBarcode) {
+        this.secondaryBarcodes.add(secondaryBarcode);
+        return this;
+    }
+
+    public ProductTestDataBuilder secondaryBarcodes(List<String> secondaryBarcodes) {
+        this.secondaryBarcodes = secondaryBarcodes != null ? new ArrayList<>(secondaryBarcodes) : new ArrayList<>();
+        return this;
     }
 }
 

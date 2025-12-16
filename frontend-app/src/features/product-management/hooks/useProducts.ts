@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { productService } from '../services/productService';
 import { Product, ProductListFilters } from '../types/product';
 import { logger } from '../../../utils/logger';
@@ -21,12 +21,16 @@ export const useProducts = (filters: ProductListFilters): UseProductsResult => {
 
     try {
       const response = await productService.listProducts(filters);
-      
-      if (response.success && response.data) {
-        setProducts(response.data);
-      } else {
-        throw new Error(response.error?.message || 'Failed to fetch products');
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to fetch products');
       }
+
+      if (!response.data) {
+        throw new Error('Invalid response from server');
+      }
+
+      setProducts(response.data);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to fetch products');
       logger.error('Error fetching products:', error);
@@ -40,8 +44,14 @@ export const useProducts = (filters: ProductListFilters): UseProductsResult => {
     if (filters.tenantId) {
       fetchProducts();
     }
-  }, [filters.tenantId, filters.page, filters.size, filters.category, filters.brand, filters.search]);
+  }, [
+    filters.tenantId,
+    filters.page,
+    filters.size,
+    filters.category,
+    filters.brand,
+    filters.search,
+  ]);
 
   return { products, isLoading, error, refetch: fetchProducts };
 };
-

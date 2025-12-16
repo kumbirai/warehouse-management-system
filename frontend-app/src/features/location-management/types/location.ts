@@ -1,6 +1,6 @@
 /**
  * Location Management Types
- * 
+ *
  * Type definitions for Location Management feature.
  * These types match the backend DTOs for type safety.
  */
@@ -53,4 +53,3 @@ export interface LocationListFilters {
   status?: string;
   search?: string;
 }
-

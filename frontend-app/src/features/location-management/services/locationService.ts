@@ -41,9 +41,7 @@ export const locationService = {
     return response.data;
   },
 
-  async listLocations(
-    filters: LocationListFilters
-  ): Promise<LocationListApiResponse> {
+  async listLocations(filters: LocationListFilters): Promise<LocationListApiResponse> {
     const headers: Record<string, string> = {};
     if (filters.tenantId) {
       headers['X-Tenant-Id'] = filters.tenantId;
@@ -71,4 +69,3 @@ export const locationService = {
     return response.data;
   },
 };
-

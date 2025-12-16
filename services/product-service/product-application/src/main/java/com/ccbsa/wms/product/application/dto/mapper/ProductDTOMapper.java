@@ -18,6 +18,7 @@ import com.ccbsa.wms.product.application.dto.command.UpdateProductResultDTO;
 import com.ccbsa.wms.product.application.dto.command.UploadProductCsvResultDTO;
 import com.ccbsa.wms.product.application.dto.query.ProductCodeUniquenessResultDTO;
 import com.ccbsa.wms.product.application.dto.query.ProductQueryResultDTO;
+import com.ccbsa.wms.product.application.dto.query.ValidateProductBarcodeResultDTO;
 import com.ccbsa.wms.product.application.service.command.dto.CreateProductCommand;
 import com.ccbsa.wms.product.application.service.command.dto.CreateProductResult;
 import com.ccbsa.wms.product.application.service.command.dto.ProductCsvError;
@@ -28,7 +29,10 @@ import com.ccbsa.wms.product.application.service.command.dto.UploadProductCsvRes
 import com.ccbsa.wms.product.application.service.query.dto.CheckProductCodeUniquenessQuery;
 import com.ccbsa.wms.product.application.service.query.dto.GetProductQuery;
 import com.ccbsa.wms.product.application.service.query.dto.ProductCodeUniquenessResult;
+import com.ccbsa.wms.product.application.service.query.dto.ProductInfo;
 import com.ccbsa.wms.product.application.service.query.dto.ProductQueryResult;
+import com.ccbsa.wms.product.application.service.query.dto.ValidateProductBarcodeQuery;
+import com.ccbsa.wms.product.application.service.query.dto.ValidateProductBarcodeResult;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductBarcode;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
@@ -284,6 +288,47 @@ public class ProductDTOMapper {
         ProductCodeUniquenessResultDTO dto = new ProductCodeUniquenessResultDTO();
         dto.setProductCode(result.getProductCode().getValue());
         dto.setUnique(result.isUnique());
+        return dto;
+    }
+
+    /**
+     * Converts barcode string and tenant ID to ValidateProductBarcodeQuery.
+     *
+     * @param barcode  Barcode string
+     * @param tenantId Tenant ID string
+     * @return ValidateProductBarcodeQuery
+     */
+    public ValidateProductBarcodeQuery toValidateProductBarcodeQuery(String barcode, String tenantId) {
+        return ValidateProductBarcodeQuery.builder()
+                .barcode(barcode)
+                .tenantId(TenantId.of(tenantId))
+                .build();
+    }
+
+    /**
+     * Converts ValidateProductBarcodeResult to ValidateProductBarcodeResultDTO.
+     *
+     * @param result Query result
+     * @return ValidateProductBarcodeResultDTO
+     */
+    public ValidateProductBarcodeResultDTO toValidateProductBarcodeResultDTO(ValidateProductBarcodeResult result) {
+        ValidateProductBarcodeResultDTO dto = new ValidateProductBarcodeResultDTO();
+        dto.setValid(result.isValid());
+        dto.setBarcodeFormat(result.getBarcodeFormat());
+        dto.setErrorMessage(result.getErrorMessage());
+
+        if (result.getProductInfo() != null) {
+            ProductInfo productInfo = result.getProductInfo();
+            ValidateProductBarcodeResultDTO.ProductInfoDTO productInfoDTO =
+                    new ValidateProductBarcodeResultDTO.ProductInfoDTO();
+            productInfoDTO.setProductId(productInfo.getProductId().getValueAsString());
+            productInfoDTO.setProductCode(productInfo.getProductCode().getValue());
+            productInfoDTO.setDescription(productInfo.getDescription());
+            productInfoDTO.setBarcode(productInfo.getBarcode().getValue());
+            productInfoDTO.setBarcodeType(productInfo.getBarcode().getType());
+            dto.setProductInfo(productInfoDTO);
+        }
+
         return dto;
     }
 }

@@ -1,6 +1,6 @@
 /**
  * Product Management Types
- * 
+ *
  * Type definitions for Product Management feature.
  * These types match the backend DTOs for type safety.
  */
@@ -79,4 +79,3 @@ export interface ProductCodeUniquenessResponse {
   productCode: string;
   isUnique: boolean;
 }
-

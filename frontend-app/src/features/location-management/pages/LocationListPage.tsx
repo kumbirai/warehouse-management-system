@@ -9,7 +9,7 @@ export const LocationListPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { locations, isLoading, error } = useLocations({
-    tenantId: user?.tenantId,
+    tenantId: user?.tenantId ?? undefined,
     page: 0,
     size: 100,
   });
@@ -30,4 +30,3 @@ export const LocationListPage = () => {
     </Container>
   );
 };
-

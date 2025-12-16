@@ -39,6 +39,8 @@ public class RestTemplateConfig {
         // Configure request timeouts
         // Note: setConnectTimeout is deprecated in HttpClient 5 but still functional.
         // The replacement API is not yet stable, so we continue using this method.
+        // This is a known limitation and will be updated when HttpClient 5 provides a stable replacement.
+        @SuppressWarnings("deprecation")
         RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectTimeout(Timeout.ofSeconds(CONNECTION_TIMEOUT_SECONDS))
                 .setResponseTimeout(Timeout.ofSeconds(READ_TIMEOUT_SECONDS))

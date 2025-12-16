@@ -35,14 +35,14 @@ class ProductManagementTest extends BaseIntegrationTest {
                 .build();
 
         RequestHeaderHelper.addTenantHeaderIfNeeded(
-                webTestClient
-                        .post()
-                        .uri("/product-service/products")
-                        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(Mono.just(createProductRequest), Map.class),
-                authHelper,
-                accessToken)
+                        webTestClient
+                                .post()
+                                .uri("/product-service/products")
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(Mono.just(createProductRequest), Map.class),
+                        authHelper,
+                        accessToken)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -67,14 +67,14 @@ class ProductManagementTest extends BaseIntegrationTest {
                 .build();
 
         RequestHeaderHelper.addTenantHeaderIfNeeded(
-                webTestClient
-                        .post()
-                        .uri("/product-service/products")
-                        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(Mono.just(createProductRequest), Map.class),
-                authHelper,
-                accessToken)
+                        webTestClient
+                                .post()
+                                .uri("/product-service/products")
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(Mono.just(createProductRequest), Map.class),
+                        authHelper,
+                        accessToken)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody()
@@ -90,12 +90,12 @@ class ProductManagementTest extends BaseIntegrationTest {
 
         // Then retrieve it
         RequestHeaderHelper.addTenantHeaderIfNeeded(
-                webTestClient
-                        .get()
-                        .uri(String.format("/product-service/products/%s", productId))
-                        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
-                authHelper,
-                accessToken)
+                        webTestClient
+                                .get()
+                                .uri(String.format("/product-service/products/%s", productId))
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
+                        authHelper,
+                        accessToken)
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -107,87 +107,6 @@ class ProductManagementTest extends BaseIntegrationTest {
                 .jsonPath("$.data.primaryBarcode").exists();
     }
 
-    @Test
-    @DisplayName("Should return 404 for non-existent product")
-    void shouldReturn404ForNonExistentProduct() {
-        String nonExistentId = "00000000-0000-0000-0000-000000000000";
-
-        RequestHeaderHelper.addTenantHeaderIfNeeded(
-                webTestClient
-                        .get()
-                        .uri(String.format("/product-service/products/%s", nonExistentId))
-                        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
-                authHelper,
-                accessToken)
-                .exchange()
-                .expectStatus().isNotFound();
-    }
-
-    @Test
-    @DisplayName("Should check product code uniqueness")
-    void shouldCheckProductCodeUniqueness() {
-        String productCode = "PROD-UNIQUE-" + System.currentTimeMillis();
-
-        RequestHeaderHelper.addTenantHeaderIfNeeded(
-                webTestClient
-                        .get()
-                        .uri(uriBuilder -> uriBuilder
-                                .path("/product-service/products/check-uniqueness")
-                                .queryParam("productCode", productCode)
-                                .build())
-                        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
-                authHelper,
-                accessToken)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.data.productCode").isEqualTo(productCode)
-                .jsonPath("$.data.isUnique").isEqualTo(true);
-    }
-
-    @Test
-    @DisplayName("Should update product")
-    void shouldUpdateProduct() {
-        // First create a product
-        String productId = createTestProduct();
-
-        // Then update it
-        Map<String, Object> updateRequest = new HashMap<>();
-        updateRequest.put("description", "Updated Description");
-        updateRequest.put("primaryBarcode", "6001067109999");
-        updateRequest.put("unitOfMeasure", "CS");
-
-        RequestHeaderHelper.addTenantHeaderIfNeeded(
-                webTestClient
-                        .put()
-                        .uri(String.format("/product-service/products/%s", productId))
-                        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(Mono.just(updateRequest), Map.class),
-                authHelper,
-                accessToken)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.data.productId").isEqualTo(productId);
-    }
-
-    @Test
-    @DisplayName("Should require authentication")
-    void shouldRequireAuthentication() {
-        Map<String, Object> createProductRequest = new HashMap<>();
-
-        webTestClient
-                .post()
-                .uri("/product-service/products")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(createProductRequest), Map.class)
-                .exchange()
-                .expectStatus().isUnauthorized();
-    }
-
     /**
      * Helper method to create a test product and return its ID.
      *
@@ -197,14 +116,14 @@ class ProductManagementTest extends BaseIntegrationTest {
         Map<String, Object> request = ProductTestDataBuilder.createDefault();
 
         byte[] responseBody = RequestHeaderHelper.addTenantHeaderIfNeeded(
-                webTestClient
-                        .post()
-                        .uri("/product-service/products")
-                        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(Mono.just(request), Map.class),
-                authHelper,
-                accessToken)
+                        webTestClient
+                                .post()
+                                .uri("/product-service/products")
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(Mono.just(request), Map.class),
+                        authHelper,
+                        accessToken)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody()
@@ -231,6 +150,87 @@ class ProductManagementTest extends BaseIntegrationTest {
         } catch (Exception e) {
             throw new RuntimeException("Failed to extract product ID from response", e);
         }
+    }
+
+    @Test
+    @DisplayName("Should return 404 for non-existent product")
+    void shouldReturn404ForNonExistentProduct() {
+        String nonExistentId = "00000000-0000-0000-0000-000000000000";
+
+        RequestHeaderHelper.addTenantHeaderIfNeeded(
+                        webTestClient
+                                .get()
+                                .uri(String.format("/product-service/products/%s", nonExistentId))
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
+                        authHelper,
+                        accessToken)
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+    @Test
+    @DisplayName("Should check product code uniqueness")
+    void shouldCheckProductCodeUniqueness() {
+        String productCode = "PROD-UNIQUE-" + System.currentTimeMillis();
+
+        RequestHeaderHelper.addTenantHeaderIfNeeded(
+                        webTestClient
+                                .get()
+                                .uri(uriBuilder -> uriBuilder
+                                        .path("/product-service/products/check-uniqueness")
+                                        .queryParam("productCode", productCode)
+                                        .build())
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
+                        authHelper,
+                        accessToken)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.data.productCode").isEqualTo(productCode)
+                .jsonPath("$.data.isUnique").isEqualTo(true);
+    }
+
+    @Test
+    @DisplayName("Should update product")
+    void shouldUpdateProduct() {
+        // First create a product
+        String productId = createTestProduct();
+
+        // Then update it
+        Map<String, Object> updateRequest = new HashMap<>();
+        updateRequest.put("description", "Updated Description");
+        updateRequest.put("primaryBarcode", "6001067109999");
+        updateRequest.put("unitOfMeasure", "CS");
+
+        RequestHeaderHelper.addTenantHeaderIfNeeded(
+                        webTestClient
+                                .put()
+                                .uri(String.format("/product-service/products/%s", productId))
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(Mono.just(updateRequest), Map.class),
+                        authHelper,
+                        accessToken)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.data.productId").isEqualTo(productId);
+    }
+
+    @Test
+    @DisplayName("Should require authentication")
+    void shouldRequireAuthentication() {
+        Map<String, Object> createProductRequest = new HashMap<>();
+
+        webTestClient
+                .post()
+                .uri("/product-service/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(createProductRequest), Map.class)
+                .exchange()
+                .expectStatus().isUnauthorized();
     }
 }
 

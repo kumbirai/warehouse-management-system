@@ -56,6 +56,7 @@
 **Component:** `LocationCreationForm.tsx`
 
 **Fields:**
+
 - **Zone** (required, text input)
 - **Aisle** (required, text input)
 - **Rack** (required, text input)
@@ -65,16 +66,19 @@
 - **Status** (default: AVAILABLE, dropdown)
 
 **Validation:**
+
 - Zone, Aisle, Rack, Level are required
 - Barcode format validation (if manually entered)
 - Real-time validation feedback
 
 **Actions:**
+
 - **Create** - Submit form to create location
 - **Cancel** - Navigate back to location list
 - **Generate Barcode** - Auto-generate barcode based on coordinates
 
 **UI Flow:**
+
 1. User navigates to "Locations" → "Create Location"
 2. Form displays with all fields
 3. User enters location coordinates
@@ -89,6 +93,7 @@
 **Component:** `LocationList.tsx`
 
 **Features:**
+
 - List all locations with pagination
 - Filter by zone, aisle, status
 - Search by barcode or description
@@ -101,6 +106,7 @@
 **Component:** `LocationDetail.tsx`
 
 **Features:**
+
 - Display location details
 - Display barcode (with QR code)
 - Print barcode option
@@ -144,6 +150,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
 ### Value Objects
 
 **LocationId:**
+
 ```java
 public final class LocationId {
     private final UUID value;
@@ -154,6 +161,7 @@ public final class LocationId {
 ```
 
 **LocationBarcode:**
+
 ```java
 public final class LocationBarcode {
     private final String value;
@@ -166,6 +174,7 @@ public final class LocationBarcode {
 ```
 
 **LocationCoordinates:**
+
 ```java
 public final class LocationCoordinates {
     private final String zone;
@@ -178,6 +187,7 @@ public final class LocationCoordinates {
 ```
 
 **LocationStatus:**
+
 ```java
 public enum LocationStatus {
     AVAILABLE,
@@ -188,6 +198,7 @@ public enum LocationStatus {
 ```
 
 **LocationCapacity:**
+
 ```java
 public final class LocationCapacity {
     private final Quantity currentQuantity;
@@ -200,6 +211,7 @@ public final class LocationCapacity {
 ### Domain Events
 
 **LocationCreatedEvent:**
+
 ```java
 public class LocationCreatedEvent extends LocationManagementEvent<Location> {
     private final LocationBarcode barcode;
@@ -219,6 +231,7 @@ public class LocationCreatedEvent extends LocationManagementEvent<Location> {
 **Module:** `location-management-domain/location-management-domain-core`
 
 **Files to Create:**
+
 1. `Location.java` - Aggregate root
 2. `LocationId.java` - Value object
 3. `LocationBarcode.java` - Value object
@@ -229,6 +242,7 @@ public class LocationCreatedEvent extends LocationManagementEvent<Location> {
 8. `LocationManagementEvent.java` - Base service event
 
 **Implementation Steps:**
+
 1. Create value objects with validation
 2. Create Location aggregate with builder pattern
 3. Implement business logic methods
@@ -240,6 +254,7 @@ public class LocationCreatedEvent extends LocationManagementEvent<Location> {
 **Module:** `location-management-domain/location-management-application-service`
 
 **Command Handler:**
+
 ```java
 @Component
 public class CreateLocationCommandHandler {
@@ -295,6 +310,7 @@ public class CreateLocationCommandHandler {
 ```
 
 **Query Handler:**
+
 ```java
 @Component
 public class GetLocationQueryHandler {
@@ -322,6 +338,7 @@ public class GetLocationQueryHandler {
 ```
 
 **Port Interfaces:**
+
 ```java
 // Repository Port
 public interface LocationRepository {
@@ -342,6 +359,7 @@ public interface LocationEventPublisher extends EventPublisher {
 **Module:** `location-management-dataaccess`
 
 **JPA Entity:**
+
 ```java
 @Entity
 @Table(name = "locations", schema = "tenant_schema")
@@ -394,6 +412,7 @@ public class LocationEntity {
 ```
 
 **Repository Adapter:**
+
 ```java
 @Repository
 public class LocationRepositoryAdapter implements LocationRepository {
@@ -436,6 +455,7 @@ public class LocationRepositoryAdapter implements LocationRepository {
 ```
 
 **Database Migration:**
+
 ```sql
 -- V1__Create_locations_table.sql
 CREATE TABLE IF NOT EXISTS locations (
@@ -466,6 +486,7 @@ CREATE INDEX idx_locations_coordinates ON locations(zone, aisle, rack, level);
 **Module:** `location-management-application`
 
 **Command Controller:**
+
 ```java
 @RestController
 @RequestMapping("/api/v1/location-management/locations")
@@ -492,6 +513,7 @@ public class LocationCommandController {
 ```
 
 **Query Controller:**
+
 ```java
 @RestController
 @RequestMapping("/api/v1/location-management/locations")
@@ -522,6 +544,7 @@ public class LocationQueryController {
 ```
 
 **DTOs:**
+
 ```java
 // CreateLocationCommandDTO
 public class CreateLocationCommandDTO {
@@ -560,6 +583,7 @@ public class CreateLocationResultDTO {
 **Module:** `location-management-messaging`
 
 **Event Publisher:**
+
 ```java
 @Component
 public class LocationEventPublisherImpl implements LocationEventPublisher {
@@ -656,6 +680,7 @@ export const locationApiClient = new LocationApiClient();
 ### React Components
 
 **Location Creation Form:**
+
 ```typescript
 // frontend-app/src/features/location/commands/CreateLocationForm.tsx
 export const CreateLocationForm: React.FC = () => {
@@ -759,17 +784,20 @@ export const CreateLocationForm: React.FC = () => {
 ### Unit Tests
 
 **Domain Core:**
+
 - Location aggregate creation
 - Barcode generation logic
 - Barcode format validation
 - Business logic methods
 
 **Application Service:**
+
 - Command handler logic
 - Query handler logic
 - Validation logic
 
 **Data Access:**
+
 - Repository adapter operations
 - Entity mapping
 
@@ -821,14 +849,14 @@ class LocationManagementTest extends BaseIntegrationTest {
 
 ## Acceptance Criteria Validation
 
-| AC | Description | Validation Method |
-|----|-------------|-------------------|
-| AC1 | System allows creation of location with unique barcode identifier | Unit test + Integration test |
-| AC2 | Barcode format follows CCBSA standards | Unit test for barcode validation |
-| AC3 | System validates barcode uniqueness | Integration test + Unit test |
-| AC4 | System supports barcode scanning for location identification | Frontend barcode scanner component |
-| AC5 | Location barcodes are printable and replaceable | Frontend print functionality + Update endpoint |
-| AC6 | System stores location coordinates (zone, aisle, rack, level) | Database migration + Integration test |
+| AC  | Description                                                       | Validation Method                              |
+|-----|-------------------------------------------------------------------|------------------------------------------------|
+| AC1 | System allows creation of location with unique barcode identifier | Unit test + Integration test                   |
+| AC2 | Barcode format follows CCBSA standards                            | Unit test for barcode validation               |
+| AC3 | System validates barcode uniqueness                               | Integration test + Unit test                   |
+| AC4 | System supports barcode scanning for location identification      | Frontend barcode scanner component             |
+| AC5 | Location barcodes are printable and replaceable                   | Frontend print functionality + Update endpoint |
+| AC6 | System stores location coordinates (zone, aisle, rack, level)     | Database migration + Integration test          |
 
 ---
 

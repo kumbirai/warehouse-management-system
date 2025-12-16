@@ -26,6 +26,7 @@
 ### Purpose
 
 Gateway API tests validate that:
+
 1. Frontend calls are correctly routed through gateway to backend services
 2. Authentication and authorization work correctly
 3. Data flows correctly from frontend → gateway → backend → response
@@ -35,6 +36,7 @@ Gateway API tests validate that:
 ### Test Scope
 
 **Sprint 1 Coverage:**
+
 - Location Management Service endpoints
 - Product Service endpoints (CSV upload and manual entry)
 - Authentication and authorization
@@ -58,6 +60,7 @@ Gateway API tests validate that:
 **Base Class:** `BaseIntegrationTest.java`
 
 **Features:**
+
 - Authentication setup
 - WebTestClient configuration
 - Test data builders
@@ -65,6 +68,7 @@ Gateway API tests validate that:
 - Cleanup helpers
 
 **Structure:**
+
 ```java
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
@@ -100,16 +104,19 @@ public abstract class BaseIntegrationTest {
 ### Test Utilities
 
 **RequestHeaderHelper:**
+
 - Adds tenant header automatically
 - Handles authentication headers
 - Provides consistent request building
 
 **TestData:**
+
 - Generates realistic test data
 - Provides unique identifiers
 - Creates test entities
 
 **AuthenticationHelper:**
+
 - Handles authentication flow
 - Manages access tokens
 - Provides user context
@@ -158,32 +165,33 @@ gateway-api-tests/
 **Test Cases:**
 
 1. **Create Location**
-   - Should create location with valid data
-   - Should generate barcode automatically if not provided
-   - Should reject duplicate barcode
-   - Should reject invalid coordinates
-   - Should require authentication
+    - Should create location with valid data
+    - Should generate barcode automatically if not provided
+    - Should reject duplicate barcode
+    - Should reject invalid coordinates
+    - Should require authentication
 
 2. **Get Location**
-   - Should get location by ID
-   - Should return 404 for non-existent location
-   - Should enforce tenant isolation
-   - Should require authentication
+    - Should get location by ID
+    - Should return 404 for non-existent location
+    - Should enforce tenant isolation
+    - Should require authentication
 
 3. **List Locations**
-   - Should list locations with pagination
-   - Should filter by zone
-   - Should filter by status
-   - Should sort by coordinates
-   - Should require authentication
+    - Should list locations with pagination
+    - Should filter by zone
+    - Should filter by status
+    - Should sort by coordinates
+    - Should require authentication
 
 4. **Update Location**
-   - Should update location status
-   - Should update location capacity
-   - Should reject invalid updates
-   - Should require authentication
+    - Should update location status
+    - Should update location capacity
+    - Should reject invalid updates
+    - Should require authentication
 
 **Example Test:**
+
 ```java
 @DisplayName("Location Management API Tests")
 class LocationManagementTest extends BaseIntegrationTest {
@@ -332,33 +340,34 @@ class LocationManagementTest extends BaseIntegrationTest {
 **Test Cases:**
 
 1. **Create Product**
-   - Should create product with valid data
-   - Should reject duplicate product code
-   - Should reject duplicate barcode
-   - Should support multiple secondary barcodes
-   - Should require authentication
+    - Should create product with valid data
+    - Should reject duplicate product code
+    - Should reject duplicate barcode
+    - Should support multiple secondary barcodes
+    - Should require authentication
 
 2. **Update Product**
-   - Should update product description
-   - Should update product barcodes
-   - Should reject invalid updates
-   - Should require authentication
+    - Should update product description
+    - Should update product barcodes
+    - Should reject invalid updates
+    - Should require authentication
 
 3. **Get Product**
-   - Should get product by ID
-   - Should get product by barcode
-   - Should return 404 for non-existent product
-   - Should enforce tenant isolation
-   - Should require authentication
+    - Should get product by ID
+    - Should get product by barcode
+    - Should return 404 for non-existent product
+    - Should enforce tenant isolation
+    - Should require authentication
 
 4. **List Products**
-   - Should list products with pagination
-   - Should filter by category
-   - Should filter by brand
-   - Should search by product code
-   - Should require authentication
+    - Should list products with pagination
+    - Should filter by category
+    - Should filter by brand
+    - Should search by product code
+    - Should require authentication
 
 **Example Test:**
+
 ```java
 @DisplayName("Product Management API Tests")
 class ProductManagementTest extends BaseIntegrationTest {
@@ -457,15 +466,16 @@ class ProductManagementTest extends BaseIntegrationTest {
 **Test Cases:**
 
 1. **CSV Upload**
-   - Should upload CSV file successfully
-   - Should create products from CSV
-   - Should update existing products from CSV
-   - Should handle validation errors
-   - Should reject file larger than 10MB
-   - Should reject invalid CSV format
-   - Should require authentication
+    - Should upload CSV file successfully
+    - Should create products from CSV
+    - Should update existing products from CSV
+    - Should handle validation errors
+    - Should reject file larger than 10MB
+    - Should reject invalid CSV format
+    - Should require authentication
 
 **Example Test:**
+
 ```java
 @DisplayName("Product CSV Upload API Tests")
 class ProductCsvUploadTest extends BaseIntegrationTest {
@@ -581,6 +591,7 @@ class ProductCsvUploadTest extends BaseIntegrationTest {
 ### Test Data Builders
 
 **LocationTestDataBuilder:**
+
 ```java
 public class LocationTestDataBuilder {
     private String zone;
@@ -615,6 +626,7 @@ public class LocationTestDataBuilder {
 ```
 
 **ProductTestDataBuilder:**
+
 ```java
 public class ProductTestDataBuilder {
     private String productCode;
@@ -648,6 +660,7 @@ public class ProductTestDataBuilder {
 ### Test Data Generation
 
 **TestData Utility:**
+
 ```java
 @Component
 public class TestData {
@@ -678,27 +691,27 @@ public class TestData {
 ### Common Error Scenarios
 
 1. **Authentication Errors**
-   - Missing authentication token
-   - Invalid authentication token
-   - Expired authentication token
+    - Missing authentication token
+    - Invalid authentication token
+    - Expired authentication token
 
 2. **Authorization Errors**
-   - Insufficient permissions
-   - Wrong role
+    - Insufficient permissions
+    - Wrong role
 
 3. **Validation Errors**
-   - Missing required fields
-   - Invalid field formats
-   - Duplicate values
+    - Missing required fields
+    - Invalid field formats
+    - Duplicate values
 
 4. **Business Logic Errors**
-   - Duplicate product codes
-   - Duplicate barcodes
-   - Invalid references
+    - Duplicate product codes
+    - Duplicate barcodes
+    - Invalid references
 
 5. **Resource Errors**
-   - Non-existent resources
-   - Tenant isolation violations
+    - Non-existent resources
+    - Tenant isolation violations
 
 ### Error Response Validation
 
@@ -737,16 +750,19 @@ void shouldReturnStandardizedErrorResponse() {
 ### Running Tests
 
 **All Tests:**
+
 ```bash
 mvn test
 ```
 
 **Specific Test Class:**
+
 ```bash
 mvn test -Dtest=LocationManagementTest
 ```
 
 **Specific Test Method:**
+
 ```bash
 mvn test -Dtest=LocationManagementTest#shouldCreateLocation
 ```
@@ -754,6 +770,7 @@ mvn test -Dtest=LocationManagementTest#shouldCreateLocation
 ### Test Configuration
 
 **application-test.yml:**
+
 ```yaml
 spring:
   kafka:
@@ -773,6 +790,7 @@ gateway:
 ### CI/CD Integration
 
 Tests should run:
+
 - On every pull request
 - Before merging to main branch
 - As part of deployment pipeline

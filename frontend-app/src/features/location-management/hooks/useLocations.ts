@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { locationService } from '../services/locationService';
 import { Location, LocationListFilters } from '../types/location';
 import { logger } from '../../../utils/logger';
@@ -21,12 +21,16 @@ export const useLocations = (filters: LocationListFilters): UseLocationsResult =
 
     try {
       const response = await locationService.listLocations(filters);
-      
-      if (response.success && response.data) {
-        setLocations(response.data);
-      } else {
-        throw new Error(response.error?.message || 'Failed to fetch locations');
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to fetch locations');
       }
+
+      if (!response.data) {
+        throw new Error('Invalid response from server');
+      }
+
+      setLocations(response.data);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to fetch locations');
       logger.error('Error fetching locations:', error);
@@ -44,4 +48,3 @@ export const useLocations = (filters: LocationListFilters): UseLocationsResult =
 
   return { locations, isLoading, error, refetch: fetchLocations };
 };
-

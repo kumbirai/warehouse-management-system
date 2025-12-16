@@ -3,13 +3,21 @@ package com.ccbsa.wms.stockmanagement.config;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.core5.util.Timeout;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -19,11 +27,14 @@ import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.util.backoff.BackOff;
 import org.springframework.util.backoff.ExponentialBackOff;
+import org.springframework.web.client.RestTemplate;
 
 import com.ccbsa.common.messaging.config.KafkaConfig;
 import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
 import com.ccbsa.wms.common.security.ServiceSecurityConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * Stock Management Service Configuration
@@ -154,6 +165,68 @@ public class StockManagementServiceConfiguration {
         backOff.setMaxInterval(maxInterval);
         backOff.setMaxElapsedTime(maxInterval * maxRetries);
         return backOff;
+    }
+
+    /**
+     * Primary ObjectMapper for REST API responses.
+     * <p>
+     * This ObjectMapper is used for REST API JSON serialization/deserialization.
+     * It does NOT include type information (@class property) to keep API responses clean.
+     * <p>
+     * For Kafka message serialization, use the kafkaObjectMapper bean from KafkaConfig.
+     *
+     * @return ObjectMapper configured for REST API (no type information)
+     */
+    @Bean
+    @Primary
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        // Do NOT configure JsonTypeInfo - REST API should not include type information
+        return mapper;
+    }
+
+    /**
+     * RestTemplate bean for external service calls (e.g., Product Service).
+     * <p>
+     * Configured with connection pooling and timeouts for production use.
+     * Uses HttpComponentsClientHttpRequestFactory to avoid deprecated RestTemplateBuilder methods.
+     *
+     * @param builder RestTemplateBuilder
+     * @return RestTemplate configured for external service calls
+     */
+    @Bean
+    public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        // Create connection pool manager
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+        connectionManager.setMaxTotal(200);
+        connectionManager.setDefaultMaxPerRoute(50);
+
+        // Configure request timeouts using HttpClient 5 API
+        // Note: setConnectTimeout is deprecated in HttpClient 5 but still functional.
+        // The replacement API is not yet stable, so we continue using this method.
+        // This is a known limitation and will be updated when HttpClient 5 provides a stable replacement.
+        @SuppressWarnings("deprecation")
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectTimeout(Timeout.ofSeconds(10))
+                .setResponseTimeout(Timeout.ofSeconds(30))
+                .setConnectionRequestTimeout(Timeout.ofSeconds(10))
+                .build();
+
+        // Create HTTP client with connection pooling
+        HttpClient httpClient = HttpClientBuilder.create()
+                .setConnectionManager(connectionManager)
+                .setDefaultRequestConfig(requestConfig)
+                .evictIdleConnections(Timeout.ofSeconds(30))
+                .evictExpiredConnections()
+                .build();
+
+        // Create request factory with pooled HTTP client
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+
+        return builder.requestFactory(() -> requestFactory)
+                .build();
     }
 }
 

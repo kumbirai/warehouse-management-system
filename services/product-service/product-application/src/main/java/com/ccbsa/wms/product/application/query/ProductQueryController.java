@@ -14,11 +14,14 @@ import com.ccbsa.common.application.api.ApiResponseBuilder;
 import com.ccbsa.wms.product.application.dto.mapper.ProductDTOMapper;
 import com.ccbsa.wms.product.application.dto.query.ProductCodeUniquenessResultDTO;
 import com.ccbsa.wms.product.application.dto.query.ProductQueryResultDTO;
+import com.ccbsa.wms.product.application.dto.query.ValidateProductBarcodeResultDTO;
 import com.ccbsa.wms.product.application.service.query.CheckProductCodeUniquenessQueryHandler;
 import com.ccbsa.wms.product.application.service.query.GetProductQueryHandler;
+import com.ccbsa.wms.product.application.service.query.ValidateProductBarcodeQueryHandler;
 import com.ccbsa.wms.product.application.service.query.dto.GetProductQuery;
 import com.ccbsa.wms.product.application.service.query.dto.ProductCodeUniquenessResult;
 import com.ccbsa.wms.product.application.service.query.dto.ProductQueryResult;
+import com.ccbsa.wms.product.application.service.query.dto.ValidateProductBarcodeResult;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,14 +43,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class ProductQueryController {
     private final GetProductQueryHandler getProductQueryHandler;
     private final CheckProductCodeUniquenessQueryHandler checkProductCodeUniquenessQueryHandler;
+    private final ValidateProductBarcodeQueryHandler validateProductBarcodeQueryHandler;
     private final ProductDTOMapper mapper;
 
     public ProductQueryController(
             GetProductQueryHandler getProductQueryHandler,
             CheckProductCodeUniquenessQueryHandler checkProductCodeUniquenessQueryHandler,
+            ValidateProductBarcodeQueryHandler validateProductBarcodeQueryHandler,
             ProductDTOMapper mapper) {
         this.getProductQueryHandler = getProductQueryHandler;
         this.checkProductCodeUniquenessQueryHandler = checkProductCodeUniquenessQueryHandler;
+        this.validateProductBarcodeQueryHandler = validateProductBarcodeQueryHandler;
         this.mapper = mapper;
     }
 
@@ -84,6 +90,25 @@ public class ProductQueryController {
 
         // Map result to DTO
         ProductCodeUniquenessResultDTO resultDTO = mapper.toProductCodeUniquenessResultDTO(result);
+
+        return ApiResponseBuilder.ok(resultDTO);
+    }
+
+    @GetMapping("/validate-barcode")
+    @Operation(summary = "Validate Product Barcode", description = "Validates a product barcode and returns product information if found")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OPERATOR')")
+    public ResponseEntity<ApiResponse<ValidateProductBarcodeResultDTO>> validateBarcode(
+            @RequestHeader("X-Tenant-Id") String tenantId,
+            @RequestParam("barcode") String barcode) {
+        // Map to query
+        com.ccbsa.wms.product.application.service.query.dto.ValidateProductBarcodeQuery query =
+                mapper.toValidateProductBarcodeQuery(barcode, tenantId);
+
+        // Execute query
+        ValidateProductBarcodeResult result = validateProductBarcodeQueryHandler.handle(query);
+
+        // Map result to DTO
+        ValidateProductBarcodeResultDTO resultDTO = mapper.toValidateProductBarcodeResultDTO(result);
 
         return ApiResponseBuilder.ok(resultDTO);
     }

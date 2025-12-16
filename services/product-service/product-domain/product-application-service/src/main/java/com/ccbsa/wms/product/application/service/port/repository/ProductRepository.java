@@ -66,6 +66,16 @@ public interface ProductRepository {
     boolean existsByBarcodeAndTenantId(ProductBarcode barcode, TenantId tenantId);
 
     /**
+     * Finds a Product by barcode and tenant ID.
+     * Searches both primary and secondary barcodes.
+     *
+     * @param barcode  Barcode value (as string)
+     * @param tenantId Tenant identifier
+     * @return Optional Product if found
+     */
+    Optional<Product> findByBarcodeAndTenantId(String barcode, TenantId tenantId);
+
+    /**
      * Finds all products for a tenant.
      *
      * @param tenantId Tenant identifier

@@ -1,4 +1,4 @@
-package com.ccbsa.wms.user.domain.core.valueobject;
+package com.ccbsa.common.domain.valueobject;
 
 import java.util.Objects;
 
@@ -8,6 +8,7 @@ import java.util.Objects;
  * Represents a description text for domain events or other domain concepts.
  * Immutable and validated on construction.
  * <p>
+ * This is a shared value object used across multiple services.
  * Business Rules:
  * - Description cannot be null or empty
  * - Maximum length: 500 characters

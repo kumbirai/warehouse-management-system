@@ -1,9 +1,9 @@
 package com.ccbsa.wms.user.domain.core.event;
 
 import com.ccbsa.common.domain.EventMetadata;
+import com.ccbsa.common.domain.valueobject.Description;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
-import com.ccbsa.wms.user.domain.core.valueobject.Description;
 import com.ccbsa.wms.user.domain.core.valueobject.UserStatus;
 
 /**

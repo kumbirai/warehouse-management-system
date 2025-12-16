@@ -1,12 +1,4 @@
-import {
-  Box,
-  Card,
-  CardContent,
-  CircularProgress,
-  Grid,
-  Paper,
-  Typography,
-} from '@mui/material';
+import { Box, Card, CardContent, CircularProgress, Grid, Paper, Typography } from '@mui/material';
 import { Product } from '../types/product';
 
 interface ProductDetailProps {
@@ -106,11 +98,7 @@ export const ProductDetail = ({ product, isLoading, error }: ProductDetailProps)
                   </Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     {product.secondaryBarcodes.map((barcode, index) => (
-                      <Typography
-                        key={index}
-                        variant="body1"
-                        sx={{ fontFamily: 'monospace' }}
-                      >
+                      <Typography key={index} variant="body1" sx={{ fontFamily: 'monospace' }}>
                         {barcode}
                       </Typography>
                     ))}
@@ -142,4 +130,3 @@ export const ProductDetail = ({ product, isLoading, error }: ProductDetailProps)
     </Grid>
   );
 };
-

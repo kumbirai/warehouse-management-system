@@ -1,5 +1,5 @@
 import { Container } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ProductDetail } from '../components/ProductDetail';
 import { useProduct } from '../hooks/useProduct';
 import { useAuth } from '../../../hooks/useAuth';
@@ -26,4 +26,3 @@ export const ProductDetailPage = () => {
     </Container>
   );
 };
-

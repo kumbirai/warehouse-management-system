@@ -4,10 +4,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.BodyInserters;
 
 import com.ccbsa.wms.gateway.api.util.RequestHeaderHelper;
-
-import org.springframework.web.reactive.function.BodyInserters;
 
 /**
  * Gateway API integration tests for Product CSV Upload functionality.
@@ -36,13 +35,13 @@ class ProductCsvUploadTest extends BaseIntegrationTest {
     @DisplayName("Should reject request without file")
     void shouldRejectRequestWithoutFile() {
         RequestHeaderHelper.addTenantHeaderIfNeeded(
-                webTestClient
-                        .post()
-                        .uri("/product-service/products/upload-csv")
-                        .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
-                        .contentType(MediaType.MULTIPART_FORM_DATA),
-                authHelper,
-                accessToken)
+                        webTestClient
+                                .post()
+                                .uri("/product-service/products/upload-csv")
+                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
+                                .contentType(MediaType.MULTIPART_FORM_DATA),
+                        authHelper,
+                        accessToken)
                 .exchange()
                 .expectStatus().is4xxClientError();
     }

@@ -13,14 +13,14 @@ import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.application.context.CorrelationContext;
 import com.ccbsa.common.domain.valueobject.EmailAddress;
+import com.ccbsa.common.domain.valueobject.Message;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.common.domain.valueobject.Title;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.notification.application.service.command.CreateNotificationCommandHandler;
 import com.ccbsa.wms.notification.application.service.command.dto.CreateNotificationCommand;
-import com.ccbsa.wms.notification.domain.core.valueobject.Message;
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
-import com.ccbsa.wms.notification.domain.core.valueobject.Title;
 
 /**
  * Event Listener: UserCreatedEventListener
@@ -139,13 +139,43 @@ public class UserCreatedEventListener {
 
     /**
      * Detects event type from payload or header.
+     * <p>
+     * Since type information is disabled in serialization, we detect event type by checking
+     * for @class field first (most reliable), then header, then event-specific fields.
+     *
+     * @param eventData  Event data map
+     * @param headerType Event type from header (may be null)
+     * @return Detected event type
      */
     private String detectEventType(Map<String, Object> eventData, String headerType) {
-        Object aggregateTypeObj = eventData.get("aggregateType");
-        if (aggregateTypeObj instanceof String) {
-            return (String) aggregateTypeObj;
+        // Check @class field first (most reliable source of event type)
+        Object classObj = eventData.get("@class");
+        if (classObj instanceof String) {
+            String className = (String) classObj;
+            if (className.contains(".")) {
+                String simpleName = className.substring(className.lastIndexOf('.') + 1);
+                logger.debug("Detected event type from @class field: {}", simpleName);
+                return simpleName;
+            }
+            logger.debug("Detected event type from @class field: {}", className);
+            return className;
         }
-        return headerType != null ? headerType : "Unknown";
+
+        // Check header if @class is not available
+        if (headerType != null) {
+            String simpleName = headerType.contains(".")
+                    ? headerType.substring(headerType.lastIndexOf('.') + 1)
+                    : headerType;
+            logger.debug("Detected event type from header: {}", simpleName);
+            return simpleName;
+        }
+
+        // Check for UserCreatedEvent-specific fields (has username, emailAddress, status)
+        if (eventData.containsKey("username") && eventData.containsKey("emailAddress") && eventData.containsKey("status")) {
+            return "UserCreatedEvent";
+        }
+
+        return "Unknown";
     }
 
     /**

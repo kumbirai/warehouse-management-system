@@ -4,14 +4,14 @@ import java.time.LocalDateTime;
 
 import com.ccbsa.common.domain.TenantAwareAggregateRoot;
 import com.ccbsa.common.domain.valueobject.EmailAddress;
+import com.ccbsa.common.domain.valueobject.Message;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.common.domain.valueobject.Title;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent;
-import com.ccbsa.wms.notification.domain.core.valueobject.Message;
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationId;
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationStatus;
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
-import com.ccbsa.wms.notification.domain.core.valueobject.Title;
 
 /**
  * Aggregate Root: Notification

@@ -24,6 +24,12 @@
             <artifactId>common-domain</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.ccbsa.wms</groupId>
+            <artifactId>product-domain-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

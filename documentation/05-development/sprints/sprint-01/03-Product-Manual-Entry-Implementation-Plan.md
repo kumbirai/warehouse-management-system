@@ -60,6 +60,7 @@
 **Component:** `ProductCreationForm.tsx`
 
 **Fields:**
+
 - **Product Code** (required, text input with uniqueness check)
 - **Description** (required, textarea, max 500 characters)
 - **Primary Barcode** (required, text input with format validation)
@@ -69,6 +70,7 @@
 - **Secondary Barcodes** (optional, dynamic list with add/remove)
 
 **Validation:**
+
 - Real-time validation for all fields
 - Product code uniqueness check (debounced API call)
 - Barcode format validation (EAN-13, Code 128, etc.)
@@ -76,6 +78,7 @@
 - Clear error messages for each field
 
 **Actions:**
+
 - **Save Draft** - Save to localStorage for later completion
 - **Create Product** - Submit form to create product
 - **Cancel** - Navigate back to product list
@@ -83,6 +86,7 @@
 - **Remove Secondary Barcode** - Remove a secondary barcode
 
 **UI Flow:**
+
 1. User navigates to "Products" → "Create Product"
 2. Form displays with all fields
 3. User enters product code (system checks uniqueness in real-time)
@@ -99,6 +103,7 @@
 **Component:** `ProductUpdateForm.tsx`
 
 **Features:**
+
 - Pre-populated with existing product data
 - Same validation as creation form
 - Product code is read-only (cannot be changed)
@@ -110,6 +115,7 @@
 **Component:** `ProductList.tsx`
 
 **Features:**
+
 - List all products with pagination
 - Filter by category, brand, unit of measure
 - Search by product code, description, barcode
@@ -122,6 +128,7 @@
 **Component:** `ProductDetail.tsx`
 
 **Features:**
+
 - Display product details
 - Display all barcodes (primary and secondary)
 - Print barcode option
@@ -164,7 +171,8 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
 }
 ```
 
-**Note:** Domain model is shared with CSV upload story. See [02-Product-CSV-Upload-Implementation-Plan.md](02-Product-CSV-Upload-Implementation-Plan.md) for complete domain model details.
+**Note:** Domain model is shared with CSV upload story. See [02-Product-CSV-Upload-Implementation-Plan.md](02-Product-CSV-Upload-Implementation-Plan.md) for complete domain model
+details.
 
 ---
 
@@ -175,6 +183,7 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
 **Module:** `product-domain/product-application-service`
 
 **Command Handler:**
+
 ```java
 @Component
 public class CreateProductCommandHandler {
@@ -251,6 +260,7 @@ public class CreateProductCommandHandler {
 ```
 
 **Update Command Handler:**
+
 ```java
 @Component
 public class UpdateProductCommandHandler {
@@ -325,6 +335,7 @@ public class UpdateProductCommandHandler {
 ```
 
 **Query Handler:**
+
 ```java
 @Component
 public class GetProductQueryHandler {
@@ -355,6 +366,7 @@ public class GetProductQueryHandler {
 ```
 
 **Product Code Uniqueness Check Query:**
+
 ```java
 @Component
 public class CheckProductCodeUniquenessQueryHandler {
@@ -381,6 +393,7 @@ public class CheckProductCodeUniquenessQueryHandler {
 **Module:** `product-application`
 
 **Command Controller:**
+
 ```java
 @RestController
 @RequestMapping("/api/v1/product-service/products")
@@ -427,6 +440,7 @@ public class ProductCommandController {
 ```
 
 **Query Controller:**
+
 ```java
 @RestController
 @RequestMapping("/api/v1/product-service/products")
@@ -476,6 +490,7 @@ public class ProductQueryController {
 ```
 
 **DTOs:**
+
 ```java
 // CreateProductCommandDTO
 public class CreateProductCommandDTO {
@@ -626,6 +641,7 @@ export const productApiClient = new ProductApiClient();
 ### React Components
 
 **Product Creation Form:**
+
 ```typescript
 // frontend-app/src/features/product/commands/CreateProductForm.tsx
 export const CreateProductForm: React.FC = () => {
@@ -863,6 +879,7 @@ export const CreateProductForm: React.FC = () => {
 ### Unit Tests
 
 **Domain Core:**
+
 - Product aggregate creation
 - Product code validation
 - Barcode format validation
@@ -870,11 +887,13 @@ export const CreateProductForm: React.FC = () => {
 - Business logic methods
 
 **Application Service:**
+
 - Command handler logic
 - Validation logic
 - Error handling
 
 **Data Access:**
+
 - Repository adapter operations
 - Entity mapping
 
@@ -957,16 +976,16 @@ class ProductManagementTest extends BaseIntegrationTest {
 
 ## Acceptance Criteria Validation
 
-| AC | Description | Validation Method |
-|----|-------------|-------------------|
-| AC1 | System provides form-based UI for product data entry | Frontend test |
-| AC2 | Form includes all required fields | Frontend test |
-| AC3 | System validates required fields and data formats in real-time | Frontend test + Backend test |
-| AC4 | System validates product code uniqueness | Integration test + Frontend test |
-| AC5 | System supports adding multiple barcodes per product | Integration test + Frontend test |
-| AC6 | System provides clear validation error messages | Frontend test + Backend test |
-| AC7 | System allows saving draft products for later completion | Frontend test |
-| AC8 | System publishes ProductCreatedEvent or ProductUpdatedEvent | Integration test |
+| AC  | Description                                                    | Validation Method                |
+|-----|----------------------------------------------------------------|----------------------------------|
+| AC1 | System provides form-based UI for product data entry           | Frontend test                    |
+| AC2 | Form includes all required fields                              | Frontend test                    |
+| AC3 | System validates required fields and data formats in real-time | Frontend test + Backend test     |
+| AC4 | System validates product code uniqueness                       | Integration test + Frontend test |
+| AC5 | System supports adding multiple barcodes per product           | Integration test + Frontend test |
+| AC6 | System provides clear validation error messages                | Frontend test + Backend test     |
+| AC7 | System allows saving draft products for later completion       | Frontend test                    |
+| AC8 | System publishes ProductCreatedEvent or ProductUpdatedEvent    | Integration test                 |
 
 ---
 

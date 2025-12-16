@@ -1,5 +1,5 @@
 import { Container } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { LocationDetail } from '../components/LocationDetail';
 import { useLocation } from '../hooks/useLocation';
 import { useAuth } from '../../../hooks/useAuth';
@@ -26,4 +26,3 @@ export const LocationDetailPage = () => {
     </Container>
   );
 };
-

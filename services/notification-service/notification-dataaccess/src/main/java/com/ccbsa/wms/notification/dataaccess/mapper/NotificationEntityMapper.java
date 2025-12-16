@@ -3,13 +3,13 @@ package com.ccbsa.wms.notification.dataaccess.mapper;
 import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.domain.valueobject.EmailAddress;
+import com.ccbsa.common.domain.valueobject.Message;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.common.domain.valueobject.Title;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.notification.dataaccess.entity.NotificationEntity;
 import com.ccbsa.wms.notification.domain.core.entity.Notification;
-import com.ccbsa.wms.notification.domain.core.valueobject.Message;
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationId;
-import com.ccbsa.wms.notification.domain.core.valueobject.Title;
 
 /**
  * Mapper: NotificationEntityMapper

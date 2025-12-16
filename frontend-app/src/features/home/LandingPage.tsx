@@ -1,6 +1,6 @@
-import { Box, Button, Container, Grid, Paper, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import {Box, Button, Container, Grid, Paper, Typography} from '@mui/material';
+import {useNavigate} from 'react-router-dom';
+import {useAuth} from '../../hooks/useAuth';
 
 /**
  * Public landing page component.

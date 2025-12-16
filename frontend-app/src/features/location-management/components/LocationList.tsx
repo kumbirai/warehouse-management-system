@@ -1,7 +1,5 @@
 import {
   Box,
-  Card,
-  CardContent,
   Chip,
   CircularProgress,
   Paper,
@@ -64,7 +62,7 @@ export const LocationList = ({ locations, isLoading, error }: LocationListProps)
           </TableRow>
         </TableHead>
         <TableBody>
-          {locations.map((location) => (
+          {locations.map(location => (
             <TableRow
               key={location.locationId}
               hover
@@ -91,4 +89,3 @@ export const LocationList = ({ locations, isLoading, error }: LocationListProps)
     </TableContainer>
   );
 };
-

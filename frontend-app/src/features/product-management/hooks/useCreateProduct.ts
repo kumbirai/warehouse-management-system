@@ -21,13 +21,17 @@ export const useCreateProduct = (): UseCreateProductResult => {
 
     try {
       const response = await productService.createProduct(request, tenantId);
-      
-      if (response.success && response.data) {
-        logger.info('Product created successfully', { productId: response.data.productId });
-        navigate(`/products/${response.data.productId}`);
-      } else {
-        throw new Error(response.error?.message || 'Failed to create product');
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to create product');
       }
+
+      if (!response.data) {
+        throw new Error('Invalid response from server');
+      }
+
+      logger.info('Product created successfully', { productId: response.data.productId });
+      navigate(`/products/${response.data.productId}`);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to create product');
       logger.error('Error creating product:', error);
@@ -40,4 +44,3 @@ export const useCreateProduct = (): UseCreateProductResult => {
 
   return { createProduct, isLoading, error };
 };
-

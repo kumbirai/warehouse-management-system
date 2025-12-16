@@ -52,6 +52,15 @@ public interface ProductJpaRepository extends JpaRepository<ProductEntity, UUID>
     boolean existsByTenantIdAndPrimaryBarcode(String tenantId, String barcode);
 
     /**
+     * Finds a product by tenant ID and primary barcode.
+     *
+     * @param tenantId Tenant identifier
+     * @param barcode  Primary barcode
+     * @return Optional ProductEntity if found
+     */
+    Optional<ProductEntity> findByTenantIdAndPrimaryBarcode(String tenantId, String barcode);
+
+    /**
      * Finds all products for a tenant.
      *
      * @param tenantId Tenant identifier

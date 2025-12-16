@@ -4,13 +4,13 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import com.ccbsa.common.domain.TenantAwareAggregateRoot;
+import com.ccbsa.common.domain.valueobject.Description;
 import com.ccbsa.common.domain.valueobject.EmailAddress;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.user.domain.core.event.UserCreatedEvent;
 import com.ccbsa.wms.user.domain.core.event.UserDeactivatedEvent;
 import com.ccbsa.wms.user.domain.core.event.UserUpdatedEvent;
-import com.ccbsa.wms.user.domain.core.valueobject.Description;
 import com.ccbsa.wms.user.domain.core.valueobject.FirstName;
 import com.ccbsa.wms.user.domain.core.valueobject.KeycloakUserId;
 import com.ccbsa.wms.user.domain.core.valueobject.LastName;

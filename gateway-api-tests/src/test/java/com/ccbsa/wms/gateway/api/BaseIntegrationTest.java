@@ -32,9 +32,9 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class BaseIntegrationTest {
 
     protected static final String TEST_USERNAME =
-            System.getenv().getOrDefault("TEST_USERNAME", "admin");
+            System.getenv().getOrDefault("TEST_USERNAME", "sysadmin");
     protected static final String TEST_PASSWORD =
-            System.getenv().getOrDefault("TEST_PASSWORD", "admin");
+            System.getenv().getOrDefault("TEST_PASSWORD", "Password123@");
     private static final String DEFAULT_BASE_URL = "https://localhost:8080/api/v1";
     protected static String baseUrl =
             System.getenv().getOrDefault("GATEWAY_BASE_URL", DEFAULT_BASE_URL);

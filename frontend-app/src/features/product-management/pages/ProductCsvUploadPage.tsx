@@ -20,4 +20,3 @@ export const ProductCsvUploadPage = () => {
     </Container>
   );
 };
-

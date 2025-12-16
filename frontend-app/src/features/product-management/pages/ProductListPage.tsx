@@ -1,4 +1,4 @@
-import { Box, Button, Container, Tabs, Tab } from '@mui/material';
+import { Box, Button, Container, Tab, Tabs } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProductList } from '../components/ProductList';
@@ -14,7 +14,7 @@ export const ProductListPage = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
   const { products, isLoading, error } = useProducts({
-    tenantId: user?.tenantId,
+    tenantId: user?.tenantId ?? undefined,
     page: 0,
     size: 100,
   });
@@ -32,11 +32,7 @@ export const ProductListPage = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <h1>Products</h1>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<UploadFileIcon />}
-            onClick={() => setActiveTab(1)}
-          >
+          <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={() => setActiveTab(1)}>
             Upload CSV
           </Button>
           <Button
@@ -54,14 +50,9 @@ export const ProductListPage = () => {
         <Tab label="CSV Upload" />
       </Tabs>
 
-      {activeTab === 0 && (
-        <ProductList products={products} isLoading={isLoading} error={error} />
-      )}
+      {activeTab === 0 && <ProductList products={products} isLoading={isLoading} error={error} />}
 
-      {activeTab === 1 && (
-        <ProductCsvUploadForm onUpload={handleUpload} isLoading={isUploading} />
-      )}
+      {activeTab === 1 && <ProductCsvUploadForm onUpload={handleUpload} isLoading={isUploading} />}
     </Container>
   );
 };
-

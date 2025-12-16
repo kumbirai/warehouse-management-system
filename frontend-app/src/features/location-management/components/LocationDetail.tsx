@@ -147,4 +147,3 @@ export const LocationDetail = ({ location, isLoading, error }: LocationDetailPro
     </Grid>
   );
 };
-
