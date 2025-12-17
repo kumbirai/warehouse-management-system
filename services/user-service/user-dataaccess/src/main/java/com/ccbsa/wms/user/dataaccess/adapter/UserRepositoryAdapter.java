@@ -1,7 +1,9 @@
 package com.ccbsa.wms.user.dataaccess.adapter;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -69,8 +71,8 @@ public class UserRepositoryAdapter
         if (tenantId == null) {
             logger.error("TenantContext is not set when saving user! User will be saved to wrong schema. User tenantId: {}", user.getTenantId() != null ? user.getTenantId()
                     .getValue() : "null");
-            throw new IllegalStateException("TenantContext must be set before saving user. Expected tenantId: " + (user.getTenantId() != null ? user.getTenantId()
-                    .getValue() : "null"));
+            throw new IllegalStateException(String.format("TenantContext must be set before saving user. Expected tenantId: %s", 
+                    user.getTenantId() != null ? user.getTenantId().getValue() : "null"));
         }
 
         // Verify tenantId matches
@@ -198,8 +200,8 @@ public class UserRepositoryAdapter
     @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
             justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " + "and properly escaped using escapeIdentifier() method. "
                     + "PostgreSQL SET search_path command does not support parameterized queries.")
-    private void executeSetSearchPath(java.sql.Connection connection, String schemaName) {
-        try (java.sql.Statement stmt = connection.createStatement()) {
+    private void executeSetSearchPath(Connection connection, String schemaName) {
+        try (Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
             logger.debug("Setting search_path to: {}", schemaName);
             stmt.execute(setSchemaSql);
@@ -250,6 +252,38 @@ public class UserRepositoryAdapter
 
     @Override
     public List<User> findByTenantId(TenantId tenantId) {
+        // Verify TenantContext is set (critical for schema resolution)
+        com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
+            throw new IllegalStateException(String.format("TenantContext must be set before querying users. Expected tenantId: %s", 
+                    tenantId != null ? tenantId.getValue() : "null"));
+        }
+
+        // Verify tenantId matches TenantContext
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
+        }
+
+        logger.debug("Querying users with TenantContext set to: {}", contextTenantId.getValue());
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        // This ensures Hibernate uses the correct schema even if naming strategy caching occurs
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Now query using JPA repository (will use the schema set in search_path)
         return jpaRepository.findByTenantId(tenantId.getValue())
                 .stream()
                 .map(mapper::toDomain)
@@ -361,7 +395,9 @@ public class UserRepositoryAdapter
         }
 
         // Explicitly list all columns to ensure proper JPA entity mapping
-        String columns = "user_id, tenant_id, username, email_address, first_name, last_name, " + "keycloak_user_id, status, created_at, last_modified_at, version";
+        String columns = String.format("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s",
+                "user_id", "tenant_id", "username", "email_address", "first_name", "last_name",
+                "keycloak_user_id", "status", "created_at", "last_modified_at", "version");
 
         StringBuilder sql = new StringBuilder();
         List<String> unionParts = new ArrayList<>();
@@ -397,7 +433,9 @@ public class UserRepositoryAdapter
             }
 
             // 2. Build UNION query with WHERE user_id = ?
-            String columns = "user_id, tenant_id, username, email_address, first_name, last_name, " + "keycloak_user_id, status, created_at, last_modified_at, version";
+            String columns = String.format("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s",
+                    "user_id", "tenant_id", "username", "email_address", "first_name", "last_name",
+                    "keycloak_user_id", "status", "created_at", "last_modified_at", "version");
 
             List<String> unionParts = new ArrayList<>();
             for (String schema : tenantSchemas) {
@@ -435,6 +473,38 @@ public class UserRepositoryAdapter
 
     @Override
     public List<User> findByTenantIdAndStatus(TenantId tenantId, UserStatus status) {
+        // Verify TenantContext is set (critical for schema resolution)
+        com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
+            throw new IllegalStateException(String.format("TenantContext must be set before querying users. Expected tenantId: %s", 
+                    tenantId != null ? tenantId.getValue() : "null"));
+        }
+
+        // Verify tenantId matches TenantContext
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
+        }
+
+        logger.debug("Querying users with status filter - TenantContext: {}, Status: {}", contextTenantId.getValue(), status);
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        // This ensures Hibernate uses the correct schema even if naming strategy caching occurs
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Now query using JPA repository (will use the schema set in search_path)
         UserEntity.UserStatus entityStatus = UserEntity.UserStatus.valueOf(status.name());
         return jpaRepository.findByTenantIdAndStatus(tenantId.getValue(), entityStatus)
                 .stream()

@@ -1,13 +1,11 @@
 package com.ccbsa.wms.user.application.api.controller;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -97,6 +95,11 @@ public class UserQueryController {
         ListUsersQueryResult result = listUsersQueryHandler.handle(mapper.toListUsersQuery(resolvedTenantId, status, zeroIndexedPage, size));
         List<UserResponse> responses = mapper.toUserResponseList(result);
 
+        // Log result for debugging
+        org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserQueryController.class);
+        logger.info("ListUsers query result: tenantId={}, totalCount={}, itemsCount={}, page={}, size={}", 
+            resolvedTenantId, result.getTotalCount(), responses.size(), page, size);
+
         // Build pagination metadata (using 1-indexed page for response)
         ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page != null && page > 0 ? page : 1, size != null && size > 0 ? size : 20, result.getTotalCount());
         ApiMeta meta = ApiMeta.builder()
@@ -108,40 +111,23 @@ public class UserQueryController {
 
     /**
      * Checks if the current user has TENANT_ADMIN role.
+     * <p>
+     * Uses Spring Security authorities (set by GatewayRoleHeaderAuthenticationFilter from X-Role header)
+     * rather than reading directly from JWT token, following the gateway-trust architectural pattern.
      *
      * @return true if user has TENANT_ADMIN role, false otherwise
      */
     private boolean isTenantAdmin() {
         Authentication authentication = SecurityContextHolder.getContext()
                 .getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
+        if (authentication == null) {
             return false;
         }
 
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        return hasRole(jwt, "TENANT_ADMIN");
-    }
-
-    /**
-     * Checks if the JWT token contains the specified role.
-     *
-     * @param jwt  The JWT token
-     * @param role The role to check for
-     * @return true if the role is present, false otherwise
-     */
-    private boolean hasRole(Jwt jwt, String role) {
-        Object realmAccess = jwt.getClaim("realm_access");
-        if (realmAccess instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
-            Object rolesObj = realmAccessMap.get("roles");
-            if (rolesObj instanceof List) {
-                @SuppressWarnings("unchecked")
-                List<String> roles = (List<String>) rolesObj;
-                return roles.contains(role);
-            }
-        }
-        return false;
+        // Check Spring Security authorities (set by GatewayRoleHeaderAuthenticationFilter)
+        // Authorities have ROLE_ prefix, so check for ROLE_TENANT_ADMIN
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_TENANT_ADMIN"));
     }
 }
 

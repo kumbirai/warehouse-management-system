@@ -198,6 +198,7 @@ logging:
     com.ccbsa.wms.user: INFO
     com.ccbsa.wms.user.application: DEBUG
     com.ccbsa.wms.user.config.UserServiceSecurityConfig: DEBUG
+    com.ccbsa.wms.common.security.GatewayRoleHeaderAuthenticationFilter: DEBUG
     # org.springframework.security: DEBUG
     # org.springframework.security.web: DEBUG
     # org.springframework.security.web.FilterChainProxy: TRACE

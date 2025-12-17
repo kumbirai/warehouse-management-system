@@ -20,6 +20,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -40,11 +41,16 @@ public class ServiceSecurityConfig {
      */
     @Bean
     @ConditionalOnMissingBean(SecurityFilterChain.class)
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            GatewayRoleHeaderAuthenticationFilter gatewayRoleHeaderAuthenticationFilter) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder())
                         .jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                // Add filter to extract roles from X-Role header (set by gateway) after JWT BearerTokenAuthenticationFilter
+                // Note: BearerTokenAuthenticationFilter is added by oauth2ResourceServer(), so we add our filter after it
+                .addFilterAfter(gatewayRoleHeaderAuthenticationFilter, BearerTokenAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/**", "/error", "/swagger-ui/**", "/v3/api-docs/**")
                         .permitAll()
                         .anyRequest()
@@ -66,13 +72,17 @@ public class ServiceSecurityConfig {
     /**
      * JWT authentication converter that extracts roles from Keycloak JWT tokens.
      * <p>
+     * <b>Note:</b> This is a fallback method. The primary method for role extraction is via the
+     * {@code X-Role} header set by the gateway (see {@link GatewayRoleHeaderAuthenticationFilter}).
+     * This converter is used when the header is not present (e.g., direct service-to-service calls).
+     * <p>
      * Extracts roles from the {@code realm_access.roles} claim in the JWT token and converts them to Spring Security authorities with the {@code ROLE_} prefix. This enables
      * {@code @PreAuthorize("hasRole('ADMIN')")} annotations to work
      * correctly.
      * <p>
      * Example: If the JWT contains {@code realm_access.roles: ["ADMIN", "USER"]}, this converter will create authorities {@code ROLE_ADMIN} and {@code ROLE_USER}.
      *
-     * @return JwtAuthenticationConverter configured to extract roles from Keycloak JWT tokens
+     * @return JwtAuthenticationConverter configured to extract roles from Keycloak JWT tokens (fallback)
      */
     @Bean
     @ConditionalOnMissingBean(JwtAuthenticationConverter.class)

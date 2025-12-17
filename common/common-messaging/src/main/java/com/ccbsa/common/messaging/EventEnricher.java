@@ -76,7 +76,7 @@ public final class EventEnricher {
             // Find constructor that accepts EventMetadata as last parameter
             Constructor<?> enrichedConstructor = findEnrichedConstructor(eventClass);
             if (enrichedConstructor == null) {
-                logger.warn("No constructor with EventMetadata found for event class: {}. " + "Event will be published without metadata.", eventClass.getName());
+                logger.warn("No constructor with EventMetadata found for event class: {}. Event will be published without metadata.", eventClass.getName());
                 return event;
             }
 
@@ -86,7 +86,7 @@ public final class EventEnricher {
             Class<?>[] paramTypes = enrichedConstructor.getParameterTypes();
             int expectedParamCount = paramTypes.length - 1; // Exclude EventMetadata
             if (originalParams.length == 0 && expectedParamCount > 0) {
-                logger.warn("Failed to extract constructor parameters for event class: {}. " + "Event will be published without metadata.", eventClass.getName());
+                logger.warn("Failed to extract constructor parameters for event class: {}. Event will be published without metadata.", eventClass.getName());
                 return event;
             }
 

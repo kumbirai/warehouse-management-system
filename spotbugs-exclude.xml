@@ -71,6 +71,11 @@
         <Class name="~.*Controller"/>
         <Bug pattern="URF_UNREAD_FIELD"/>
     </Match>
+    <!-- Spring-managed beans (interfaces/ports) injected via constructor are immutable -->
+    <Match>
+        <Class name="~.*Controller"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
 
     <!-- Exclude false positives in publisher/impl classes -->
     <!-- Fields are used in publish() methods, SpotBugs sometimes misses this -->

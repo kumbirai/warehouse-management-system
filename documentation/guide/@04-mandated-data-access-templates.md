@@ -120,6 +120,21 @@ com.ccbsa.wms.{service}.dataaccess/
 
 ## Repository Adapter Template
 
+**⚠️ CRITICAL: Schema-Per-Tenant Pattern**
+
+All repository adapters **MUST** set the PostgreSQL `search_path` before querying tenant-specific data. This is **mandatory** for the schema-per-tenant pattern to work correctly.
+
+**Required Dependencies:**
+- `TenantSchemaResolver` - resolves schema name from TenantContext
+- `TenantSchemaProvisioner` - ensures schema exists and migrations are applied
+- `EntityManager` - for setting search_path on database connection
+
+**Pattern:** All methods that query by `tenantId` MUST:
+1. Verify `TenantContext` is set
+2. Resolve schema name using `TenantSchemaResolver`
+3. Set PostgreSQL `search_path` to resolved schema
+4. Then execute JPA repository query
+
 ```java
 package com.ccbsa.wms.{service}.dataaccess.adapter;
 
@@ -130,28 +145,76 @@ import com.ccbsa.wms.{service}.dataaccess.entity.{DomainObject}Entity;
 import com.ccbsa.wms.{service}.dataaccess.jpa.{DomainObject}JpaRepository;
 import com.ccbsa.wms.{service}.dataaccess.mapper.{DomainObject}EntityMapper;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.{service}.dataaccess.schema.TenantSchemaProvisioner;
+import com.ccbsa.wms.common.security.TenantContext;
+import org.hibernate.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Repository
 public class {DomainObject}RepositoryAdapter implements {DomainObject}Repository {
+    private static final Logger logger = LoggerFactory.getLogger({DomainObject}RepositoryAdapter.class);
     
     private final {DomainObject}JpaRepository jpaRepository;
     private final {DomainObject}EntityMapper mapper;
+    private final TenantSchemaResolver schemaResolver;
+    private final TenantSchemaProvisioner schemaProvisioner;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
     
     public {DomainObject}RepositoryAdapter(
             {DomainObject}JpaRepository jpaRepository,
-            {DomainObject}EntityMapper mapper
+            {DomainObject}EntityMapper mapper,
+            TenantSchemaResolver schemaResolver,
+            TenantSchemaProvisioner schemaProvisioner
     ) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
+        this.schemaResolver = schemaResolver;
+        this.schemaProvisioner = schemaProvisioner;
     }
     
     @Override
     public void save({DomainObject} {domainObject}) {
+        // Verify TenantContext is set (critical for schema resolution)
+        TenantId tenantId = TenantContext.getTenantId();
+        if (tenantId == null) {
+            logger.error("TenantContext is not set when saving {domainObject}! Cannot resolve schema.");
+            throw new IllegalStateException("TenantContext must be set before saving {domainObject}");
+        }
+
+        // Verify tenantId matches
+        if (!tenantId.getValue().equals({domainObject}.getTenantId().getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, {DomainObject}: {}", 
+                tenantId.getValue(), {domainObject}.getTenantId().getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match {domainObject} tenantId");
+        }
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
         // Check if entity already exists to handle version correctly for optimistic locking
         Optional<{DomainObject}Entity> existingEntity = 
             jpaRepository.findByTenantIdAndId(
@@ -170,6 +233,7 @@ public class {DomainObject}RepositoryAdapter implements {DomainObject}Repository
         }
 
         jpaRepository.save(entity);
+        logger.debug("{DomainObject} saved successfully to schema: '{}'", schemaName);
     }
     
     /**
@@ -198,12 +262,70 @@ public class {DomainObject}RepositoryAdapter implements {DomainObject}Repository
     
     @Override
     public Optional<{DomainObject}> findByTenantIdAndId(TenantId tenantId, {DomainObject}Id id) {
+        // Verify TenantContext is set (critical for schema resolution)
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when querying {domainObject}! Cannot resolve schema.");
+            throw new IllegalStateException("TenantContext must be set before querying {domainObject}");
+        }
+
+        // Verify tenantId matches TenantContext
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, Requested: {}", 
+                contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
+        }
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Now query using JPA repository (will use the schema set in search_path)
         return jpaRepository.findByTenantIdAndId(tenantId.getValue(), id.getValue())
             .map(mapper::toDomain);
     }
     
     @Override
     public List<{DomainObject}> findByTenantId(TenantId tenantId) {
+        // Verify TenantContext is set (critical for schema resolution)
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when querying {domainObject}s! Cannot resolve schema.");
+            throw new IllegalStateException("TenantContext must be set before querying {domainObject}s");
+        }
+
+        // Verify tenantId matches TenantContext
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, Requested: {}", 
+                contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
+        }
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Now query using JPA repository (will use the schema set in search_path)
         return jpaRepository.findByTenantId(tenantId.getValue()).stream()
             .map(mapper::toDomain)
             .collect(Collectors.toList());
@@ -217,6 +339,86 @@ public class {DomainObject}RepositoryAdapter implements {DomainObject}Repository
     @Override
     public boolean existsById({DomainObject}Id id) {
         return jpaRepository.existsById(id.getValue());
+    }
+    
+    /**
+     * Validates that a schema name matches expected patterns to prevent SQL injection.
+     * <p>
+     * Schema names must match one of these patterns:
+     * - 'public' (for legacy data)
+     * - 'tenant_*_schema' (for tenant-specific schemas)
+     *
+     * @param schemaName The schema name to validate
+     * @throws IllegalArgumentException if schema name does not match expected patterns
+     */
+    private void validateSchemaName(String schemaName) {
+        if (schemaName == null || schemaName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Schema name cannot be null or empty");
+        }
+
+        // Allow 'public' schema
+        if ("public".equals(schemaName)) {
+            return;
+        }
+
+        // Allow tenant schemas matching pattern: tenant_*_schema
+        if (schemaName.matches("^tenant_[a-zA-Z0-9_]+_schema$")) {
+            return;
+        }
+
+        throw new IllegalArgumentException(
+            String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName)
+        );
+    }
+
+    /**
+     * Sets the PostgreSQL search_path for the current database connection.
+     * <p>
+     * This method sets the search_path to the specified schema name.
+     * The schema name must be validated before calling this method.
+     *
+     * @param session    Hibernate session
+     * @param schemaName Validated schema name
+     */
+    private void setSearchPath(Session session, String schemaName) {
+        session.doWork(connection -> executeSetSearchPath(connection, schemaName));
+    }
+
+    /**
+     * Executes the SET search_path SQL command.
+     * <p>
+     * This method is separated to allow proper SpotBugs annotation placement.
+     *
+     * @param connection Database connection
+     * @param schemaName Validated and escaped schema name
+     */
+    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
+            justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " +
+                    "and properly escaped using escapeIdentifier() method. " +
+                    "PostgreSQL SET search_path command does not support parameterized queries.")
+    private void executeSetSearchPath(java.sql.Connection connection, String schemaName) {
+        try (java.sql.Statement stmt = connection.createStatement()) {
+            String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
+            logger.debug("Setting search_path to: {}", schemaName);
+            stmt.execute(setSchemaSql);
+        } catch (SQLException e) {
+            logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
+            throw new RuntimeException("Failed to set database schema", e);
+        }
+    }
+
+    /**
+     * Escapes a PostgreSQL identifier to prevent SQL injection.
+     * <p>
+     * PostgreSQL identifiers are case-sensitive when quoted. This method wraps
+     * the identifier in double quotes and escapes any internal quotes.
+     *
+     * @param identifier The identifier to escape
+     * @return Escaped identifier safe for use in SQL
+     */
+    private String escapeIdentifier(String identifier) {
+        // PostgreSQL identifiers: wrap in double quotes and escape internal quotes
+        return "\"" + identifier.replace("\"", "\"\"") + "\"";
     }
 }
 ```

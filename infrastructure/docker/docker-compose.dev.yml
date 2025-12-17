@@ -15,6 +15,19 @@ services:
     networks:
       - wms-dev-network
     restart: unless-stopped
+    # Increase max_connections to support multiple microservices, Keycloak, and admin tools
+    # Default is 100, which is insufficient for this multi-service architecture
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=128MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c log_connections=on
+      -c log_disconnections=on
+      -c log_line_prefix='%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 30s

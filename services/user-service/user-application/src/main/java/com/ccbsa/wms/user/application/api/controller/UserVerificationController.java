@@ -50,12 +50,12 @@ public class UserVerificationController {
             @PathVariable String userId) {
         // Load user to get Keycloak user ID
         User user = userRepository.findById(UserId.of(userId))
-                .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
+                .orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", userId)));
 
         // Check if user has Keycloak user ID
         if (!user.getKeycloakUserId()
                 .isPresent()) {
-            throw new IllegalStateException("User does not have a Keycloak account: " + userId);
+            throw new IllegalStateException(String.format("User does not have a Keycloak account: %s", userId));
         }
 
         KeycloakUserId keycloakUserId = user.getKeycloakUserId()

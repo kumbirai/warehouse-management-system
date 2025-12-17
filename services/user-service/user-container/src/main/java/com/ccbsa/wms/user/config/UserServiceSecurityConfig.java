@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -126,7 +127,9 @@ public class UserServiceSecurityConfig
     @Bean
     @org.springframework.core.annotation.Order(2)
     @Override
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            com.ccbsa.wms.common.security.GatewayRoleHeaderAuthenticationFilter gatewayRoleHeaderAuthenticationFilter) throws Exception {
         logger.info("Configuring protected endpoints security filter chain (Order 2) - with OAuth2 Resource Server");
         http.securityMatcher(createProtectedEndpointsMatcher())
                 .csrf(csrf -> csrf.disable())
@@ -136,7 +139,11 @@ public class UserServiceSecurityConfig
                         // All endpoints in this chain require authentication
                         .anyRequest()
                         .authenticated())
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder())))
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder())
+                        .jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                // Add filter to extract roles from X-Role header (set by gateway) after JWT BearerTokenAuthenticationFilter
+                // Note: BearerTokenAuthenticationFilter is added by oauth2ResourceServer(), so we add our filter after it
+                .addFilterAfter(gatewayRoleHeaderAuthenticationFilter, BearerTokenAuthenticationFilter.class)
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(createAuthenticationEntryPoint())
                         .accessDeniedHandler(createAccessDeniedHandler()));
 

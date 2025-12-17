@@ -53,17 +53,20 @@ public class ListUsersQueryHandler {
             } else {
                 users = userRepository.findByTenantId(query.getTenantId());
             }
+            logger.debug("Found {} users for tenantId={}", users.size(), query.getTenantId());
         } else {
             // SYSTEM_ADMIN can query all users across all tenant schemas (tenantId is null)
             // Note: This is only reached if user has SYSTEM_ADMIN role (enforced by @PreAuthorize)
             // Use findAllAcrossTenants to query across all tenant schemas
             users = userRepository.findAllAcrossTenants(query.getStatus());
+            logger.debug("Found {} users across all tenants (SYSTEM_ADMIN query)", users.size());
         }
 
         // 2. Apply pagination
         int start = query.getPage() * query.getSize();
         int end = Math.min(start + query.getSize(), users.size());
         List<User> paginatedUsers = users.subList(Math.min(start, users.size()), end);
+        logger.debug("Returning {} users (page {} of {}, total: {})", paginatedUsers.size(), query.getPage(), (users.size() + query.getSize() - 1) / query.getSize(), users.size());
 
         // 3. Map to query results
         List<GetUserQueryResult> results = paginatedUsers.stream()
