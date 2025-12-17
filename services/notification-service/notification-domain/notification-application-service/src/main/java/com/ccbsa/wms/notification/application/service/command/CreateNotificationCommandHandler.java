@@ -30,9 +30,7 @@ public class CreateNotificationCommandHandler {
     private final NotificationRepository repository;
     private final NotificationEventPublisher eventPublisher;
 
-    public CreateNotificationCommandHandler(
-            NotificationRepository repository,
-            NotificationEventPublisher eventPublisher) {
+    public CreateNotificationCommandHandler(NotificationRepository repository, NotificationEventPublisher eventPublisher) {
         this.repository = repository;
         this.eventPublisher = eventPublisher;
     }
@@ -108,10 +106,9 @@ public class CreateNotificationCommandHandler {
     /**
      * Publishes domain events after transaction commit to avoid race conditions.
      * <p>
-     * Events are published using TransactionSynchronizationManager to ensure they are
-     * only published after the database transaction has successfully committed.
-     * This prevents race conditions where event listeners consume events before
-     * the notification is visible in the database.
+     * Events are published using TransactionSynchronizationManager to ensure they are only published after the database transaction has successfully committed. This prevents race
+     * conditions where event listeners consume events before the
+     * notification is visible in the database.
      *
      * @param domainEvents Domain events to publish
      */

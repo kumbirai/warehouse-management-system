@@ -43,7 +43,8 @@ public final class ValidateProductBarcodeQuery {
         }
 
         public ValidateProductBarcodeQuery build() {
-            if (barcode == null || barcode.trim().isEmpty()) {
+            if (barcode == null || barcode.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("Barcode is required");
             }
             if (tenantId == null) {

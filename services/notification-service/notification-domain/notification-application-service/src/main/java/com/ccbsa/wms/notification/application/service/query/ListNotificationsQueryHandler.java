@@ -14,8 +14,7 @@ import com.ccbsa.wms.notification.application.service.query.dto.ListNotification
 /**
  * Query Handler: ListNotificationsQueryHandler
  * <p>
- * Handles query for list of notifications with filtering.
- * Uses repository port for MVP (read model can be added later).
+ * Handles query for list of notifications with filtering. Uses repository port for MVP (read model can be added later).
  */
 @Component
 public class ListNotificationsQueryHandler {
@@ -42,18 +41,11 @@ public class ListNotificationsQueryHandler {
         // 2. Load from repository based on filters
         List<com.ccbsa.wms.notification.domain.core.entity.Notification> notifications;
         if (query.getRecipientUserId() != null && query.getStatus() != null) {
-            notifications = repository.findByRecipientUserIdAndStatus(
-                    query.getTenantId(),
-                    query.getRecipientUserId(),
-                    query.getStatus());
+            notifications = repository.findByRecipientUserIdAndStatus(query.getTenantId(), query.getRecipientUserId(), query.getStatus());
         } else if (query.getRecipientUserId() != null) {
-            notifications = repository.findByRecipientUserId(
-                    query.getTenantId(),
-                    query.getRecipientUserId());
+            notifications = repository.findByRecipientUserId(query.getTenantId(), query.getRecipientUserId());
         } else if (query.getType() != null) {
-            notifications = repository.findByType(
-                    query.getTenantId(),
-                    query.getType());
+            notifications = repository.findByType(query.getTenantId(), query.getType());
         } else {
             // For MVP, if no filters, return empty (can be extended later)
             notifications = List.of();
@@ -80,14 +72,15 @@ public class ListNotificationsQueryHandler {
         }
     }
 
-    private GetNotificationQueryResult toQueryResult(
-            com.ccbsa.wms.notification.domain.core.entity.Notification notification) {
+    private GetNotificationQueryResult toQueryResult(com.ccbsa.wms.notification.domain.core.entity.Notification notification) {
         return GetNotificationQueryResult.builder()
                 .notificationId(notification.getId())
                 .tenantId(notification.getTenantId())
                 .recipientUserId(notification.getRecipientUserId())
-                .title(notification.getTitle().getValue())
-                .message(notification.getMessage().getValue())
+                .title(notification.getTitle()
+                        .getValue())
+                .message(notification.getMessage()
+                        .getValue())
                 .type(notification.getType())
                 .status(notification.getStatus())
                 .createdAt(notification.getCreatedAt())

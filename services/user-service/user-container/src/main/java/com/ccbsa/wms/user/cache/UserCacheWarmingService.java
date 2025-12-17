@@ -18,15 +18,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * <p>
  * Warms user caches for active tenants on startup.
  * <p>
- * Warming Strategy:
- * 1. Load all active tenants
- * 2. For each tenant, load frequently accessed users (e.g., admins)
- * 3. Users are automatically cached via CachedUserRepositoryAdapter
+ * Warming Strategy: 1. Load all active tenants 2. For each tenant, load frequently accessed users (e.g., admins) 3. Users are automatically cached via CachedUserRepositoryAdapter
  * <p>
  * This reduces initial response latency for first user requests after deployment.
  */
 @Service
-public class UserCacheWarmingService extends CacheWarmingService {
+public class UserCacheWarmingService
+        extends CacheWarmingService {
 
     private static final Logger log = LoggerFactory.getLogger(UserCacheWarmingService.class);
 
@@ -56,8 +54,7 @@ public class UserCacheWarmingService extends CacheWarmingService {
     /**
      * Warms user cache for a specific tenant.
      * <p>
-     * This method is a placeholder for future implementation.
-     * It will be called from performCacheWarming() once tenant query logic is implemented.
+     * This method is a placeholder for future implementation. It will be called from performCacheWarming() once tenant query logic is implemented.
      *
      * @param tenantId Tenant ID to warm cache for
      */
@@ -74,8 +71,7 @@ public class UserCacheWarmingService extends CacheWarmingService {
                 userRepository.findByTenantIdAndId(tenantId, user.getId());
             });
 
-            log.debug("Warmed cache for {} users in tenant: {}",
-                    users.size(), tenantId.getValue());
+            log.debug("Warmed cache for {} users in tenant: {}", users.size(), tenantId.getValue());
         } catch (Exception e) {
             log.warn("Failed to warm cache for tenant: {}", tenantId.getValue(), e);
             // Continue with next tenant

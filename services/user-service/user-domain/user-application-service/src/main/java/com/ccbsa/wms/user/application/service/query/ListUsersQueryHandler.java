@@ -42,8 +42,7 @@ public class ListUsersQueryHandler {
      */
     @Transactional(readOnly = true)
     public ListUsersQueryResult handle(ListUsersQuery query) {
-        logger.debug("Listing users: tenantId={}, status={}, page={}, size={}",
-                query.getTenantId(), query.getStatus(), query.getPage(), query.getSize());
+        logger.debug("Listing users: tenantId={}, status={}, page={}, size={}", query.getTenantId(), query.getStatus(), query.getPage(), query.getSize());
 
         // 1. Load users from repository
         List<User> users;
@@ -76,18 +75,16 @@ public class ListUsersQueryHandler {
     }
 
     private GetUserQueryResult toQueryResult(User user) {
-        return new GetUserQueryResult(
-                user.getId(),
-                user.getTenantId(),
-                user.getUsername().getValue(),
-                user.getEmail().getValue(),
-                user.getFirstName().map(fn -> fn.getValue()).orElse(null),
-                user.getLastName().map(ln -> ln.getValue()).orElse(null),
-                user.getStatus(),
-                user.getKeycloakUserId().map(KeycloakUserId::getValue).orElse(null),
-                List.of(), // Roles would be fetched separately if needed
-                user.getCreatedAt(),
-                user.getLastModifiedAt());
+        return new GetUserQueryResult(user.getId(), user.getTenantId(), user.getUsername()
+                .getValue(), user.getEmail()
+                .getValue(), user.getFirstName()
+                .map(fn -> fn.getValue())
+                .orElse(null), user.getLastName()
+                .map(ln -> ln.getValue())
+                .orElse(null), user.getStatus(), user.getKeycloakUserId()
+                .map(KeycloakUserId::getValue)
+                .orElse(null), List.of(), // Roles would be fetched separately if needed
+                user.getCreatedAt(), user.getLastModifiedAt());
     }
 }
 

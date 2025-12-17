@@ -16,8 +16,7 @@ import com.ccbsa.wms.user.domain.core.valueobject.Username;
 /**
  * Mapper: UserEntityMapper
  * <p>
- * Maps between User domain aggregate and UserEntity JPA entity.
- * Handles conversion between domain value objects and JPA entity fields.
+ * Maps between User domain aggregate and UserEntity JPA entity. Handles conversion between domain value objects and JPA entity fields.
  */
 @Component
 public class UserEntityMapper {
@@ -25,8 +24,7 @@ public class UserEntityMapper {
     /**
      * Converts User domain entity to UserEntity JPA entity.
      * <p>
-     * For new entities (version == 0), version is not set to let Hibernate manage it.
-     * For existing entities (version > 0), version is set to enable optimistic locking.
+     * For new entities (version == 0), version is not set to let Hibernate manage it. For existing entities (version > 0), version is set to enable optimistic locking.
      *
      * @param user User domain entity
      * @return UserEntity JPA entity
@@ -38,13 +36,23 @@ public class UserEntityMapper {
         }
 
         UserEntity entity = new UserEntity();
-        entity.setUserId(user.getId().getValue());
-        entity.setTenantId(user.getTenantId().getValue());
-        entity.setUsername(user.getUsername().getValue());
-        entity.setEmailAddress(user.getEmail().getValue());
-        entity.setFirstName(user.getFirstName().map(FirstName::getValue).orElse(null));
-        entity.setLastName(user.getLastName().map(LastName::getValue).orElse(null));
-        entity.setKeycloakUserId(user.getKeycloakUserId().map(KeycloakUserId::getValue).orElse(null));
+        entity.setUserId(user.getId()
+                .getValue());
+        entity.setTenantId(user.getTenantId()
+                .getValue());
+        entity.setUsername(user.getUsername()
+                .getValue());
+        entity.setEmailAddress(user.getEmail()
+                .getValue());
+        entity.setFirstName(user.getFirstName()
+                .map(FirstName::getValue)
+                .orElse(null));
+        entity.setLastName(user.getLastName()
+                .map(LastName::getValue)
+                .orElse(null));
+        entity.setKeycloakUserId(user.getKeycloakUserId()
+                .map(KeycloakUserId::getValue)
+                .orElse(null));
         entity.setStatus(mapToEntityStatus(user.getStatus()));
         entity.setCreatedAt(user.getCreatedAt());
         entity.setLastModifiedAt(user.getLastModifiedAt());
@@ -97,7 +105,8 @@ public class UserEntityMapper {
                 .status(mapToDomainStatus(entity.getStatus()))
                 .createdAt(entity.getCreatedAt())
                 .lastModifiedAt(entity.getLastModifiedAt())
-                .version(entity.getVersion() != null ? entity.getVersion().intValue() : 0)
+                .version(entity.getVersion() != null ? entity.getVersion()
+                        .intValue() : 0)
                 .buildWithoutEvents();
     }
 

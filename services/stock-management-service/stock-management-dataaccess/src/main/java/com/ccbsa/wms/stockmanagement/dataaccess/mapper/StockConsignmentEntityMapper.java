@@ -20,8 +20,7 @@ import com.ccbsa.wms.stockmanagement.domain.core.valueobject.ConsignmentReferenc
 /**
  * Mapper: StockConsignmentEntityMapper
  * <p>
- * Maps between StockConsignment domain aggregate and StockConsignmentEntity JPA entity.
- * Handles conversion between domain value objects and JPA entity fields.
+ * Maps between StockConsignment domain aggregate and StockConsignmentEntity JPA entity. Handles conversion between domain value objects and JPA entity fields.
  */
 @Component
 public class StockConsignmentEntityMapper {
@@ -39,10 +38,14 @@ public class StockConsignmentEntityMapper {
         }
 
         StockConsignmentEntity entity = new StockConsignmentEntity();
-        entity.setId(consignment.getId().getValue());
-        entity.setTenantId(consignment.getTenantId().getValue());
-        entity.setConsignmentReference(consignment.getConsignmentReference().getValue());
-        entity.setWarehouseId(consignment.getWarehouseId().getValue());
+        entity.setId(consignment.getId()
+                .getValue());
+        entity.setTenantId(consignment.getTenantId()
+                .getValue());
+        entity.setConsignmentReference(consignment.getConsignmentReference()
+                .getValue());
+        entity.setWarehouseId(consignment.getWarehouseId()
+                .getValue());
         entity.setStatus(consignment.getStatus());
         entity.setReceivedAt(consignment.getReceivedAt());
         entity.setConfirmedAt(consignment.getConfirmedAt());
@@ -56,7 +59,8 @@ public class StockConsignmentEntityMapper {
             ConsignmentLineItemEntity lineItemEntity = new ConsignmentLineItemEntity();
             lineItemEntity.setId(UUID.randomUUID());
             lineItemEntity.setConsignment(entity);
-            lineItemEntity.setProductCode(lineItem.getProductCode().getValue());
+            lineItemEntity.setProductCode(lineItem.getProductCode()
+                    .getValue());
             lineItemEntity.setQuantity(lineItem.getQuantity());
             lineItemEntity.setExpirationDate(lineItem.getExpirationDate());
             lineItemEntity.setCreatedAt(LocalDateTime.now());
@@ -111,7 +115,8 @@ public class StockConsignmentEntityMapper {
                 .confirmedAt(entity.getConfirmedAt())
                 .createdAt(entity.getCreatedAt())
                 .lastModifiedAt(entity.getLastModifiedAt())
-                .version(entity.getVersion() != null ? entity.getVersion().intValue() : 0)
+                .version(entity.getVersion() != null ? entity.getVersion()
+                        .intValue() : 0)
                 .buildWithoutEvents();
 
         return consignment;

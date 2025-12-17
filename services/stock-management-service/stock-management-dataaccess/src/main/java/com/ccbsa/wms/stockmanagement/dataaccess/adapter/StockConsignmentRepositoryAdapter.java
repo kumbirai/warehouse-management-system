@@ -16,17 +16,15 @@ import com.ccbsa.wms.stockmanagement.domain.core.valueobject.ConsignmentReferenc
 /**
  * Repository Adapter: StockConsignmentRepositoryAdapter
  * <p>
- * Implements StockConsignmentRepository port interface.
- * Adapts between domain StockConsignment aggregate and JPA StockConsignmentEntity.
+ * Implements StockConsignmentRepository port interface. Adapts between domain StockConsignment aggregate and JPA StockConsignmentEntity.
  */
 @Repository
-public class StockConsignmentRepositoryAdapter implements StockConsignmentRepository {
+public class StockConsignmentRepositoryAdapter
+        implements StockConsignmentRepository {
     private final StockConsignmentJpaRepository jpaRepository;
     private final StockConsignmentEntityMapper mapper;
 
-    public StockConsignmentRepositoryAdapter(
-            StockConsignmentJpaRepository jpaRepository,
-            StockConsignmentEntityMapper mapper) {
+    public StockConsignmentRepositoryAdapter(StockConsignmentJpaRepository jpaRepository, StockConsignmentEntityMapper mapper) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
     }
@@ -34,11 +32,9 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
     @Override
     public void save(StockConsignment consignment) {
         // Check if entity already exists to handle version correctly
-        Optional<StockConsignmentEntity> existingEntity =
-                jpaRepository.findByTenantIdAndId(
-                        consignment.getTenantId().getValue(),
-                        consignment.getId().getValue()
-                );
+        Optional<StockConsignmentEntity> existingEntity = jpaRepository.findByTenantIdAndId(consignment.getTenantId()
+                .getValue(), consignment.getId()
+                .getValue());
 
         StockConsignmentEntity entity;
         if (existingEntity.isPresent()) {
@@ -58,15 +54,16 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
     }
 
     /**
-     * Updates an existing entity with values from the domain model.
-     * Preserves JPA managed state and version for optimistic locking.
+     * Updates an existing entity with values from the domain model. Preserves JPA managed state and version for optimistic locking.
      *
      * @param entity      Existing JPA entity
      * @param consignment Domain consignment aggregate
      */
     private void updateEntityFromDomain(StockConsignmentEntity entity, StockConsignment consignment) {
-        entity.setConsignmentReference(consignment.getConsignmentReference().getValue());
-        entity.setWarehouseId(consignment.getWarehouseId().getValue());
+        entity.setConsignmentReference(consignment.getConsignmentReference()
+                .getValue());
+        entity.setWarehouseId(consignment.getWarehouseId()
+                .getValue());
         entity.setStatus(consignment.getStatus());
         entity.setReceivedAt(consignment.getReceivedAt());
         entity.setConfirmedAt(consignment.getConfirmedAt());
@@ -74,11 +71,14 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
         entity.setLastModifiedAt(consignment.getLastModifiedAt());
 
         // Update line items - remove all existing and add new ones
-        entity.getLineItems().clear();
+        entity.getLineItems()
+                .clear();
         StockConsignmentEntity newEntity = mapper.toEntity(consignment);
-        entity.getLineItems().addAll(newEntity.getLineItems());
+        entity.getLineItems()
+                .addAll(newEntity.getLineItems());
         // Update line item references to point to this entity
-        entity.getLineItems().forEach(lineItem -> lineItem.setConsignment(entity));
+        entity.getLineItems()
+                .forEach(lineItem -> lineItem.setConsignment(entity));
 
         // Version is managed by JPA - don't update it manually
     }
@@ -90,20 +90,14 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
     }
 
     @Override
-    public Optional<StockConsignment> findByConsignmentReferenceAndTenantId(
-            ConsignmentReference reference,
-            TenantId tenantId) {
-        return jpaRepository.findByTenantIdAndConsignmentReference(
-                        tenantId.getValue(),
-                        reference.getValue())
+    public Optional<StockConsignment> findByConsignmentReferenceAndTenantId(ConsignmentReference reference, TenantId tenantId) {
+        return jpaRepository.findByTenantIdAndConsignmentReference(tenantId.getValue(), reference.getValue())
                 .map(mapper::toDomain);
     }
 
     @Override
     public boolean existsByConsignmentReferenceAndTenantId(ConsignmentReference reference, TenantId tenantId) {
-        return jpaRepository.existsByTenantIdAndConsignmentReference(
-                tenantId.getValue(),
-                reference.getValue());
+        return jpaRepository.existsByTenantIdAndConsignmentReference(tenantId.getValue(), reference.getValue());
     }
 }
 

@@ -43,8 +43,7 @@ public final class ProductCsvError {
             return false;
         }
         ProductCsvError that = (ProductCsvError) o;
-        return rowNumber == that.rowNumber &&
-                Objects.equals(productCode, that.productCode);
+        return rowNumber == that.rowNumber && Objects.equals(productCode, that.productCode);
     }
 
     @Override
@@ -73,7 +72,8 @@ public final class ProductCsvError {
         }
 
         public ProductCsvError build() {
-            if (errorMessage == null || errorMessage.trim().isEmpty()) {
+            if (errorMessage == null || errorMessage.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("ErrorMessage is required");
             }
             return new ProductCsvError(this);

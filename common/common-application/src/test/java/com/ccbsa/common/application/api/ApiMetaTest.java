@@ -11,9 +11,7 @@ class ApiMetaTest {
     @DisplayName("Should create ApiMeta with pagination")
     void shouldCreateApiMetaWithPagination() {
         // Given
-        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(1,
-                20,
-                100);
+        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(1, 20, 100);
 
         // When
         ApiMeta meta = ApiMeta.builder()
@@ -46,9 +44,7 @@ class ApiMetaTest {
         long totalElements = 100;
 
         // When
-        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page,
-                size,
-                totalElements);
+        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page, size, totalElements);
 
         // Then
         assertThat(pagination).isNotNull();
@@ -69,9 +65,7 @@ class ApiMetaTest {
         long totalElements = 100;
 
         // When
-        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page,
-                size,
-                totalElements);
+        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page, size, totalElements);
 
         // Then
         assertThat(pagination.getPage()).isEqualTo(1);
@@ -88,9 +82,7 @@ class ApiMetaTest {
         long totalElements = 100;
 
         // When
-        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page,
-                size,
-                totalElements);
+        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page, size, totalElements);
 
         // Then
         assertThat(pagination.getPage()).isEqualTo(5);
@@ -107,9 +99,7 @@ class ApiMetaTest {
         long totalElements = 20; // Exactly one page
 
         // When
-        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page,
-                size,
-                totalElements);
+        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page, size, totalElements);
 
         // Then
         assertThat(pagination.getTotalPages()).isEqualTo(1);
@@ -126,9 +116,7 @@ class ApiMetaTest {
         long totalElements = 0;
 
         // When
-        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page,
-                size,
-                totalElements);
+        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page, size, totalElements);
 
         // Then
         assertThat(pagination.getTotalPages()).isEqualTo(0);
@@ -145,9 +133,7 @@ class ApiMetaTest {
         long totalElements = 95; // 95 / 20 = 4.75, should round up to 5 pages
 
         // When
-        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page,
-                size,
-                totalElements);
+        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page, size, totalElements);
 
         // Then
         assertThat(pagination.getTotalPages()).isEqualTo(5); // Ceiling of 4.75

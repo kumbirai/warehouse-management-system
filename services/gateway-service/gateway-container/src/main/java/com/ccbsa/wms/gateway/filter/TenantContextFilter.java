@@ -16,8 +16,7 @@ import org.springframework.stereotype.Component;
  * Gateway filter that extracts tenant context from JWT token and injects it as headers.
  *
  * <p>This filter extracts contextual information from the JWT token and injects it
- * as HTTP headers for downstream services. This enables services to access tenant
- * and user context without parsing JWT tokens themselves.
+ * as HTTP headers for downstream services. This enables services to access tenant and user context without parsing JWT tokens themselves.
  *
  * <p>Extracts from JWT:
  * <ul>
@@ -37,7 +36,8 @@ import org.springframework.stereotype.Component;
  * modifying headers. This enables public endpoints to work correctly.
  */
 @Component
-public class TenantContextFilter extends AbstractGatewayFilterFactory<TenantContextFilter.Config> {
+public class TenantContextFilter
+        extends AbstractGatewayFilterFactory<TenantContextFilter.Config> {
     private static final String TENANT_ID_CLAIM = "tenant_id";
     private static final String REALM_ACCESS_CLAIM = "realm_access";
     private static final String ROLES_CLAIM = "roles";
@@ -51,38 +51,33 @@ public class TenantContextFilter extends AbstractGatewayFilterFactory<TenantCont
 
     @Override
     public GatewayFilter apply(Config config) {
-        return (exchange, chain) ->
-        {
+        return (exchange, chain) -> {
             return ReactiveSecurityContextHolder.getContext()
                     .cast(SecurityContext.class)
                     .map(SecurityContext::getAuthentication)
                     .filter(auth -> auth instanceof JwtAuthenticationToken)
                     .cast(JwtAuthenticationToken.class)
                     .map(JwtAuthenticationToken::getToken)
-                    .flatMap(jwt ->
-                    {
+                    .flatMap(jwt -> {
                         ServerHttpRequest request = exchange.getRequest();
                         ServerHttpRequest.Builder requestBuilder = request.mutate();
 
                         // Extract tenant ID from JWT
                         String tenantId = extractTenantId(jwt);
                         if (tenantId != null) {
-                            requestBuilder.header(X_TENANT_ID_HEADER,
-                                    tenantId);
+                            requestBuilder.header(X_TENANT_ID_HEADER, tenantId);
                         }
 
                         // Extract user ID from JWT subject
                         String userId = jwt.getSubject();
                         if (userId != null) {
-                            requestBuilder.header(X_USER_ID_HEADER,
-                                    userId);
+                            requestBuilder.header(X_USER_ID_HEADER, userId);
                         }
 
                         // Extract roles from JWT
                         String roles = extractRoles(jwt);
                         if (roles != null && !roles.isEmpty()) {
-                            requestBuilder.header(X_ROLE_HEADER,
-                                    roles);
+                            requestBuilder.header(X_ROLE_HEADER, roles);
                         }
 
                         ServerHttpRequest modifiedRequest = requestBuilder.build();
@@ -126,16 +121,14 @@ public class TenantContextFilter extends AbstractGatewayFilterFactory<TenantCont
             if (rolesObj instanceof List) {
                 @SuppressWarnings("unchecked")
                 List<String> roles = (List<String>) rolesObj;
-                return String.join(",",
-                        roles);
+                return String.join(",", roles);
             }
         }
         return null;
     }
 
     /**
-     * Configuration class for TenantContextFilter.
-     * Currently empty but available for future configuration options.
+     * Configuration class for TenantContextFilter. Currently empty but available for future configuration options.
      */
     public static class Config {
         // Configuration properties if needed

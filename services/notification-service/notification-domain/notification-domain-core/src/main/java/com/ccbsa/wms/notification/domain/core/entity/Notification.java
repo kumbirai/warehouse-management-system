@@ -18,13 +18,11 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
  * <p>
  * Represents a notification sent to a user.
  * <p>
- * Business Rules:
- * - Notifications are tenant-aware
- * - Notifications have a recipient user
- * - Notifications can be marked as read
- * - Notifications have a status (PENDING, SENT, DELIVERED, FAILED, READ)
+ * Business Rules: - Notifications are tenant-aware - Notifications have a recipient user - Notifications can be marked as read - Notifications have a status (PENDING, SENT,
+ * DELIVERED, FAILED, READ)
  */
-public class Notification extends TenantAwareAggregateRoot<NotificationId> {
+public class Notification
+        extends TenantAwareAggregateRoot<NotificationId> {
 
     // Value Objects
     private Title title;
@@ -41,8 +39,7 @@ public class Notification extends TenantAwareAggregateRoot<NotificationId> {
     private LocalDateTime readAt;
 
     /**
-     * Private constructor for builder pattern.
-     * Prevents direct instantiation.
+     * Private constructor for builder pattern. Prevents direct instantiation.
      */
     private Notification() {
     }
@@ -59,17 +56,13 @@ public class Notification extends TenantAwareAggregateRoot<NotificationId> {
     /**
      * Business logic method: Marks notification as sent.
      * <p>
-     * Business Rules:
-     * - Only PENDING notifications can be marked as sent
-     * - Sets sentAt timestamp
+     * Business Rules: - Only PENDING notifications can be marked as sent - Sets sentAt timestamp
      *
      * @throws IllegalStateException if notification is not in PENDING status
      */
     public void markAsSent() {
         if (status != NotificationStatus.PENDING) {
-            throw new IllegalStateException(
-                    String.format("Cannot mark notification as sent: current status is %s", status)
-            );
+            throw new IllegalStateException(String.format("Cannot mark notification as sent: current status is %s", status));
         }
 
         this.status = NotificationStatus.SENT;
@@ -80,16 +73,13 @@ public class Notification extends TenantAwareAggregateRoot<NotificationId> {
     /**
      * Business logic method: Marks notification as delivered.
      * <p>
-     * Business Rules:
-     * - Only SENT notifications can be marked as delivered
+     * Business Rules: - Only SENT notifications can be marked as delivered
      *
      * @throws IllegalStateException if notification is not in SENT status
      */
     public void markAsDelivered() {
         if (status != NotificationStatus.SENT) {
-            throw new IllegalStateException(
-                    String.format("Cannot mark notification as delivered: current status is %s", status)
-            );
+            throw new IllegalStateException(String.format("Cannot mark notification as delivered: current status is %s", status));
         }
 
         this.status = NotificationStatus.DELIVERED;
@@ -99,16 +89,13 @@ public class Notification extends TenantAwareAggregateRoot<NotificationId> {
     /**
      * Business logic method: Marks notification as failed.
      * <p>
-     * Business Rules:
-     * - PENDING or SENT notifications can be marked as failed
+     * Business Rules: - PENDING or SENT notifications can be marked as failed
      *
      * @throws IllegalStateException if notification is in invalid status
      */
     public void markAsFailed() {
         if (status != NotificationStatus.PENDING && status != NotificationStatus.SENT) {
-            throw new IllegalStateException(
-                    String.format("Cannot mark notification as failed: current status is %s", status)
-            );
+            throw new IllegalStateException(String.format("Cannot mark notification as failed: current status is %s", status));
         }
 
         this.status = NotificationStatus.FAILED;
@@ -118,17 +105,13 @@ public class Notification extends TenantAwareAggregateRoot<NotificationId> {
     /**
      * Business logic method: Marks notification as read.
      * <p>
-     * Business Rules:
-     * - Only DELIVERED notifications can be marked as read
-     * - Sets readAt timestamp
+     * Business Rules: - Only DELIVERED notifications can be marked as read - Sets readAt timestamp
      *
      * @throws IllegalStateException if notification is not in DELIVERED status
      */
     public void markAsRead() {
         if (status != NotificationStatus.DELIVERED) {
-            throw new IllegalStateException(
-                    String.format("Cannot mark notification as read: current status is %s", status)
-            );
+            throw new IllegalStateException(String.format("Cannot mark notification as read: current status is %s", status));
         }
 
         this.status = NotificationStatus.READ;
@@ -197,8 +180,7 @@ public class Notification extends TenantAwareAggregateRoot<NotificationId> {
     }
 
     /**
-     * Builder class for constructing Notification instances.
-     * Ensures all required fields are set and validated.
+     * Builder class for constructing Notification instances. Ensures all required fields are set and validated.
      */
     public static class Builder {
         private Notification notification = new Notification();
@@ -329,11 +311,7 @@ public class Notification extends TenantAwareAggregateRoot<NotificationId> {
 
             // Publish creation event only if this is a new notification (no version set)
             if (notification.getVersion() == 0) {
-                notification.addDomainEvent(new NotificationCreatedEvent(
-                        notification.getId(),
-                        notification.getTenantId(),
-                        notification.type
-                ));
+                notification.addDomainEvent(new NotificationCreatedEvent(notification.getId(), notification.getTenantId(), notification.type));
             }
 
             return consumeNotification();
@@ -375,8 +353,7 @@ public class Notification extends TenantAwareAggregateRoot<NotificationId> {
         }
 
         /**
-         * Consumes the notification from the builder and returns it.
-         * Creates a new notification instance for the next build.
+         * Consumes the notification from the builder and returns it. Creates a new notification instance for the next build.
          *
          * @return Built notification
          */
@@ -387,8 +364,7 @@ public class Notification extends TenantAwareAggregateRoot<NotificationId> {
         }
 
         /**
-         * Builds Notification without publishing creation event.
-         * Used when reconstructing from persistence.
+         * Builds Notification without publishing creation event. Used when reconstructing from persistence.
          *
          * @return Validated Notification instance
          * @throws IllegalArgumentException if validation fails

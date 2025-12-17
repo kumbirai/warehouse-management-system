@@ -6,11 +6,9 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
 
 /**
- * Port interface for Keycloak group operations.
- * Used by tenant-service for tenant group management.
+ * Port interface for Keycloak group operations. Used by tenant-service for tenant group management.
  * <p>
- * Groups can be used to organize users within a realm.
- * In a single-realm multi-tenant approach, each tenant can have its own group.
+ * Groups can be used to organize users within a realm. In a single-realm multi-tenant approach, each tenant can have its own group.
  */
 public interface KeycloakGroupPort {
     /**
@@ -22,9 +20,7 @@ public interface KeycloakGroupPort {
      * @return Created group representation
      * @throws IllegalArgumentException if realm does not exist or group name is invalid
      */
-    GroupRepresentation createGroup(String realmName,
-                                    TenantId tenantId,
-                                    String groupName);
+    GroupRepresentation createGroup(String realmName, TenantId tenantId, String groupName);
 
     /**
      * Gets a group by name.
@@ -33,8 +29,7 @@ public interface KeycloakGroupPort {
      * @param groupName Group name
      * @return Group representation or null if not found
      */
-    GroupRepresentation getGroup(String realmName,
-                                 String groupName);
+    GroupRepresentation getGroup(String realmName, String groupName);
 
     /**
      * Adds a user to a group.
@@ -44,9 +39,7 @@ public interface KeycloakGroupPort {
      * @param userId    User ID
      * @throws IllegalArgumentException if realm, group, or user does not exist
      */
-    void addUserToGroup(String realmName,
-                        String groupId,
-                        UserId userId);
+    void addUserToGroup(String realmName, String groupId, UserId userId);
 
     /**
      * Removes a user from a group.
@@ -56,9 +49,7 @@ public interface KeycloakGroupPort {
      * @param userId    User ID
      * @throws IllegalArgumentException if realm, group, or user does not exist
      */
-    void removeUserFromGroup(String realmName,
-                             String groupId,
-                             UserId userId);
+    void removeUserFromGroup(String realmName, String groupId, UserId userId);
 
     /**
      * Checks if a group exists.
@@ -67,7 +58,6 @@ public interface KeycloakGroupPort {
      * @param groupName Group name
      * @return true if group exists, false otherwise
      */
-    boolean groupExists(String realmName,
-                        String groupName);
+    boolean groupExists(String realmName, String groupName);
 }
 

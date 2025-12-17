@@ -25,35 +25,32 @@ import jakarta.validation.Valid;
  * <p>
  * Handles location command operations (write operations).
  * <p>
- * Responsibilities:
- * - Create location endpoints
- * - Validate request DTOs
- * - Map DTOs to commands
- * - Return standardized API responses
+ * Responsibilities: - Create location endpoints - Validate request DTOs - Map DTOs to commands - Return standardized API responses
  */
 @RestController
 @RequestMapping("/api/v1/location-management/locations")
-@Tag(name = "Location Commands", description = "Location command operations")
+@Tag(name = "Location Commands",
+        description = "Location command operations")
 public class LocationCommandController {
     private final CreateLocationCommandHandler commandHandler;
     private final LocationDTOMapper mapper;
 
-    public LocationCommandController(
-            CreateLocationCommandHandler commandHandler,
-            LocationDTOMapper mapper) {
+    public LocationCommandController(CreateLocationCommandHandler commandHandler, LocationDTOMapper mapper) {
         this.commandHandler = commandHandler;
         this.mapper = mapper;
     }
 
     @PostMapping
-    @Operation(summary = "Create Location", description = "Creates a new warehouse location with barcode")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(summary = "Create Location",
+            description = "Creates a new warehouse location with barcode")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER')")
     public ResponseEntity<ApiResponse<CreateLocationResultDTO>> createLocation(
             @RequestHeader("X-Tenant-Id") String tenantId,
-            @Valid @RequestBody CreateLocationCommandDTO commandDTO) {
+            @Valid
+            @RequestBody
+            CreateLocationCommandDTO commandDTO) {
         // Map DTO to command
-        com.ccbsa.wms.location.application.service.command.dto.CreateLocationCommand command =
-                mapper.toCreateCommand(commandDTO, tenantId);
+        com.ccbsa.wms.location.application.service.command.dto.CreateLocationCommand command = mapper.toCreateCommand(commandDTO, tenantId);
 
         // Execute command
         CreateLocationResult result = commandHandler.handle(command);

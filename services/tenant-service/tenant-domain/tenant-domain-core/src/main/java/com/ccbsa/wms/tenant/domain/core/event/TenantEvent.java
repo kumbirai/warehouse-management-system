@@ -9,15 +9,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * Base class for all Tenant domain events.
  * <p>
- * All tenant-specific events extend this class.
- * Note: Tenant events do not include tenantId because Tenant IS the tenant.
+ * All tenant-specific events extend this class. Note: Tenant events do not include tenantId because Tenant IS the tenant.
  * <p>
- * The aggregateId in DomainEvent now stores the tenant ID as a String directly,
- * preserving the original tenant ID value.
+ * The aggregateId in DomainEvent now stores the tenant ID as a String directly, preserving the original tenant ID value.
  *
  * @param <T> The aggregate root type (TenantId)
  */
-public abstract class TenantEvent<T> extends DomainEvent<T> {
+public abstract class TenantEvent<T>
+        extends DomainEvent<T> {
     /**
      * Constructor for Tenant events without metadata.
      *
@@ -64,15 +63,13 @@ public abstract class TenantEvent<T> extends DomainEvent<T> {
     @Deprecated
     @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
             justification = "Tenant events must fail fast if aggregate identifiers are invalid")
-    protected TenantEvent(TenantId aggregateId,
-                          int eventVersion) {
+    protected TenantEvent(TenantId aggregateId, int eventVersion) {
         super(extractTenantIdString(aggregateId), "Tenant");
         // Note: DomainEvent base class handles versioning
     }
 
     /**
-     * Gets the tenant ID string value from aggregateId.
-     * Since aggregateId is now a String, it directly contains the tenant ID.
+     * Gets the tenant ID string value from aggregateId. Since aggregateId is now a String, it directly contains the tenant ID.
      *
      * @return The tenant ID string value
      */

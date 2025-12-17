@@ -13,10 +13,7 @@ import com.ccbsa.wms.location.domain.core.exception.LocationNotFoundException;
  * <p>
  * Handles retrieval of Location aggregate by ID.
  * <p>
- * Responsibilities:
- * - Load Location aggregate from repository
- * - Map aggregate to query result DTO
- * - Return optimized read model
+ * Responsibilities: - Load Location aggregate from repository - Map aggregate to query result DTO - Return optimized read model
  */
 @Component
 public class GetLocationQueryHandler {
@@ -30,11 +27,9 @@ public class GetLocationQueryHandler {
     @Transactional(readOnly = true)
     public LocationQueryResult handle(GetLocationQuery query) {
         // 1. Load aggregate
-        com.ccbsa.wms.location.domain.core.entity.Location location = repository
-                .findByIdAndTenantId(query.getLocationId(), query.getTenantId())
-                .orElseThrow(() -> new LocationNotFoundException(
-                        String.format("Location not found: %s", query.getLocationId().getValueAsString())
-                ));
+        com.ccbsa.wms.location.domain.core.entity.Location location = repository.findByIdAndTenantId(query.getLocationId(), query.getTenantId())
+                .orElseThrow(() -> new LocationNotFoundException(String.format("Location not found: %s", query.getLocationId()
+                        .getValueAsString())));
 
         // 2. Map to query result
         return LocationQueryResult.builder()

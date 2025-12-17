@@ -11,7 +11,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * <p>
  * All product-specific events extend this class.
  */
-public abstract class ProductEvent extends DomainEvent<ProductId> {
+public abstract class ProductEvent
+        extends DomainEvent<ProductId> {
     /**
      * Constructor for Product events without metadata.
      *
@@ -34,7 +35,8 @@ public abstract class ProductEvent extends DomainEvent<ProductId> {
         if (productId == null) {
             throw new IllegalArgumentException("ProductId cannot be null");
         }
-        return productId.getValue().toString();
+        return productId.getValue()
+                .toString();
     }
 
     /**

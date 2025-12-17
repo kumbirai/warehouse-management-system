@@ -9,8 +9,7 @@ import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 /**
  * Result DTO: CreateProductResult
  * <p>
- * Result object returned after creating a product.
- * Contains only the information needed by the caller (not the full domain entity).
+ * Result object returned after creating a product. Contains only the information needed by the caller (not the full domain entity).
  */
 public final class CreateProductResult {
     private final ProductId productId;

@@ -37,35 +37,30 @@ public class TenantCreatedEventListener {
     private final CreateNotificationCommandHandler createNotificationCommandHandler;
     private final TenantServicePort tenantServicePort;
 
-    public TenantCreatedEventListener(
-            CreateNotificationCommandHandler createNotificationCommandHandler,
-            TenantServicePort tenantServicePort) {
+    public TenantCreatedEventListener(CreateNotificationCommandHandler createNotificationCommandHandler, TenantServicePort tenantServicePort) {
         this.createNotificationCommandHandler = createNotificationCommandHandler;
         this.tenantServicePort = tenantServicePort;
     }
 
-    @KafkaListener(
-            topics = "tenant-events",
+    @KafkaListener(topics = "tenant-events",
             groupId = "notification-service",
-            containerFactory = "externalEventKafkaListenerContainerFactory"
-    )
-    public void handle(@Payload Map<String, Object> eventData,
-                       @Header(value = "__TypeId__", required = false) String eventType,
-                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic,
-                       Acknowledgment acknowledgment) {
-        logger.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}",
-                topic, eventData.keySet(), eventType, eventData.get("@class"));
+            containerFactory = "externalEventKafkaListenerContainerFactory")
+    public void handle(
+            @Payload Map<String, Object> eventData,
+            @Header(value = "__TypeId__",
+                    required = false) String eventType,
+            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
+        logger.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));
         try {
             // Extract and set correlation ID from event metadata for traceability
             extractAndSetCorrelationId(eventData);
 
             // Detect event type from payload (class name or aggregateType field) or header
             String detectedEventType = detectEventType(eventData, eventType);
-            logger.info("Event type detection: detectedType={}, headerType={}, eventDataKeys={}, aggregateType={}",
-                    detectedEventType, eventType, eventData.keySet(), eventData.get("aggregateType"));
+            logger.info("Event type detection: detectedType={}, headerType={}, eventDataKeys={}, aggregateType={}", detectedEventType, eventType, eventData.keySet(),
+                    eventData.get("aggregateType"));
             if (!isTenantCreatedEvent(detectedEventType)) {
-                logger.debug("Skipping event - not TenantCreatedEvent: detectedType={}, headerType={}",
-                        detectedEventType, eventType);
+                logger.debug("Skipping event - not TenantCreatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
                 acknowledgment.acknowledge();
                 return;
             }
@@ -75,8 +70,7 @@ public class TenantCreatedEventListener {
             String tenantIdString = extractTenantIdFromEvent(eventData);
             TenantId tenantId = TenantId.of(tenantIdString);
 
-            logger.info("Received TenantCreatedEvent: tenantId={}, eventId={}, eventDataKeys={}",
-                    tenantId.getValue(), extractEventId(eventData), eventData.keySet());
+            logger.info("Received TenantCreatedEvent: tenantId={}, eventId={}, eventDataKeys={}", tenantId.getValue(), extractEventId(eventData), eventData.keySet());
 
             // Set tenant context for multi-tenant schema resolution
             TenantContext.setTenantId(tenantId);
@@ -97,8 +91,7 @@ public class TenantCreatedEventListener {
 
                 createNotificationCommandHandler.handle(command);
 
-                logger.info("Created tenant creation notification for tenant: tenantId={}, email={}",
-                        tenantId.getValue(), tenantEmail.getValue());
+                logger.info("Created tenant creation notification for tenant: tenantId={}, email={}", tenantId.getValue(), tenantEmail.getValue());
 
                 // Acknowledge message
                 acknowledgment.acknowledge();
@@ -108,12 +101,10 @@ public class TenantCreatedEventListener {
             }
         } catch (IllegalArgumentException e) {
             // Invalid event format - acknowledge to skip (don't retry malformed events)
-            logger.error("Invalid event format for TenantCreatedEvent: eventData={}, error={}",
-                    eventData, e.getMessage(), e);
+            logger.error("Invalid event format for TenantCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             acknowledgment.acknowledge();
         } catch (Exception e) {
-            logger.error("Failed to process TenantCreatedEvent: eventData={}, error={}",
-                    eventData, e.getMessage(), e);
+            logger.error("Failed to process TenantCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             // Don't acknowledge - will retry for transient failures
             throw new RuntimeException("Failed to process TenantCreatedEvent", e);
         } finally {
@@ -123,8 +114,7 @@ public class TenantCreatedEventListener {
     }
 
     /**
-     * Extracts correlation ID from event metadata and sets it in CorrelationContext.
-     * This enables traceability through event chains.
+     * Extracts correlation ID from event metadata and sets it in CorrelationContext. This enables traceability through event chains.
      *
      * @param eventData the event data map
      */
@@ -150,8 +140,8 @@ public class TenantCreatedEventListener {
     /**
      * Detects event type from payload or header.
      * <p>
-     * Since type information is disabled in serialization, we detect event type by checking
-     * for event-specific fields. TenantCreatedEvent has 'name', 'status', and optionally 'email' fields.
+     * Since type information is disabled in serialization, we detect event type by checking for event-specific fields. TenantCreatedEvent has 'name', 'status', and optionally
+     * 'email' fields.
      *
      * @param eventData  Event data map
      * @param headerType Event type from header (may be null)
@@ -199,8 +189,7 @@ public class TenantCreatedEventListener {
     /**
      * Extracts tenantId from event data.
      * <p>
-     * Extracts from the tenantId field in TenantEvent, or falls back to aggregateId
-     * (which now contains the tenant ID as a String).
+     * Extracts from the tenantId field in TenantEvent, or falls back to aggregateId (which now contains the tenant ID as a String).
      *
      * @param eventData Event data map
      * @return String tenant ID

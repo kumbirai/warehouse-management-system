@@ -6,17 +6,11 @@ import java.util.Objects;
 /**
  * Value Object: LocationCapacity
  *
- * Represents the capacity information for a warehouse location.
- * Immutable and self-validating.
+ * Represents the capacity information for a warehouse location. Immutable and self-validating.
  *
- * Capacity consists of:
- * - currentQuantity: Current quantity stored in the location
- * - maximumQuantity: Maximum quantity the location can hold (optional)
+ * Capacity consists of: - currentQuantity: Current quantity stored in the location - maximumQuantity: Maximum quantity the location can hold (optional)
  *
- * Business Rules:
- * - currentQuantity cannot exceed maximumQuantity if maximumQuantity is set
- * - currentQuantity cannot be negative
- * - maximumQuantity must be positive if set
+ * Business Rules: - currentQuantity cannot exceed maximumQuantity if maximumQuantity is set - currentQuantity cannot be negative - maximumQuantity must be positive if set
  */
 public final class LocationCapacity {
     private final BigDecimal currentQuantity;
@@ -55,10 +49,7 @@ public final class LocationCapacity {
                 throw new IllegalArgumentException("MaximumQuantity must be positive if set");
             }
             if (currentQuantity.compareTo(maximumQuantity) > 0) {
-                throw new IllegalArgumentException(
-                        String.format("CurrentQuantity (%s) cannot exceed MaximumQuantity (%s)",
-                                currentQuantity, maximumQuantity)
-                );
+                throw new IllegalArgumentException(String.format("CurrentQuantity (%s) cannot exceed MaximumQuantity (%s)", currentQuantity, maximumQuantity));
             }
         }
     }
@@ -174,8 +165,7 @@ public final class LocationCapacity {
             return false;
         }
         LocationCapacity that = (LocationCapacity) o;
-        return Objects.equals(currentQuantity, that.currentQuantity) &&
-                Objects.equals(maximumQuantity, that.maximumQuantity);
+        return Objects.equals(currentQuantity, that.currentQuantity) && Objects.equals(maximumQuantity, that.maximumQuantity);
     }
 
     @Override

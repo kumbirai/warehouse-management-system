@@ -27,16 +27,15 @@ import jakarta.servlet.http.HttpServletRequest;
 /**
  * Adapter: TenantServiceAdapter
  * <p>
- * Implements TenantServicePort for tenant validation operations.
- * Calls tenant-service REST API to validate tenant status.
+ * Implements TenantServicePort for tenant validation operations. Calls tenant-service REST API to validate tenant status.
  */
 @Component
-public class TenantServiceAdapter implements TenantServicePort {
+public class TenantServiceAdapter
+        implements TenantServicePort {
     private static final Logger logger = LoggerFactory.getLogger(TenantServiceAdapter.class);
 
-    private static final ParameterizedTypeReference<ApiResponse<String>> TENANT_STATUS_RESPONSE_TYPE =
-            new ParameterizedTypeReference<ApiResponse<String>>() {
-            };
+    private static final ParameterizedTypeReference<ApiResponse<String>> TENANT_STATUS_RESPONSE_TYPE = new ParameterizedTypeReference<ApiResponse<String>>() {
+    };
 
     private final RestTemplate restTemplate;
     private final String tenantServiceUrl;
@@ -54,8 +53,7 @@ public class TenantServiceAdapter implements TenantServicePort {
         try {
             String status = getTenantStatus(tenantId);
             boolean isActive = "ACTIVE".equals(status);
-            logger.debug("Tenant status check result: tenantId={}, status={}, isActive={}",
-                    tenantId.getValue(), status, isActive);
+            logger.debug("Tenant status check result: tenantId={}, status={}, isActive={}", tenantId.getValue(), status, isActive);
             return isActive;
         } catch (TenantNotFoundException e) {
             logger.warn("Tenant not found: {}", tenantId.getValue());
@@ -86,11 +84,7 @@ public class TenantServiceAdapter implements TenantServicePort {
 
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-            ResponseEntity<ApiResponse<String>> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    entity,
-                    TENANT_STATUS_RESPONSE_TYPE);
+            ResponseEntity<ApiResponse<String>> response = restTemplate.exchange(url, HttpMethod.GET, entity, TENANT_STATUS_RESPONSE_TYPE);
 
             ApiResponse<String> responseBody = response.getBody();
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
@@ -99,8 +93,7 @@ public class TenantServiceAdapter implements TenantServicePort {
                 return status;
             }
 
-            throw new TenantServiceException(
-                    String.format("Unexpected response from tenant service: %s", response.getStatusCode()));
+            throw new TenantServiceException(String.format("Unexpected response from tenant service: %s", response.getStatusCode()));
         } catch (HttpClientErrorException.NotFound e) {
             logger.warn("Tenant not found: {}", tenantId.getValue());
             throw new TenantNotFoundException(String.format("Tenant not found: %s", tenantId.getValue()), e);
@@ -117,8 +110,7 @@ public class TenantServiceAdapter implements TenantServicePort {
     }
 
     /**
-     * Extracts the Authorization header from the current HTTP request.
-     * This allows service-to-service calls to forward the JWT token.
+     * Extracts the Authorization header from the current HTTP request. This allows service-to-service calls to forward the JWT token.
      *
      * @return Authorization header value or null if not available
      */

@@ -6,21 +6,18 @@ import java.util.Objects;
 /**
  * Value Object: EmailAddress
  * <p>
- * Represents an email address.
- * Immutable and validated on construction.
+ * Represents an email address. Immutable and validated on construction.
  * <p>
- * This is a shared value object used across multiple services.
- * Business Rules:
- * - EmailAddress cannot be null or empty
- * - Maximum length: 255 characters
- * - Must match RFC 5322 compliant email format (simplified)
- * - Automatically converted to lowercase
+ * This is a shared value object used across multiple services. Business Rules: - EmailAddress cannot be null or empty - Maximum length: 255 characters - Must match RFC 5322
+ * compliant email format (simplified) - Automatically converted to
+ * lowercase
  */
 public final class EmailAddress {
     private final String value;
 
     private EmailAddress(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("EmailAddress cannot be null or empty");
         }
         String trimmed = value.trim();
@@ -50,14 +47,14 @@ public final class EmailAddress {
     }
 
     /**
-     * Creates an EmailAddress from a string value, allowing null.
-     * Returns null if the value is null or empty.
+     * Creates an EmailAddress from a string value, allowing null. Returns null if the value is null or empty.
      *
      * @param value EmailAddress string (can be null or empty)
      * @return EmailAddress instance or null if value is null/empty
      */
     public static EmailAddress ofNullable(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             return null;
         }
         return new EmailAddress(value);

@@ -32,12 +32,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 /**
  * Production-grade Kafka configuration for messaging infrastructure.
  * <p>
- * Provides standardized producer and consumer factories with:
- * - Idempotent producers for exactly-once semantics
- * - Manual acknowledgment for reliable message processing
- * - Error handling and retry mechanisms
- * - Transaction support
- * - Optimized batching and compression
+ * Provides standardized producer and consumer factories with: - Idempotent producers for exactly-once semantics - Manual acknowledgment for reliable message processing - Error
+ * handling and retry mechanisms - Transaction support - Optimized
+ * batching and compression
  */
 @Configuration
 public class KafkaConfig {
@@ -87,25 +84,22 @@ public class KafkaConfig {
     /**
      * ObjectMapper bean for Kafka message serialization/deserialization.
      * <p>
-     * PRODUCTION-GRADE DESIGN: This ObjectMapper is explicitly named and scoped for Kafka use only.
-     * It includes type information (@class property) which is REQUIRED for polymorphic event
-     * deserialization across service boundaries, but should NOT be used for REST API responses.
+     * PRODUCTION-GRADE DESIGN: This ObjectMapper is explicitly named and scoped for Kafka use only. It includes type information (@class property) which is REQUIRED for
+     * polymorphic event deserialization across service boundaries, but
+     * should NOT be used for REST API responses.
      * <p>
-     * Configured with JavaTimeModule for proper date/time handling and Jdk8Module
-     * for Java 8 types like Optional.
-     * Type information is included in JSON payload (as @class property) to enable
-     * event type detection when consuming events across service boundaries.
+     * Configured with JavaTimeModule for proper date/time handling and Jdk8Module for Java 8 types like Optional. Type information is included in JSON payload (as @class property)
+     * to enable event type detection when consuming events across
+     * service boundaries.
      * <p>
-     * Uses mixin to add type information to DomainEvent without modifying domain core
-     * (keeping domain pure Java per architecture guidelines).
+     * Uses mixin to add type information to DomainEvent without modifying domain core (keeping domain pure Java per architecture guidelines).
      * <p>
-     * ARCHITECTURAL FIX: Configured to handle Object.class deserialization correctly.
-     * When deserializing to Object.class, Jackson's default behavior uses WRAPPER_ARRAY format,
-     * but our events use PROPERTY format (@class property). The mixin for Object.class ensures
-     * consistent PROPERTY format deserialization across all event types.
+     * ARCHITECTURAL FIX: Configured to handle Object.class deserialization correctly. When deserializing to Object.class, Jackson's default behavior uses WRAPPER_ARRAY format, but
+     * our events use PROPERTY format (@class property). The mixin
+     * for Object.class ensures consistent PROPERTY format deserialization across all event types.
      * <p>
-     * IMPORTANT: All Kafka-related beans (producerFactory, consumerFactory, jsonSerializer)
-     * must explicitly inject this bean by name to ensure proper separation from REST API ObjectMapper.
+     * IMPORTANT: All Kafka-related beans (producerFactory, consumerFactory, jsonSerializer) must explicitly inject this bean by name to ensure proper separation from REST API
+     * ObjectMapper.
      */
     @Bean("kafkaObjectMapper")
     public ObjectMapper kafkaObjectMapper() {
@@ -121,7 +115,7 @@ public class KafkaConfig {
 
         // ARCHITECTURAL FIX: Configure Object.class deserialization to use PROPERTY format
         // When deserializing to Object.class, Jackson's default behavior uses WRAPPER_ARRAY format,
-        // but our events are serialized with PROPERTY format (@class property). 
+        // but our events are serialized with PROPERTY format (@class property).
         //
         // CRITICAL: We use a custom deserializer that ALWAYS deserializes to Map<String, Object>
         // regardless of @class property. This ensures loose coupling - listeners don't need event
@@ -151,7 +145,8 @@ public class KafkaConfig {
      * Explicitly uses kafkaObjectMapper to ensure type information is included in Kafka messages.
      */
     @Bean
-    public ProducerFactory<String, Object> producerFactory(@org.springframework.beans.factory.annotation.Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ProducerFactory<String, Object> producerFactory(
+            @org.springframework.beans.factory.annotation.Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -175,21 +170,20 @@ public class KafkaConfig {
         // to avoid conflict with Spring Boot auto-configuration. Do not set JsonSerializer.ADD_TYPE_INFO_HEADERS
         // in configProps when using programmatic configuration.
 
-        DefaultKafkaProducerFactory<String, Object> factory =
-                new DefaultKafkaProducerFactory<>(configProps);
+        DefaultKafkaProducerFactory<String, Object> factory = new DefaultKafkaProducerFactory<>(configProps);
         factory.setValueSerializer(jsonSerializer(kafkaObjectMapper));
         return factory;
     }
 
     /**
-     * JSON serializer for Kafka producer.
-     * Type information is included in JSON payload (via ObjectMapper configuration) to enable
-     * event type detection when consuming events across service boundaries.
+     * JSON serializer for Kafka producer. Type information is included in JSON payload (via ObjectMapper configuration) to enable event type detection when consuming events across
+     * service boundaries.
      * <p>
      * Explicitly uses kafkaObjectMapper to ensure type information is included.
      */
     @Bean
-    public JsonSerializer<Object> jsonSerializer(@org.springframework.beans.factory.annotation.Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public JsonSerializer<Object> jsonSerializer(
+            @org.springframework.beans.factory.annotation.Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         JsonSerializer<Object> serializer = new JsonSerializer<>(kafkaObjectMapper);
         // Type information is handled by ObjectMapper configuration, not headers
         serializer.setAddTypeInfo(false);
@@ -210,7 +204,8 @@ public class KafkaConfig {
      * Explicitly uses kafkaObjectMapper to ensure type information is properly deserialized.
      */
     @Bean
-    public ConsumerFactory<String, Object> consumerFactory(@org.springframework.beans.factory.annotation.Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ConsumerFactory<String, Object> consumerFactory(
+            @org.springframework.beans.factory.annotation.Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
@@ -249,8 +244,7 @@ public class KafkaConfig {
         deserializer.setUseTypeHeaders(false);
         deserializer.setRemoveTypeHeaders(true);
 
-        DefaultKafkaConsumerFactory<String, Object> factory =
-                new DefaultKafkaConsumerFactory<>(configProps);
+        DefaultKafkaConsumerFactory<String, Object> factory = new DefaultKafkaConsumerFactory<>(configProps);
         factory.setValueDeserializer(deserializer);
         return factory;
     }
@@ -259,14 +253,13 @@ public class KafkaConfig {
      * Kafka listener container factory with manual acknowledgment and concurrency settings.
      */
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(
-            ConsumerFactory<String, Object> consumerFactory) {
-        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
+    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(ConsumerFactory<String, Object> consumerFactory) {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
 
         // Manual acknowledgment mode for reliable processing
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties()
+                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         // Concurrency for parallel processing
         factory.setConcurrency(concurrency);
@@ -278,41 +271,41 @@ public class KafkaConfig {
     }
 
     /**
-     * Kafka transaction manager for transactional producers.
-     * Used when exactly-once semantics are required.
+     * Kafka transaction manager for transactional producers. Used when exactly-once semantics are required.
      * <p>
-     * This bean is only created when {@code spring.kafka.producer.transaction-enabled=true}
-     * is set in the configuration. When enabled, the producer factory must also be
-     * configured with a transactional ID (see producerFactory method).
+     * This bean is only created when {@code spring.kafka.producer.transaction-enabled=true} is set in the configuration. When enabled, the producer factory must also be configured
+     * with a transactional ID (see producerFactory method).
      * <p>
-     * Note: Currently, the default producer factory does not support transactions.
-     * To enable transactions, configure a separate transactional producer factory
-     * with TRANSACTIONAL_ID_CONFIG set.
+     * Note: Currently, the default producer factory does not support transactions. To enable transactions, configure a separate transactional producer factory with
+     * TRANSACTIONAL_ID_CONFIG set.
      */
     @Bean
-    @ConditionalOnProperty(name = "spring.kafka.producer.transaction-enabled", havingValue = "true", matchIfMissing = false)
-    public KafkaTransactionManager<String, Object> kafkaTransactionManager(
-            ProducerFactory<String, Object> producerFactory) {
+    @ConditionalOnProperty(name = "spring.kafka.producer.transaction-enabled",
+            havingValue = "true",
+            matchIfMissing = false)
+    public KafkaTransactionManager<String, Object> kafkaTransactionManager(ProducerFactory<String, Object> producerFactory) {
         return new KafkaTransactionManager<>(producerFactory);
     }
 
     /**
-     * Mixin interface to add type information to DomainEvent.
-     * This allows adding Jackson annotations without modifying domain core,
-     * maintaining pure Java domain per architecture guidelines.
+     * Mixin interface to add type information to DomainEvent. This allows adding Jackson annotations without modifying domain core, maintaining pure Java domain per architecture
+     * guidelines.
      */
-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS,
+            include = JsonTypeInfo.As.PROPERTY,
+            property = "@class")
     private interface DomainEventTypeInfoMixin {
         // Empty interface - annotations are inherited by DomainEvent
     }
 
     /**
-     * Mixin interface to add type information to Object.class.
-     * This ensures that when deserializing to Object.class, Jackson uses PROPERTY format
-     * (same as DomainEvent) instead of the default WRAPPER_ARRAY format.
-     * This fixes deserialization errors when consuming events as Object.class.
+     * Mixin interface to add type information to Object.class. This ensures that when deserializing to Object.class, Jackson uses PROPERTY format (same as DomainEvent) instead of
+     * the default WRAPPER_ARRAY format. This fixes deserialization
+     * errors when consuming events as Object.class.
      */
-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS,
+            include = JsonTypeInfo.As.PROPERTY,
+            property = "@class")
     private interface ObjectTypeInfoMixin {
         // Empty interface - annotations are inherited by Object.class
     }

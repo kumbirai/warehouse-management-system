@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Alert, Box, Button, Container, Link, Paper, TextField, Typography } from '@mui/material';
+import {useEffect, useRef, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {Alert, Box, Button, Container, Link, Paper, TextField, Typography} from '@mui/material';
 import axios from 'axios';
-import { useAuth } from '../../hooks/useAuth';
+import {useAuth} from '../../hooks/useAuth';
 
 /**
  * Login page component.
@@ -52,7 +52,8 @@ export const LoginPage = () => {
 
     try {
       console.log('[LoginPage] Calling login function');
-      await login(username, password);
+      // Trim username to prevent validation errors from trailing/leading spaces
+      await login(username.trim(), password);
       console.log('[LoginPage] Login function completed successfully, setting loginSuccessRef');
       // Mark login as successful - navigation will happen via useEffect when isAuthenticated becomes true
       loginSuccessRef.current = true;
@@ -123,6 +124,27 @@ export const LoginPage = () => {
           {error && (
             <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
               {error}
+              {error.toLowerCase().includes('not fully set up') ||
+              error.toLowerCase().includes('verify your email') ||
+              error.toLowerCase().includes('temporary password') ||
+              error.toLowerCase().includes('account setup') ? (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>To complete your account setup:</strong>
+                  </Typography>
+                  <Typography variant="body2" component="div">
+                    <ol style={{ margin: 0, paddingLeft: '20px' }}>
+                      <li>Check your email for a verification link</li>
+                      <li>Click the link to verify your email address</li>
+                      <li>Set your password using the link in the same email</li>
+                    </ol>
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+                    If you didn't receive the email, please check your spam folder or contact your
+                    system administrator.
+                  </Typography>
+                </Box>
+              ) : null}
             </Alert>
           )}
 

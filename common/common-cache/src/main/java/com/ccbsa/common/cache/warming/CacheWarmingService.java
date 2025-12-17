@@ -12,11 +12,8 @@ import org.springframework.stereotype.Service;
  * <p>
  * Warms up critical caches on application startup to reduce initial response latency.
  * <p>
- * Warming Strategy:
- * 1. Triggered by ApplicationReadyEvent (all beans initialized)
- * 2. Runs asynchronously to not block startup
- * 3. Warms only critical, frequently accessed data
- * 4. Logs warming progress and errors
+ * Warming Strategy: 1. Triggered by ApplicationReadyEvent (all beans initialized) 2. Runs asynchronously to not block startup 3. Warms only critical, frequently accessed data 4.
+ * Logs warming progress and errors
  * <p>
  * Service-specific implementations extend this base class.
  */

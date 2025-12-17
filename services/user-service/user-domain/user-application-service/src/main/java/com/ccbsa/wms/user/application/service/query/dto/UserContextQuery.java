@@ -7,7 +7,8 @@ import com.ccbsa.common.application.query.Query;
  * <p>
  * Query to get user context from JWT token.
  */
-public final class UserContextQuery implements Query<UserContextView> {
+public final class UserContextQuery
+        implements Query<UserContextView> {
     private final String accessToken;
 
     public UserContextQuery(String accessToken) {

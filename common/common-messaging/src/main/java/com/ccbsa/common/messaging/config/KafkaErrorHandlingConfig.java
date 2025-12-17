@@ -29,11 +29,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * Kafka error handling configuration with dead letter queue support.
  * <p>
- * Provides:
- * - Dead letter topic publishing for failed messages
- * - Exponential backoff retry mechanism
- * - Error handlers for listener containers
- * - Configurable retry attempts and intervals
+ * Provides: - Dead letter topic publishing for failed messages - Exponential backoff retry mechanism - Error handlers for listener containers - Configurable retry attempts and
+ * intervals
  */
 @Configuration
 public class KafkaErrorHandlingConfig {
@@ -67,13 +64,13 @@ public class KafkaErrorHandlingConfig {
     private String deadLetterTopicSuffix;
 
     /**
-     * Consumer factory for dead letter queue publishing.
-     * Uses same configuration as main consumer but with different group ID.
+     * Consumer factory for dead letter queue publishing. Uses same configuration as main consumer but with different group ID.
      * <p>
      * Explicitly uses kafkaObjectMapper to ensure type information is properly deserialized.
      */
     @Bean
-    public ConsumerFactory<String, Object> dlqConsumerFactory(@org.springframework.beans.factory.annotation.Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ConsumerFactory<String, Object> dlqConsumerFactory(
+            @org.springframework.beans.factory.annotation.Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, String.format("%s-dlq", groupId));
@@ -95,8 +92,7 @@ public class KafkaErrorHandlingConfig {
         deserializer.setUseTypeHeaders(false);
         deserializer.setRemoveTypeHeaders(true);
 
-        DefaultKafkaConsumerFactory<String, Object> factory =
-                new DefaultKafkaConsumerFactory<>(configProps);
+        DefaultKafkaConsumerFactory<String, Object> factory = new DefaultKafkaConsumerFactory<>(configProps);
         factory.setValueDeserializer(deserializer);
         return factory;
     }
@@ -112,8 +108,7 @@ public class KafkaErrorHandlingConfig {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                org.springframework.kafka.support.serializer.JsonSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, org.springframework.kafka.support.serializer.JsonSerializer.class);
 
         // Use same producer config as main producer
         configProps.put(ProducerConfig.ACKS_CONFIG, "all");
@@ -127,32 +122,24 @@ public class KafkaErrorHandlingConfig {
         // Spring Boot auto-configuration. Do not set JsonSerializer.ADD_TYPE_INFO_HEADERS
         // in configProps when using programmatic configuration.
 
-        org.springframework.kafka.core.DefaultKafkaProducerFactory<String, Object> factory =
-                new org.springframework.kafka.core.DefaultKafkaProducerFactory<>(configProps);
-        org.springframework.kafka.support.serializer.JsonSerializer<Object> serializer =
-                new org.springframework.kafka.support.serializer.JsonSerializer<>(kafkaObjectMapper);
+        org.springframework.kafka.core.DefaultKafkaProducerFactory<String, Object> factory = new org.springframework.kafka.core.DefaultKafkaProducerFactory<>(configProps);
+        org.springframework.kafka.support.serializer.JsonSerializer<Object> serializer = new org.springframework.kafka.support.serializer.JsonSerializer<>(kafkaObjectMapper);
         serializer.setAddTypeInfo(false);
         factory.setValueSerializer(serializer);
         return factory;
     }
 
     /**
-     * Dead letter publishing recoverer.
-     * Publishes failed messages to dead letter topic with suffix.
+     * Dead letter publishing recoverer. Publishes failed messages to dead letter topic with suffix.
      */
     @Bean
-    public DeadLetterPublishingRecoverer deadLetterPublishingRecoverer(
-            KafkaTemplate<String, Object> kafkaTemplate) {
-        return new DeadLetterPublishingRecoverer(
-                kafkaTemplate,
-                (record, ex) -> {
-                    String originalTopic = record.topic();
-                    String dlqTopic = originalTopic + deadLetterTopicSuffix;
-                    logger.warn("Publishing failed message to dead letter topic: {} -> {}",
-                            originalTopic, dlqTopic);
-                    return new org.apache.kafka.common.TopicPartition(dlqTopic, record.partition());
-                }
-        );
+    public DeadLetterPublishingRecoverer deadLetterPublishingRecoverer(KafkaTemplate<String, Object> kafkaTemplate) {
+        return new DeadLetterPublishingRecoverer(kafkaTemplate, (record, ex) -> {
+            String originalTopic = record.topic();
+            String dlqTopic = originalTopic + deadLetterTopicSuffix;
+            logger.warn("Publishing failed message to dead letter topic: {} -> {}", originalTopic, dlqTopic);
+            return new org.apache.kafka.common.TopicPartition(dlqTopic, record.partition());
+        });
     }
 
     /**
@@ -172,23 +159,15 @@ public class KafkaErrorHandlingConfig {
      * Common error handler with dead letter queue and exponential backoff.
      */
     @Bean
-    public CommonErrorHandler kafkaErrorHandler(
-            DeadLetterPublishingRecoverer deadLetterPublishingRecoverer,
-            BackOff backOff) {
-        DefaultErrorHandler errorHandler = new DefaultErrorHandler(
-                deadLetterPublishingRecoverer,
-                backOff
-        );
+    public CommonErrorHandler kafkaErrorHandler(DeadLetterPublishingRecoverer deadLetterPublishingRecoverer, BackOff backOff) {
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(deadLetterPublishingRecoverer, backOff);
 
         // Skip retries for certain exceptions (e.g., deserialization errors)
-        errorHandler.addNotRetryableExceptions(
-                org.apache.kafka.common.errors.SerializationException.class,
-                org.springframework.kafka.support.serializer.DeserializationException.class
-        );
+        errorHandler.addNotRetryableExceptions(org.apache.kafka.common.errors.SerializationException.class,
+                org.springframework.kafka.support.serializer.DeserializationException.class);
 
         errorHandler.setRetryListeners((record, ex, deliveryAttempt) -> {
-            logger.warn("Retry attempt {} for message from topic {}: {}",
-                    deliveryAttempt, record.topic(), ex.getMessage());
+            logger.warn("Retry attempt {} for message from topic {}: {}", deliveryAttempt, record.topic(), ex.getMessage());
         });
 
         return errorHandler;
@@ -198,17 +177,15 @@ public class KafkaErrorHandlingConfig {
      * Enhanced listener container factory with error handling.
      */
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, Object>
-    kafkaListenerContainerFactoryWithErrorHandling(
-            ConsumerFactory<String, Object> consumerFactory,
-            CommonErrorHandler errorHandler) {
-        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
+    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactoryWithErrorHandling(ConsumerFactory<String, Object> consumerFactory,
+                                                                                                                  CommonErrorHandler errorHandler) {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         factory.setCommonErrorHandler(errorHandler);
 
         // Manual acknowledgment mode
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties()
+                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         return factory;
     }

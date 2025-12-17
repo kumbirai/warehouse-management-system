@@ -19,14 +19,13 @@ import jakarta.servlet.http.HttpServletRequest;
 /**
  * Global Exception Handler: GlobalExceptionHandler
  * <p>
- * Handles exceptions across all controllers and provides consistent error responses
- * using the standardized ApiResponse format.
+ * Handles exceptions across all controllers and provides consistent error responses using the standardized ApiResponse format.
  * <p>
- * This handler extends {@link BaseGlobalExceptionHandler} to inherit common exception
- * handling and adds notification-service-specific exception handlers.
+ * This handler extends {@link BaseGlobalExceptionHandler} to inherit common exception handling and adds notification-service-specific exception handlers.
  */
 @RestControllerAdvice(basePackages = "com.ccbsa.wms.notification.application.api")
-public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
+public class GlobalExceptionHandler
+        extends BaseGlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
@@ -37,24 +36,17 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
      * @return Error response with 404 Not Found
      */
     @ExceptionHandler(NotificationNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNotificationNotFoundException(
-            NotificationNotFoundException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleNotificationNotFoundException(NotificationNotFoundException ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Notification not found: {} - RequestId: {}, Path: {}",
-                ex.getMessage(),
-                requestId,
-                path);
+        logger.warn("Notification not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("NOTIFICATION_NOT_FOUND",
-                        ex.getMessage())
+        ApiError error = ApiError.builder("NOTIFICATION_NOT_FOUND", ex.getMessage())
                 .path(path)
                 .requestId(requestId)
                 .build();
-        return ApiResponseBuilder.error(HttpStatus.NOT_FOUND,
-                error);
+        return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
     }
 }
 

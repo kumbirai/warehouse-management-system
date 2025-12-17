@@ -3,8 +3,7 @@ package com.ccbsa.wms.notification.domain.core.valueobject;
 /**
  * Value Object: NotificationType
  * <p>
- * Represents the type of notification.
- * Immutable enum-like value object.
+ * Represents the type of notification. Immutable enum-like value object.
  */
 public enum NotificationType {
     USER_CREATED("User account created"),

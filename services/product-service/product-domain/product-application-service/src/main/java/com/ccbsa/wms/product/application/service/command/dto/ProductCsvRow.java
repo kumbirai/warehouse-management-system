@@ -73,8 +73,7 @@ public final class ProductCsvRow {
             return false;
         }
         ProductCsvRow that = (ProductCsvRow) o;
-        return rowNumber == that.rowNumber &&
-                Objects.equals(productCode, that.productCode);
+        return rowNumber == that.rowNumber && Objects.equals(productCode, that.productCode);
     }
 
     @Override
@@ -133,16 +132,20 @@ public final class ProductCsvRow {
         }
 
         public ProductCsvRow build() {
-            if (productCode == null || productCode.trim().isEmpty()) {
+            if (productCode == null || productCode.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("ProductCode is required");
             }
-            if (description == null || description.trim().isEmpty()) {
+            if (description == null || description.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("Description is required");
             }
-            if (primaryBarcode == null || primaryBarcode.trim().isEmpty()) {
+            if (primaryBarcode == null || primaryBarcode.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("PrimaryBarcode is required");
             }
-            if (unitOfMeasure == null || unitOfMeasure.trim().isEmpty()) {
+            if (unitOfMeasure == null || unitOfMeasure.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("UnitOfMeasure is required");
             }
             return new ProductCsvRow(this);

@@ -6,14 +6,10 @@ import java.util.regex.Pattern;
 /**
  * Value Object: ProductCode
  *
- * Represents a unique product code identifier.
- * Immutable and self-validating.
+ * Represents a unique product code identifier. Immutable and self-validating.
  *
- * Business Rules:
- * - Product code must be alphanumeric with hyphens/underscores
- * - Product code must be unique per tenant
- * - Product code cannot be null or empty
- * - Product code length: 1-50 characters
+ * Business Rules: - Product code must be alphanumeric with hyphens/underscores - Product code must be unique per tenant - Product code cannot be null or empty - Product code
+ * length: 1-50 characters
  */
 public final class ProductCode {
     private static final Pattern PRODUCT_CODE_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{1,50}$");
@@ -38,7 +34,8 @@ public final class ProductCode {
      * @throws IllegalArgumentException if validation fails
      */
     private void validate(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("ProductCode cannot be null or empty");
         }
 
@@ -48,10 +45,9 @@ public final class ProductCode {
             throw new IllegalArgumentException("ProductCode must not exceed 50 characters");
         }
 
-        if (!PRODUCT_CODE_PATTERN.matcher(trimmedValue).matches()) {
-            throw new IllegalArgumentException(
-                    String.format("ProductCode must be alphanumeric with hyphens/underscores only: %s", value)
-            );
+        if (!PRODUCT_CODE_PATTERN.matcher(trimmedValue)
+                .matches()) {
+            throw new IllegalArgumentException(String.format("ProductCode must be alphanumeric with hyphens/underscores only: %s", value));
         }
     }
 

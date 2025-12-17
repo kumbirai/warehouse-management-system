@@ -14,8 +14,7 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationId;
 /**
  * Mapper: NotificationEntityMapper
  * <p>
- * Maps between Notification domain aggregate and NotificationEntity JPA entity.
- * Handles conversion between domain value objects and JPA entity fields.
+ * Maps between Notification domain aggregate and NotificationEntity JPA entity. Handles conversion between domain value objects and JPA entity fields.
  */
 @Component
 public class NotificationEntityMapper {
@@ -23,8 +22,7 @@ public class NotificationEntityMapper {
     /**
      * Converts Notification domain entity to NotificationEntity JPA entity.
      * <p>
-     * For new entities (version == 0), version is set to null to let Hibernate manage it.
-     * For existing entities (version > 0), version is set to enable optimistic locking.
+     * For new entities (version == 0), version is set to null to let Hibernate manage it. For existing entities (version > 0), version is set to enable optimistic locking.
      *
      * @param notification Notification domain entity
      * @return NotificationEntity JPA entity
@@ -36,12 +34,18 @@ public class NotificationEntityMapper {
         }
 
         NotificationEntity entity = new NotificationEntity();
-        entity.setId(notification.getId().getValue());
-        entity.setTenantId(notification.getTenantId().getValue());
-        entity.setRecipientUserId(notification.getRecipientUserId().getValue());
-        entity.setRecipientEmail(notification.getRecipientEmail() != null ? notification.getRecipientEmail().getValue() : null);
-        entity.setTitle(notification.getTitle().getValue());
-        entity.setMessage(notification.getMessage().getValue());
+        entity.setId(notification.getId()
+                .getValue());
+        entity.setTenantId(notification.getTenantId()
+                .getValue());
+        entity.setRecipientUserId(notification.getRecipientUserId()
+                .getValue());
+        entity.setRecipientEmail(notification.getRecipientEmail() != null ? notification.getRecipientEmail()
+                .getValue() : null);
+        entity.setTitle(notification.getTitle()
+                .getValue());
+        entity.setMessage(notification.getMessage()
+                .getValue());
         entity.setType(notification.getType());
         entity.setStatus(notification.getStatus());
         entity.setCreatedAt(notification.getCreatedAt());
@@ -88,7 +92,8 @@ public class NotificationEntityMapper {
                 .version(entity.getVersion());
 
         // Set recipient email if available (nullable for backward compatibility)
-        if (entity.getRecipientEmail() != null && !entity.getRecipientEmail().isEmpty()) {
+        if (entity.getRecipientEmail() != null && !entity.getRecipientEmail()
+                .isEmpty()) {
             builder.recipientEmail(EmailAddress.of(entity.getRecipientEmail()));
         }
 

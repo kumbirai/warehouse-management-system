@@ -11,10 +11,10 @@ import com.ccbsa.wms.product.dataaccess.entity.ProductEntity;
 /**
  * JPA Repository: ProductJpaRepository
  * <p>
- * Spring Data JPA repository for ProductEntity.
- * Provides database access methods with multi-tenant support.
+ * Spring Data JPA repository for ProductEntity. Provides database access methods with multi-tenant support.
  */
-public interface ProductJpaRepository extends JpaRepository<ProductEntity, UUID> {
+public interface ProductJpaRepository
+        extends JpaRepository<ProductEntity, UUID> {
     /**
      * Finds a product by tenant ID and product ID.
      *

@@ -8,8 +8,7 @@ import com.ccbsa.common.domain.valueobject.UserId;
 /**
  * View: UserContextView
  * <p>
- * Read model for user context information.
- * Uses value objects for type-safe IDs.
+ * Read model for user context information. Uses value objects for type-safe IDs.
  *
  * <p>Note: TenantId may be null for SYSTEM_ADMIN users who are not associated with a tenant.
  */
@@ -22,13 +21,7 @@ public final class UserContextView {
     private final String firstName;
     private final String lastName;
 
-    public UserContextView(UserId userId,
-                           String username,
-                           TenantId tenantId,
-                           List<String> roles,
-                           String email,
-                           String firstName,
-                           String lastName) {
+    public UserContextView(UserId userId, String username, TenantId tenantId, List<String> roles, String email, String firstName, String lastName) {
         if (userId == null) {
             throw new IllegalArgumentException("UserId cannot be null");
         }
@@ -77,14 +70,9 @@ public final class UserContextView {
 
     @Override
     public String toString() {
-        return String.format("UserContextView{userId='%s', username='%s', tenantId='%s', roles=%s, email='%s', firstName='%s', lastName='%s'}",
-                userId.getValue(),
-                username,
-                tenantId != null ? tenantId.getValue() : "null",
-                roles,
-                email,
-                firstName,
-                lastName);
+        return String.format("UserContextView{userId='%s', username='%s', tenantId='%s', roles=%s, email='%s', firstName='%s', lastName='%s'}", userId.getValue(), username,
+                tenantId != null ? tenantId.getValue() : "null", roles, email,
+                firstName, lastName);
     }
 }
 

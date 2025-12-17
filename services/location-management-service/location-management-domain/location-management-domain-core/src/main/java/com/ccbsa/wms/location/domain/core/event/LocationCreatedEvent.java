@@ -14,7 +14,8 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
  * <p>
  * Event Version: 1.0
  */
-public final class LocationCreatedEvent extends LocationManagementEvent {
+public final class LocationCreatedEvent
+        extends LocationManagementEvent {
     private final LocationBarcode barcode;
     private final LocationCoordinates coordinates;
     private final LocationStatus status;
@@ -30,8 +31,7 @@ public final class LocationCreatedEvent extends LocationManagementEvent {
      * @param status      Location status
      * @throws IllegalArgumentException if any parameter is null
      */
-    public LocationCreatedEvent(LocationId locationId, TenantId tenantId, LocationBarcode barcode,
-                                LocationCoordinates coordinates, LocationStatus status) {
+    public LocationCreatedEvent(LocationId locationId, TenantId tenantId, LocationBarcode barcode, LocationCoordinates coordinates, LocationStatus status) {
         super(locationId);
         if (tenantId == null) {
             throw new IllegalArgumentException("TenantId cannot be null");
@@ -62,8 +62,7 @@ public final class LocationCreatedEvent extends LocationManagementEvent {
      * @param metadata    Event metadata for traceability
      * @throws IllegalArgumentException if any parameter is null
      */
-    public LocationCreatedEvent(LocationId locationId, TenantId tenantId, LocationBarcode barcode,
-                                LocationCoordinates coordinates, LocationStatus status, EventMetadata metadata) {
+    public LocationCreatedEvent(LocationId locationId, TenantId tenantId, LocationBarcode barcode, LocationCoordinates coordinates, LocationStatus status, EventMetadata metadata) {
         super(locationId, metadata);
         if (tenantId == null) {
             throw new IllegalArgumentException("TenantId cannot be null");

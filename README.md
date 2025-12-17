@@ -8,8 +8,10 @@
 
 ## Overview
 
-The Warehouse Management System Integration serves as a bridge between Microsoft Dynamics 365 Finance and Operations (D365) and Local Distribution Partner (LDP) warehouse
-operations. The system enables LDPs to manage consigned stock, optimize warehouse operations, maintain accurate inventory levels, and ensure seamless reconciliation with D365.
+The Warehouse Management System Integration serves as a bridge between Microsoft Dynamics 365 Finance and Operations (
+D365) and Local Distribution Partner (LDP) warehouse
+operations. The system enables LDPs to manage consigned stock, optimize warehouse operations, maintain accurate
+inventory levels, and ensure seamless reconciliation with D365.
 
 ## Architecture
 
@@ -179,11 +181,14 @@ mvn spotbugs:check
 
 ## Contributing
 
-1. Follow the coding standards defined in [Clean Code Guidelines](documentation/05-development/clean-code-guidelines-per-module.md)
+1. Follow the coding standards defined
+   in [Clean Code Guidelines](documentation/05-development/clean-code-guidelines-per-module.md)
 2. Ensure all tests pass
 3. Run code quality checks before committing
-4. Follow the implementation templates in [Implementation Template Guide](documentation/guide/mandated-Implementation-template-guide.md)
-5. Adhere to Domain-Driven Design (DDD), Clean Hexagonal Architecture, CQRS, and Event-Driven Design principles as defined
+4. Follow the implementation templates
+   in [Implementation Template Guide](documentation/guide/mandated-Implementation-template-guide.md)
+5. Adhere to Domain-Driven Design (DDD), Clean Hexagonal Architecture, CQRS, and Event-Driven Design principles as
+   defined
    in [Service Architecture Document](documentation/01-architecture/Service_Architecture_Document.md)
 
 ## License

@@ -58,11 +58,11 @@ import jakarta.ws.rs.core.Response;
 /**
  * Adapter: AuthenticationServiceAdapter
  * <p>
- * Implements AuthenticationServicePort for BFF authentication operations.
- * Handles Keycloak token operations, masking IAM complexity.
+ * Implements AuthenticationServicePort for BFF authentication operations. Handles Keycloak token operations, masking IAM complexity.
  */
 @Component
-public class AuthenticationServiceAdapter implements AuthenticationServicePort {
+public class AuthenticationServiceAdapter
+        implements AuthenticationServicePort {
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationServiceAdapter.class);
     // Keycloak client configuration - should match Keycloak client setup
     private static final String CLIENT_ID = "wms-api";
@@ -76,9 +76,7 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
 
     @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
             justification = "Configuration validation is intentionally performed before publishing the bean")
-    public AuthenticationServiceAdapter(KeycloakConfig keycloakConfig,
-                                        RestTemplate restTemplate,
-                                        KeycloakClientPort keycloakClientPort) {
+    public AuthenticationServiceAdapter(KeycloakConfig keycloakConfig, RestTemplate restTemplate, KeycloakClientPort keycloakClientPort) {
         KeycloakConfig validatedConfig = validateConfig(keycloakConfig);
         this.keycloakConfig = validatedConfig;
         this.clientSecret = validatedConfig.getClientSecret();
@@ -101,56 +99,40 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
     }
 
     @Override
-    @Retryable(retryFor = {RestClientException.class,
-            KeycloakServiceException.class},
+    @Retryable(retryFor = {RestClientException.class, KeycloakServiceException.class},
             maxAttempts = 3,
             backoff = @Backoff(delay = 500,
                     multiplier = 2.0),
             noRetryFor = {AuthenticationException.class})
     public AuthenticationResult login(LoginCommand command) {
-        logger.debug("Attempting login for user: {}",
-                command.getUsername());
+        logger.debug("Attempting login for user: {}", command.getUsername());
 
         try {
             // Build token endpoint URL
-            String tokenUrl = String.format("%s/realms/%s/protocol/openid-connect/token",
-                    keycloakConfig.getServerUrl(),
-                    keycloakConfig.getDefaultRealm());
+            String tokenUrl = String.format("%s/realms/%s/protocol/openid-connect/token", keycloakConfig.getServerUrl(), keycloakConfig.getDefaultRealm());
 
-            logger.debug("Keycloak token URL: {}",
-                    tokenUrl);
-            logger.debug("Client ID: {}, Client Secret configured: {}",
-                    CLIENT_ID,
-                    (clientSecret != null && !clientSecret.isEmpty()));
+            logger.debug("Keycloak token URL: {}", tokenUrl);
+            logger.debug("Client ID: {}, Client Secret configured: {}", CLIENT_ID, (clientSecret != null && !clientSecret.isEmpty()));
 
             // Prepare request
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
             MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-            body.add("grant_type",
-                    GRANT_TYPE_PASSWORD);
-            body.add("client_id",
-                    CLIENT_ID);
+            body.add("grant_type", GRANT_TYPE_PASSWORD);
+            body.add("client_id", CLIENT_ID);
             if (clientSecret != null && !clientSecret.isEmpty()) {
-                body.add("client_secret",
-                        clientSecret);
+                body.add("client_secret", clientSecret);
             } else {
                 logger.warn("Client secret is not configured - this may cause authentication failures for confidential clients");
             }
-            body.add("username",
-                    command.getUsername());
-            body.add("password",
-                    command.getPassword());
+            body.add("username", command.getUsername());
+            body.add("password", command.getPassword());
 
-            HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(body,
-                    headers);
+            HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(body, headers);
 
             // Call Keycloak token endpoint
-            ResponseEntity<String> response = restTemplate.exchange(tokenUrl,
-                    HttpMethod.POST,
-                    entity,
-                    String.class);
+            ResponseEntity<String> response = restTemplate.exchange(tokenUrl, HttpMethod.POST, entity, String.class);
 
             // Parse response
             JsonNode jsonResponse = objectMapper.readTree(response.getBody());
@@ -166,14 +148,9 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
             // Extract user context from access token
             AuthenticationResult.UserContext userContext = extractUserContext(accessToken);
 
-            logger.info("Login successful for user: {}",
-                    command.getUsername());
+            logger.info("Login successful for user: {}", command.getUsername());
 
-            return new AuthenticationResult(accessToken,
-                    refreshToken,
-                    tokenType,
-                    expiresIn,
-                    userContext);
+            return new AuthenticationResult(accessToken, refreshToken, tokenType, expiresIn, userContext);
         } catch (HttpClientErrorException e) {
             // Extract and log Keycloak error response
             String errorResponseBody = e.getResponseBodyAsString();
@@ -181,11 +158,8 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
 
             if (e.getStatusCode()
                     .value() == 401) {
-                logger.warn("Login failed for user: {} - HTTP 401 Unauthorized. Keycloak error: {}",
-                        command.getUsername(),
-                        keycloakError);
-                logger.debug("Full Keycloak error response: {}",
-                        errorResponseBody);
+                logger.warn("Login failed for user: {} - HTTP 401 Unauthorized. Keycloak error: {}", command.getUsername(), keycloakError);
+                logger.debug("Full Keycloak error response: {}", errorResponseBody);
 
                 // Provide more specific error message based on Keycloak error
                 String errorMessage = "Invalid username or password";
@@ -196,15 +170,11 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
                     errorMessage = "Invalid username or password";
                 }
 
-                throw new AuthenticationException(errorMessage,
-                        e);
+                throw new AuthenticationException(errorMessage, e);
             } else if (e.getStatusCode()
                     .value() == 400) {
-                logger.warn("Login failed for user: {} - HTTP 400 Bad Request. Keycloak error: {}",
-                        command.getUsername(),
-                        keycloakError);
-                logger.debug("Full Keycloak error response: {}",
-                        errorResponseBody);
+                logger.warn("Login failed for user: {} - HTTP 400 Bad Request. Keycloak error: {}", command.getUsername(), keycloakError);
+                logger.debug("Full Keycloak error response: {}", errorResponseBody);
 
                 // Provide user-friendly error messages for specific Keycloak 400 errors
                 String errorMessage = "Invalid request parameters";
@@ -212,11 +182,9 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
                 // Check for account setup issues (email not verified, temporary password, etc.)
                 // Use Locale.ROOT for locale-independent case conversion (production-grade)
                 String lowerCaseError = keycloakError.toLowerCase(Locale.ROOT);
-                if (lowerCaseError.contains("account is not fully set up") ||
-                        lowerCaseError.contains("account is not fully setup")) {
+                if (lowerCaseError.contains("account is not fully set up") || lowerCaseError.contains("account is not fully setup")) {
                     errorMessage = "Your account is not fully set up. Please verify your email address or contact your administrator to complete account setup.";
-                    logger.info("User account not fully set up: {} - likely email not verified or temporary password",
-                            command.getUsername());
+                    logger.info("User account not fully set up: {} - likely email not verified or temporary password", command.getUsername());
                 } else if (keycloakError.contains("invalid_grant")) {
                     // Generic invalid_grant error (credentials incorrect)
                     errorMessage = "Invalid username or password";
@@ -226,33 +194,19 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
                     errorMessage = "Your account has been temporarily disabled due to too many failed login attempts. Please try again later or contact your administrator.";
                 }
 
-                throw new AuthenticationException(errorMessage,
-                        e);
+                throw new AuthenticationException(errorMessage, e);
             } else {
-                logger.error("Login failed for user: {} - HTTP {}: {}. Keycloak error: {}",
-                        command.getUsername(),
-                        e.getStatusCode()
-                                .value(),
-                        e.getMessage(),
-                        keycloakError);
-                logger.debug("Full Keycloak error response: {}",
-                        errorResponseBody);
-                throw new KeycloakServiceException(String.format("Authentication service error: %s",
-                        keycloakError),
-                        e);
+                logger.error("Login failed for user: {} - HTTP {}: {}. Keycloak error: {}", command.getUsername(), e.getStatusCode()
+                        .value(), e.getMessage(), keycloakError);
+                logger.debug("Full Keycloak error response: {}", errorResponseBody);
+                throw new KeycloakServiceException(String.format("Authentication service error: %s", keycloakError), e);
             }
         } catch (RestClientException e) {
-            logger.error("Network error during login for user: {}",
-                    command.getUsername(),
-                    e);
-            throw new KeycloakServiceException("Unable to connect to authentication service",
-                    e);
+            logger.error("Network error during login for user: {}", command.getUsername(), e);
+            throw new KeycloakServiceException("Unable to connect to authentication service", e);
         } catch (JsonProcessingException e) {
-            logger.error("Unexpected error during login for user: {}",
-                    command.getUsername(),
-                    e);
-            throw new KeycloakServiceException("Authentication failed",
-                    e);
+            logger.error("Unexpected error during login for user: {}", command.getUsername(), e);
+            throw new KeycloakServiceException("Authentication failed", e);
         }
     }
 
@@ -272,8 +226,7 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
             // Decode JWT token (base64 decode payload)
             String[] parts = accessToken.split("\\.");
             if (parts.length != 3) {
-                throw new IllegalArgumentException(String.format("Invalid JWT token format: expected 3 parts, got %d",
-                        parts.length));
+                throw new IllegalArgumentException(String.format("Invalid JWT token format: expected 3 parts, got %d", parts.length));
             }
 
             // Decode payload (second part) with proper padding
@@ -281,22 +234,21 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
             // Add padding if needed for Base64 decoding
             int padding = 4 - (payload.length() % 4);
             if (padding != 4) {
-                payload = String.format("%s%s",
-                        payload,
-                        "=".repeat(padding));
+                payload = String.format("%s%s", payload, "=".repeat(padding));
             }
 
             String decodedPayload = new String(Base64.getUrlDecoder()
-                    .decode(payload),
-                    StandardCharsets.UTF_8);
+                    .decode(payload), StandardCharsets.UTF_8);
             JsonNode claims = objectMapper.readTree(decodedPayload);
 
             // Extract user information
             String userIdString = claims.has("sub") ? claims.get("sub")
                     .asText() : null;
-            String username = claims.has("preferred_username") ? claims.get("preferred_username")
-                    .asText() : (claims.has("username") ? claims.get("username")
-                    .asText() : null);
+            String username = claims.has("preferred_username")
+                    ? claims.get("preferred_username")
+                    .asText()
+                    : (claims.has("username") ? claims.get("username")
+                            .asText() : null);
             String email = claims.has("email") ? claims.get("email")
                     .asText() : null;
             String firstName = claims.has("given_name") ? claims.get("given_name")
@@ -331,22 +283,13 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
             UserId userId = UserId.of(userIdString);
             TenantId tenantId = (tenantIdString != null && !tenantIdString.isEmpty()) ? TenantId.of(tenantIdString) : null;
 
-            return new AuthenticationResult.UserContext(userId,
-                    username,
-                    tenantId,
-                    roles,
-                    email,
-                    firstName,
-                    lastName);
+            return new AuthenticationResult.UserContext(userId, username, tenantId, roles, email, firstName, lastName);
         } catch (IllegalArgumentException e) {
-            logger.warn("Failed to extract user context: {}",
-                    e.getMessage());
+            logger.warn("Failed to extract user context: {}", e.getMessage());
             throw e;
         } catch (JsonProcessingException e) {
-            logger.error("Failed to parse user context from token",
-                    e);
-            throw new IllegalArgumentException("Failed to extract user context",
-                    e);
+            logger.error("Failed to parse user context from token", e);
+            throw new IllegalArgumentException("Failed to extract user context", e);
         }
     }
 
@@ -381,15 +324,13 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
 
             return errorMsg.length() > 0 ? errorMsg.toString() : errorResponseBody;
         } catch (JsonProcessingException e) {
-            logger.debug("Failed to parse Keycloak error response: {}",
-                    e.getMessage());
+            logger.debug("Failed to parse Keycloak error response: {}", e.getMessage());
             return errorResponseBody;
         }
     }
 
     @Override
-    @Retryable(retryFor = {RestClientException.class,
-            KeycloakServiceException.class},
+    @Retryable(retryFor = {RestClientException.class, KeycloakServiceException.class},
             maxAttempts = 3,
             backoff = @Backoff(delay = 500,
                     multiplier = 2.0),
@@ -399,34 +340,24 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
 
         try {
             // Build token endpoint URL
-            String tokenUrl = String.format("%s/realms/%s/protocol/openid-connect/token",
-                    keycloakConfig.getServerUrl(),
-                    keycloakConfig.getDefaultRealm());
+            String tokenUrl = String.format("%s/realms/%s/protocol/openid-connect/token", keycloakConfig.getServerUrl(), keycloakConfig.getDefaultRealm());
 
             // Prepare request
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
             MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-            body.add("grant_type",
-                    GRANT_TYPE_REFRESH_TOKEN);
-            body.add("client_id",
-                    CLIENT_ID);
+            body.add("grant_type", GRANT_TYPE_REFRESH_TOKEN);
+            body.add("client_id", CLIENT_ID);
             if (clientSecret != null && !clientSecret.isEmpty()) {
-                body.add("client_secret",
-                        clientSecret);
+                body.add("client_secret", clientSecret);
             }
-            body.add("refresh_token",
-                    command.getRefreshToken());
+            body.add("refresh_token", command.getRefreshToken());
 
-            HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(body,
-                    headers);
+            HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(body, headers);
 
             // Call Keycloak token endpoint
-            ResponseEntity<String> response = restTemplate.exchange(tokenUrl,
-                    HttpMethod.POST,
-                    entity,
-                    String.class);
+            ResponseEntity<String> response = restTemplate.exchange(tokenUrl, HttpMethod.POST, entity, String.class);
 
             // Parse response
             JsonNode jsonResponse = objectMapper.readTree(response.getBody());
@@ -444,11 +375,7 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
 
             logger.debug("Token refresh successful");
 
-            return new AuthenticationResult(accessToken,
-                    refreshToken,
-                    tokenType,
-                    expiresIn,
-                    userContext);
+            return new AuthenticationResult(accessToken, refreshToken, tokenType, expiresIn, userContext);
         } catch (HttpClientErrorException e) {
             // Extract and log Keycloak error response
             String errorResponseBody = e.getResponseBodyAsString();
@@ -456,61 +383,39 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
 
             if (e.getStatusCode()
                     .value() == 401) {
-                logger.warn("Token refresh failed - HTTP 401 Unauthorized. Keycloak error: {}",
-                        keycloakError);
-                logger.debug("Full Keycloak error response: {}",
-                        errorResponseBody);
-                throw new AuthenticationException("Invalid or expired refresh token",
-                        e);
+                logger.warn("Token refresh failed - HTTP 401 Unauthorized. Keycloak error: {}", keycloakError);
+                logger.debug("Full Keycloak error response: {}", errorResponseBody);
+                throw new AuthenticationException("Invalid or expired refresh token", e);
             } else if (e.getStatusCode()
                     .value() == 400) {
-                logger.warn("Token refresh failed - HTTP 400 Bad Request. Keycloak error: {}",
-                        keycloakError);
-                logger.debug("Full Keycloak error response: {}",
-                        errorResponseBody);
-                throw new AuthenticationException(String.format("Invalid request parameters: %s",
-                        keycloakError),
-                        e);
+                logger.warn("Token refresh failed - HTTP 400 Bad Request. Keycloak error: {}", keycloakError);
+                logger.debug("Full Keycloak error response: {}", errorResponseBody);
+                throw new AuthenticationException(String.format("Invalid request parameters: %s", keycloakError), e);
             } else {
-                logger.error("Token refresh failed - HTTP {}: {}. Keycloak error: {}",
-                        e.getStatusCode()
-                                .value(),
-                        e.getMessage(),
-                        keycloakError);
-                logger.debug("Full Keycloak error response: {}",
-                        errorResponseBody);
-                throw new KeycloakServiceException(String.format("Token refresh service error: %s",
-                        keycloakError),
-                        e);
+                logger.error("Token refresh failed - HTTP {}: {}. Keycloak error: {}", e.getStatusCode()
+                        .value(), e.getMessage(), keycloakError);
+                logger.debug("Full Keycloak error response: {}", errorResponseBody);
+                throw new KeycloakServiceException(String.format("Token refresh service error: %s", keycloakError), e);
             }
         } catch (RestClientException e) {
-            logger.error("Network error during token refresh",
-                    e);
-            throw new KeycloakServiceException("Unable to connect to authentication service",
-                    e);
+            logger.error("Network error during token refresh", e);
+            throw new KeycloakServiceException("Unable to connect to authentication service", e);
         } catch (JsonProcessingException e) {
-            logger.error("Unexpected error during token refresh",
-                    e);
-            throw new KeycloakServiceException("Token refresh failed",
-                    e);
+            logger.error("Unexpected error during token refresh", e);
+            throw new KeycloakServiceException("Token refresh failed", e);
         }
     }
 
     @Override
     public UserContextView getUserContext(UserContextQuery query) {
         AuthenticationResult.UserContext context = extractUserContext(query.getAccessToken());
-        return new UserContextView(context.getUserId(),
-                context.getUsername(),
-                context.getTenantId(),
-                context.getRoles(),
-                context.getEmail(),
-                context.getFirstName(),
+        return new UserContextView(context.getUserId(), context.getUsername(), context.getTenantId(), context.getRoles(), context.getEmail(), context.getFirstName(),
                 context.getLastName());
     }
 
     @Override
-    public com.ccbsa.wms.user.domain.core.valueobject.KeycloakUserId createUser(String tenantId, String username, String email,
-                                                                                String password, String firstName, String lastName) {
+    public com.ccbsa.wms.user.domain.core.valueobject.KeycloakUserId createUser(String tenantId, String username, String email, String password, String firstName,
+                                                                                String lastName) {
         logger.debug("Creating user in Keycloak: username={}, tenantId={}", username, tenantId);
 
         try {
@@ -548,7 +453,8 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
                 }
 
                 // Extract user ID from location header
-                String locationHeader = response.getLocation().toString();
+                String locationHeader = response.getLocation()
+                        .toString();
                 String keycloakUserId = locationHeader.substring(locationHeader.lastIndexOf('/') + 1);
 
                 // Assign user to tenant group
@@ -579,7 +485,8 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
 
         try {
             // Find tenant group
-            List<GroupRepresentation> groups = realm.groups().groups();
+            List<GroupRepresentation> groups = realm.groups()
+                    .groups();
             GroupRepresentation tenantGroup = groups.stream()
                     .filter(group -> groupName.equalsIgnoreCase(group.getName()))
                     .findFirst()
@@ -592,7 +499,8 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
             }
 
             // Assign user to group
-            UserResource userResource = realm.users().get(keycloakUserId);
+            UserResource userResource = realm.users()
+                    .get(keycloakUserId);
             userResource.joinGroup(tenantGroup.getId());
 
             logger.debug("User assigned to tenant group successfully: userId={}, group={}", keycloakUserId, groupName);
@@ -605,15 +513,15 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
     }
 
     @Override
-    public void updateUser(com.ccbsa.wms.user.domain.core.valueobject.KeycloakUserId keycloakUserId, String email,
-                           String firstName, String lastName) {
+    public void updateUser(com.ccbsa.wms.user.domain.core.valueobject.KeycloakUserId keycloakUserId, String email, String firstName, String lastName) {
         logger.debug("Updating user in Keycloak: userId={}", keycloakUserId.getValue());
 
         try {
             RealmResource realm = keycloakClientPort.getAdminClient()
                     .realm(keycloakConfig.getDefaultRealm());
 
-            UserResource userResource = realm.users().get(keycloakUserId.getValue());
+            UserResource userResource = realm.users()
+                    .get(keycloakUserId.getValue());
             UserRepresentation user = userResource.toRepresentation();
 
             user.setEmail(email);
@@ -636,7 +544,8 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
             RealmResource realm = keycloakClientPort.getAdminClient()
                     .realm(keycloakConfig.getDefaultRealm());
 
-            UserResource userResource = realm.users().get(keycloakUserId.getValue());
+            UserResource userResource = realm.users()
+                    .get(keycloakUserId.getValue());
             UserRepresentation user = userResource.toRepresentation();
             user.setEnabled(true);
             userResource.update(user);
@@ -656,7 +565,8 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
             RealmResource realm = keycloakClientPort.getAdminClient()
                     .realm(keycloakConfig.getDefaultRealm());
 
-            UserResource userResource = realm.users().get(keycloakUserId.getValue());
+            UserResource userResource = realm.users()
+                    .get(keycloakUserId.getValue());
             UserRepresentation user = userResource.toRepresentation();
             user.setEnabled(false);
             userResource.update(user);
@@ -682,8 +592,11 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
             RoleRepresentation role = roleResource.toRepresentation();
 
             // Assign role to user
-            UserResource userResource = realm.users().get(keycloakUserId.getValue());
-            userResource.roles().realmLevel().add(Collections.singletonList(role));
+            UserResource userResource = realm.users()
+                    .get(keycloakUserId.getValue());
+            userResource.roles()
+                    .realmLevel()
+                    .add(Collections.singletonList(role));
 
             logger.debug("Role assigned successfully: userId={}, role={}", keycloakUserId.getValue(), roleName);
         } catch (Exception e) {
@@ -706,8 +619,11 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
             RoleRepresentation role = roleResource.toRepresentation();
 
             // Remove role from user
-            UserResource userResource = realm.users().get(keycloakUserId.getValue());
-            userResource.roles().realmLevel().remove(Collections.singletonList(role));
+            UserResource userResource = realm.users()
+                    .get(keycloakUserId.getValue());
+            userResource.roles()
+                    .realmLevel()
+                    .remove(Collections.singletonList(role));
 
             logger.debug("Role removed successfully: userId={}, role={}", keycloakUserId.getValue(), roleName);
         } catch (Exception e) {
@@ -724,8 +640,11 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
             RealmResource realm = keycloakClientPort.getAdminClient()
                     .realm(keycloakConfig.getDefaultRealm());
 
-            UserResource userResource = realm.users().get(keycloakUserId.getValue());
-            List<RoleRepresentation> roles = userResource.roles().realmLevel().listEffective();
+            UserResource userResource = realm.users()
+                    .get(keycloakUserId.getValue());
+            List<RoleRepresentation> roles = userResource.roles()
+                    .realmLevel()
+                    .listEffective();
 
             return roles.stream()
                     .map(RoleRepresentation::getName)
@@ -733,6 +652,42 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
         } catch (Exception e) {
             logger.error("Failed to get user roles from Keycloak: {}", e.getMessage(), e);
             throw new KeycloakServiceException(String.format("Failed to get user roles from Keycloak: %s", e.getMessage()), e);
+        }
+    }
+
+    @Override
+    public void sendEmailVerificationAndPasswordReset(com.ccbsa.wms.user.domain.core.valueobject.KeycloakUserId keycloakUserId, String redirectUri) {
+        logger.debug("Sending email verification and password reset email: userId={}, redirectUri={}", keycloakUserId.getValue(), redirectUri);
+
+        try {
+            RealmResource realm = keycloakClientPort.getAdminClient()
+                    .realm(keycloakConfig.getDefaultRealm());
+
+            UserResource userResource = realm.users()
+                    .get(keycloakUserId.getValue());
+
+            // Prepare actions: VERIFY_EMAIL and UPDATE_PASSWORD
+            List<String> actions = new ArrayList<>();
+            actions.add("VERIFY_EMAIL");
+            actions.add("UPDATE_PASSWORD");
+
+            // Execute actions email with client ID and redirect URI
+            // Keycloak will send an email with links for both actions
+            // Method signature: executeActionsEmail(String clientId, String redirectUri, List<String> actions)
+            // If redirectUri is provided, it will be used for the action links
+            if (redirectUri != null && !redirectUri.trim()
+                    .isEmpty()) {
+                userResource.executeActionsEmail(CLIENT_ID, redirectUri, actions);
+            } else {
+                // Use default Keycloak redirect (login page)
+                // Method signature: executeActionsEmail(List<String> actions)
+                userResource.executeActionsEmail(actions);
+            }
+
+            logger.info("Email verification and password reset email sent successfully: userId={}", keycloakUserId.getValue());
+        } catch (Exception e) {
+            logger.error("Failed to send email verification and password reset email: userId={}, error={}", keycloakUserId.getValue(), e.getMessage(), e);
+            throw new KeycloakServiceException(String.format("Failed to send email verification and password reset email: %s", e.getMessage()), e);
         }
     }
 }

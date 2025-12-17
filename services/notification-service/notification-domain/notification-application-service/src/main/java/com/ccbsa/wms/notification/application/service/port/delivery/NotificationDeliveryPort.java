@@ -7,11 +7,9 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationChannel;
 /**
  * Port: NotificationDeliveryPort
  * <p>
- * Defines the contract for notification delivery across different channels (email, SMS, WhatsApp).
- * Implemented by delivery adapters in infrastructure layers.
+ * Defines the contract for notification delivery across different channels (email, SMS, WhatsApp). Implemented by delivery adapters in infrastructure layers.
  * <p>
- * Each adapter implements this port for a specific delivery channel.
- * The application service discovers adapters by calling {@link #supports(NotificationChannel)}.
+ * Each adapter implements this port for a specific delivery channel. The application service discovers adapters by calling {@link #supports(NotificationChannel)}.
  */
 public interface NotificationDeliveryPort {
 

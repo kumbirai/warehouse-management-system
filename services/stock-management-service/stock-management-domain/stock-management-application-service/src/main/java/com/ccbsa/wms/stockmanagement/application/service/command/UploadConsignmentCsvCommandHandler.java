@@ -32,13 +32,8 @@ import com.ccbsa.wms.stockmanagement.domain.core.valueobject.ConsignmentReferenc
  * <p>
  * Handles uploading consignment data via CSV file.
  * <p>
- * Responsibilities:
- * - Parse CSV content
- * - Validate each CSV row
- * - Group rows by ConsignmentReference
- * - Create consignments with line items
- * - Collect and publish domain events
- * - Return upload result with statistics and errors
+ * Responsibilities: - Parse CSV content - Validate each CSV row - Group rows by ConsignmentReference - Create consignments with line items - Collect and publish domain events -
+ * Return upload result with statistics and errors
  */
 @Component
 public class UploadConsignmentCsvCommandHandler {
@@ -49,11 +44,8 @@ public class UploadConsignmentCsvCommandHandler {
     private final ProductServicePort productServicePort;
     private final ConsignmentCsvParser csvParser;
 
-    public UploadConsignmentCsvCommandHandler(
-            StockConsignmentRepository repository,
-            StockManagementEventPublisher eventPublisher,
-            ProductServicePort productServicePort,
-            ConsignmentCsvParser csvParser) {
+    public UploadConsignmentCsvCommandHandler(StockConsignmentRepository repository, StockManagementEventPublisher eventPublisher, ProductServicePort productServicePort,
+                                              ConsignmentCsvParser csvParser) {
         this.repository = repository;
         this.eventPublisher = eventPublisher;
         this.productServicePort = productServicePort;
@@ -110,11 +102,13 @@ public class UploadConsignmentCsvCommandHandler {
                 }
 
                 // Get warehouse ID from first row (all rows should have same warehouse)
-                String warehouseIdStr = consignmentRows.get(0).getWarehouseId();
+                String warehouseIdStr = consignmentRows.get(0)
+                        .getWarehouseId();
                 WarehouseId warehouseId = WarehouseId.of(warehouseIdStr);
 
                 // Get received date from first row
-                LocalDateTime receivedAt = consignmentRows.get(0).getReceivedDate();
+                LocalDateTime receivedAt = consignmentRows.get(0)
+                        .getReceivedDate();
 
                 // Convert CSV rows to line items
                 List<ConsignmentLineItem> lineItems = new ArrayList<>();

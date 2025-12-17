@@ -8,7 +8,8 @@ import com.ccbsa.common.domain.valueobject.TenantId;
  * <p>
  * Represents the intent to suspend a tenant.
  */
-public final class SuspendTenantCommand implements Command {
+public final class SuspendTenantCommand
+        implements Command {
     private final TenantId tenantId;
 
     public SuspendTenantCommand(TenantId tenantId) {

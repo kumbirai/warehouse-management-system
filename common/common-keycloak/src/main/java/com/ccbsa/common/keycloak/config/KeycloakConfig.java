@@ -8,11 +8,9 @@ import jakarta.validation.constraints.NotBlank;
 /**
  * Configuration properties for Keycloak Admin Client.
  * <p>
- * These properties are used to configure the connection to Keycloak
- * for administrative operations (user management, realm management, etc.).
+ * These properties are used to configure the connection to Keycloak for administrative operations (user management, realm management, etc.).
  * <p>
- * Note: This class should be enabled via @EnableConfigurationProperties in the application class.
- * Do not annotate with @Configuration to avoid duplicate bean creation.
+ * Note: This class should be enabled via @EnableConfigurationProperties in the application class. Do not annotate with @Configuration to avoid duplicate bean creation.
  */
 @ConfigurationProperties(prefix = "keycloak.admin")
 @Validated
@@ -30,13 +28,11 @@ public class KeycloakConfig {
     private int connectionTimeout = 5000;
     private int socketTimeout = 5000;
     /**
-     * Default realm name for user operations when tenant-specific realm is not available.
-     * This is used in the single-realm approach or as a fallback.
+     * Default realm name for user operations when tenant-specific realm is not available. This is used in the single-realm approach or as a fallback.
      */
     private String defaultRealm = "wms-realm";
     /**
-     * Client secret for confidential clients (e.g., wms-api).
-     * Required for token endpoint authentication when using confidential clients.
+     * Client secret for confidential clients (e.g., wms-api). Required for token endpoint authentication when using confidential clients.
      */
     private String clientSecret;
 

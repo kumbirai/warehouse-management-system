@@ -7,8 +7,7 @@ import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 /**
  * Product Info DTO
  * <p>
- * Lightweight product information for barcode validation results.
- * Used in caching and query results.
+ * Lightweight product information for barcode validation results. Used in caching and query results.
  */
 public final class ProductInfo {
     private final ProductId productId;

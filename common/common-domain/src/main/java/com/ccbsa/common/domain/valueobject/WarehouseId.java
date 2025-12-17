@@ -5,13 +5,9 @@ import java.util.Objects;
 /**
  * Value Object: WarehouseId
  * <p>
- * Represents a warehouse identifier.
- * Immutable and self-validating.
+ * Represents a warehouse identifier. Immutable and self-validating.
  * <p>
- * This is a shared value object used across multiple services.
- * Business Rules:
- * - Cannot be null or empty
- * - Maximum length: 50 characters
+ * This is a shared value object used across multiple services. Business Rules: - Cannot be null or empty - Maximum length: 50 characters
  */
 public final class WarehouseId {
     private static final int MAX_LENGTH = 50;
@@ -30,13 +26,13 @@ public final class WarehouseId {
      * @throws IllegalArgumentException if validation fails
      */
     private void validate(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("WarehouseId cannot be null or empty");
         }
-        if (value.trim().length() > MAX_LENGTH) {
-            throw new IllegalArgumentException(
-                    String.format("WarehouseId cannot exceed %d characters", MAX_LENGTH)
-            );
+        if (value.trim()
+                .length() > MAX_LENGTH) {
+            throw new IllegalArgumentException(String.format("WarehouseId cannot exceed %d characters", MAX_LENGTH));
         }
     }
 

@@ -8,17 +8,14 @@ import java.util.Optional;
 /**
  * Value Object: TenantConfiguration
  * <p>
- * Represents tenant-specific configuration settings.
- * Immutable and validated on construction.
+ * Represents tenant-specific configuration settings. Immutable and validated on construction.
  */
 public final class TenantConfiguration {
     private final String keycloakRealmName;
     private final boolean usePerTenantRealm;
     private final Map<String, String> settings;
 
-    private TenantConfiguration(String keycloakRealmName,
-                                boolean usePerTenantRealm,
-                                Map<String, String> settings) {
+    private TenantConfiguration(String keycloakRealmName, boolean usePerTenantRealm, Map<String, String> settings) {
         if (keycloakRealmName != null && keycloakRealmName.trim()
                 .isEmpty()) {
             throw new IllegalArgumentException("Keycloak realm name cannot be empty");
@@ -29,23 +26,19 @@ public final class TenantConfiguration {
     }
 
     public static TenantConfiguration defaultConfiguration() {
-        return new TenantConfiguration(null,
-                false,
-                new HashMap<>());
+        return new TenantConfiguration(null, false, new HashMap<>());
     }
 
     /**
-     * Factory method to create a configuration with a per-tenant realm.
-     * This explicitly enables per-tenant realm strategy (usePerTenantRealm = true).
-     * For single realm strategy (default), use {@link #defaultConfiguration()} or {@link #builder()}.
+     * Factory method to create a configuration with a per-tenant realm. This explicitly enables per-tenant realm strategy (usePerTenantRealm = true). For single realm strategy
+     * (default), use {@link #defaultConfiguration()} or
+     * {@link #builder()}.
      *
      * @param keycloakRealmName The realm name for this tenant
      * @return TenantConfiguration with per-tenant realm enabled
      */
     public static TenantConfiguration withRealm(String keycloakRealmName) {
-        return new TenantConfiguration(keycloakRealmName,
-                true,
-                new HashMap<>());
+        return new TenantConfiguration(keycloakRealmName, true, new HashMap<>());
     }
 
     public static Builder builder() {
@@ -68,23 +61,18 @@ public final class TenantConfiguration {
         return Optional.ofNullable(settings.get(key));
     }
 
-    public TenantConfiguration withSetting(String key,
-                                           String value) {
+    public TenantConfiguration withSetting(String key, String value) {
         Map<String, String> newSettings = new HashMap<>(this.settings);
         if (value == null) {
             newSettings.remove(key);
         } else {
-            newSettings.put(key,
-                    value);
+            newSettings.put(key, value);
         }
-        return new TenantConfiguration(this.keycloakRealmName,
-                this.usePerTenantRealm,
-                newSettings);
+        return new TenantConfiguration(this.keycloakRealmName, this.usePerTenantRealm, newSettings);
     }
 
     public TenantConfiguration withKeycloakRealmName(String realmName) {
-        return new TenantConfiguration(realmName,
-                this.usePerTenantRealm, // Preserve current usePerTenantRealm value
+        return new TenantConfiguration(realmName, this.usePerTenantRealm, // Preserve current usePerTenantRealm value
                 this.settings);
     }
 
@@ -97,24 +85,17 @@ public final class TenantConfiguration {
             return false;
         }
         TenantConfiguration that = (TenantConfiguration) o;
-        return usePerTenantRealm == that.usePerTenantRealm && Objects.equals(keycloakRealmName,
-                that.keycloakRealmName) && Objects.equals(settings,
-                that.settings);
+        return usePerTenantRealm == that.usePerTenantRealm && Objects.equals(keycloakRealmName, that.keycloakRealmName) && Objects.equals(settings, that.settings);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(keycloakRealmName,
-                usePerTenantRealm,
-                settings);
+        return Objects.hash(keycloakRealmName, usePerTenantRealm, settings);
     }
 
     @Override
     public String toString() {
-        return String.format("TenantConfiguration{keycloakRealmName='%s', usePerTenantRealm=%s, settings=%s}",
-                keycloakRealmName,
-                usePerTenantRealm,
-                settings);
+        return String.format("TenantConfiguration{keycloakRealmName='%s', usePerTenantRealm=%s, settings=%s}", keycloakRealmName, usePerTenantRealm, settings);
     }
 
     public static class Builder {
@@ -135,10 +116,8 @@ public final class TenantConfiguration {
             return this;
         }
 
-        public Builder setting(String key,
-                               String value) {
-            this.settings.put(key,
-                    value);
+        public Builder setting(String key, String value) {
+            this.settings.put(key, value);
             return this;
         }
 
@@ -148,9 +127,7 @@ public final class TenantConfiguration {
         }
 
         public TenantConfiguration build() {
-            return new TenantConfiguration(keycloakRealmName,
-                    usePerTenantRealm,
-                    settings);
+            return new TenantConfiguration(keycloakRealmName, usePerTenantRealm, settings);
         }
     }
 }

@@ -5,8 +5,7 @@ import java.util.Map;
 /**
  * Port: EmailTemplateEngine
  * <p>
- * Interface for rendering email templates.
- * Provides abstraction for template engine implementations (Thymeleaf, FreeMarker, etc.).
+ * Interface for rendering email templates. Provides abstraction for template engine implementations (Thymeleaf, FreeMarker, etc.).
  */
 public interface EmailTemplateEngine {
     /**

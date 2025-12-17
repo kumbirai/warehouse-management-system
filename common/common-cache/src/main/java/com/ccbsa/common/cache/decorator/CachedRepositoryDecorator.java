@@ -19,12 +19,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 /**
  * Base class for cached repository decorators.
  * <p>
- * Provides common caching logic for repository adapters.
- * Implements cache-aside pattern with automatic metrics collection.
+ * Provides common caching logic for repository adapters. Implements cache-aside pattern with automatic metrics collection.
  * <p>
- * Type Parameters:
- * - T: Domain entity type (e.g., User, Product)
- * - ID: Entity ID type (e.g., UserId, ProductId)
+ * Type Parameters: - T: Domain entity type (e.g., User, Product) - ID: Entity ID type (e.g., UserId, ProductId)
  * <p>
  * Usage:
  * <pre>
@@ -58,13 +55,7 @@ public abstract class CachedRepositoryDecorator<T, ID> {
     private final Counter cacheWrites;
     private final Counter cacheEvictions;
 
-    protected CachedRepositoryDecorator(
-            Object baseRepository,
-            RedisTemplate<String, Object> redisTemplate,
-            String cacheNamespace,
-            Duration cacheTtl,
-            MeterRegistry meterRegistry
-    ) {
+    protected CachedRepositoryDecorator(Object baseRepository, RedisTemplate<String, Object> redisTemplate, String cacheNamespace, Duration cacheTtl, MeterRegistry meterRegistry) {
         this.baseRepository = baseRepository;
         this.redisTemplate = redisTemplate;
         this.cacheNamespace = cacheNamespace;
@@ -95,22 +86,17 @@ public abstract class CachedRepositoryDecorator<T, ID> {
     /**
      * Finds entity in cache, or loads from database if not cached.
      * <p>
-     * Cache-aside pattern:
-     * 1. Check cache
-     * 2. If hit, return cached value
-     * 3. If miss, load from database
-     * 4. Store in cache with TTL
-     * 5. Return value
+     * Cache-aside pattern: 1. Check cache 2. If hit, return cached value 3. If miss, load from database 4. Store in cache with TTL 5. Return value
      */
     @SuppressWarnings("unchecked")
-    protected Optional<T> findWithCache(TenantId tenantId, UUID entityId,
-                                        Function<UUID, Optional<T>> databaseLoader) {
+    protected Optional<T> findWithCache(TenantId tenantId, UUID entityId, Function<UUID, Optional<T>> databaseLoader) {
         // 1. Generate cache key
         String cacheKey = CacheKeyGenerator.forEntity(tenantId, cacheNamespace, entityId);
 
         // 2. Check cache first
         try {
-            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            Object cached = redisTemplate.opsForValue()
+                    .get(cacheKey);
 
             if (cached != null) {
                 cacheHits.increment();
@@ -131,7 +117,8 @@ public abstract class CachedRepositoryDecorator<T, ID> {
         // 4. Populate cache if entity exists
         if (entity.isPresent()) {
             try {
-                redisTemplate.opsForValue().set(cacheKey, entity.get(), cacheTtl);
+                redisTemplate.opsForValue()
+                        .set(cacheKey, entity.get(), cacheTtl);
                 cacheWrites.increment();
                 log.trace("Cache WRITE for key: {}", cacheKey);
             } catch (Exception e) {
@@ -146,13 +133,9 @@ public abstract class CachedRepositoryDecorator<T, ID> {
     /**
      * Saves entity to database and updates cache (write-through).
      * <p>
-     * Write-through pattern:
-     * 1. Save to database (source of truth)
-     * 2. Update cache immediately
-     * 3. Return saved entity
+     * Write-through pattern: 1. Save to database (source of truth) 2. Update cache immediately 3. Return saved entity
      */
-    protected T saveWithCache(TenantId tenantId, UUID entityId, T entity,
-                              Function<T, T> databaseSaver) {
+    protected T saveWithCache(TenantId tenantId, UUID entityId, T entity, Function<T, T> databaseSaver) {
         // 1. Save to database first (source of truth)
         T savedEntity = databaseSaver.apply(entity);
 
@@ -160,7 +143,8 @@ public abstract class CachedRepositoryDecorator<T, ID> {
         String cacheKey = CacheKeyGenerator.forEntity(tenantId, cacheNamespace, entityId);
 
         try {
-            redisTemplate.opsForValue().set(cacheKey, savedEntity, cacheTtl);
+            redisTemplate.opsForValue()
+                    .set(cacheKey, savedEntity, cacheTtl);
             cacheWrites.increment();
             log.trace("Cache WRITE (write-through) for key: {}", cacheKey);
         } catch (Exception e) {
@@ -174,12 +158,9 @@ public abstract class CachedRepositoryDecorator<T, ID> {
     /**
      * Deletes entity from database and evicts from cache.
      * <p>
-     * Write-through delete:
-     * 1. Delete from database
-     * 2. Evict from cache
+     * Write-through delete: 1. Delete from database 2. Evict from cache
      */
-    protected void deleteWithCache(TenantId tenantId, UUID entityId,
-                                   Consumer<UUID> databaseDeleter) {
+    protected void deleteWithCache(TenantId tenantId, UUID entityId, Consumer<UUID> databaseDeleter) {
         // 1. Delete from database first
         databaseDeleter.accept(entityId);
 

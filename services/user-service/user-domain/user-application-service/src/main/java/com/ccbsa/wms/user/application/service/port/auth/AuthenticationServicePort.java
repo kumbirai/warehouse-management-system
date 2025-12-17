@@ -54,8 +54,7 @@ public interface AuthenticationServicePort {
      * @return Keycloak user identifier
      * @throws com.ccbsa.wms.user.application.service.exception.KeycloakServiceException if user creation fails
      */
-    KeycloakUserId createUser(String tenantId, String username, String email,
-                              String password, String firstName, String lastName);
+    KeycloakUserId createUser(String tenantId, String username, String email, String password, String firstName, String lastName);
 
     /**
      * Updates a user in Keycloak.
@@ -66,8 +65,7 @@ public interface AuthenticationServicePort {
      * @param lastName       Last name (optional)
      * @throws com.ccbsa.wms.user.application.service.exception.KeycloakServiceException if update fails
      */
-    void updateUser(KeycloakUserId keycloakUserId, String email,
-                    String firstName, String lastName);
+    void updateUser(KeycloakUserId keycloakUserId, String email, String firstName, String lastName);
 
     /**
      * Enables a user in Keycloak.
@@ -111,5 +109,17 @@ public interface AuthenticationServicePort {
      * @throws com.ccbsa.wms.user.application.service.exception.KeycloakServiceException if operation fails
      */
     List<String> getUserRoles(KeycloakUserId keycloakUserId);
+
+    /**
+     * Sends email verification and password reset email to a user.
+     * <p>
+     * This method sends a Keycloak action email containing both VERIFY_EMAIL and UPDATE_PASSWORD actions. The user will receive an email with links to verify their email address
+     * and set their password.
+     *
+     * @param keycloakUserId Keycloak user identifier
+     * @param redirectUri    Optional redirect URI for the action links (frontend verification page)
+     * @throws com.ccbsa.wms.user.application.service.exception.KeycloakServiceException if email sending fails
+     */
+    void sendEmailVerificationAndPasswordReset(KeycloakUserId keycloakUserId, String redirectUri);
 }
 

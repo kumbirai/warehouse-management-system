@@ -7,12 +7,12 @@ import com.ccbsa.common.application.command.Command;
  * <p>
  * Represents the intent to authenticate a user.
  */
-public final class LoginCommand implements Command {
+public final class LoginCommand
+        implements Command {
     private final String username;
     private final String password;
 
-    public LoginCommand(String username,
-                        String password) {
+    public LoginCommand(String username, String password) {
         if (username == null || username.isBlank()) {
             throw new IllegalArgumentException("Username cannot be null or blank");
         }
@@ -33,8 +33,7 @@ public final class LoginCommand implements Command {
 
     @Override
     public String toString() {
-        return String.format("LoginCommand{username='%s'}",
-                username);
+        return String.format("LoginCommand{username='%s'}", username);
     }
 }
 

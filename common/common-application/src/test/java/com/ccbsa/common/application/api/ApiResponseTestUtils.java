@@ -25,13 +25,9 @@ public final class ApiResponseTestUtils {
      * @param expectedStatus The expected HTTP status
      * @param expectedData   The expected data (can be null)
      */
-    public static <T> void assertSuccessResponse(ResponseEntity<ApiResponse<T>> response,
-                                                 HttpStatus expectedStatus,
-                                                 T expectedData) {
+    public static <T> void assertSuccessResponse(ResponseEntity<ApiResponse<T>> response, HttpStatus expectedStatus, T expectedData) {
         assert response != null : "Response cannot be null";
-        assert response.getStatusCode() == expectedStatus : String.format("Expected status %s but got %s",
-                expectedStatus,
-                response.getStatusCode());
+        assert response.getStatusCode() == expectedStatus : String.format("Expected status %s but got %s", expectedStatus, response.getStatusCode());
         ApiResponse<T> body = response.getBody();
         assert body != null : "Response body cannot be null";
         if (body != null) {
@@ -40,9 +36,7 @@ public final class ApiResponseTestUtils {
 
             if (expectedData != null) {
                 assert body.getData() != null && body.getData()
-                        .equals(expectedData) : String.format("Expected data %s but got %s",
-                        expectedData,
-                        body.getData());
+                        .equals(expectedData) : String.format("Expected data %s but got %s", expectedData, body.getData());
             }
         }
     }
@@ -55,13 +49,9 @@ public final class ApiResponseTestUtils {
      * @param expectedStatus    The expected HTTP status
      * @param expectedErrorCode The expected error code
      */
-    public static <T> void assertErrorResponse(ResponseEntity<ApiResponse<T>> response,
-                                               HttpStatus expectedStatus,
-                                               String expectedErrorCode) {
+    public static <T> void assertErrorResponse(ResponseEntity<ApiResponse<T>> response, HttpStatus expectedStatus, String expectedErrorCode) {
         assert response != null : "Response cannot be null";
-        assert response.getStatusCode() == expectedStatus : String.format("Expected status %s but got %s",
-                expectedStatus,
-                response.getStatusCode());
+        assert response.getStatusCode() == expectedStatus : String.format("Expected status %s but got %s", expectedStatus, response.getStatusCode());
         ApiResponse<T> body = response.getBody();
         assert body != null : "Response body cannot be null";
         if (body != null) {
@@ -70,9 +60,7 @@ public final class ApiResponseTestUtils {
             assert error != null : "Error should not be null";
             if (error != null) {
                 assert error.getCode() != null && error.getCode()
-                        .equals(expectedErrorCode) : String.format("Expected error code %s but got %s",
-                        expectedErrorCode,
-                        error.getCode());
+                        .equals(expectedErrorCode) : String.format("Expected error code %s but got %s", expectedErrorCode, error.getCode());
             }
         }
     }
@@ -84,10 +72,8 @@ public final class ApiResponseTestUtils {
      * @param message The error message
      * @return ApiError instance
      */
-    public static ApiError createTestError(String code,
-                                           String message) {
-        return ApiError.builder(code,
-                        message)
+    public static ApiError createTestError(String code, String message) {
+        return ApiError.builder(code, message)
                 .build();
     }
 
@@ -101,13 +87,8 @@ public final class ApiResponseTestUtils {
      * @param details   The error details
      * @return ApiError instance
      */
-    public static ApiError createTestError(String code,
-                                           String message,
-                                           String path,
-                                           String requestId,
-                                           Map<String, Object> details) {
-        return ApiError.builder(code,
-                        message)
+    public static ApiError createTestError(String code, String message, String path, String requestId, Map<String, Object> details) {
+        return ApiError.builder(code, message)
                 .path(path)
                 .requestId(requestId)
                 .details(details)
@@ -122,15 +103,12 @@ public final class ApiResponseTestUtils {
      * @return Map of links
      */
     @SafeVarargs
-    public static Map<String, String> createTestLinks(String self,
-                                                      Map.Entry<String, String>... additional) {
+    public static Map<String, String> createTestLinks(String self, Map.Entry<String, String>... additional) {
         Map<String, String> links = new HashMap<>();
-        links.put("self",
-                self);
+        links.put("self", self);
         if (additional != null) {
             for (Map.Entry<String, String> entry : additional) {
-                links.put(entry.getKey(),
-                        entry.getValue());
+                links.put(entry.getKey(), entry.getValue());
             }
         }
         return links;
@@ -144,12 +122,8 @@ public final class ApiResponseTestUtils {
      * @param totalElements The total number of elements
      * @return ApiMeta with pagination
      */
-    public static ApiMeta createTestPaginationMeta(int page,
-                                                   int size,
-                                                   long totalElements) {
-        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page,
-                size,
-                totalElements);
+    public static ApiMeta createTestPaginationMeta(int page, int size, long totalElements) {
+        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page, size, totalElements);
         return ApiMeta.builder()
                 .pagination(pagination)
                 .build();

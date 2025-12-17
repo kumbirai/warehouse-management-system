@@ -9,9 +9,7 @@ import jakarta.validation.constraints.Size;
  * <p>
  * Request DTO for user login via BFF.
  * <p>
- * Validation rules:
- * - Username: 1-255 characters, alphanumeric, dots, underscores, hyphens, @ symbol
- * - Password: 1-255 characters (no pattern to allow special characters)
+ * Validation rules: - Username: 1-255 characters, alphanumeric, dots, underscores, hyphens, @ symbol - Password: 1-255 characters (no pattern to allow special characters)
  */
 public final class LoginRequest {
     @NotBlank(message = "Username is required")
@@ -30,8 +28,7 @@ public final class LoginRequest {
     public LoginRequest() {
     }
 
-    public LoginRequest(String username,
-                        String password) {
+    public LoginRequest(String username, String password) {
         this.username = username;
         this.password = password;
     }
@@ -54,8 +51,7 @@ public final class LoginRequest {
 
     @Override
     public String toString() {
-        return String.format("LoginRequest{username='%s'}",
-                username);
+        return String.format("LoginRequest{username='%s'}", username);
     }
 }
 

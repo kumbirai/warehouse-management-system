@@ -40,8 +40,7 @@ import jakarta.validation.Valid;
 /**
  * REST Controller: BffAuthController
  * <p>
- * BFF (Backend for Frontend) authentication endpoints.
- * Masks Keycloak IAM complexity from frontend clients.
+ * BFF (Backend for Frontend) authentication endpoints. Masks Keycloak IAM complexity from frontend clients.
  */
 @RestController
 @RequestMapping("/bff/auth")
@@ -57,8 +56,7 @@ public class BffAuthController {
     /**
      * Constructs a new BffAuthController with required dependencies.
      * <p>
-     * All dependencies are stored as final fields and used internally.
-     * They are not exposed through any public methods, maintaining proper encapsulation.
+     * All dependencies are stored as final fields and used internally. They are not exposed through any public methods, maintaining proper encapsulation.
      *
      * @param loginCommandHandler        the login command handler, must not be null
      * @param refreshTokenCommandHandler the refresh token command handler, must not be null
@@ -66,11 +64,8 @@ public class BffAuthController {
      * @param mapper                     the authentication mapper, must not be null
      * @param cookieUtil                 the cookie utility, must not be null
      */
-    public BffAuthController(LoginCommandHandler loginCommandHandler,
-                             RefreshTokenCommandHandler refreshTokenCommandHandler,
-                             GetUserContextQueryHandler getUserContextQueryHandler,
-                             AuthMapper mapper,
-                             CookieUtil cookieUtil) {
+    public BffAuthController(LoginCommandHandler loginCommandHandler, RefreshTokenCommandHandler refreshTokenCommandHandler, GetUserContextQueryHandler getUserContextQueryHandler,
+                             AuthMapper mapper, CookieUtil cookieUtil) {
         this.loginCommandHandler = Objects.requireNonNull(loginCommandHandler, "LoginCommandHandler cannot be null");
         this.refreshTokenCommandHandler = Objects.requireNonNull(refreshTokenCommandHandler, "RefreshTokenCommandHandler cannot be null");
         this.getUserContextQueryHandler = Objects.requireNonNull(getUserContextQueryHandler, "GetUserContextQueryHandler cannot be null");
@@ -83,8 +78,10 @@ public class BffAuthController {
             description = "Authenticates user and returns tokens with user context. Refresh token is set as httpOnly cookie.")
     @Timed(value = "bff.auth.login",
             description = "Time taken to process login request")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request,
-                                                            HttpServletResponse httpResponse) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(
+            @Valid
+            @RequestBody
+            LoginRequest request, HttpServletResponse httpResponse) {
         LoginCommand command = mapper.toLoginCommand(request);
         AuthenticationResult result = loginCommandHandler.handle(command);
         LoginResponse response = mapper.toLoginResponse(result);
@@ -105,10 +102,9 @@ public class BffAuthController {
     @Timed(value = "bff.auth.refresh",
             description = "Time taken to refresh token")
     public ResponseEntity<ApiResponse<LoginResponse>> refreshToken(
-            @CookieValue(value = "refreshToken", required = false) String refreshTokenFromCookie,
-            @RequestBody(required = false) RefreshTokenRequest request,
-            HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) {
+            @CookieValue(value = "refreshToken",
+                    required = false) String refreshTokenFromCookie,
+            @RequestBody(required = false) RefreshTokenRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
 
         // Prefer refresh token from httpOnly cookie (industry best practice)
         // Fallback to request body for backward compatibility during migration
@@ -146,19 +142,20 @@ public class BffAuthController {
             description = "Returns current authenticated user context")
     @Timed(value = "bff.auth.me",
             description = "Time taken to get user context")
-    public ResponseEntity<ApiResponse<UserContextResponse>> getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<ApiResponse<UserContextResponse>> getCurrentUser(
+            @AuthenticationPrincipal Jwt jwt) {
         UserContextQuery query = mapper.toUserContextQuery(jwt.getTokenValue());
         UserContextView view = getUserContextQueryHandler.handle(query);
         UserContextResponse response = mapper.toUserContextResponse(view);
         return ApiResponseBuilder.ok(response);
     }
 
-    @PostMapping(value = "/logout", consumes = {"application/json", "application/*+json", "*/*"})
+    @PostMapping(value = "/logout",
+            consumes = {"application/json", "application/*+json", "*/*"})
     @Operation(summary = "Logout",
             description = "Logs out the current user and clears refresh token cookie")
     public ResponseEntity<ApiResponse<Void>> logout(
-            @RequestBody(required = false) Map<String, Object> body,
-            HttpServletResponse httpResponse) {
+            @RequestBody(required = false) Map<String, Object> body, HttpServletResponse httpResponse) {
         // Clear refresh token cookie
         cookieUtil.removeRefreshTokenCookie(httpResponse);
 

@@ -13,18 +13,16 @@ import com.ccbsa.common.keycloak.port.KeycloakClientPort;
 import com.ccbsa.common.keycloak.util.KeycloakClientSecretRetriever;
 
 /**
- * Application startup validator.
- * Validates critical configuration on application startup.
- * Optionally attempts to retrieve client secret from Keycloak if not configured.
+ * Application startup validator. Validates critical configuration on application startup. Optionally attempts to retrieve client secret from Keycloak if not configured.
  */
 @Component
-public class ApplicationStartupValidator implements CommandLineRunner {
+public class ApplicationStartupValidator
+        implements CommandLineRunner {
     private static final Logger logger = LoggerFactory.getLogger(ApplicationStartupValidator.class);
     private final KeycloakConfig keycloakConfig;
     private final KeycloakClientPort keycloakClientPort;
 
-    public ApplicationStartupValidator(KeycloakConfig keycloakConfig,
-                                       KeycloakClientPort keycloakClientPort) {
+    public ApplicationStartupValidator(KeycloakConfig keycloakConfig, KeycloakClientPort keycloakClientPort) {
         this.keycloakConfig = Objects.requireNonNull(keycloakConfig, "KeycloakConfig must not be null");
         this.keycloakClientPort = Objects.requireNonNull(keycloakClientPort, "KeycloakClientPort must not be null");
     }
@@ -41,8 +39,7 @@ public class ApplicationStartupValidator implements CommandLineRunner {
             logger.error("❌ Keycloak server URL is not configured");
             isValid = false;
         } else {
-            logger.info("✓ Keycloak server URL: {}",
-                    keycloakConfig.getServerUrl());
+            logger.info("✓ Keycloak server URL: {}", keycloakConfig.getServerUrl());
         }
 
         if (keycloakConfig.getDefaultRealm() == null || keycloakConfig.getDefaultRealm()
@@ -50,8 +47,7 @@ public class ApplicationStartupValidator implements CommandLineRunner {
             logger.error("❌ Keycloak default realm is not configured");
             isValid = false;
         } else {
-            logger.info("✓ Keycloak default realm: {}",
-                    keycloakConfig.getDefaultRealm());
+            logger.info("✓ Keycloak default realm: {}", keycloakConfig.getDefaultRealm());
         }
 
         // Check client secret configuration
@@ -60,8 +56,7 @@ public class ApplicationStartupValidator implements CommandLineRunner {
             logger.warn("⚠ Keycloak client secret is not configured - attempting to retrieve from Keycloak...");
 
             try {
-                KeycloakClientSecretRetriever retriever = new KeycloakClientSecretRetriever(keycloakClientPort,
-                        keycloakConfig);
+                KeycloakClientSecretRetriever retriever = new KeycloakClientSecretRetriever(keycloakClientPort, keycloakConfig);
                 Optional<String> secret = retriever.retrieveWmsApiClientSecret();
 
                 if (secret.isPresent()) {
@@ -73,8 +68,7 @@ public class ApplicationStartupValidator implements CommandLineRunner {
                     logger.warn("  Or set environment variable: KEYCLOAK_CLIENT_SECRET=<secret>");
                 }
             } catch (Exception e) {
-                logger.warn("⚠ Failed to retrieve client secret from Keycloak: {}",
-                        e.getMessage());
+                logger.warn("⚠ Failed to retrieve client secret from Keycloak: {}", e.getMessage());
                 logger.warn("  To configure manually, run: ./scripts/get-keycloak-client-secret.sh");
                 logger.warn("  Or set environment variable: KEYCLOAK_CLIENT_SECRET=<secret>");
             }

@@ -17,11 +17,7 @@ public final class AuthenticationResult {
     private final int expiresIn;
     private final UserContext userContext;
 
-    public AuthenticationResult(String accessToken,
-                                String refreshToken,
-                                String tokenType,
-                                int expiresIn,
-                                UserContext userContext) {
+    public AuthenticationResult(String accessToken, String refreshToken, String tokenType, int expiresIn, UserContext userContext) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         this.tokenType = tokenType;
@@ -51,15 +47,11 @@ public final class AuthenticationResult {
 
     @Override
     public String toString() {
-        return String.format("AuthenticationResult{tokenType='%s', expiresIn=%d, userContext=%s}",
-                tokenType,
-                expiresIn,
-                userContext);
+        return String.format("AuthenticationResult{tokenType='%s', expiresIn=%d, userContext=%s}", tokenType, expiresIn, userContext);
     }
 
     /**
-     * User context information extracted from JWT token.
-     * Uses value objects for type-safe IDs.
+     * User context information extracted from JWT token. Uses value objects for type-safe IDs.
      *
      * <p>Note: TenantId may be null for SYSTEM_ADMIN users who are not associated with a tenant.
      */
@@ -72,13 +64,7 @@ public final class AuthenticationResult {
         private final String firstName;
         private final String lastName;
 
-        public UserContext(UserId userId,
-                           String username,
-                           TenantId tenantId,
-                           List<String> roles,
-                           String email,
-                           String firstName,
-                           String lastName) {
+        public UserContext(UserId userId, String username, TenantId tenantId, List<String> roles, String email, String firstName, String lastName) {
             if (userId == null) {
                 throw new IllegalArgumentException("UserId cannot be null");
             }
@@ -127,14 +113,9 @@ public final class AuthenticationResult {
 
         @Override
         public String toString() {
-            return String.format("UserContext{userId='%s', username='%s', tenantId='%s', roles=%s, email='%s', firstName='%s', lastName='%s'}",
-                    userId.getValue(),
-                    username,
-                    tenantId != null ? tenantId.getValue() : "null",
-                    roles,
-                    email,
-                    firstName,
-                    lastName);
+            return String.format("UserContext{userId='%s', username='%s', tenantId='%s', roles=%s, email='%s', firstName='%s', lastName='%s'}", userId.getValue(), username,
+                    tenantId != null ? tenantId.getValue() : "null", roles, email,
+                    firstName, lastName);
         }
     }
 }

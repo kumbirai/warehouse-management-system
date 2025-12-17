@@ -14,12 +14,14 @@
         <p><strong>Account Status:</strong></p>
         <ul>
             <li><strong>Status:</strong> Deactivated</li>
-            <li th:if="${deactivatedAt}"><strong>Deactivated On:</strong> <span th:text="${deactivatedAt}">date</span></li>
+            <li th:if="${deactivatedAt}"><strong>Deactivated On:</strong> <span th:text="${deactivatedAt}">date</span>
+            </li>
             <li th:if="${tenantName}"><strong>Tenant:</strong> <span th:text="${tenantName}">tenant</span></li>
         </ul>
     </div>
 
-    <p>If you believe this is an error or have questions about your account status, please contact your system administrator immediately.</p>
+    <p>If you believe this is an error or have questions about your account status, please contact your system
+        administrator immediately.</p>
     <p>Best regards,<br>WMS Team</p>
 </div>
 </body>

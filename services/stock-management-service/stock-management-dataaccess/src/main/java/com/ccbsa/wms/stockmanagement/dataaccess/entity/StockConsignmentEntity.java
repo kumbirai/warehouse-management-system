@@ -20,14 +20,11 @@ import jakarta.persistence.Version;
 /**
  * JPA Entity: StockConsignmentEntity
  * <p>
- * JPA representation of StockConsignment aggregate.
- * Uses tenant schema resolver for multi-tenant isolation (schema-per-tenant strategy).
+ * JPA representation of StockConsignment aggregate. Uses tenant schema resolver for multi-tenant isolation (schema-per-tenant strategy).
  * <p>
- * This entity maps to the StockConsignment domain aggregate and uses domain enums directly
- * to maintain consistency between domain and persistence layers.
+ * This entity maps to the StockConsignment domain aggregate and uses domain enums directly to maintain consistency between domain and persistence layers.
  * <p>
- * The schema "tenant_schema" is a placeholder that will be dynamically replaced with
- * the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
+ * The schema "tenant_schema" is a placeholder that will be dynamically replaced with the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
  */
 @Entity
 @Table(name = "stock_consignments",
@@ -83,7 +80,9 @@ public class StockConsignmentEntity {
             nullable = false)
     private Long version;
 
-    @OneToMany(mappedBy = "consignment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "consignment",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
     private List<ConsignmentLineItemEntity> lineItems = new ArrayList<>();
 
     // JPA requires no-arg constructor

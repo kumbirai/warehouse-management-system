@@ -7,8 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * Standardized API Response wrapper for all REST API responses.
  * <p>
- * This class ensures consistent response format across all backend services,
- * enabling the frontend to consume backend services uniformly.
+ * This class ensures consistent response format across all backend services, enabling the frontend to consume backend services uniformly.
  *
  * <p>Success Response Format:</p>
  * <pre>{@code
@@ -46,10 +45,7 @@ public final class ApiResponse<T> {
         // Private constructor for builder pattern
     }
 
-    private ApiResponse(T data,
-                        ApiError error,
-                        Map<String, String> links,
-                        ApiMeta meta) {
+    private ApiResponse(T data, ApiError error, Map<String, String> links, ApiMeta meta) {
         this.data = data;
         this.error = error;
         this.links = copyLinks(links);
@@ -70,10 +66,7 @@ public final class ApiResponse<T> {
      * @return ApiResponse with data
      */
     public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(data,
-                null,
-                null,
-                null);
+        return new ApiResponse<>(data, null, null, null);
     }
 
     /**
@@ -84,12 +77,8 @@ public final class ApiResponse<T> {
      * @param links HATEOAS links
      * @return ApiResponse with data and links
      */
-    public static <T> ApiResponse<T> success(T data,
-                                             Map<String, String> links) {
-        return new ApiResponse<>(data,
-                null,
-                links,
-                null);
+    public static <T> ApiResponse<T> success(T data, Map<String, String> links) {
+        return new ApiResponse<>(data, null, links, null);
     }
 
     /**
@@ -101,13 +90,8 @@ public final class ApiResponse<T> {
      * @param meta  Metadata (pagination, etc.)
      * @return ApiResponse with data, links, and meta
      */
-    public static <T> ApiResponse<T> success(T data,
-                                             Map<String, String> links,
-                                             ApiMeta meta) {
-        return new ApiResponse<>(data,
-                null,
-                links,
-                meta);
+    public static <T> ApiResponse<T> success(T data, Map<String, String> links, ApiMeta meta) {
+        return new ApiResponse<>(data, null, links, meta);
     }
 
     /**
@@ -122,10 +106,7 @@ public final class ApiResponse<T> {
         if (error == null) {
             throw new NullPointerException("Error cannot be null");
         }
-        return new ApiResponse<>(null,
-                error,
-                null,
-                null);
+        return new ApiResponse<>(null, error, null, null);
     }
 
     /**
@@ -135,10 +116,7 @@ public final class ApiResponse<T> {
      * @return Empty ApiResponse
      */
     public static <T> ApiResponse<T> noContent() {
-        return new ApiResponse<>(null,
-                null,
-                null,
-                null);
+        return new ApiResponse<>(null, null, null, null);
     }
 
     public T getData() {

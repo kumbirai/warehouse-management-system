@@ -6,14 +6,10 @@ import java.util.regex.Pattern;
 /**
  * Value Object: ProductBarcode
  *
- * Represents a barcode identifier for a product.
- * Immutable and self-validating.
+ * Represents a barcode identifier for a product. Immutable and self-validating.
  *
- * Business Rules:
- * - Barcode must follow valid barcode format (EAN-13, Code 128, etc.)
- * - Barcode must be unique per tenant
- * - Barcode type is auto-detected from format
- * - Barcode cannot be null or empty
+ * Business Rules: - Barcode must follow valid barcode format (EAN-13, Code 128, etc.) - Barcode must be unique per tenant - Barcode type is auto-detected from format - Barcode
+ * cannot be null or empty
  */
 public final class ProductBarcode {
     // EAN-13: 13 digits
@@ -50,7 +46,8 @@ public final class ProductBarcode {
      * @throws IllegalArgumentException if validation fails
      */
     private void validate(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("ProductBarcode cannot be null or empty");
         }
     }
@@ -75,21 +72,27 @@ public final class ProductBarcode {
      * @throws IllegalArgumentException if barcode format is not recognized
      */
     private static BarcodeType detectBarcodeType(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Barcode value cannot be null or empty");
         }
 
         String trimmedValue = value.trim();
 
-        if (EAN_13_PATTERN.matcher(trimmedValue).matches()) {
+        if (EAN_13_PATTERN.matcher(trimmedValue)
+                .matches()) {
             return BarcodeType.EAN_13;
-        } else if (UPC_A_PATTERN.matcher(trimmedValue).matches()) {
+        } else if (UPC_A_PATTERN.matcher(trimmedValue)
+                .matches()) {
             return BarcodeType.UPC_A;
-        } else if (ITF_14_PATTERN.matcher(trimmedValue).matches()) {
+        } else if (ITF_14_PATTERN.matcher(trimmedValue)
+                .matches()) {
             return BarcodeType.ITF_14;
-        } else if (CODE_128_PATTERN.matcher(trimmedValue).matches()) {
+        } else if (CODE_128_PATTERN.matcher(trimmedValue)
+                .matches()) {
             return BarcodeType.CODE_128;
-        } else if (CODE_39_PATTERN.matcher(trimmedValue).matches()) {
+        } else if (CODE_39_PATTERN.matcher(trimmedValue)
+                .matches()) {
             return BarcodeType.CODE_39;
         } else {
             // Default to CODE_128 for unrecognized formats (most flexible)

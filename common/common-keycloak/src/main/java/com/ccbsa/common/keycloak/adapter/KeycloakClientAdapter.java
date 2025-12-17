@@ -14,13 +14,13 @@ import com.ccbsa.common.keycloak.port.KeycloakClientPort;
 import jakarta.annotation.PreDestroy;
 
 /**
- * Adapter implementation for Keycloak client operations.
- * Provides the base Keycloak Admin Client instance used by all service-specific adapters.
+ * Adapter implementation for Keycloak client operations. Provides the base Keycloak Admin Client instance used by all service-specific adapters.
  * <p>
  * This adapter manages the Keycloak client lifecycle and connection pooling.
  */
 @Component
-public class KeycloakClientAdapter implements KeycloakClientPort {
+public class KeycloakClientAdapter
+        implements KeycloakClientPort {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakClientAdapter.class);
     private final KeycloakConfig config;
     private Keycloak keycloak;
@@ -28,8 +28,7 @@ public class KeycloakClientAdapter implements KeycloakClientPort {
     public KeycloakClientAdapter(KeycloakConfig config) {
         this.config = Objects.requireNonNull(config, "KeycloakConfig must not be null");
         this.keycloak = createKeycloakClient();
-        logger.info("Keycloak Admin Client initialized for server: {}",
-                config.getServerUrl());
+        logger.info("Keycloak Admin Client initialized for server: {}", config.getServerUrl());
     }
 
     private Keycloak createKeycloakClient() {
@@ -49,8 +48,7 @@ public class KeycloakClientAdapter implements KeycloakClientPort {
                     .findAll();
             return true;
         } catch (Exception e) {
-            logger.warn("Keycloak is not accessible: {}",
-                    e.getMessage());
+            logger.warn("Keycloak is not accessible: {}", e.getMessage());
             return false;
         }
     }
@@ -84,8 +82,7 @@ public class KeycloakClientAdapter implements KeycloakClientPort {
                 keycloak.close();
                 logger.info("Keycloak Admin Client closed");
             } catch (Exception e) {
-                logger.warn("Error closing Keycloak client: {}",
-                        e.getMessage());
+                logger.warn("Error closing Keycloak client: {}", e.getMessage());
             } finally {
                 keycloak = null;
             }

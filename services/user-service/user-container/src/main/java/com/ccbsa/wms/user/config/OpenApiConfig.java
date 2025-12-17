@@ -12,8 +12,7 @@ import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.servers.Server;
 
 /**
- * OpenAPI configuration.
- * Configures API documentation for the user-service.
+ * OpenAPI configuration. Configures API documentation for the user-service.
  */
 @Configuration
 public class OpenApiConfig {
@@ -27,9 +26,8 @@ public class OpenApiConfig {
                         .license(new License().name("Proprietary")
                                 .url("https://ccbsa.com")))
                 .servers(List.of(new Server().url("http://localhost:8088")
-                                .description("Development Server"),
-                        new Server().url("https://api.ccbsa.com")
-                                .description("Production Server")));
+                        .description("Development Server"), new Server().url("https://api.ccbsa.com")
+                        .description("Production Server")));
     }
 }
 

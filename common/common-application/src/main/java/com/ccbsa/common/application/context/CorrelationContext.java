@@ -3,12 +3,10 @@ package com.ccbsa.common.application.context;
 import java.util.UUID;
 
 /**
- * Thread-local correlation context holder.
- * Stores correlation ID for the current request thread to enable distributed tracing.
+ * Thread-local correlation context holder. Stores correlation ID for the current request thread to enable distributed tracing.
  *
  * <p>Correlation ID is used to track requests across service boundaries and through
- * event-driven flows. It is typically set at the entry point (API Gateway or first
- * service handling request) and propagated through all downstream operations.</p>
+ * event-driven flows. It is typically set at the entry point (API Gateway or first service handling request) and propagated through all downstream operations.</p>
  *
  * <p>Usage Example:</p>
  * <pre>{@code
@@ -45,7 +43,8 @@ public final class CorrelationContext {
      * @throws IllegalArgumentException if correlationId is null or empty
      */
     public static void setCorrelationId(String correlationId) {
-        if (correlationId == null || correlationId.trim().isEmpty()) {
+        if (correlationId == null || correlationId.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Correlation ID cannot be null or empty");
         }
         CORRELATION_ID.set(correlationId.trim());
@@ -57,14 +56,14 @@ public final class CorrelationContext {
      * @return the generated correlation ID
      */
     public static String generateAndSetCorrelationId() {
-        String correlationId = UUID.randomUUID().toString();
+        String correlationId = UUID.randomUUID()
+                .toString();
         CORRELATION_ID.set(correlationId);
         return correlationId;
     }
 
     /**
-     * Clears the correlation context for the current thread.
-     * Should be called after request processing to prevent memory leaks.
+     * Clears the correlation context for the current thread. Should be called after request processing to prevent memory leaks.
      */
     public static void clear() {
         CORRELATION_ID.remove();

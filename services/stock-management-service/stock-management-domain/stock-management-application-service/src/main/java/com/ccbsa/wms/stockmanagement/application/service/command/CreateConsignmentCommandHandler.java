@@ -22,12 +22,8 @@ import com.ccbsa.wms.stockmanagement.domain.core.valueobject.ConsignmentStatus;
  * <p>
  * Handles creation of new stock consignment.
  * <p>
- * Responsibilities:
- * - Validate consignment reference uniqueness
- * - Validate product codes via ProductServicePort
- * - Create StockConsignment aggregate
- * - Persist aggregate
- * - Publish StockConsignmentReceivedEvent
+ * Responsibilities: - Validate consignment reference uniqueness - Validate product codes via ProductServicePort - Create StockConsignment aggregate - Persist aggregate - Publish
+ * StockConsignmentReceivedEvent
  */
 @Component
 public class CreateConsignmentCommandHandler {
@@ -35,10 +31,7 @@ public class CreateConsignmentCommandHandler {
     private final StockManagementEventPublisher eventPublisher;
     private final ProductServicePort productServicePort;
 
-    public CreateConsignmentCommandHandler(
-            StockConsignmentRepository repository,
-            StockManagementEventPublisher eventPublisher,
-            ProductServicePort productServicePort) {
+    public CreateConsignmentCommandHandler(StockConsignmentRepository repository, StockManagementEventPublisher eventPublisher, ProductServicePort productServicePort) {
         this.repository = repository;
         this.eventPublisher = eventPublisher;
         this.productServicePort = productServicePort;
@@ -50,13 +43,9 @@ public class CreateConsignmentCommandHandler {
         validateCommand(command);
 
         // 2. Validate consignment reference uniqueness
-        if (repository.existsByConsignmentReferenceAndTenantId(
-                command.getConsignmentReference(),
-                command.getTenantId())) {
-            throw new InvalidConsignmentReferenceException(
-                    String.format("Consignment reference '%s' already exists for tenant",
-                            command.getConsignmentReference().getValue())
-            );
+        if (repository.existsByConsignmentReferenceAndTenantId(command.getConsignmentReference(), command.getTenantId())) {
+            throw new InvalidConsignmentReferenceException(String.format("Consignment reference '%s' already exists for tenant", command.getConsignmentReference()
+                    .getValue()));
         }
 
         // 3. Validate product codes exist
@@ -113,7 +102,8 @@ public class CreateConsignmentCommandHandler {
         if (command.getReceivedAt() == null) {
             throw new IllegalArgumentException("ReceivedAt is required");
         }
-        if (command.getLineItems() == null || command.getLineItems().isEmpty()) {
+        if (command.getLineItems() == null || command.getLineItems()
+                .isEmpty()) {
             throw new IllegalArgumentException("At least one line item is required");
         }
     }
@@ -129,9 +119,8 @@ public class CreateConsignmentCommandHandler {
         for (ConsignmentLineItem lineItem : lineItems) {
             var productInfo = productServicePort.getProductByCode(lineItem.getProductCode(), tenantId);
             if (productInfo.isEmpty()) {
-                throw new IllegalArgumentException(
-                        String.format("Product with code '%s' not found", lineItem.getProductCode().getValue())
-                );
+                throw new IllegalArgumentException(String.format("Product with code '%s' not found", lineItem.getProductCode()
+                        .getValue()));
             }
         }
     }

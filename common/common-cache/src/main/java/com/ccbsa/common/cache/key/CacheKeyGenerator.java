@@ -31,40 +31,26 @@ public final class CacheKeyGenerator {
     }
 
     /**
-     * Generates cache key for entity lookup.
-     * Format: tenant:{tenantId}:{namespace}:{entityId}
+     * Generates cache key for entity lookup. Format: tenant:{tenantId}:{namespace}:{entityId}
      */
     public static String forEntity(TenantId tenantId, String namespace, UUID entityId) {
-        return String.join(KEY_SEPARATOR,
-                TENANT_PREFIX,
-                tenantId.getValue(),
-                namespace,
-                entityId.toString()
-        );
+        return String.join(KEY_SEPARATOR, TENANT_PREFIX, tenantId.getValue(), namespace, entityId.toString());
     }
 
     /**
      * Generates cache key for entity lookup using current tenant context.
      */
     public static String forEntity(String namespace, UUID entityId) {
-        String tenantId = TenantContext.getTenantId() != null
-                ? TenantContext.getTenantId().getValue()
-                : "unknown";
-        return String.join(KEY_SEPARATOR,
-                TENANT_PREFIX,
-                tenantId,
-                namespace,
-                entityId.toString()
-        );
+        String tenantId = TenantContext.getTenantId() != null ? TenantContext.getTenantId()
+                .getValue() : "unknown";
+        return String.join(KEY_SEPARATOR, TENANT_PREFIX, tenantId, namespace, entityId.toString());
     }
 
     /**
-     * Generates cache key for collection queries.
-     * Format: tenant:{tenantId}:{namespace}:{queryParams}
+     * Generates cache key for collection queries. Format: tenant:{tenantId}:{namespace}:{queryParams}
      */
     public static String forCollection(TenantId tenantId, String namespace, String... queryParams) {
-        StringBuilder key = new StringBuilder()
-                .append(TENANT_PREFIX)
+        StringBuilder key = new StringBuilder().append(TENANT_PREFIX)
                 .append(KEY_SEPARATOR)
                 .append(tenantId.getValue())
                 .append(KEY_SEPARATOR)
@@ -79,28 +65,16 @@ public final class CacheKeyGenerator {
     }
 
     /**
-     * Generates global cache key (not tenant-specific).
-     * Use only for cross-tenant admin operations.
-     * Format: global:{namespace}:{key}
+     * Generates global cache key (not tenant-specific). Use only for cross-tenant admin operations. Format: global:{namespace}:{key}
      */
     public static String forGlobal(String namespace, String key) {
-        return String.join(KEY_SEPARATOR,
-                GLOBAL_PREFIX,
-                namespace,
-                key
-        );
+        return String.join(KEY_SEPARATOR, GLOBAL_PREFIX, namespace, key);
     }
 
     /**
-     * Generates wildcard pattern for cache invalidation.
-     * Format: tenant:{tenantId}:{namespace}:*
+     * Generates wildcard pattern for cache invalidation. Format: tenant:{tenantId}:{namespace}:*
      */
     public static String wildcardPattern(TenantId tenantId, String namespace) {
-        return String.join(KEY_SEPARATOR,
-                TENANT_PREFIX,
-                tenantId.getValue(),
-                namespace,
-                "*"
-        );
+        return String.join(KEY_SEPARATOR, TENANT_PREFIX, tenantId.getValue(), namespace, "*");
     }
 }

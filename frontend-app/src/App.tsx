@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { LandingPage } from './features/home/LandingPage';
 import { LoginPage } from './features/auth/LoginPage';
+import { EmailVerificationPage } from './features/auth/pages/EmailVerificationPage';
+import { PasswordSetupPage } from './features/auth/pages/PasswordSetupPage';
 import { DashboardRouter } from './components/DashboardRouter';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { UnauthorizedPage } from './components/auth/UnauthorizedPage';
@@ -19,6 +21,8 @@ function App() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/verify-email" element={<EmailVerificationPage />} />
+      <Route path="/setup-password" element={<PasswordSetupPage />} />
       <Route
         path="/dashboard"
         element={

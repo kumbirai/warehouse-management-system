@@ -43,15 +43,13 @@ import lombok.Data;
 public class CacheProperties {
 
     /**
-     * Enable/disable caching globally.
-     * Default: true (caching is mandatory in production)
+     * Enable/disable caching globally. Default: true (caching is mandatory in production)
      */
     @NotNull
     private Boolean enabled = true;
 
     /**
-     * Default TTL for all caches (in minutes).
-     * Default: 30 minutes
+     * Default TTL for all caches (in minutes). Default: 30 minutes
      */
     @Min(1)
     private Integer defaultTtlMinutes = 30;
@@ -63,15 +61,12 @@ public class CacheProperties {
     private RedisConfig redis = new RedisConfig();
 
     /**
-     * Per-cache TTL configurations.
-     * Key: Cache name (e.g., "users", "products")
-     * Value: Cache-specific configuration
+     * Per-cache TTL configurations. Key: Cache name (e.g., "users", "products") Value: Cache-specific configuration
      */
     private Map<String, CacheConfig> cacheConfigs = new HashMap<>();
 
     /**
-     * Returns an unmodifiable view of cache configurations.
-     * Prevents external modification of internal state.
+     * Returns an unmodifiable view of cache configurations. Prevents external modification of internal state.
      *
      * @return Unmodifiable map of cache configurations
      */
@@ -80,13 +75,12 @@ public class CacheProperties {
     }
 
     /**
-     * Sets cache configurations with defensive copy.
-     * Prevents external modification of internal state.
+     * Sets cache configurations with defensive copy. Prevents external modification of internal state.
      *
      * @param cacheConfigs Map of cache configurations
      */
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring @ConfigurationProperties requires setters. The map is copied defensively to prevent external "
-            + "modification.")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+            justification = "Spring @ConfigurationProperties requires setters. The map is copied defensively to prevent external " + "modification.")
     public void setCacheConfigs(Map<String, CacheConfig> cacheConfigs) {
         if (cacheConfigs == null) {
             this.cacheConfigs = new HashMap<>();
@@ -96,27 +90,24 @@ public class CacheProperties {
     }
 
     /**
-     * Returns Redis configuration.
-     * Note: RedisConfig is a nested configuration class managed by Spring.
-     * It is initialized once and not mutated after construction.
+     * Returns Redis configuration. Note: RedisConfig is a nested configuration class managed by Spring. It is initialized once and not mutated after construction.
      *
      * @return Redis configuration
      */
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "RedisConfig is a Spring @ConfigurationProperties nested class managed by Spring. It is initialized once and not"
-            + " mutated after construction. Returning the reference is safe.")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP",
+            justification = "RedisConfig is a Spring @ConfigurationProperties nested class managed by Spring. It is initialized once and not"
+                    + " mutated after construction. Returning the reference is safe.")
     public RedisConfig getRedis() {
         return redis;
     }
 
     /**
-     * Sets Redis configuration.
-     * Note: This setter is required by Spring @ConfigurationProperties.
-     * RedisConfig is managed by Spring and not mutated after initialization.
+     * Sets Redis configuration. Note: This setter is required by Spring @ConfigurationProperties. RedisConfig is managed by Spring and not mutated after initialization.
      *
      * @param redis Redis configuration
      */
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring @ConfigurationProperties requires this setter. RedisConfig is managed by Spring and not mutated after "
-            + "initialization.")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+            justification = "Spring @ConfigurationProperties requires this setter. RedisConfig is managed by Spring and not mutated after " + "initialization.")
     public void setRedis(RedisConfig redis) {
         this.redis = redis;
     }
@@ -124,15 +115,13 @@ public class CacheProperties {
     @Data
     public static class RedisConfig {
         /**
-         * Redis server hostname.
-         * Default: localhost (dev), overridden in prod via environment variables
+         * Redis server hostname. Default: localhost (dev), overridden in prod via environment variables
          */
         @NotBlank
         private String host = "localhost";
 
         /**
-         * Redis server port.
-         * Default: 6379
+         * Redis server port. Default: 6379
          */
         @Min(1)
         private Integer port = 6379;
@@ -143,8 +132,7 @@ public class CacheProperties {
         private String password;
 
         /**
-         * Redis database index (0-15).
-         * Default: 0
+         * Redis database index (0-15). Default: 0
          */
         @Min(0)
         private Integer database = 0;
@@ -159,8 +147,7 @@ public class CacheProperties {
         private Integer ttlMinutes;
 
         /**
-         * Maximum number of entries in this cache.
-         * Redis will evict entries based on LRU policy when limit is reached.
+         * Maximum number of entries in this cache. Redis will evict entries based on LRU policy when limit is reached.
          */
         private Long maxEntries;
     }

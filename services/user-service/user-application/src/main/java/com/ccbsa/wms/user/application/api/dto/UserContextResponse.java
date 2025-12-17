@@ -19,13 +19,7 @@ public final class UserContextResponse {
     public UserContextResponse() {
     }
 
-    public UserContextResponse(String userId,
-                               String username,
-                               String tenantId,
-                               List<String> roles,
-                               String email,
-                               String firstName,
-                               String lastName) {
+    public UserContextResponse(String userId, String username, String tenantId, List<String> roles, String email, String firstName, String lastName) {
         this.userId = userId;
         this.username = username;
         this.tenantId = tenantId;
@@ -93,14 +87,8 @@ public final class UserContextResponse {
 
     @Override
     public String toString() {
-        return String.format("UserContextResponse{userId='%s', username='%s', tenantId='%s', roles=%s, email='%s', firstName='%s', lastName='%s'}",
-                userId,
-                username,
-                tenantId,
-                roles,
-                email,
-                firstName,
-                lastName);
+        return String.format("UserContextResponse{userId='%s', username='%s', tenantId='%s', roles=%s, email='%s', firstName='%s', lastName='%s'}", userId, username, tenantId,
+                roles, email, firstName, lastName);
     }
 }
 

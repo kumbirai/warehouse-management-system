@@ -6,13 +6,12 @@ import com.ccbsa.wms.product.domain.core.event.ProductEvent;
 /**
  * Event Publisher Port: ProductEventPublisher
  * <p>
- * Defines the contract for publishing Product domain events.
- * Implemented by messaging adapters (Kafka).
+ * Defines the contract for publishing Product domain events. Implemented by messaging adapters (Kafka).
  * <p>
- * This port extends the common EventPublisher interface and adds
- * service-specific event publishing methods.
+ * This port extends the common EventPublisher interface and adds service-specific event publishing methods.
  */
-public interface ProductEventPublisher extends EventPublisher {
+public interface ProductEventPublisher
+        extends EventPublisher {
     /**
      * Publishes a Product event.
      *

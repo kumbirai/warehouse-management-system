@@ -13,7 +13,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * <p>
  * Published when a role is removed from a user.
  */
-public class UserRoleRemovedEvent extends UserEvent {
+public class UserRoleRemovedEvent
+        extends UserEvent {
     private final String roleName;
 
     @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",

@@ -22,19 +22,16 @@ import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 /**
  * Repository Adapter: ProductRepositoryAdapter
  * <p>
- * Implements ProductRepository port interface.
- * Adapts between domain Product aggregate and JPA ProductEntity.
+ * Implements ProductRepository port interface. Adapts between domain Product aggregate and JPA ProductEntity.
  */
 @Repository
-public class ProductRepositoryAdapter implements ProductRepository {
+public class ProductRepositoryAdapter
+        implements ProductRepository {
     private final ProductJpaRepository jpaRepository;
     private final ProductBarcodeJpaRepository barcodeJpaRepository;
     private final ProductEntityMapper mapper;
 
-    public ProductRepositoryAdapter(
-            ProductJpaRepository jpaRepository,
-            ProductBarcodeJpaRepository barcodeJpaRepository,
-            ProductEntityMapper mapper) {
+    public ProductRepositoryAdapter(ProductJpaRepository jpaRepository, ProductBarcodeJpaRepository barcodeJpaRepository, ProductEntityMapper mapper) {
         this.jpaRepository = jpaRepository;
         this.barcodeJpaRepository = barcodeJpaRepository;
         this.mapper = mapper;
@@ -43,11 +40,9 @@ public class ProductRepositoryAdapter implements ProductRepository {
     @Override
     public Product save(Product product) {
         // Check if entity already exists to handle version correctly
-        Optional<ProductEntity> existingEntity =
-                jpaRepository.findByTenantIdAndId(
-                        product.getTenantId().getValue(),
-                        product.getId().getValue()
-                );
+        Optional<ProductEntity> existingEntity = jpaRepository.findByTenantIdAndId(product.getTenantId()
+                .getValue(), product.getId()
+                .getValue());
 
         ProductEntity entity;
         if (existingEntity.isPresent()) {
@@ -70,31 +65,35 @@ public class ProductRepositoryAdapter implements ProductRepository {
     }
 
     /**
-     * Updates an existing entity with values from the domain model.
-     * Preserves JPA managed state and version for optimistic locking.
+     * Updates an existing entity with values from the domain model. Preserves JPA managed state and version for optimistic locking.
      *
      * @param entity  Existing JPA entity
      * @param product Domain product aggregate
      */
     private void updateEntityFromDomain(ProductEntity entity, Product product) {
-        entity.setProductCode(product.getProductCode().getValue());
+        entity.setProductCode(product.getProductCode()
+                .getValue());
         entity.setDescription(product.getDescription());
-        entity.setPrimaryBarcode(product.getPrimaryBarcode().getValue());
-        entity.setPrimaryBarcodeType(product.getPrimaryBarcode().getType());
+        entity.setPrimaryBarcode(product.getPrimaryBarcode()
+                .getValue());
+        entity.setPrimaryBarcodeType(product.getPrimaryBarcode()
+                .getType());
         entity.setUnitOfMeasure(product.getUnitOfMeasure());
         entity.setCategory(product.getCategory());
         entity.setBrand(product.getBrand());
         entity.setLastModifiedAt(product.getLastModifiedAt());
 
         // Update secondary barcodes - remove all existing and add new ones
-        entity.getSecondaryBarcodes().clear();
+        entity.getSecondaryBarcodes()
+                .clear();
         for (ProductBarcode barcode : product.getSecondaryBarcodes()) {
             ProductBarcodeEntity barcodeEntity = new ProductBarcodeEntity();
             barcodeEntity.setId(UUID.randomUUID());
             barcodeEntity.setProduct(entity);
             barcodeEntity.setBarcode(barcode.getValue());
             barcodeEntity.setBarcodeType(barcode.getType());
-            entity.getSecondaryBarcodes().add(barcodeEntity);
+            entity.getSecondaryBarcodes()
+                    .add(barcodeEntity);
         }
 
         // Version is managed by JPA - don't update it manually
@@ -130,17 +129,16 @@ public class ProductRepositoryAdapter implements ProductRepository {
     @Override
     public Optional<Product> findByBarcodeAndTenantId(String barcode, TenantId tenantId) {
         // First check primary barcode
-        Optional<ProductEntity> primaryBarcodeProduct =
-                jpaRepository.findByTenantIdAndPrimaryBarcode(tenantId.getValue(), barcode);
+        Optional<ProductEntity> primaryBarcodeProduct = jpaRepository.findByTenantIdAndPrimaryBarcode(tenantId.getValue(), barcode);
         if (primaryBarcodeProduct.isPresent()) {
             return primaryBarcodeProduct.map(mapper::toDomain);
         }
 
         // Then check secondary barcodes
-        Optional<ProductBarcodeEntity> secondaryBarcode =
-                barcodeJpaRepository.findByBarcodeAndTenantId(barcode, tenantId.getValue());
+        Optional<ProductBarcodeEntity> secondaryBarcode = barcodeJpaRepository.findByBarcodeAndTenantId(barcode, tenantId.getValue());
         if (secondaryBarcode.isPresent()) {
-            ProductEntity productEntity = secondaryBarcode.get().getProduct();
+            ProductEntity productEntity = secondaryBarcode.get()
+                    .getProduct();
             return Optional.of(mapper.toDomain(productEntity));
         }
 
@@ -149,14 +147,16 @@ public class ProductRepositoryAdapter implements ProductRepository {
 
     @Override
     public List<Product> findByTenantId(TenantId tenantId) {
-        return jpaRepository.findByTenantId(tenantId.getValue()).stream()
+        return jpaRepository.findByTenantId(tenantId.getValue())
+                .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Product> findByTenantIdAndCategory(TenantId tenantId, String category) {
-        return jpaRepository.findByTenantIdAndCategory(tenantId.getValue(), category).stream()
+        return jpaRepository.findByTenantIdAndCategory(tenantId.getValue(), category)
+                .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }

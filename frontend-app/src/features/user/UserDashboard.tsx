@@ -1,7 +1,7 @@
-import { Box, Button, Card, CardContent, Container, Grid, Paper, Typography } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import { Header } from '../../components/layout/Header';
+import {Box, Button, Card, CardContent, Container, Grid, Paper, Typography} from '@mui/material';
+import {Link as RouterLink} from 'react-router-dom';
+import {useAuth} from '../../hooks/useAuth';
+import {Header} from '../../components/layout/Header';
 
 /**
  * Tenant User dashboard component.
@@ -31,6 +31,9 @@ export const UserDashboard = () => {
                 <Typography variant="body2" color="text.secondary">
                   Perform daily stock counts and reconcile inventory.
                 </Typography>
+                <Button sx={{ mt: 2 }} size="small" variant="outlined" disabled>
+                  Coming Soon
+                </Button>
               </CardContent>
             </Card>
           </Grid>
@@ -43,6 +46,9 @@ export const UserDashboard = () => {
                 <Typography variant="body2" color="text.secondary">
                   View and execute picking lists for orders.
                 </Typography>
+                <Button sx={{ mt: 2 }} size="small" variant="outlined" disabled>
+                  Coming Soon
+                </Button>
               </CardContent>
             </Card>
           </Grid>
@@ -55,6 +61,24 @@ export const UserDashboard = () => {
                 <Typography variant="body2" color="text.secondary">
                   Receive and confirm incoming stock consignments.
                 </Typography>
+                <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    component={RouterLink}
+                    to="/stock-management/consignments/create"
+                  >
+                    Create Consignment
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    component={RouterLink}
+                    to="/stock-management/consignments/upload-csv"
+                  >
+                    Upload CSV
+                  </Button>
+                </Box>
               </CardContent>
             </Card>
           </Grid>
@@ -67,6 +91,9 @@ export const UserDashboard = () => {
                 <Typography variant="body2" color="text.secondary">
                   Process returns and manage return documentation.
                 </Typography>
+                <Button sx={{ mt: 2 }} size="small" variant="outlined" disabled>
+                  Coming Soon
+                </Button>
               </CardContent>
             </Card>
           </Grid>

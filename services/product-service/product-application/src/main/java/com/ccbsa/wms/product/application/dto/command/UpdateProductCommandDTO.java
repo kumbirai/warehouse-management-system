@@ -13,7 +13,8 @@ import jakarta.validation.constraints.Size;
  */
 public final class UpdateProductCommandDTO {
     @NotBlank(message = "Description is required")
-    @Size(max = 500, message = "Description must not exceed 500 characters")
+    @Size(max = 500,
+            message = "Description must not exceed 500 characters")
     private String description;
 
     @NotBlank(message = "Primary barcode is required")

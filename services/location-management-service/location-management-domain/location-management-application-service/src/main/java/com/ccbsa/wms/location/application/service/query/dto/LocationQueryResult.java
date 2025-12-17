@@ -11,8 +11,7 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
 /**
  * Query Result DTO: LocationQueryResult
  * <p>
- * Result object returned from location queries.
- * Contains optimized read model data for location information.
+ * Result object returned from location queries. Contains optimized read model data for location information.
  */
 public final class LocationQueryResult {
     private final LocationId locationId;

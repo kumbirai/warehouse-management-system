@@ -16,11 +16,11 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantStatus;
 /**
  * JPA Repository: TenantJpaRepository
  * <p>
- * Spring Data JPA repository for TenantEntity.
- * Provides standard CRUD operations and custom query methods.
+ * Spring Data JPA repository for TenantEntity. Provides standard CRUD operations and custom query methods.
  */
 @Repository
-public interface TenantJpaRepository extends JpaRepository<TenantEntity, String> {
+public interface TenantJpaRepository
+        extends JpaRepository<TenantEntity, String> {
     /**
      * Finds tenants by status.
      *
@@ -48,8 +48,8 @@ public interface TenantJpaRepository extends JpaRepository<TenantEntity, String>
     /**
      * Searches tenants with optional status and search text filters.
      * <p>
-     * Note: Status parameter is String (not TenantStatus) to avoid PostgreSQL type inference
-     * issues with NULL parameters in native queries. The enum is converted to String in the adapter.
+     * Note: Status parameter is String (not TenantStatus) to avoid PostgreSQL type inference issues with NULL parameters in native queries. The enum is converted to String in the
+     * adapter.
      *
      * @param status   Tenant status filter as String (nullable, e.g., "ACTIVE", "PENDING")
      * @param search   Search text filter (nullable)
@@ -76,8 +76,8 @@ public interface TenantJpaRepository extends JpaRepository<TenantEntity, String>
                     )
                     """,
             nativeQuery = true)
-    Page<TenantEntity> searchTenants(@Param("status") String status,
-                                     @Param("search") String search,
-                                     Pageable pageable);
+    Page<TenantEntity> searchTenants(
+            @Param("status") String status,
+            @Param("search") String search, Pageable pageable);
 }
 

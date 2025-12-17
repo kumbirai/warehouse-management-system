@@ -13,12 +13,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * Adapter: ThymeleafEmailTemplateEngine
  * <p>
- * Implements EmailTemplateEngine using Thymeleaf template engine.
- * Renders HTML email templates from resources/templates/email/ directory.
+ * Implements EmailTemplateEngine using Thymeleaf template engine. Renders HTML email templates from resources/templates/email/ directory.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "TemplateEngine is a managed bean and treated as immutable port")
-public class ThymeleafEmailTemplateEngine implements EmailTemplateEngine {
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+        justification = "TemplateEngine is a managed bean and treated as immutable port")
+public class ThymeleafEmailTemplateEngine
+        implements EmailTemplateEngine {
     private static final Logger logger = LoggerFactory.getLogger(ThymeleafEmailTemplateEngine.class);
     private static final String TEMPLATE_PREFIX = "email/";
     private static final String TEMPLATE_SUFFIX = ".html";
@@ -44,8 +45,7 @@ public class ThymeleafEmailTemplateEngine implements EmailTemplateEngine {
             return rendered;
         } catch (Exception e) {
             logger.error("Failed to render email template: {}", templateName, e);
-            throw new TemplateException(
-                    String.format("Failed to render email template '%s': %s", templateName, e.getMessage()), e);
+            throw new TemplateException(String.format("Failed to render email template '%s': %s", templateName, e.getMessage()), e);
         }
     }
 }

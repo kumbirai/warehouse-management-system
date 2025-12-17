@@ -4,8 +4,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Immutable value object representing metadata for domain events.
- * Contains traceability information for distributed tracing and event correlation.
+ * Immutable value object representing metadata for domain events. Contains traceability information for distributed tracing and event correlation.
  *
  * <p>Event metadata includes:
  * <ul>
@@ -45,8 +44,7 @@ public final class EventMetadata {
     }
 
     /**
-     * Gets the correlation ID.
-     * Correlation ID tracks the entire business flow across services and operations.
+     * Gets the correlation ID. Correlation ID tracks the entire business flow across services and operations.
      *
      * @return the correlation ID, or null if not set
      */
@@ -55,8 +53,7 @@ public final class EventMetadata {
     }
 
     /**
-     * Gets the causation ID.
-     * Causation ID is the event ID of the event that caused this event.
+     * Gets the causation ID. Causation ID is the event ID of the event that caused this event.
      *
      * @return the causation ID, or null if not set
      */
@@ -65,8 +62,7 @@ public final class EventMetadata {
     }
 
     /**
-     * Gets the user ID.
-     * User ID identifies the user who triggered the event.
+     * Gets the user ID. User ID identifies the user who triggered the event.
      *
      * @return the user ID, or null if not set
      */
@@ -83,9 +79,7 @@ public final class EventMetadata {
             return false;
         }
         EventMetadata that = (EventMetadata) o;
-        return Objects.equals(correlationId, that.correlationId)
-                && Objects.equals(causationId, that.causationId)
-                && Objects.equals(userId, that.userId);
+        return Objects.equals(correlationId, that.correlationId) && Objects.equals(causationId, that.causationId) && Objects.equals(userId, that.userId);
     }
 
     @Override
@@ -95,8 +89,7 @@ public final class EventMetadata {
 
     @Override
     public String toString() {
-        return String.format("EventMetadata{correlationId='%s', causationId=%s, userId='%s'}",
-                correlationId, causationId, userId);
+        return String.format("EventMetadata{correlationId='%s', causationId=%s, userId='%s'}", correlationId, causationId, userId);
     }
 
     /**
@@ -118,7 +111,8 @@ public final class EventMetadata {
          * @return this builder
          */
         public Builder correlationId(String correlationId) {
-            if (correlationId != null && correlationId.trim().isEmpty()) {
+            if (correlationId != null && correlationId.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("Correlation ID cannot be empty");
             }
             this.correlationId = correlationId != null ? correlationId.trim() : null;
@@ -143,7 +137,8 @@ public final class EventMetadata {
          * @return this builder
          */
         public Builder userId(String userId) {
-            if (userId != null && userId.trim().isEmpty()) {
+            if (userId != null && userId.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("User ID cannot be empty");
             }
             this.userId = userId != null ? userId.trim() : null;

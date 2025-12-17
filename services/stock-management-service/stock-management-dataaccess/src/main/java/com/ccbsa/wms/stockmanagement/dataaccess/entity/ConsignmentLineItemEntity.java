@@ -14,14 +14,11 @@ import jakarta.persistence.Table;
 /**
  * JPA Entity: ConsignmentLineItemEntity
  * <p>
- * JPA representation of ConsignmentLineItem value object.
- * Uses tenant schema resolver for multi-tenant isolation (schema-per-tenant strategy).
+ * JPA representation of ConsignmentLineItem value object. Uses tenant schema resolver for multi-tenant isolation (schema-per-tenant strategy).
  * <p>
- * This entity maps to the ConsignmentLineItem domain value object and represents
- * a line item within a stock consignment.
+ * This entity maps to the ConsignmentLineItem domain value object and represents a line item within a stock consignment.
  * <p>
- * The schema "tenant_schema" is a placeholder that will be dynamically replaced with
- * the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
+ * The schema "tenant_schema" is a placeholder that will be dynamically replaced with the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
  */
 @Entity
 @Table(name = "consignment_line_items",

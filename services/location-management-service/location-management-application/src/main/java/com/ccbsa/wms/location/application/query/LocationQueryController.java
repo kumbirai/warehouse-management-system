@@ -24,28 +24,25 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * <p>
  * Handles location query operations (read operations).
  * <p>
- * Responsibilities:
- * - Get location by ID endpoint
- * - Map queries to DTOs
- * - Return standardized API responses
+ * Responsibilities: - Get location by ID endpoint - Map queries to DTOs - Return standardized API responses
  */
 @RestController
 @RequestMapping("/api/v1/location-management/locations")
-@Tag(name = "Location Queries", description = "Location query operations")
+@Tag(name = "Location Queries",
+        description = "Location query operations")
 public class LocationQueryController {
     private final GetLocationQueryHandler queryHandler;
     private final LocationDTOMapper mapper;
 
-    public LocationQueryController(
-            GetLocationQueryHandler queryHandler,
-            LocationDTOMapper mapper) {
+    public LocationQueryController(GetLocationQueryHandler queryHandler, LocationDTOMapper mapper) {
         this.queryHandler = queryHandler;
         this.mapper = mapper;
     }
 
     @GetMapping("/{locationId}")
-    @Operation(summary = "Get Location by ID", description = "Retrieves a location by ID")
-    @PreAuthorize("hasAnyRole('VIEWER', 'ADMIN', 'MANAGER')")
+    @Operation(summary = "Get Location by ID",
+            description = "Retrieves a location by ID")
+    @PreAuthorize("hasAnyRole('VIEWER', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'PICKER', 'STOCK_CLERK')")
     public ResponseEntity<ApiResponse<LocationQueryResultDTO>> getLocation(
             @PathVariable String locationId,
             @RequestHeader("X-Tenant-Id") String tenantId) {

@@ -14,11 +14,9 @@ import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
 /**
  * Hibernate PhysicalNamingStrategy that dynamically resolves tenant schema at runtime.
  * <p>
- * This strategy intercepts schema resolution during Hibernate operations and replaces
- * the schema name with the tenant-specific schema resolved from TenantSchemaResolver.
+ * This strategy intercepts schema resolution during Hibernate operations and replaces the schema name with the tenant-specific schema resolved from TenantSchemaResolver.
  * <p>
- * This solves the issue where SpEL expressions in @Table annotations are not evaluated
- * by Hibernate. Instead, we use a placeholder schema name in annotations and replace it
+ * This solves the issue where SpEL expressions in @Table annotations are not evaluated by Hibernate. Instead, we use a placeholder schema name in annotations and replace it
  * dynamically at runtime.
  * <p>
  * Usage in JPA entities:
@@ -33,7 +31,8 @@ import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
  * </pre>
  */
 @Component
-public class TenantAwarePhysicalNamingStrategy implements PhysicalNamingStrategy, ApplicationContextAware {
+public class TenantAwarePhysicalNamingStrategy
+        implements PhysicalNamingStrategy, ApplicationContextAware {
 
     private static final String PLACEHOLDER_SCHEMA = "tenant_schema";
 
@@ -46,7 +45,8 @@ public class TenantAwarePhysicalNamingStrategy implements PhysicalNamingStrategy
     }
 
     @Override
-    public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(
+            @NonNull ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 
@@ -82,8 +82,7 @@ public class TenantAwarePhysicalNamingStrategy implements PhysicalNamingStrategy
                 // Return null to use default schema (public) where Flyway creates tables
                 // The actual tenant schema will be resolved at runtime when tenant context is available
                 org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TenantAwarePhysicalNamingStrategy.class);
-                logger.warn("Tenant context not set when resolving schema '{}': {}. Using default schema (public).",
-                        PLACEHOLDER_SCHEMA, e.getMessage());
+                logger.warn("Tenant context not set when resolving schema '{}': {}. Using default schema (public).", PLACEHOLDER_SCHEMA, e.getMessage());
                 return null;
             }
         }

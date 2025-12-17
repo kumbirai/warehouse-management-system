@@ -20,8 +20,7 @@ public final class LocationQueryResultDTO {
     public LocationQueryResultDTO() {
     }
 
-    public LocationQueryResultDTO(String locationId, String barcode, LocationCoordinatesDTO coordinates,
-                                  String status, LocationCapacityDTO capacity, String description,
+    public LocationQueryResultDTO(String locationId, String barcode, LocationCoordinatesDTO coordinates, String status, LocationCapacityDTO capacity, String description,
                                   LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
         this.locationId = locationId;
         this.barcode = barcode;

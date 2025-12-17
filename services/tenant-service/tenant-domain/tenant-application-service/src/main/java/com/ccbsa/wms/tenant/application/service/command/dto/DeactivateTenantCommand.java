@@ -8,7 +8,8 @@ import com.ccbsa.common.domain.valueobject.TenantId;
  * <p>
  * Represents the intent to deactivate a tenant.
  */
-public final class DeactivateTenantCommand implements Command {
+public final class DeactivateTenantCommand
+        implements Command {
     private final TenantId tenantId;
 
     public DeactivateTenantCommand(TenantId tenantId) {

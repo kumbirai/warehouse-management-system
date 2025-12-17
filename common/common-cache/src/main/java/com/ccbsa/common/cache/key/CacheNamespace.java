@@ -3,8 +3,7 @@ package com.ccbsa.common.cache.key;
 /**
  * Cache Namespace Constants.
  * <p>
- * Defines standardized cache namespaces for all services.
- * Ensures consistency in cache key prefixes.
+ * Defines standardized cache namespaces for all services. Ensures consistency in cache key prefixes.
  * <p>
  * Usage:
  * <pre>

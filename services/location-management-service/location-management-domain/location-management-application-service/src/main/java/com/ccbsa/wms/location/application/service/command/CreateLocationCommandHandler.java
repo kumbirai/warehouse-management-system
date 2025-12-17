@@ -26,11 +26,7 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
  * <p>
  * Handles creation of new Location aggregate.
  * <p>
- * Responsibilities:
- * - Validates barcode uniqueness
- * - Creates Location aggregate
- * - Persists aggregate
- * - Publishes domain events after transaction commit
+ * Responsibilities: - Validates barcode uniqueness - Creates Location aggregate - Persists aggregate - Publishes domain events after transaction commit
  */
 @Component
 public class CreateLocationCommandHandler {
@@ -39,9 +35,7 @@ public class CreateLocationCommandHandler {
     private final LocationRepository repository;
     private final LocationEventPublisher eventPublisher;
 
-    public CreateLocationCommandHandler(
-            LocationRepository repository,
-            LocationEventPublisher eventPublisher) {
+    public CreateLocationCommandHandler(LocationRepository repository, LocationEventPublisher eventPublisher) {
         this.repository = repository;
         this.eventPublisher = eventPublisher;
     }
@@ -69,7 +63,9 @@ public class CreateLocationCommandHandler {
         }
 
         // Set description if provided
-        if (command.getDescription() != null && !command.getDescription().trim().isEmpty()) {
+        if (command.getDescription() != null && !command.getDescription()
+                .trim()
+                .isEmpty()) {
             builder.description(command.getDescription());
         }
 
@@ -127,19 +123,16 @@ public class CreateLocationCommandHandler {
      */
     private void validateBarcodeUniqueness(LocationBarcode barcode, com.ccbsa.common.domain.valueobject.TenantId tenantId) {
         if (repository.existsByBarcodeAndTenantId(barcode, tenantId)) {
-            throw new BarcodeAlreadyExistsException(
-                    String.format("Location barcode already exists: %s", barcode.getValue())
-            );
+            throw new BarcodeAlreadyExistsException(String.format("Location barcode already exists: %s", barcode.getValue()));
         }
     }
 
     /**
      * Publishes domain events after transaction commit to avoid race conditions.
      * <p>
-     * Events are published using TransactionSynchronizationManager to ensure they are
-     * only published after the database transaction has successfully committed.
-     * This prevents race conditions where event listeners consume events before
-     * the location is visible in the database.
+     * Events are published using TransactionSynchronizationManager to ensure they are only published after the database transaction has successfully committed. This prevents race
+     * conditions where event listeners consume events before the
+     * location is visible in the database.
      *
      * @param domainEvents Domain events to publish
      */

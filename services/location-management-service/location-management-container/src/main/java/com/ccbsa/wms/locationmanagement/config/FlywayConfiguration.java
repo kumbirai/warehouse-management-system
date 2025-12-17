@@ -12,13 +12,11 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Custom Flyway Configuration
  * <p>
- * Provides automatic checksum repair on validation failure when enabled via
- * FLYWAY_REPAIR_ON_MIGRATE environment variable (development only).
+ * Provides automatic checksum repair on validation failure when enabled via FLYWAY_REPAIR_ON_MIGRATE environment variable (development only).
  * <p>
  * In production, use manual repair: mvn flyway:repair or flyway repair command.
  * <p>
- * This configuration uses FlywayMigrationStrategy to customize migration behavior
- * and automatically repair checksums when validation fails.
+ * This configuration uses FlywayMigrationStrategy to customize migration behavior and automatically repair checksums when validation fails.
  */
 @Configuration
 public class FlywayConfiguration {
@@ -31,8 +29,7 @@ public class FlywayConfiguration {
     /**
      * Custom Flyway migration strategy that repairs checksums on validation failure.
      * <p>
-     * When repair-on-migrate is enabled, this will automatically repair checksums
-     * if validation fails due to checksum mismatches.
+     * When repair-on-migrate is enabled, this will automatically repair checksums if validation fails due to checksum mismatches.
      * <p>
      * This is the recommended way to customize Flyway behavior in Spring Boot.
      *
@@ -45,8 +42,8 @@ public class FlywayConfiguration {
             try {
                 f.migrate();
             } catch (FlywayValidateException e) {
-                if (repairOnMigrate && e.getMessage() != null
-                        && e.getMessage().contains("checksum mismatch")) {
+                if (repairOnMigrate && e.getMessage() != null && e.getMessage()
+                        .contains("checksum mismatch")) {
                     logger.warn("Flyway validation failed with checksum mismatch. Repairing checksums...");
                     logger.warn("This should only be enabled in development environments.");
                     try {
@@ -55,9 +52,7 @@ public class FlywayConfiguration {
                         f.migrate();
                     } catch (Exception repairException) {
                         logger.error("Failed to repair Flyway checksums", repairException);
-                        throw new RuntimeException(
-                                "Flyway checksum repair failed. Please run 'mvn flyway:repair' manually.",
-                                repairException);
+                        throw new RuntimeException("Flyway checksum repair failed. Please run 'mvn flyway:repair' manually.", repairException);
                     }
                 } else {
                     throw e;

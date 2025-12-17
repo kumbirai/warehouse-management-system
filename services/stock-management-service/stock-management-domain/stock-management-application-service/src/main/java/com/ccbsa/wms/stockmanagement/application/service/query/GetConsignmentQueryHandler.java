@@ -14,10 +14,7 @@ import com.ccbsa.wms.stockmanagement.domain.core.exception.ConsignmentNotFoundEx
  * <p>
  * Handles retrieval of StockConsignment aggregate by ID.
  * <p>
- * Responsibilities:
- * - Load StockConsignment aggregate from repository
- * - Map aggregate to query result DTO
- * - Return optimized read model
+ * Responsibilities: - Load StockConsignment aggregate from repository - Map aggregate to query result DTO - Return optimized read model
  */
 @Component
 public class GetConsignmentQueryHandler {
@@ -30,11 +27,9 @@ public class GetConsignmentQueryHandler {
     @Transactional(readOnly = true)
     public ConsignmentQueryResult handle(GetConsignmentQuery query) {
         // 1. Load aggregate
-        StockConsignment consignment = repository
-                .findByIdAndTenantId(query.getConsignmentId(), query.getTenantId())
-                .orElseThrow(() -> new ConsignmentNotFoundException(
-                        String.format("Consignment not found: %s", query.getConsignmentId().getValueAsString())
-                ));
+        StockConsignment consignment = repository.findByIdAndTenantId(query.getConsignmentId(), query.getTenantId())
+                .orElseThrow(() -> new ConsignmentNotFoundException(String.format("Consignment not found: %s", query.getConsignmentId()
+                        .getValueAsString())));
 
         // 2. Map to query result
         return ConsignmentQueryResult.builder()

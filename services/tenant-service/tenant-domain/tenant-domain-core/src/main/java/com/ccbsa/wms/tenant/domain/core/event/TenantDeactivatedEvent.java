@@ -8,7 +8,8 @@ import com.ccbsa.common.domain.valueobject.TenantId;
  * <p>
  * Published when a tenant is deactivated.
  */
-public final class TenantDeactivatedEvent extends TenantEvent<TenantId> {
+public final class TenantDeactivatedEvent
+        extends TenantEvent<TenantId> {
     public TenantDeactivatedEvent(TenantId tenantId) {
         super(tenantId);
     }

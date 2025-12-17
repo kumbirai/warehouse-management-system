@@ -13,12 +13,10 @@ import com.ccbsa.wms.stockmanagement.domain.core.valueobject.ConsignmentReferenc
  * <p>
  * Published when a stock consignment is received at the warehouse.
  * <p>
- * This event indicates that:
- * - A new consignment has been created
- * - Consignment is in RECEIVED status
- * - Line items have been recorded
+ * This event indicates that: - A new consignment has been created - Consignment is in RECEIVED status - Line items have been recorded
  */
-public class StockConsignmentReceivedEvent extends StockManagementEvent<StockConsignment> {
+public class StockConsignmentReceivedEvent
+        extends StockManagementEvent<StockConsignment> {
     private static final String AGGREGATE_TYPE = "StockConsignment";
 
     private final ConsignmentReference consignmentReference;
@@ -35,12 +33,8 @@ public class StockConsignmentReceivedEvent extends StockManagementEvent<StockCon
      * @param warehouseId          Warehouse identifier
      * @param lineItems            List of consignment line items
      */
-    public StockConsignmentReceivedEvent(
-            String aggregateId,
-            ConsignmentReference consignmentReference,
-            TenantId tenantId,
-            WarehouseId warehouseId,
-            List<ConsignmentLineItem> lineItems) {
+    public StockConsignmentReceivedEvent(String aggregateId, ConsignmentReference consignmentReference, TenantId tenantId, WarehouseId warehouseId,
+                                         List<ConsignmentLineItem> lineItems) {
         super(aggregateId, AGGREGATE_TYPE);
         this.consignmentReference = consignmentReference;
         this.tenantId = tenantId;

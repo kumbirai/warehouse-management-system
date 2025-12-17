@@ -6,8 +6,7 @@ import java.util.List;
 /**
  * Result DTO: UploadProductCsvResult
  * <p>
- * Result object returned after uploading a CSV file.
- * Contains summary statistics and error details.
+ * Result object returned after uploading a CSV file. Contains summary statistics and error details.
  */
 public final class UploadProductCsvResult {
     private final int totalRows;

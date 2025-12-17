@@ -3,8 +3,7 @@ package com.ccbsa.wms.notification.domain.core.valueobject;
 /**
  * Value Object: NotificationStatus
  * <p>
- * Represents the status of a notification.
- * Immutable enum-like value object.
+ * Represents the status of a notification. Immutable enum-like value object.
  */
 public enum NotificationStatus {
     PENDING("Notification is pending delivery"),

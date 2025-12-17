@@ -12,9 +12,7 @@ import com.ccbsa.wms.product.application.service.query.dto.ProductCodeUniqueness
  * <p>
  * Handles checking if a product code is unique for a tenant.
  * <p>
- * Responsibilities:
- * - Check product code uniqueness in repository
- * - Return uniqueness result
+ * Responsibilities: - Check product code uniqueness in repository - Return uniqueness result
  */
 @Component
 public class CheckProductCodeUniquenessQueryHandler {
@@ -28,10 +26,7 @@ public class CheckProductCodeUniquenessQueryHandler {
     @Transactional(readOnly = true)
     public ProductCodeUniquenessResult handle(CheckProductCodeUniquenessQuery query) {
         // Check if product code exists
-        boolean isUnique = !repository.existsByProductCodeAndTenantId(
-                query.getProductCode(),
-                query.getTenantId()
-        );
+        boolean isUnique = !repository.existsByProductCodeAndTenantId(query.getProductCode(), query.getTenantId());
 
         return ProductCodeUniquenessResult.builder()
                 .productCode(query.getProductCode())

@@ -13,8 +13,7 @@ import org.springframework.stereotype.Component;
  * Gateway filter that extracts or generates correlation ID and propagates it to downstream services.
  *
  * <p>This filter ensures that every request has a correlation ID for distributed tracing.
- * If a correlation ID is present in the incoming request header, it is used. Otherwise,
- * a new correlation ID is generated. The correlation ID is then added to the request headers
+ * If a correlation ID is present in the incoming request header, it is used. Otherwise, a new correlation ID is generated. The correlation ID is then added to the request headers
  * for all downstream service calls.</p>
  *
  * <p>Correlation ID header: X-Correlation-Id</p>
@@ -31,7 +30,8 @@ import org.springframework.stereotype.Component;
  * }</pre>
  */
 @Component
-public class CorrelationContextFilter extends AbstractGatewayFilterFactory<CorrelationContextFilter.Config> {
+public class CorrelationContextFilter
+        extends AbstractGatewayFilterFactory<CorrelationContextFilter.Config> {
     private static final Logger logger = LoggerFactory.getLogger(CorrelationContextFilter.class);
     private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
 
@@ -43,11 +43,14 @@ public class CorrelationContextFilter extends AbstractGatewayFilterFactory<Corre
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
-            String correlationId = request.getHeaders().getFirst(CORRELATION_ID_HEADER);
+            String correlationId = request.getHeaders()
+                    .getFirst(CORRELATION_ID_HEADER);
 
             // Generate correlation ID if not present
-            if (correlationId == null || correlationId.trim().isEmpty()) {
-                correlationId = UUID.randomUUID().toString();
+            if (correlationId == null || correlationId.trim()
+                    .isEmpty()) {
+                correlationId = UUID.randomUUID()
+                        .toString();
                 logger.debug("Generated new correlation ID: {}", correlationId);
             } else {
                 correlationId = correlationId.trim();
@@ -66,8 +69,7 @@ public class CorrelationContextFilter extends AbstractGatewayFilterFactory<Corre
     }
 
     /**
-     * Configuration class for CorrelationContextFilter.
-     * Currently empty but available for future configuration options.
+     * Configuration class for CorrelationContextFilter. Currently empty but available for future configuration options.
      */
     public static class Config {
         // Configuration properties if needed

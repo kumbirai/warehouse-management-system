@@ -11,14 +11,13 @@ import org.springframework.stereotype.Component;
  * <p>
  * Checks Redis connectivity and reports health status.
  * <p>
- * Health States:
- * - UP: Redis is reachable and responding to PING
- * - DOWN: Redis is unreachable or not responding
+ * Health States: - UP: Redis is reachable and responding to PING - DOWN: Redis is unreachable or not responding
  * <p>
  * Exposed via: /actuator/health
  */
 @Component
-public class CacheHealthIndicator implements HealthIndicator {
+public class CacheHealthIndicator
+        implements HealthIndicator {
 
     private final RedisConnectionFactory connectionFactory;
 

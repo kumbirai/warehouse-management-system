@@ -20,8 +20,7 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 /**
  * DTO Mapper: LocationDTOMapper
  * <p>
- * Maps between API DTOs and application service commands/queries.
- * Acts as an anti-corruption layer protecting the domain from external API changes.
+ * Maps between API DTOs and application service commands/queries. Acts as an anti-corruption layer protecting the domain from external API changes.
  */
 @Component
 public class LocationDTOMapper {
@@ -36,20 +35,19 @@ public class LocationDTOMapper {
     public CreateLocationCommand toCreateCommand(CreateLocationCommandDTO dto, String tenantId) {
         CreateLocationCommand.Builder builder = CreateLocationCommand.builder()
                 .tenantId(TenantId.of(tenantId))
-                .coordinates(LocationCoordinates.of(
-                        dto.getZone(),
-                        dto.getAisle(),
-                        dto.getRack(),
-                        dto.getLevel()
-                ));
+                .coordinates(LocationCoordinates.of(dto.getZone(), dto.getAisle(), dto.getRack(), dto.getLevel()));
 
         // Set barcode if provided
-        if (dto.getBarcode() != null && !dto.getBarcode().trim().isEmpty()) {
+        if (dto.getBarcode() != null && !dto.getBarcode()
+                .trim()
+                .isEmpty()) {
             builder.barcode(LocationBarcode.of(dto.getBarcode()));
         }
 
         // Set description if provided
-        if (dto.getDescription() != null && !dto.getDescription().trim().isEmpty()) {
+        if (dto.getDescription() != null && !dto.getDescription()
+                .trim()
+                .isEmpty()) {
             builder.description(dto.getDescription());
         }
 
@@ -64,10 +62,13 @@ public class LocationDTOMapper {
      */
     public CreateLocationResultDTO toCreateResultDTO(CreateLocationResult result) {
         CreateLocationResultDTO dto = new CreateLocationResultDTO();
-        dto.setLocationId(result.getLocationId().getValueAsString());
-        dto.setBarcode(result.getBarcode().getValue());
+        dto.setLocationId(result.getLocationId()
+                .getValueAsString());
+        dto.setBarcode(result.getBarcode()
+                .getValue());
         dto.setCoordinates(toCommandCoordinatesDTO(result.getCoordinates()));
-        dto.setStatus(result.getStatus().name());
+        dto.setStatus(result.getStatus()
+                .name());
         dto.setCreatedAt(result.getCreatedAt());
         return dto;
     }
@@ -76,12 +77,8 @@ public class LocationDTOMapper {
      * Converts LocationCoordinates to command LocationCoordinatesDTO.
      */
     private com.ccbsa.wms.location.application.dto.command.LocationCoordinatesDTO toCommandCoordinatesDTO(LocationCoordinates coordinates) {
-        return new com.ccbsa.wms.location.application.dto.command.LocationCoordinatesDTO(
-                coordinates.getZone(),
-                coordinates.getAisle(),
-                coordinates.getRack(),
-                coordinates.getLevel()
-        );
+        return new com.ccbsa.wms.location.application.dto.command.LocationCoordinatesDTO(coordinates.getZone(), coordinates.getAisle(), coordinates.getRack(),
+                coordinates.getLevel());
     }
 
     /**
@@ -106,10 +103,13 @@ public class LocationDTOMapper {
      */
     public LocationQueryResultDTO toQueryResultDTO(LocationQueryResult result) {
         LocationQueryResultDTO dto = new LocationQueryResultDTO();
-        dto.setLocationId(result.getLocationId().getValueAsString());
-        dto.setBarcode(result.getBarcode().getValue());
+        dto.setLocationId(result.getLocationId()
+                .getValueAsString());
+        dto.setBarcode(result.getBarcode()
+                .getValue());
         dto.setCoordinates(toQueryCoordinatesDTO(result.getCoordinates()));
-        dto.setStatus(result.getStatus().name());
+        dto.setStatus(result.getStatus()
+                .name());
         dto.setCapacity(toCapacityDTO(result.getCapacity()));
         dto.setDescription(result.getDescription());
         dto.setCreatedAt(result.getCreatedAt());
@@ -121,12 +121,8 @@ public class LocationDTOMapper {
      * Converts LocationCoordinates to query LocationCoordinatesDTO.
      */
     private com.ccbsa.wms.location.application.dto.query.LocationCoordinatesDTO toQueryCoordinatesDTO(LocationCoordinates coordinates) {
-        return new com.ccbsa.wms.location.application.dto.query.LocationCoordinatesDTO(
-                coordinates.getZone(),
-                coordinates.getAisle(),
-                coordinates.getRack(),
-                coordinates.getLevel()
-        );
+        return new com.ccbsa.wms.location.application.dto.query.LocationCoordinatesDTO(coordinates.getZone(), coordinates.getAisle(), coordinates.getRack(),
+                coordinates.getLevel());
     }
 
     /**
@@ -136,10 +132,7 @@ public class LocationDTOMapper {
         if (capacity == null) {
             return null;
         }
-        return new LocationCapacityDTO(
-                capacity.getCurrentQuantity(),
-                capacity.getMaximumQuantity()
-        );
+        return new LocationCapacityDTO(capacity.getCurrentQuantity(), capacity.getMaximumQuantity());
     }
 }
 

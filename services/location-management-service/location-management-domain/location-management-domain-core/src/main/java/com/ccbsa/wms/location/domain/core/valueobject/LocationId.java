@@ -5,8 +5,7 @@ import java.util.UUID;
 /**
  * Value Object: LocationId
  *
- * Represents the unique identifier for Location.
- * Immutable and validated on construction.
+ * Represents the unique identifier for Location. Immutable and validated on construction.
  */
 public final class LocationId {
     private final UUID value;
@@ -43,7 +42,8 @@ public final class LocationId {
      * @throws IllegalArgumentException if value is invalid
      */
     public static LocationId of(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("LocationId string cannot be null or empty");
         }
         try {

@@ -126,7 +126,8 @@ public final class CreateProductCommand {
             if (productCode == null) {
                 throw new IllegalArgumentException("ProductCode is required");
             }
-            if (description == null || description.trim().isEmpty()) {
+            if (description == null || description.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("Description is required");
             }
             if (primaryBarcode == null) {

@@ -2,7 +2,8 @@
 
 ## Overview
 
-The User Service implements the **Backend for Frontend (BFF)** pattern to mask Keycloak IAM complexity from frontend clients. This service provides authentication endpoints that
+The User Service implements the **Backend for Frontend (BFF)** pattern to mask Keycloak IAM complexity from frontend
+clients. This service provides authentication endpoints that
 abstract away Keycloak-specific details.
 
 ## Architecture

@@ -19,12 +19,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * Event Publisher Implementation: NotificationEventPublisherImpl
  * <p>
- * Implements NotificationEventPublisher port interface.
- * Publishes notification domain events to Kafka.
+ * Implements NotificationEventPublisher port interface. Publishes notification domain events to Kafka.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is a managed bean and treated as immutable port")
-public class NotificationEventPublisherImpl implements NotificationEventPublisher {
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+        justification = "Kafka template is a managed bean and treated as immutable port")
+public class NotificationEventPublisherImpl
+        implements NotificationEventPublisher {
     private static final Logger logger = LoggerFactory.getLogger(NotificationEventPublisherImpl.class);
     private static final String NOTIFICATION_EVENTS_TOPIC = "notification-events";
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -43,9 +44,8 @@ public class NotificationEventPublisherImpl implements NotificationEventPublishe
         if (event instanceof NotificationEvent) {
             publish((NotificationEvent) event);
         } else {
-            throw new IllegalArgumentException(String.format("Event must be a NotificationEvent: %s",
-                    event.getClass()
-                            .getName()));
+            throw new IllegalArgumentException(String.format("Event must be a NotificationEvent: %s", event.getClass()
+                    .getName()));
         }
     }
 
@@ -56,27 +56,19 @@ public class NotificationEventPublisherImpl implements NotificationEventPublishe
             NotificationEvent enrichedEvent = enrichEventWithMetadata(event);
 
             String key = enrichedEvent.getAggregateId();
-            kafkaTemplate.send(NOTIFICATION_EVENTS_TOPIC,
-                    key,
-                    enrichedEvent);
-            logger.debug("Published notification event: {} with key: {} [correlationId: {}]",
-                    enrichedEvent.getClass()
-                            .getSimpleName(),
-                    key,
-                    enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
+            kafkaTemplate.send(NOTIFICATION_EVENTS_TOPIC, key, enrichedEvent);
+            logger.debug("Published notification event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass()
+                    .getSimpleName(), key, enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata()
+                    .getCorrelationId() : "none");
         } catch (Exception e) {
-            logger.error("Failed to publish notification event: {}",
-                    event.getClass()
-                            .getSimpleName(),
-                    e);
-            throw new RuntimeException("Failed to publish notification event",
-                    e);
+            logger.error("Failed to publish notification event: {}", event.getClass()
+                    .getSimpleName(), e);
+            throw new RuntimeException("Failed to publish notification event", e);
         }
     }
 
     /**
-     * Enriches event with metadata by creating an immutable copy.
-     * Uses event-specific logic to create enriched copies.
+     * Enriches event with metadata by creating an immutable copy. Uses event-specific logic to create enriched copies.
      *
      * @param event The original event
      * @return Enriched event with metadata, or original if enrichment fails
@@ -102,24 +94,17 @@ public class NotificationEventPublisherImpl implements NotificationEventPublishe
         if (event instanceof com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent) {
             com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent notificationCreatedEvent =
                     (com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent) event;
-            return new com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent(
-                    notificationId,
-                    notificationCreatedEvent.getTenantId(),
-                    notificationCreatedEvent.getType(),
-                    metadata);
+            return new com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent(notificationId, notificationCreatedEvent.getTenantId(),
+                    notificationCreatedEvent.getType(), metadata);
         } else if (event instanceof com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent) {
-            com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent notificationSentEvent =
-                    (com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent) event;
-            return new com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent(
-                    notificationId,
-                    notificationSentEvent.getChannel(),
-                    notificationSentEvent.getSentAt(),
+            com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent notificationSentEvent = (com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent) event;
+            return new com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent(notificationId, notificationSentEvent.getChannel(), notificationSentEvent.getSentAt(),
                     metadata);
         }
 
         // Unknown event type, return original
-        logger.warn("Unknown notification event type: {}. Event will be published without metadata.",
-                event.getClass().getName());
+        logger.warn("Unknown notification event type: {}. Event will be published without metadata.", event.getClass()
+                .getName());
         return event;
     }
 
@@ -130,9 +115,8 @@ public class NotificationEventPublisherImpl implements NotificationEventPublishe
      */
     private EventMetadata buildEventMetadata() {
         String correlationId = CorrelationContext.getCorrelationId();
-        String userId = TenantContext.getUserId() != null
-                ? TenantContext.getUserId().getValue()
-                : null;
+        String userId = TenantContext.getUserId() != null ? TenantContext.getUserId()
+                .getValue() : null;
 
         if (correlationId == null && userId == null) {
             return null;

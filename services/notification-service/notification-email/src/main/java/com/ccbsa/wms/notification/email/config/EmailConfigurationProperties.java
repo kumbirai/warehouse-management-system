@@ -6,8 +6,7 @@ import org.springframework.validation.annotation.Validated;
 /**
  * Configuration: EmailConfigurationProperties
  * <p>
- * Email configuration properties at notification.email level.
- * Configured via application.yml with prefix: notification.email
+ * Email configuration properties at notification.email level. Configured via application.yml with prefix: notification.email
  */
 @ConfigurationProperties(prefix = "notification.email")
 @Validated

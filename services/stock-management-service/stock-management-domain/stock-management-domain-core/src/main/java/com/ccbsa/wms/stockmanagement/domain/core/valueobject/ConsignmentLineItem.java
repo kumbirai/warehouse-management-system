@@ -8,13 +8,9 @@ import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
 /**
  * Value Object: ConsignmentLineItem
  * <p>
- * Represents a line item in a stock consignment.
- * Immutable and self-validating.
+ * Represents a line item in a stock consignment. Immutable and self-validating.
  * <p>
- * Business Rules:
- * - Product code is required
- * - Quantity must be positive (> 0)
- * - Expiration date is optional, but if provided must be in the future
+ * Business Rules: - Product code is required - Quantity must be positive (> 0) - Expiration date is optional, but if provided must be in the future
  */
 public final class ConsignmentLineItem {
     private final ProductCode productCode;
@@ -102,9 +98,7 @@ public final class ConsignmentLineItem {
             return false;
         }
         ConsignmentLineItem that = (ConsignmentLineItem) o;
-        return quantity == that.quantity
-                && Objects.equals(productCode, that.productCode)
-                && Objects.equals(expirationDate, that.expirationDate);
+        return quantity == that.quantity && Objects.equals(productCode, that.productCode) && Objects.equals(expirationDate, that.expirationDate);
     }
 
     @Override
@@ -114,8 +108,7 @@ public final class ConsignmentLineItem {
 
     @Override
     public String toString() {
-        return String.format("ConsignmentLineItem{productCode=%s, quantity=%d, expirationDate=%s}",
-                productCode, quantity, expirationDate);
+        return String.format("ConsignmentLineItem{productCode=%s, quantity=%d, expirationDate=%s}", productCode, quantity, expirationDate);
     }
 
     /**

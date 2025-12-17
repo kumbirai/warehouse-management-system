@@ -22,23 +22,21 @@ import com.ccbsa.wms.notification.application.service.port.service.TenantService
 /**
  * Adapter: TenantServiceAdapter
  * <p>
- * Implements TenantServicePort for retrieving tenant information from tenant-service.
- * Calls tenant-service REST API to get tenant email address.
+ * Implements TenantServicePort for retrieving tenant information from tenant-service. Calls tenant-service REST API to get tenant email address.
  */
 @Component
-public class TenantServiceAdapter implements TenantServicePort {
+public class TenantServiceAdapter
+        implements TenantServicePort {
     private static final Logger logger = LoggerFactory.getLogger(TenantServiceAdapter.class);
 
-    private static final ParameterizedTypeReference<ApiResponse<TenantResponse>> TENANT_RESPONSE_TYPE =
-            new ParameterizedTypeReference<ApiResponse<TenantResponse>>() {
-            };
+    private static final ParameterizedTypeReference<ApiResponse<TenantResponse>> TENANT_RESPONSE_TYPE = new ParameterizedTypeReference<ApiResponse<TenantResponse>>() {
+    };
 
     private final RestTemplate restTemplate;
     private final String tenantServiceUrl;
 
-    public TenantServiceAdapter(
-            RestTemplate restTemplate,
-            @Value("${tenant.service.url:http://tenant-service:8080}") String tenantServiceUrl) {
+    public TenantServiceAdapter(RestTemplate restTemplate,
+                                @Value("${tenant.service.url:http://tenant-service:8080}") String tenantServiceUrl) {
         this.restTemplate = restTemplate;
         this.tenantServiceUrl = tenantServiceUrl;
     }
@@ -49,8 +47,12 @@ public class TenantServiceAdapter implements TenantServicePort {
 
         try {
             Optional<TenantServicePort.TenantDetails> details = getTenantDetails(tenantId);
-            if (details.isPresent() && details.get().emailAddress() != null && !details.get().emailAddress().isEmpty()) {
-                return EmailAddress.of(details.get().emailAddress());
+            if (details.isPresent() && details.get()
+                    .emailAddress() != null && !details.get()
+                    .emailAddress()
+                    .isEmpty()) {
+                return EmailAddress.of(details.get()
+                        .emailAddress());
             }
             throw new RuntimeException(String.format("Tenant email not found for tenantId: %s", tenantId.getValue()));
         } catch (RestClientException e) {
@@ -70,23 +72,15 @@ public class TenantServiceAdapter implements TenantServicePort {
             String url = String.format("%s/api/v1/tenants/%s", tenantServiceUrl, tenantId.getValue());
             logger.debug("Calling tenant service: {}", url);
 
-            ResponseEntity<ApiResponse<TenantResponse>> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    null,
-                    TENANT_RESPONSE_TYPE);
+            ResponseEntity<ApiResponse<TenantResponse>> response = restTemplate.exchange(url, HttpMethod.GET, null, TENANT_RESPONSE_TYPE);
 
             ApiResponse<TenantResponse> responseBody = response.getBody();
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
                 TenantResponse tenantResponse = responseBody.getData();
-                TenantServicePort.TenantDetails details = new TenantServicePort.TenantDetails(
-                        tenantResponse.getTenantId(),
-                        tenantResponse.getName(),
-                        tenantResponse.getStatus(),
-                        tenantResponse.getEmailAddress(),
-                        tenantResponse.getPhone(),
-                        tenantResponse.getAddress()
-                );
+                TenantServicePort.TenantDetails details =
+                        new TenantServicePort.TenantDetails(tenantResponse.getTenantId(), tenantResponse.getName(), tenantResponse.getStatus(), tenantResponse.getEmailAddress(),
+                                tenantResponse.getPhone(),
+                                tenantResponse.getAddress());
                 logger.debug("Tenant details retrieved: tenantId={}, name={}", tenantId.getValue(), tenantResponse.getName());
                 return Optional.of(details);
             }
@@ -105,8 +99,7 @@ public class TenantServiceAdapter implements TenantServicePort {
     }
 
     /**
-     * DTO for tenant-service response.
-     * Matches the TenantResponse structure from tenant-service API.
+     * DTO for tenant-service response. Matches the TenantResponse structure from tenant-service API.
      */
     private static class TenantResponse {
         private String tenantId;

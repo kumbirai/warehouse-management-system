@@ -5,20 +5,16 @@ import java.util.Objects;
 /**
  * Value Object: Description
  * <p>
- * Represents a description text for domain events or other domain concepts.
- * Immutable and validated on construction.
+ * Represents a description text for domain events or other domain concepts. Immutable and validated on construction.
  * <p>
- * This is a shared value object used across multiple services.
- * Business Rules:
- * - Description cannot be null or empty
- * - Maximum length: 500 characters
- * - Automatically trimmed
+ * This is a shared value object used across multiple services. Business Rules: - Description cannot be null or empty - Maximum length: 500 characters - Automatically trimmed
  */
 public final class Description {
     private final String value;
 
     private Description(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Description cannot be null or empty");
         }
         String trimmed = value.trim();

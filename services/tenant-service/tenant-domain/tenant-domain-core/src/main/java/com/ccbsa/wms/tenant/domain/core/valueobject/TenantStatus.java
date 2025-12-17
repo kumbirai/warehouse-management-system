@@ -5,31 +5,26 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * Value Object: TenantStatus
  * <p>
- * Represents the lifecycle status of a tenant.
- * Immutable enum representing tenant states.
+ * Represents the lifecycle status of a tenant. Immutable enum representing tenant states.
  */
 public enum TenantStatus {
     /**
-     * Tenant created but not yet activated.
-     * Cannot access the system.
+     * Tenant created but not yet activated. Cannot access the system.
      */
     PENDING,
 
     /**
-     * Tenant is active and operational.
-     * Can access the system.
+     * Tenant is active and operational. Can access the system.
      */
     ACTIVE,
 
     /**
-     * Tenant is deactivated.
-     * Cannot access the system.
+     * Tenant is deactivated. Cannot access the system.
      */
     INACTIVE,
 
     /**
-     * Tenant is temporarily suspended.
-     * Cannot access the system.
+     * Tenant is temporarily suspended. Cannot access the system.
      */
     SUSPENDED;
 

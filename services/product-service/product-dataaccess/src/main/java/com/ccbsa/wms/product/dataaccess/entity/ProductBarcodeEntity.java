@@ -18,8 +18,7 @@ import jakarta.persistence.Table;
  * <p>
  * JPA representation of secondary product barcodes.
  * <p>
- * This entity represents the one-to-many relationship between Product and secondary barcodes.
- * Primary barcode is stored directly in ProductEntity.
+ * This entity represents the one-to-many relationship between Product and secondary barcodes. Primary barcode is stored directly in ProductEntity.
  */
 @Entity
 @Table(name = "product_barcodes",

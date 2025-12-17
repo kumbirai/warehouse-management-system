@@ -29,8 +29,7 @@ import jakarta.validation.ConstraintViolationException;
  * Base Global Exception Handler for all services.
  *
  * <p>This base handler provides common exception handling for exceptions that are
- * shared across all services. Services can extend this class to add service-specific
- * exception handlers while inheriting the common handlers.</p>
+ * shared across all services. Services can extend this class to add service-specific exception handlers while inheriting the common handlers.</p>
  *
  * <p>Handles the following common exceptions:</p>
  * <ul>
@@ -63,108 +62,77 @@ public class BaseGlobalExceptionHandler {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleEntityNotFound(EntityNotFoundException ex,
-                                                                  HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleEntityNotFound(EntityNotFoundException ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Resource not found: {} - RequestId: {}, Path: {}",
-                ex.getMessage(),
-                requestId,
-                path);
+        logger.warn("Resource not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("RESOURCE_NOT_FOUND",
-                        ex.getMessage())
+        ApiError error = ApiError.builder("RESOURCE_NOT_FOUND", ex.getMessage())
                 .path(path)
                 .requestId(requestId)
                 .build();
-        return ApiResponseBuilder.error(HttpStatus.NOT_FOUND,
-                error);
+        return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
     }
 
     @ExceptionHandler(InvalidOperationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleInvalidOperation(InvalidOperationException ex,
-                                                                    HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleInvalidOperation(InvalidOperationException ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Invalid operation: {} - RequestId: {}, Path: {}",
-                ex.getMessage(),
-                requestId,
-                path);
+        logger.warn("Invalid operation: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("INVALID_OPERATION",
-                        ex.getMessage())
+        ApiError error = ApiError.builder("INVALID_OPERATION", ex.getMessage())
                 .path(path)
                 .requestId(requestId)
                 .build();
-        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST,
-                error);
+        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
     @ExceptionHandler(DomainException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDomainException(DomainException ex,
-                                                                   HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleDomainException(DomainException ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Domain exception: {} - RequestId: {}, Path: {}",
-                ex.getMessage(),
-                requestId,
-                path);
+        logger.warn("Domain exception: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("DOMAIN_ERROR",
-                        ex.getMessage())
+        ApiError error = ApiError.builder("DOMAIN_ERROR", ex.getMessage())
                 .path(path)
                 .requestId(requestId)
                 .build();
-        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST,
-                error);
+        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException ex,
-                                                                   HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Validation error: {} - RequestId: {}, Path: {}",
-                ex.getMessage(),
-                requestId,
-                path);
+        logger.warn("Validation error: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("VALIDATION_ERROR",
-                        ex.getMessage())
+        ApiError error = ApiError.builder("VALIDATION_ERROR", ex.getMessage())
                 .path(path)
                 .requestId(requestId)
                 .build();
-        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST,
-                error);
+        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ApiResponse<Void>> handleIllegalState(IllegalStateException ex,
-                                                                HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleIllegalState(IllegalStateException ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Invalid state: {} - RequestId: {}, Path: {}",
-                ex.getMessage(),
-                requestId,
-                path);
+        logger.warn("Invalid state: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("INVALID_OPERATION",
-                        ex.getMessage())
+        ApiError error = ApiError.builder("INVALID_OPERATION", ex.getMessage())
                 .path(path)
                 .requestId(requestId)
                 .build();
-        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST,
-                error);
+        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
-                                                                          HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
@@ -172,30 +140,22 @@ public class BaseGlobalExceptionHandler {
         Map<String, String> fieldErrors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .collect(Collectors.toMap(FieldError::getField,
-                        fieldError -> fieldError.getDefaultMessage() != null ? fieldError.getDefaultMessage() : "Validation failed",
+                .collect(Collectors.toMap(FieldError::getField, fieldError -> fieldError.getDefaultMessage() != null ? fieldError.getDefaultMessage() : "Validation failed",
                         (existing, replacement) -> existing));
-        details.put("fieldErrors",
-                fieldErrors);
+        details.put("fieldErrors", fieldErrors);
 
-        logger.warn("Request validation failed - RequestId: {}, Path: {}, FieldErrors: {}",
-                requestId,
-                path,
-                fieldErrors.keySet());
+        logger.warn("Request validation failed - RequestId: {}, Path: {}, FieldErrors: {}", requestId, path, fieldErrors.keySet());
 
-        ApiError error = ApiError.builder("VALIDATION_ERROR",
-                        "Request validation failed")
+        ApiError error = ApiError.builder("VALIDATION_ERROR", "Request validation failed")
                 .details(details)
                 .path(path)
                 .requestId(requestId)
                 .build();
-        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST,
-                error);
+        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(ConstraintViolationException ex,
-                                                                       HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
@@ -203,45 +163,31 @@ public class BaseGlobalExceptionHandler {
         Map<String, String> violations = ex.getConstraintViolations()
                 .stream()
                 .collect(Collectors.toMap(violation -> violation.getPropertyPath()
-                                .toString(),
-                        ConstraintViolation::getMessage,
-                        (existing, replacement) -> existing));
-        details.put("constraintViolations",
-                violations);
+                        .toString(), ConstraintViolation::getMessage, (existing, replacement) -> existing));
+        details.put("constraintViolations", violations);
 
-        logger.warn("Constraint validation failed - RequestId: {}, Path: {}, Violations: {}",
-                requestId,
-                path,
-                violations.keySet());
+        logger.warn("Constraint validation failed - RequestId: {}, Path: {}, Violations: {}", requestId, path, violations.keySet());
 
-        ApiError error = ApiError.builder("VALIDATION_ERROR",
-                        "Constraint validation failed")
+        ApiError error = ApiError.builder("VALIDATION_ERROR", "Constraint validation failed")
                 .details(details)
                 .path(path)
                 .requestId(requestId)
                 .build();
-        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST,
-                error);
+        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex,
-                                                           HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.error("Unexpected error occurred - RequestId: {}, Path: {}",
-                requestId,
-                path,
-                ex);
+        logger.error("Unexpected error occurred - RequestId: {}, Path: {}", requestId, path, ex);
 
-        ApiError error = ApiError.builder("INTERNAL_SERVER_ERROR",
-                        "An unexpected error occurred")
+        ApiError error = ApiError.builder("INTERNAL_SERVER_ERROR", "An unexpected error occurred")
                 .path(path)
                 .requestId(requestId)
                 .build();
-        return ApiResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR,
-                error);
+        return ApiResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, error);
     }
 }
 

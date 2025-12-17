@@ -15,9 +15,7 @@ import jakarta.persistence.Version;
 /**
  * JPA Entity: TenantEntity
  * <p>
- * JPA representation of Tenant aggregate.
- * Note: This service is NOT tenant-aware (it manages tenants),
- * so we use a single schema, not schema-per-tenant.
+ * JPA representation of Tenant aggregate. Note: This service is NOT tenant-aware (it manages tenants), so we use a single schema, not schema-per-tenant.
  */
 @Entity
 @Table(name = "tenants",

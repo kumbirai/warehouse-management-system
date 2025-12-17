@@ -5,8 +5,7 @@ import java.util.UUID;
 /**
  * Value Object: NotificationId
  * <p>
- * Represents the unique identifier for Notification.
- * Immutable and validated on construction.
+ * Represents the unique identifier for Notification. Immutable and validated on construction.
  */
 public final class NotificationId {
     private final UUID value;
@@ -43,7 +42,8 @@ public final class NotificationId {
      * @throws IllegalArgumentException if value is invalid
      */
     public static NotificationId of(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("NotificationId string cannot be null or empty");
         }
         try {

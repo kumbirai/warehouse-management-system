@@ -1,12 +1,12 @@
-import { useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import {useEffect, useRef} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
+import {useNavigate} from 'react-router-dom';
 import axios from 'axios';
-import { authService, UserContext } from '../services/authService';
-import { correlationIdService } from '../services/correlationIdService';
-import { clearUser, setLoading, setUser } from '../store/authSlice';
-import { RootState } from '../store';
-import { logger } from '../utils/logger';
+import {authService, UserContext} from '../services/authService';
+import {correlationIdService} from '../services/correlationIdService';
+import {clearUser, setLoading, setUser} from '../store/authSlice';
+import {RootState} from '../store';
+import {logger} from '../utils/logger';
 
 /**
  * Global initialization flag to prevent multiple initializations across all component instances.

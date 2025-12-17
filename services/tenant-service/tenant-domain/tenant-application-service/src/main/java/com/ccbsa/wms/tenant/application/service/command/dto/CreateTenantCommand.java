@@ -11,16 +11,14 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantName;
  * <p>
  * Represents the intent to create a new tenant.
  */
-public final class CreateTenantCommand implements Command {
+public final class CreateTenantCommand
+        implements Command {
     private final TenantId tenantId;
     private final TenantName name;
     private final ContactInformation contactInformation;
     private final TenantConfiguration configuration;
 
-    public CreateTenantCommand(TenantId tenantId,
-                               TenantName name,
-                               ContactInformation contactInformation,
-                               TenantConfiguration configuration) {
+    public CreateTenantCommand(TenantId tenantId, TenantName name, ContactInformation contactInformation, TenantConfiguration configuration) {
         if (tenantId == null) {
             throw new IllegalArgumentException("TenantId cannot be null");
         }

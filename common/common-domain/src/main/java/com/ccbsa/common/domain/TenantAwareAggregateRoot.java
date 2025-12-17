@@ -5,33 +5,30 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * Base class for aggregate roots that are tenant-aware.
- * Tenant-aware aggregates belong to a specific tenant (LDP) and must include tenant ID.
+ * Base class for aggregate roots that are tenant-aware. Tenant-aware aggregates belong to a specific tenant (LDP) and must include tenant ID.
  *
  * @param <ID> The type of the aggregate identifier
  */
-public abstract class TenantAwareAggregateRoot<ID> extends AggregateRoot<ID> {
+public abstract class TenantAwareAggregateRoot<ID>
+        extends AggregateRoot<ID> {
     protected TenantId tenantId;
 
     /**
-     * Protected no-arg constructor for builder pattern and reflection-based construction.
-     * Subclasses should use the constructor that requires TenantId when possible.
-     * The tenantId must be set via setTenantId() before the aggregate is used.
+     * Protected no-arg constructor for builder pattern and reflection-based construction. Subclasses should use the constructor that requires TenantId when possible. The tenantId
+     * must be set via setTenantId() before the aggregate is used.
      */
     protected TenantAwareAggregateRoot() {
         super();
     }
 
     /**
-     * Protected constructor that ensures TenantId is always set.
-     * This is the preferred constructor for subclasses.
+     * Protected constructor that ensures TenantId is always set. This is the preferred constructor for subclasses.
      *
      * @param tenantId The tenant identifier (must not be null)
      * @throws IllegalArgumentException if tenantId is null
      */
     @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "Tenant-aware aggregates must fail fast when tenant context is missing; "
-                    + "the aggregate instance is not published if validation fails.")
+            justification = "Tenant-aware aggregates must fail fast when tenant context is missing; " + "the aggregate instance is not published if validation fails.")
     protected TenantAwareAggregateRoot(TenantId tenantId) {
         this(validateTenantId(tenantId), true);
     }
@@ -49,8 +46,7 @@ public abstract class TenantAwareAggregateRoot<ID> extends AggregateRoot<ID> {
     }
 
     /**
-     * Returns the tenant ID.
-     * Validates that tenantId is set before returning.
+     * Returns the tenant ID. Validates that tenantId is set before returning.
      *
      * @return The tenant identifier
      * @throws IllegalStateException if tenantId has not been set
@@ -63,8 +59,7 @@ public abstract class TenantAwareAggregateRoot<ID> extends AggregateRoot<ID> {
     }
 
     /**
-     * Sets the tenant ID with validation.
-     * This method ensures tenantId is never null.
+     * Sets the tenant ID with validation. This method ensures tenantId is never null.
      *
      * @param tenantId The tenant identifier (must not be null)
      * @throws IllegalArgumentException if tenantId is null

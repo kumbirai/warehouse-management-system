@@ -10,8 +10,7 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
 /**
  * Result DTO: CreateLocationResult
  * <p>
- * Result object returned after creating a location.
- * Contains only the information needed by the caller (not the full domain entity).
+ * Result object returned after creating a location. Contains only the information needed by the caller (not the full domain entity).
  */
 public final class CreateLocationResult {
     private final LocationId locationId;

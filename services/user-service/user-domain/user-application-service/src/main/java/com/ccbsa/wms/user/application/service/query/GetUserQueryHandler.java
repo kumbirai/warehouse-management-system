@@ -27,9 +27,7 @@ public class GetUserQueryHandler {
     private final UserRepository userRepository;
     private final AuthenticationServicePort authenticationService;
 
-    public GetUserQueryHandler(
-            UserRepository userRepository,
-            AuthenticationServicePort authenticationService) {
+    public GetUserQueryHandler(UserRepository userRepository, AuthenticationServicePort authenticationService) {
         this.userRepository = userRepository;
         this.authenticationService = authenticationService;
     }
@@ -45,18 +43,21 @@ public class GetUserQueryHandler {
      */
     @Transactional(readOnly = true)
     public GetUserQueryResult handle(GetUserQuery query) {
-        logger.debug("Getting user: userId={}", query.getUserId().getValue());
+        logger.debug("Getting user: userId={}", query.getUserId()
+                .getValue());
 
         // 1. Load user
         User user = userRepository.findById(query.getUserId())
-                .orElseThrow(() -> new UserNotFoundException(
-                        String.format("User not found: %s", query.getUserId().getValue())));
+                .orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", query.getUserId()
+                        .getValue())));
 
         // 2. Get roles from Keycloak
         List<String> roles = List.of();
-        if (user.getKeycloakUserId().isPresent()) {
+        if (user.getKeycloakUserId()
+                .isPresent()) {
             try {
-                roles = authenticationService.getUserRoles(user.getKeycloakUserId().get());
+                roles = authenticationService.getUserRoles(user.getKeycloakUserId()
+                        .get());
             } catch (Exception e) {
                 logger.warn("Failed to get user roles from Keycloak: {}", e.getMessage());
                 // Continue without roles
@@ -64,18 +65,15 @@ public class GetUserQueryHandler {
         }
 
         // 3. Map to query result
-        return new GetUserQueryResult(
-                user.getId(),
-                user.getTenantId(),
-                user.getUsername().getValue(),
-                user.getEmail().getValue(),
-                user.getFirstName().map(fn -> fn.getValue()).orElse(null),
-                user.getLastName().map(ln -> ln.getValue()).orElse(null),
-                user.getStatus(),
-                user.getKeycloakUserId().map(KeycloakUserId::getValue).orElse(null),
-                roles,
-                user.getCreatedAt(),
-                user.getLastModifiedAt());
+        return new GetUserQueryResult(user.getId(), user.getTenantId(), user.getUsername()
+                .getValue(), user.getEmail()
+                .getValue(), user.getFirstName()
+                .map(fn -> fn.getValue())
+                .orElse(null), user.getLastName()
+                .map(ln -> ln.getValue())
+                .orElse(null), user.getStatus(), user.getKeycloakUserId()
+                .map(KeycloakUserId::getValue)
+                .orElse(null), roles, user.getCreatedAt(), user.getLastModifiedAt());
     }
 }
 

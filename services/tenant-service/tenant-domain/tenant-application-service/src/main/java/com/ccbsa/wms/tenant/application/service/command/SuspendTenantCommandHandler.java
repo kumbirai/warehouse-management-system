@@ -19,16 +19,15 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Handles tenant suspension, including Keycloak realm disablement if configured.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Ports are managed singletons injected by Spring and kept immutable")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+        justification = "Ports are managed singletons injected by Spring and kept immutable")
 public class SuspendTenantCommandHandler {
     private final TenantRepository tenantRepository;
     private final TenantEventPublisher eventPublisher;
     private final KeycloakRealmServicePort keycloakRealmPort;
     private final TenantGroupServicePort tenantGroupServicePort;
 
-    public SuspendTenantCommandHandler(TenantRepository tenantRepository,
-                                       TenantEventPublisher eventPublisher,
-                                       KeycloakRealmServicePort keycloakRealmPort,
+    public SuspendTenantCommandHandler(TenantRepository tenantRepository, TenantEventPublisher eventPublisher, KeycloakRealmServicePort keycloakRealmPort,
                                        TenantGroupServicePort tenantGroupServicePort) {
         this.tenantRepository = tenantRepository;
         this.eventPublisher = eventPublisher;
@@ -40,8 +39,7 @@ public class SuspendTenantCommandHandler {
     public void handle(SuspendTenantCommand command) {
         // Find tenant
         Tenant tenant = tenantRepository.findById(command.getTenantId())
-                .orElseThrow(() -> new EntityNotFoundException(String.format("Tenant not found: %s",
-                        command.getTenantId())));
+                .orElseThrow(() -> new EntityNotFoundException(String.format("Tenant not found: %s", command.getTenantId())));
 
         // Suspend tenant (domain logic)
         tenant.suspend();
@@ -51,8 +49,7 @@ public class SuspendTenantCommandHandler {
                 .isUsePerTenantRealm()) {
             tenant.getConfiguration()
                     .getKeycloakRealmName()
-                    .ifPresent(realmName ->
-                    {
+                    .ifPresent(realmName -> {
                         if (keycloakRealmPort.realmExists(realmName)) {
                             keycloakRealmPort.disableRealm(realmName);
                         }

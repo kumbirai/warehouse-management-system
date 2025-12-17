@@ -13,8 +13,7 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
 /**
  * Repository Port: NotificationRepository
  * <p>
- * Defines the contract for Notification aggregate persistence.
- * Implemented by data access adapters.
+ * Defines the contract for Notification aggregate persistence. Implemented by data access adapters.
  */
 public interface NotificationRepository {
 

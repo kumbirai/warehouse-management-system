@@ -11,8 +11,7 @@ import com.ccbsa.wms.notification.application.service.query.dto.GetNotificationQ
 /**
  * Query Handler: GetNotificationQueryHandler
  * <p>
- * Handles query for Notification by ID.
- * Uses repository port for MVP (read model can be added later).
+ * Handles query for Notification by ID. Uses repository port for MVP (read model can be added later).
  */
 @Component
 public class GetNotificationQueryHandler {
@@ -40,10 +39,8 @@ public class GetNotificationQueryHandler {
         // 2. Load from repository
         return repository.findById(query.getNotificationId())
                 .map(this::toQueryResult)
-                .orElseThrow(() -> new NotificationNotFoundException(
-                        query.getNotificationId().getValueAsString(),
-                        "Notification not found"
-                ));
+                .orElseThrow(() -> new NotificationNotFoundException(query.getNotificationId()
+                        .getValueAsString(), "Notification not found"));
     }
 
     private void validateQuery(GetNotificationQuery query) {
@@ -55,14 +52,15 @@ public class GetNotificationQueryHandler {
         }
     }
 
-    private GetNotificationQueryResult toQueryResult(
-            com.ccbsa.wms.notification.domain.core.entity.Notification notification) {
+    private GetNotificationQueryResult toQueryResult(com.ccbsa.wms.notification.domain.core.entity.Notification notification) {
         return GetNotificationQueryResult.builder()
                 .notificationId(notification.getId())
                 .tenantId(notification.getTenantId())
                 .recipientUserId(notification.getRecipientUserId())
-                .title(notification.getTitle().getValue())
-                .message(notification.getMessage().getValue())
+                .title(notification.getTitle()
+                        .getValue())
+                .message(notification.getMessage()
+                        .getValue())
                 .type(notification.getType())
                 .status(notification.getStatus())
                 .createdAt(notification.getCreatedAt())

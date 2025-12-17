@@ -39,15 +39,14 @@ public class UserCreatedEventListener {
         this.createNotificationCommandHandler = createNotificationCommandHandler;
     }
 
-    @KafkaListener(
-            topics = "user-events",
+    @KafkaListener(topics = "user-events",
             groupId = "notification-service",
-            containerFactory = "externalEventKafkaListenerContainerFactory"
-    )
-    public void handle(@Payload Map<String, Object> eventData,
-                       @Header(value = "__TypeId__", required = false) String eventType,
-                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic,
-                       Acknowledgment acknowledgment) {
+            containerFactory = "externalEventKafkaListenerContainerFactory")
+    public void handle(
+            @Payload Map<String, Object> eventData,
+            @Header(value = "__TypeId__",
+                    required = false) String eventType,
+            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         try {
             // Extract and set correlation ID from event metadata for traceability
             extractAndSetCorrelationId(eventData);
@@ -55,8 +54,7 @@ public class UserCreatedEventListener {
             // Detect event type from payload (aggregateType field) or header
             String detectedEventType = detectEventType(eventData, eventType);
             if (!isUserCreatedEvent(detectedEventType)) {
-                logger.debug("Skipping event - not UserCreatedEvent: detectedType={}, headerType={}",
-                        detectedEventType, eventType);
+                logger.debug("Skipping event - not UserCreatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
                 acknowledgment.acknowledge();
                 return;
             }
@@ -67,8 +65,7 @@ public class UserCreatedEventListener {
             EmailAddress recipientEmail = extractEmail(eventData);
             String username = extractUsername(eventData);
 
-            logger.info("Received UserCreatedEvent: userId={}, tenantId={}, email={}, eventId={}, eventDataKeys={}",
-                    aggregateId, tenantId.getValue(), recipientEmail.getValue(),
+            logger.info("Received UserCreatedEvent: userId={}, tenantId={}, email={}, eventId={}, eventDataKeys={}", aggregateId, tenantId.getValue(), recipientEmail.getValue(),
                     extractEventId(eventData), eventData.keySet());
 
             // Set tenant context for multi-tenant schema resolution
@@ -80,15 +77,13 @@ public class UserCreatedEventListener {
                         .recipientUserId(UserId.of(aggregateId))
                         .recipientEmail(recipientEmail)
                         .title(Title.of("Welcome to WMS"))
-                        .message(Message.of(String.format(
-                                "Welcome! Your account has been created. Username: %s", username)))
+                        .message(Message.of(String.format("Welcome! Your account has been created. Username: %s", username)))
                         .type(NotificationType.USER_CREATED)
                         .build();
 
                 createNotificationCommandHandler.handle(command);
 
-                logger.info("Created welcome notification for user: userId={}, email={}",
-                        aggregateId, recipientEmail.getValue());
+                logger.info("Created welcome notification for user: userId={}, email={}", aggregateId, recipientEmail.getValue());
 
                 // Acknowledge message
                 acknowledgment.acknowledge();
@@ -98,12 +93,10 @@ public class UserCreatedEventListener {
             }
         } catch (IllegalArgumentException e) {
             // Invalid event format - acknowledge to skip (don't retry malformed events)
-            logger.error("Invalid event format for UserCreatedEvent: eventData={}, error={}",
-                    eventData, e.getMessage(), e);
+            logger.error("Invalid event format for UserCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             acknowledgment.acknowledge();
         } catch (Exception e) {
-            logger.error("Failed to process UserCreatedEvent: eventData={}, error={}",
-                    eventData, e.getMessage(), e);
+            logger.error("Failed to process UserCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             // Don't acknowledge - will retry for transient failures
             throw new RuntimeException("Failed to process UserCreatedEvent", e);
         } finally {
@@ -113,8 +106,7 @@ public class UserCreatedEventListener {
     }
 
     /**
-     * Extracts correlation ID from event metadata and sets it in CorrelationContext.
-     * This enables traceability through event chains.
+     * Extracts correlation ID from event metadata and sets it in CorrelationContext. This enables traceability through event chains.
      *
      * @param eventData the event data map
      */
@@ -140,8 +132,7 @@ public class UserCreatedEventListener {
     /**
      * Detects event type from payload or header.
      * <p>
-     * Since type information is disabled in serialization, we detect event type by checking
-     * for @class field first (most reliable), then header, then event-specific fields.
+     * Since type information is disabled in serialization, we detect event type by checking for @class field first (most reliable), then header, then event-specific fields.
      *
      * @param eventData  Event data map
      * @param headerType Event type from header (may be null)
@@ -163,9 +154,7 @@ public class UserCreatedEventListener {
 
         // Check header if @class is not available
         if (headerType != null) {
-            String simpleName = headerType.contains(".")
-                    ? headerType.substring(headerType.lastIndexOf('.') + 1)
-                    : headerType;
+            String simpleName = headerType.contains(".") ? headerType.substring(headerType.lastIndexOf('.') + 1) : headerType;
             logger.debug("Detected event type from header: {}", simpleName);
             return simpleName;
         }
@@ -203,8 +192,7 @@ public class UserCreatedEventListener {
     }
 
     /**
-     * Extracts and validates tenantId from event data.
-     * Handles both simple string serialization and value object serialization.
+     * Extracts and validates tenantId from event data. Handles both simple string serialization and value object serialization.
      *
      * @param eventData Event data map
      * @return TenantId
@@ -213,9 +201,7 @@ public class UserCreatedEventListener {
     private TenantId extractTenantId(Map<String, Object> eventData) {
         Object tenantIdObj = eventData.get("tenantId");
         if (tenantIdObj == null) {
-            throw new IllegalArgumentException(String.format(
-                    "tenantId is required but missing in event. Available keys: %s",
-                    eventData.keySet()));
+            throw new IllegalArgumentException(String.format("tenantId is required but missing in event. Available keys: %s", eventData.keySet()));
         }
 
         // Handle value object serialization (Map with "value" field)
@@ -233,8 +219,7 @@ public class UserCreatedEventListener {
     }
 
     /**
-     * Extracts email address from event data.
-     * Handles both direct email field and nested emailAddress object.
+     * Extracts email address from event data. Handles both direct email field and nested emailAddress object.
      */
     private EmailAddress extractEmail(Map<String, Object> eventData) {
         // Try direct email field first
@@ -262,8 +247,7 @@ public class UserCreatedEventListener {
     }
 
     /**
-     * Extracts username from event data.
-     * Handles both direct username field and nested username object.
+     * Extracts username from event data. Handles both direct username field and nested username object.
      */
     private String extractUsername(Map<String, Object> eventData) {
         Object usernameObj = eventData.get("username");

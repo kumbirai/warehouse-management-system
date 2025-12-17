@@ -10,9 +10,7 @@ public final class CreateTenantResponse {
     private final boolean success;
     private final String message;
 
-    public CreateTenantResponse(String tenantId,
-                                boolean success,
-                                String message) {
+    public CreateTenantResponse(String tenantId, boolean success, String message) {
         this.tenantId = tenantId;
         this.success = success;
         this.message = message;

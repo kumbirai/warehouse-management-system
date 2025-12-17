@@ -39,15 +39,14 @@ public class UserRoleAssignedEventListener {
         this.createNotificationCommandHandler = createNotificationCommandHandler;
     }
 
-    @KafkaListener(
-            topics = "user-events",
+    @KafkaListener(topics = "user-events",
             groupId = "notification-service",
-            containerFactory = "externalEventKafkaListenerContainerFactory"
-    )
-    public void handle(@Payload Map<String, Object> eventData,
-                       @Header(value = "__TypeId__", required = false) String eventType,
-                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic,
-                       Acknowledgment acknowledgment) {
+            containerFactory = "externalEventKafkaListenerContainerFactory")
+    public void handle(
+            @Payload Map<String, Object> eventData,
+            @Header(value = "__TypeId__",
+                    required = false) String eventType,
+            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         try {
             // Extract and set correlation ID from event metadata for traceability
             extractAndSetCorrelationId(eventData);
@@ -55,8 +54,7 @@ public class UserRoleAssignedEventListener {
             // Detect event type from payload (aggregateType field) or header
             String detectedEventType = detectEventType(eventData, eventType);
             if (!isUserRoleAssignedEvent(detectedEventType)) {
-                logger.debug("Skipping event - not UserRoleAssignedEvent: detectedType={}, headerType={}",
-                        detectedEventType, eventType);
+                logger.debug("Skipping event - not UserRoleAssignedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
                 acknowledgment.acknowledge();
                 return;
             }
@@ -67,8 +65,9 @@ public class UserRoleAssignedEventListener {
             EmailAddress recipientEmail = extractEmail(eventData);
             String roleName = extractRoleName(eventData);
 
-            logger.info("Received UserRoleAssignedEvent: userId={}, tenantId={}, email={}, role={}, eventId={}, eventDataKeys={}",
-                    aggregateId, tenantId.getValue(), recipientEmail.getValue(), roleName, extractEventId(eventData), eventData.keySet());
+            logger.info("Received UserRoleAssignedEvent: userId={}, tenantId={}, email={}, role={}, eventId={}, eventDataKeys={}", aggregateId, tenantId.getValue(),
+                    recipientEmail.getValue(), roleName, extractEventId(eventData),
+                    eventData.keySet());
 
             // Set tenant context for multi-tenant schema resolution
             TenantContext.setTenantId(tenantId);
@@ -85,8 +84,7 @@ public class UserRoleAssignedEventListener {
 
                 createNotificationCommandHandler.handle(command);
 
-                logger.info("Created role assignment notification for user: userId={}, email={}, role={}",
-                        aggregateId, recipientEmail.getValue(), roleName);
+                logger.info("Created role assignment notification for user: userId={}, email={}, role={}", aggregateId, recipientEmail.getValue(), roleName);
 
                 // Acknowledge message
                 acknowledgment.acknowledge();
@@ -96,12 +94,10 @@ public class UserRoleAssignedEventListener {
             }
         } catch (IllegalArgumentException e) {
             // Invalid event format - acknowledge to skip (don't retry malformed events)
-            logger.error("Invalid event format for UserRoleAssignedEvent: eventData={}, error={}",
-                    eventData, e.getMessage(), e);
+            logger.error("Invalid event format for UserRoleAssignedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             acknowledgment.acknowledge();
         } catch (Exception e) {
-            logger.error("Failed to process UserRoleAssignedEvent: eventData={}, error={}",
-                    eventData, e.getMessage(), e);
+            logger.error("Failed to process UserRoleAssignedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             // Don't acknowledge - will retry for transient failures
             throw new RuntimeException("Failed to process UserRoleAssignedEvent", e);
         } finally {
@@ -111,8 +107,7 @@ public class UserRoleAssignedEventListener {
     }
 
     /**
-     * Extracts correlation ID from event metadata and sets it in CorrelationContext.
-     * This enables traceability through event chains.
+     * Extracts correlation ID from event metadata and sets it in CorrelationContext. This enables traceability through event chains.
      *
      * @param eventData the event data map
      */
@@ -138,8 +133,7 @@ public class UserRoleAssignedEventListener {
     /**
      * Detects event type from payload or header.
      * <p>
-     * Since type information is disabled in serialization, we detect event type by checking
-     * for @class field first (most reliable), then header, then event-specific fields.
+     * Since type information is disabled in serialization, we detect event type by checking for @class field first (most reliable), then header, then event-specific fields.
      *
      * @param eventData  Event data map
      * @param headerType Event type from header (may be null)
@@ -161,9 +155,7 @@ public class UserRoleAssignedEventListener {
 
         // Check header if @class is not available
         if (headerType != null) {
-            String simpleName = headerType.contains(".")
-                    ? headerType.substring(headerType.lastIndexOf('.') + 1)
-                    : headerType;
+            String simpleName = headerType.contains(".") ? headerType.substring(headerType.lastIndexOf('.') + 1) : headerType;
             logger.debug("Detected event type from header: {}", simpleName);
             return simpleName;
         }
@@ -203,8 +195,7 @@ public class UserRoleAssignedEventListener {
     }
 
     /**
-     * Extracts and validates tenantId from event data.
-     * Handles both simple string serialization and value object serialization.
+     * Extracts and validates tenantId from event data. Handles both simple string serialization and value object serialization.
      *
      * @param eventData Event data map
      * @return TenantId
@@ -231,8 +222,7 @@ public class UserRoleAssignedEventListener {
     }
 
     /**
-     * Extracts email address from event data.
-     * Handles both direct email field and nested emailAddress object.
+     * Extracts email address from event data. Handles both direct email field and nested emailAddress object.
      */
     private EmailAddress extractEmail(Map<String, Object> eventData) {
         // Try direct email field first

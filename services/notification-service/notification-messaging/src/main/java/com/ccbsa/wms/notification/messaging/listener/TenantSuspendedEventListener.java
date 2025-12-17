@@ -37,35 +37,30 @@ public class TenantSuspendedEventListener {
     private final CreateNotificationCommandHandler createNotificationCommandHandler;
     private final TenantServicePort tenantServicePort;
 
-    public TenantSuspendedEventListener(
-            CreateNotificationCommandHandler createNotificationCommandHandler,
-            TenantServicePort tenantServicePort) {
+    public TenantSuspendedEventListener(CreateNotificationCommandHandler createNotificationCommandHandler, TenantServicePort tenantServicePort) {
         this.createNotificationCommandHandler = createNotificationCommandHandler;
         this.tenantServicePort = tenantServicePort;
     }
 
-    @KafkaListener(
-            topics = "tenant-events",
+    @KafkaListener(topics = "tenant-events",
             groupId = "notification-service",
-            containerFactory = "externalEventKafkaListenerContainerFactory"
-    )
-    public void handle(@Payload Map<String, Object> eventData,
-                       @Header(value = "__TypeId__", required = false) String eventType,
-                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic,
-                       Acknowledgment acknowledgment) {
-        logger.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}",
-                topic, eventData.keySet(), eventType, eventData.get("@class"));
+            containerFactory = "externalEventKafkaListenerContainerFactory")
+    public void handle(
+            @Payload Map<String, Object> eventData,
+            @Header(value = "__TypeId__",
+                    required = false) String eventType,
+            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
+        logger.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));
         try {
             // Extract and set correlation ID from event metadata for traceability
             extractAndSetCorrelationId(eventData);
 
             // Detect event type from payload (aggregateType field) or header
             String detectedEventType = detectEventType(eventData, eventType);
-            logger.info("Event type detection: detectedType={}, headerType={}, eventDataKeys={}, aggregateType={}",
-                    detectedEventType, eventType, eventData.keySet(), eventData.get("aggregateType"));
+            logger.info("Event type detection: detectedType={}, headerType={}, eventDataKeys={}, aggregateType={}", detectedEventType, eventType, eventData.keySet(),
+                    eventData.get("aggregateType"));
             if (!isTenantSuspendedEvent(detectedEventType)) {
-                logger.debug("Skipping event - not TenantSuspendedEvent: detectedType={}, headerType={}",
-                        detectedEventType, eventType);
+                logger.debug("Skipping event - not TenantSuspendedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
                 acknowledgment.acknowledge();
                 return;
             }
@@ -75,8 +70,7 @@ public class TenantSuspendedEventListener {
             String tenantIdString = extractTenantIdFromEvent(eventData);
             TenantId tenantId = TenantId.of(tenantIdString);
 
-            logger.info("Received TenantSuspendedEvent: tenantId={}, eventId={}, eventDataKeys={}",
-                    tenantId.getValue(), extractEventId(eventData), eventData.keySet());
+            logger.info("Received TenantSuspendedEvent: tenantId={}, eventId={}, eventDataKeys={}", tenantId.getValue(), extractEventId(eventData), eventData.keySet());
 
             // Set tenant context for multi-tenant schema resolution
             TenantContext.setTenantId(tenantId);
@@ -97,8 +91,7 @@ public class TenantSuspendedEventListener {
 
                 createNotificationCommandHandler.handle(command);
 
-                logger.info("Created tenant suspension notification for tenant: tenantId={}, email={}",
-                        tenantId.getValue(), tenantEmail.getValue());
+                logger.info("Created tenant suspension notification for tenant: tenantId={}, email={}", tenantId.getValue(), tenantEmail.getValue());
 
                 // Acknowledge message
                 acknowledgment.acknowledge();
@@ -108,12 +101,10 @@ public class TenantSuspendedEventListener {
             }
         } catch (IllegalArgumentException e) {
             // Invalid event format - acknowledge to skip (don't retry malformed events)
-            logger.error("Invalid event format for TenantSuspendedEvent: eventData={}, error={}",
-                    eventData, e.getMessage(), e);
+            logger.error("Invalid event format for TenantSuspendedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             acknowledgment.acknowledge();
         } catch (Exception e) {
-            logger.error("Failed to process TenantSuspendedEvent: eventData={}, error={}",
-                    eventData, e.getMessage(), e);
+            logger.error("Failed to process TenantSuspendedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             // Don't acknowledge - will retry for transient failures
             throw new RuntimeException("Failed to process TenantSuspendedEvent", e);
         } finally {
@@ -123,8 +114,7 @@ public class TenantSuspendedEventListener {
     }
 
     /**
-     * Extracts correlation ID from event metadata and sets it in CorrelationContext.
-     * This enables traceability through event chains.
+     * Extracts correlation ID from event metadata and sets it in CorrelationContext. This enables traceability through event chains.
      *
      * @param eventData the event data map
      */
@@ -150,9 +140,9 @@ public class TenantSuspendedEventListener {
     /**
      * Detects event type from payload or header.
      * <p>
-     * Since type information is disabled in serialization, we detect event type by checking
-     * for event-specific fields. TenantSuspendedEvent has no additional fields beyond base DomainEvent,
-     * so we check @class field first (most reliable), then event-specific fields.
+     * Since type information is disabled in serialization, we detect event type by checking for event-specific fields. TenantSuspendedEvent has no additional fields beyond base
+     * DomainEvent, so we check @class field first (most reliable),
+     * then event-specific fields.
      *
      * @param eventData  Event data map
      * @param headerType Event type from header (may be null)
@@ -174,9 +164,7 @@ public class TenantSuspendedEventListener {
 
         // Check header if @class is not available
         if (headerType != null) {
-            String simpleName = headerType.contains(".")
-                    ? headerType.substring(headerType.lastIndexOf('.') + 1)
-                    : headerType;
+            String simpleName = headerType.contains(".") ? headerType.substring(headerType.lastIndexOf('.') + 1) : headerType;
             logger.debug("Detected event type from header: {}", simpleName);
             return simpleName;
         }
@@ -217,8 +205,7 @@ public class TenantSuspendedEventListener {
     /**
      * Extracts tenantId from event data.
      * <p>
-     * Extracts from the tenantId field in TenantEvent, or falls back to aggregateId
-     * (which now contains the tenant ID as a String).
+     * Extracts from the tenantId field in TenantEvent, or falls back to aggregateId (which now contains the tenant ID as a String).
      *
      * @param eventData Event data map
      * @return String tenant ID

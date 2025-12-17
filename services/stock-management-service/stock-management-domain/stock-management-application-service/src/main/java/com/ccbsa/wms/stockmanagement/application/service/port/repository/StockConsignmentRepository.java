@@ -10,11 +10,9 @@ import com.ccbsa.wms.stockmanagement.domain.core.valueobject.ConsignmentReferenc
 /**
  * Repository Port: StockConsignmentRepository
  * <p>
- * Defines the contract for StockConsignment aggregate persistence.
- * Implemented by data access adapters.
+ * Defines the contract for StockConsignment aggregate persistence. Implemented by data access adapters.
  * <p>
- * This port is defined in the application service layer (not domain core)
- * to maintain proper dependency direction in hexagonal architecture.
+ * This port is defined in the application service layer (not domain core) to maintain proper dependency direction in hexagonal architecture.
  */
 public interface StockConsignmentRepository {
     /**
@@ -42,9 +40,7 @@ public interface StockConsignmentRepository {
      * @param tenantId  Tenant identifier
      * @return Optional StockConsignment if found
      */
-    Optional<StockConsignment> findByConsignmentReferenceAndTenantId(
-            ConsignmentReference reference,
-            TenantId tenantId);
+    Optional<StockConsignment> findByConsignmentReferenceAndTenantId(ConsignmentReference reference, TenantId tenantId);
 
     /**
      * Checks if a consignment with the given reference exists for the tenant.

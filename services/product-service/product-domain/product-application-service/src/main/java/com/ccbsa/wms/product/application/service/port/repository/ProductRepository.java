@@ -12,11 +12,9 @@ import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 /**
  * Repository Port: ProductRepository
  * <p>
- * Defines the contract for Product aggregate persistence.
- * Implemented by data access adapters.
+ * Defines the contract for Product aggregate persistence. Implemented by data access adapters.
  * <p>
- * This port is defined in the application service layer (not domain core)
- * to maintain proper dependency direction in hexagonal architecture.
+ * This port is defined in the application service layer (not domain core) to maintain proper dependency direction in hexagonal architecture.
  */
 public interface ProductRepository {
     /**
@@ -66,8 +64,7 @@ public interface ProductRepository {
     boolean existsByBarcodeAndTenantId(ProductBarcode barcode, TenantId tenantId);
 
     /**
-     * Finds a Product by barcode and tenant ID.
-     * Searches both primary and secondary barcodes.
+     * Finds a Product by barcode and tenant ID. Searches both primary and secondary barcodes.
      *
      * @param barcode  Barcode value (as string)
      * @param tenantId Tenant identifier

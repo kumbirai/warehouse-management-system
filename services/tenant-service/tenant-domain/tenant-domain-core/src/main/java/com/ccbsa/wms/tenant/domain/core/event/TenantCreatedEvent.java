@@ -13,15 +13,13 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantStatus;
  * <p>
  * Published when a new tenant is created.
  */
-public final class TenantCreatedEvent extends TenantEvent<TenantId> {
+public final class TenantCreatedEvent
+        extends TenantEvent<TenantId> {
     private final TenantName name;
     private final TenantStatus status;
     private final EmailAddress email;
 
-    public TenantCreatedEvent(TenantId tenantId,
-                              TenantName name,
-                              TenantStatus status,
-                              EmailAddress email) {
+    public TenantCreatedEvent(TenantId tenantId, TenantName name, TenantStatus status, EmailAddress email) {
         super(tenantId);
         if (name == null) {
             throw new IllegalArgumentException("Tenant name cannot be null");
@@ -34,11 +32,7 @@ public final class TenantCreatedEvent extends TenantEvent<TenantId> {
         this.email = email; // Email is optional, can be null
     }
 
-    public TenantCreatedEvent(TenantId tenantId,
-                              TenantName name,
-                              TenantStatus status,
-                              EmailAddress email,
-                              EventMetadata metadata) {
+    public TenantCreatedEvent(TenantId tenantId, TenantName name, TenantStatus status, EmailAddress email, EventMetadata metadata) {
         super(tenantId, metadata);
         if (name == null) {
             throw new IllegalArgumentException("Tenant name cannot be null");

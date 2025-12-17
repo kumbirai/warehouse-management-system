@@ -23,8 +23,7 @@ import com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent;
 /**
  * Command Handler: SendNotificationCommandHandler
  * <p>
- * Handles sending notifications via delivery channels (email, SMS, WhatsApp).
- * Orchestrates adapter discovery, delivery execution, and status updates.
+ * Handles sending notifications via delivery channels (email, SMS, WhatsApp). Orchestrates adapter discovery, delivery execution, and status updates.
  */
 @Component
 public class SendNotificationCommandHandler {
@@ -34,10 +33,7 @@ public class SendNotificationCommandHandler {
     private final List<NotificationDeliveryPort> deliveryAdapters;
     private final NotificationEventPublisher eventPublisher;
 
-    public SendNotificationCommandHandler(
-            NotificationRepository repository,
-            List<NotificationDeliveryPort> deliveryAdapters,
-            NotificationEventPublisher eventPublisher) {
+    public SendNotificationCommandHandler(NotificationRepository repository, List<NotificationDeliveryPort> deliveryAdapters, NotificationEventPublisher eventPublisher) {
         this.repository = repository;
         this.deliveryAdapters = deliveryAdapters;
         this.eventPublisher = eventPublisher;
@@ -50,9 +46,9 @@ public class SendNotificationCommandHandler {
 
         // 2. Load notification
         Notification notification = repository.findById(command.getNotificationId())
-                .orElseThrow(() -> new NotificationNotFoundException(
-                        command.getNotificationId().getValue().toString(),
-                        "Notification not found for sending"));
+                .orElseThrow(() -> new NotificationNotFoundException(command.getNotificationId()
+                        .getValue()
+                        .toString(), "Notification not found for sending"));
 
         // 3. Find adapter supporting the channel
         NotificationDeliveryPort adapter = findAdapter(command.getChannel());
@@ -63,12 +59,10 @@ public class SendNotificationCommandHandler {
         // 5. Update notification status based on result
         if (deliveryResult.isSuccess()) {
             notification.markAsSent();
-            logger.info("Notification sent successfully: notificationId={}, channel={}, externalId={}",
-                    notification.getId(), command.getChannel(), deliveryResult.getExternalId());
+            logger.info("Notification sent successfully: notificationId={}, channel={}, externalId={}", notification.getId(), command.getChannel(), deliveryResult.getExternalId());
         } else {
             notification.markAsFailed();
-            logger.error("Notification delivery failed: notificationId={}, channel={}, error={}",
-                    notification.getId(), command.getChannel(), deliveryResult.getErrorMessage());
+            logger.error("Notification delivery failed: notificationId={}, channel={}, error={}", notification.getId(), command.getChannel(), deliveryResult.getErrorMessage());
         }
 
         // 6. Persist updated notification
@@ -76,10 +70,7 @@ public class SendNotificationCommandHandler {
 
         // 7. Publish domain event on success after transaction commit
         if (deliveryResult.isSuccess()) {
-            NotificationSentEvent sentEvent = new NotificationSentEvent(
-                    notification.getId(),
-                    command.getChannel(),
-                    deliveryResult.getSentAt());
+            NotificationSentEvent sentEvent = new NotificationSentEvent(notification.getId(), command.getChannel(), deliveryResult.getSentAt());
             publishEventAfterCommit(sentEvent);
         }
 
@@ -114,15 +105,13 @@ public class SendNotificationCommandHandler {
         return deliveryAdapters.stream()
                 .filter(adapter -> adapter.supports(channel))
                 .findFirst()
-                .orElseThrow(() -> new UnsupportedChannelException(channel,
-                        "No delivery adapter registered for this channel"));
+                .orElseThrow(() -> new UnsupportedChannelException(channel, "No delivery adapter registered for this channel"));
     }
 
     /**
      * Publishes domain event after transaction commit to avoid race conditions.
      * <p>
-     * Events are published using TransactionSynchronizationManager to ensure they are
-     * only published after the database transaction has successfully committed.
+     * Events are published using TransactionSynchronizationManager to ensure they are only published after the database transaction has successfully committed.
      *
      * @param event Domain event to publish
      */

@@ -19,7 +19,8 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
  * Spring Data JPA repository for NotificationEntity.
  */
 @Repository
-public interface NotificationJpaRepository extends JpaRepository<NotificationEntity, UUID> {
+public interface NotificationJpaRepository
+        extends JpaRepository<NotificationEntity, UUID> {
 
     /**
      * Finds notification by tenant ID and ID.
@@ -47,10 +48,7 @@ public interface NotificationJpaRepository extends JpaRepository<NotificationEnt
      * @param status          Notification status
      * @return List of notifications
      */
-    List<NotificationEntity> findByTenantIdAndRecipientUserIdAndStatus(
-            String tenantId,
-            String recipientUserId,
-            NotificationStatus status);
+    List<NotificationEntity> findByTenantIdAndRecipientUserIdAndStatus(String tenantId, String recipientUserId, NotificationStatus status);
 
     /**
      * Finds notifications by tenant ID and type.
@@ -59,9 +57,7 @@ public interface NotificationJpaRepository extends JpaRepository<NotificationEnt
      * @param type     Notification type
      * @return List of notifications
      */
-    List<NotificationEntity> findByTenantIdAndType(
-            String tenantId,
-            NotificationType type);
+    List<NotificationEntity> findByTenantIdAndType(String tenantId, NotificationType type);
 
     /**
      * Counts unread notifications for a user.
@@ -70,10 +66,7 @@ public interface NotificationJpaRepository extends JpaRepository<NotificationEnt
      * @param recipientUserId Recipient user identifier
      * @return Count of unread notifications
      */
-    @Query("SELECT COUNT(n) FROM NotificationEntity n " +
-            "WHERE n.tenantId = :tenantId " +
-            "AND n.recipientUserId = :recipientUserId " +
-            "AND n.status != 'READ'")
+    @Query("SELECT COUNT(n) FROM NotificationEntity n " + "WHERE n.tenantId = :tenantId " + "AND n.recipientUserId = :recipientUserId " + "AND n.status != 'READ'")
     long countUnreadByTenantIdAndRecipientUserId(
             @Param("tenantId") String tenantId,
             @Param("recipientUserId") String recipientUserId);

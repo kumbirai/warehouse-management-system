@@ -13,7 +13,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * <p>
  * Published when a role is assigned to a user.
  */
-public class UserRoleAssignedEvent extends UserEvent {
+public class UserRoleAssignedEvent
+        extends UserEvent {
     private final String roleName;
 
     @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",

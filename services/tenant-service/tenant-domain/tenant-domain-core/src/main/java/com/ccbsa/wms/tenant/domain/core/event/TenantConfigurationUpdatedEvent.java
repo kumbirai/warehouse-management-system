@@ -9,11 +9,11 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantConfiguration;
  * <p>
  * Published when tenant configuration is updated.
  */
-public final class TenantConfigurationUpdatedEvent extends TenantEvent<TenantId> {
+public final class TenantConfigurationUpdatedEvent
+        extends TenantEvent<TenantId> {
     private final TenantConfiguration configuration;
 
-    public TenantConfigurationUpdatedEvent(TenantId tenantId,
-                                           TenantConfiguration configuration) {
+    public TenantConfigurationUpdatedEvent(TenantId tenantId, TenantConfiguration configuration) {
         super(tenantId);
         if (configuration == null) {
             throw new IllegalArgumentException("Tenant configuration cannot be null");
@@ -21,9 +21,7 @@ public final class TenantConfigurationUpdatedEvent extends TenantEvent<TenantId>
         this.configuration = configuration;
     }
 
-    public TenantConfigurationUpdatedEvent(TenantId tenantId,
-                                           TenantConfiguration configuration,
-                                           EventMetadata metadata) {
+    public TenantConfigurationUpdatedEvent(TenantId tenantId, TenantConfiguration configuration, EventMetadata metadata) {
         super(tenantId, metadata);
         if (configuration == null) {
             throw new IllegalArgumentException("Tenant configuration cannot be null");

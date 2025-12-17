@@ -20,28 +20,19 @@ public final class TenantListQuery {
     private final TenantStatus status;
     private final String search;
 
-    private TenantListQuery(int page,
-                            int size,
-                            TenantStatus status,
-                            String search) {
+    private TenantListQuery(int page, int size, TenantStatus status, String search) {
         this.page = page;
         this.size = size;
         this.status = status;
         this.search = search;
     }
 
-    public static TenantListQuery of(Integer page,
-                                     Integer size,
-                                     TenantStatus status,
-                                     String search) {
+    public static TenantListQuery of(Integer page, Integer size, TenantStatus status, String search) {
         int normalizedPage = normalizePage(page);
         int normalizedSize = normalizeSize(size);
         String normalizedSearch = normalizeSearch(search);
 
-        return new TenantListQuery(normalizedPage,
-                normalizedSize,
-                status,
-                normalizedSearch);
+        return new TenantListQuery(normalizedPage, normalizedSize, status, normalizedSearch);
     }
 
     private static int normalizePage(Integer page) {
@@ -92,16 +83,12 @@ public final class TenantListQuery {
             return false;
         }
         TenantListQuery that = (TenantListQuery) o;
-        return page == that.page && size == that.size && status == that.status && Objects.equals(search,
-                that.search);
+        return page == that.page && size == that.size && status == that.status && Objects.equals(search, that.search);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(page,
-                size,
-                status,
-                search);
+        return Objects.hash(page, size, status, search);
     }
 }
 

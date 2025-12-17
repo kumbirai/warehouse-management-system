@@ -10,11 +10,10 @@ import com.ccbsa.wms.stockmanagement.domain.core.valueobject.ConsignmentReferenc
  * <p>
  * Published when a stock consignment is confirmed.
  * <p>
- * This event indicates that:
- * - Consignment has been confirmed and is ready for processing
- * - Consignment status changed from RECEIVED to CONFIRMED
+ * This event indicates that: - Consignment has been confirmed and is ready for processing - Consignment status changed from RECEIVED to CONFIRMED
  */
-public class StockConsignmentConfirmedEvent extends StockManagementEvent<StockConsignment> {
+public class StockConsignmentConfirmedEvent
+        extends StockManagementEvent<StockConsignment> {
     private static final String AGGREGATE_TYPE = "StockConsignment";
 
     private final ConsignmentReference consignmentReference;
@@ -29,11 +28,7 @@ public class StockConsignmentConfirmedEvent extends StockManagementEvent<StockCo
      * @param tenantId             Tenant identifier
      * @param warehouseId          Warehouse identifier
      */
-    public StockConsignmentConfirmedEvent(
-            String aggregateId,
-            ConsignmentReference consignmentReference,
-            TenantId tenantId,
-            WarehouseId warehouseId) {
+    public StockConsignmentConfirmedEvent(String aggregateId, ConsignmentReference consignmentReference, TenantId tenantId, WarehouseId warehouseId) {
         super(aggregateId, AGGREGATE_TYPE);
         this.consignmentReference = consignmentReference;
         this.tenantId = tenantId;

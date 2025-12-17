@@ -20,16 +20,15 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Handles tenant activation, including Keycloak realm creation/enablement.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Ports are managed singletons injected by Spring and kept immutable")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+        justification = "Ports are managed singletons injected by Spring and kept immutable")
 public class ActivateTenantCommandHandler {
     private final TenantRepository tenantRepository;
     private final TenantEventPublisher eventPublisher;
     private final KeycloakRealmServicePort keycloakRealmPort;
     private final TenantGroupServicePort tenantGroupServicePort;
 
-    public ActivateTenantCommandHandler(TenantRepository tenantRepository,
-                                        TenantEventPublisher eventPublisher,
-                                        KeycloakRealmServicePort keycloakRealmPort,
+    public ActivateTenantCommandHandler(TenantRepository tenantRepository, TenantEventPublisher eventPublisher, KeycloakRealmServicePort keycloakRealmPort,
                                         TenantGroupServicePort tenantGroupServicePort) {
         this.tenantRepository = tenantRepository;
         this.eventPublisher = eventPublisher;
@@ -41,8 +40,7 @@ public class ActivateTenantCommandHandler {
     public void handle(ActivateTenantCommand command) {
         // Find tenant
         Tenant tenant = tenantRepository.findById(command.getTenantId())
-                .orElseThrow(() -> new EntityNotFoundException(String.format("Tenant not found: %s",
-                        command.getTenantId())));
+                .orElseThrow(() -> new EntityNotFoundException(String.format("Tenant not found: %s", command.getTenantId())));
 
         // Activate tenant (domain logic)
         tenant.activate();
@@ -55,8 +53,7 @@ public class ActivateTenantCommandHandler {
                     .orElseGet(() -> generateRealmName(tenant.getId()));
 
             if (!keycloakRealmPort.realmExists(realmName)) {
-                keycloakRealmPort.createRealm(tenant.getId(),
-                        realmName);
+                keycloakRealmPort.createRealm(tenant.getId(), realmName);
             } else {
                 keycloakRealmPort.enableRealm(realmName);
             }
@@ -83,8 +80,7 @@ public class ActivateTenantCommandHandler {
     }
 
     private String generateRealmName(TenantId tenantId) {
-        return String.format("tenant-%s",
-                tenantId.getValue());
+        return String.format("tenant-%s", tenantId.getValue());
     }
 }
 

@@ -12,9 +12,7 @@ import com.ccbsa.wms.user.application.service.port.auth.AuthenticationServicePor
  * <p>
  * Handles user login command.
  * <p>
- * Responsibilities:
- * - Execute authentication via authentication service port
- * - Return authentication result with tokens and user context
+ * Responsibilities: - Execute authentication via authentication service port - Return authentication result with tokens and user context
  */
 @Component
 public class LoginCommandHandler {

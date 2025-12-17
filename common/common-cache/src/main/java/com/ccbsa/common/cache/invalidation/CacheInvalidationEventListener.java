@@ -51,17 +51,15 @@ public abstract class CacheInvalidationEventListener {
     /**
      * Invalidates caches for a domain event.
      * <p>
-     * Default strategy:
-     * 1. Invalidate single entity cache (tenant:123:namespace:uuid)
-     * 2. Invalidate all collection caches (tenant:123:namespace:*)
+     * Default strategy: 1. Invalidate single entity cache (tenant:123:namespace:uuid) 2. Invalidate all collection caches (tenant:123:namespace:*)
      * <p>
      * Override this method for custom invalidation logic.
      */
     protected void invalidateForEvent(DomainEvent<?> event, String namespace) {
         TenantId tenantId = extractTenantId(event);
 
-        log.debug("Invalidating caches for event: {} in namespace: {}",
-                event.getClass().getSimpleName(), namespace);
+        log.debug("Invalidating caches for event: {} in namespace: {}", event.getClass()
+                .getSimpleName(), namespace);
 
         // Strategy 1: Invalidate single entity if event contains aggregate ID
         if (event.getAggregateId() != null) {
@@ -80,17 +78,15 @@ public abstract class CacheInvalidationEventListener {
     /**
      * Extracts tenant ID from domain event.
      * <p>
-     * Tries multiple strategies:
-     * 1. Check for getTenantId() method (UserEvent, etc.)
-     * 2. For TenantEvent, aggregateId IS the tenant ID
-     * 3. Fallback to TenantContext if available
+     * Tries multiple strategies: 1. Check for getTenantId() method (UserEvent, etc.) 2. For TenantEvent, aggregateId IS the tenant ID 3. Fallback to TenantContext if available
      * <p>
      * Override if your events use a different field name.
      */
     protected TenantId extractTenantId(DomainEvent<?> event) {
         // Strategy 1: Check for getTenantId() method (UserEvent, ProductEvent, etc.)
         try {
-            Method getTenantIdMethod = event.getClass().getMethod("getTenantId");
+            Method getTenantIdMethod = event.getClass()
+                    .getMethod("getTenantId");
             Object tenantIdObj = getTenantIdMethod.invoke(event);
             if (tenantIdObj instanceof TenantId tenantId) {
                 return tenantId;
@@ -100,8 +96,8 @@ public abstract class CacheInvalidationEventListener {
         } catch (NoSuchMethodException e) {
             // Method doesn't exist, try next strategy
         } catch (Exception e) {
-            log.warn("Failed to extract tenant ID via getTenantId() method from event: {}",
-                    event.getClass().getSimpleName(), e);
+            log.warn("Failed to extract tenant ID via getTenantId() method from event: {}", event.getClass()
+                    .getSimpleName(), e);
         }
 
         // Strategy 2: For TenantEvent, aggregateId IS the tenant ID
@@ -123,9 +119,8 @@ public abstract class CacheInvalidationEventListener {
             // TenantContext not available
         }
 
-        log.error("Failed to extract tenant ID from event: {}. Event: {}",
-                event.getClass().getSimpleName(), event);
-        throw new IllegalArgumentException("Event must contain tenant ID",
-                new IllegalStateException("Cannot determine tenant ID from event"));
+        log.error("Failed to extract tenant ID from event: {}. Event: {}", event.getClass()
+                .getSimpleName(), event);
+        throw new IllegalArgumentException("Event must contain tenant ID", new IllegalStateException("Cannot determine tenant ID from event"));
     }
 }

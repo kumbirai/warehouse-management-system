@@ -22,16 +22,15 @@ import com.ccbsa.wms.stockmanagement.application.service.port.service.ProductSer
 /**
  * Adapter: ProductServiceAdapter
  * <p>
- * Implements ProductServicePort for retrieving product information from product-service.
- * Calls product-service REST API to validate product codes and barcodes.
+ * Implements ProductServicePort for retrieving product information from product-service. Calls product-service REST API to validate product codes and barcodes.
  */
 @Component
-public class ProductServiceAdapter implements ProductServicePort {
+public class ProductServiceAdapter
+        implements ProductServicePort {
     private static final Logger logger = LoggerFactory.getLogger(ProductServiceAdapter.class);
 
-    private static final ParameterizedTypeReference<ApiResponse<ProductResponse>> PRODUCT_RESPONSE_TYPE =
-            new ParameterizedTypeReference<ApiResponse<ProductResponse>>() {
-            };
+    private static final ParameterizedTypeReference<ApiResponse<ProductResponse>> PRODUCT_RESPONSE_TYPE = new ParameterizedTypeReference<ApiResponse<ProductResponse>>() {
+    };
 
     private static final ParameterizedTypeReference<ApiResponse<ValidateBarcodeResponse>> BARCODE_RESPONSE_TYPE =
             new ParameterizedTypeReference<ApiResponse<ValidateBarcodeResponse>>() {
@@ -40,9 +39,8 @@ public class ProductServiceAdapter implements ProductServicePort {
     private final RestTemplate restTemplate;
     private final String productServiceUrl;
 
-    public ProductServiceAdapter(
-            RestTemplate restTemplate,
-            @Value("${product.service.url:http://product-service:8080}") String productServiceUrl) {
+    public ProductServiceAdapter(RestTemplate restTemplate,
+                                 @Value("${product.service.url:http://product-service:8080}") String productServiceUrl) {
         this.restTemplate = restTemplate;
         this.productServiceUrl = productServiceUrl;
     }
@@ -59,23 +57,15 @@ public class ProductServiceAdapter implements ProductServicePort {
             headers.set("X-Tenant-Id", tenantId.getValue());
             org.springframework.http.HttpEntity<?> entity = new org.springframework.http.HttpEntity<>(headers);
 
-            ResponseEntity<ApiResponse<ValidateBarcodeResponse>> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    entity,
-                    BARCODE_RESPONSE_TYPE);
+            ResponseEntity<ApiResponse<ValidateBarcodeResponse>> response = restTemplate.exchange(url, HttpMethod.GET, entity, BARCODE_RESPONSE_TYPE);
 
             ApiResponse<ValidateBarcodeResponse> responseBody = response.getBody();
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
                 ValidateBarcodeResponse barcodeResponse = responseBody.getData();
                 if (barcodeResponse.isValid() && barcodeResponse.getProductInfo() != null) {
                     ValidateBarcodeResponse.ProductInfoDTO productInfoDTO = barcodeResponse.getProductInfo();
-                    ProductInfo productInfo = new ProductInfo(
-                            productInfoDTO.getProductId(),
-                            productInfoDTO.getProductCode(),
-                            productInfoDTO.getDescription(),
-                            productInfoDTO.getBarcode()
-                    );
+                    ProductInfo productInfo =
+                            new ProductInfo(productInfoDTO.getProductId(), productInfoDTO.getProductCode(), productInfoDTO.getDescription(), productInfoDTO.getBarcode());
                     logger.debug("Product barcode validated: productId={}, productCode={}", productInfoDTO.getProductId(), productInfoDTO.getProductCode());
                     return Optional.of(productInfo);
                 }

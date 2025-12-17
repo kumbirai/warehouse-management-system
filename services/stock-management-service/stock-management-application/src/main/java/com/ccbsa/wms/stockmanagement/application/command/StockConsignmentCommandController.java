@@ -39,27 +39,21 @@ import jakarta.validation.Valid;
  * <p>
  * Handles stock consignment command operations (write operations).
  * <p>
- * Responsibilities:
- * - Create consignment endpoints
- * - Upload CSV endpoints
- * - Validate consignment endpoints
- * - Map DTOs to commands
- * - Return standardized API responses
+ * Responsibilities: - Create consignment endpoints - Upload CSV endpoints - Validate consignment endpoints - Map DTOs to commands - Return standardized API responses
  */
 @RestController
 @RequestMapping("/api/v1/stock-management/consignments")
-@Tag(name = "Stock Consignment Commands", description = "Stock consignment command operations")
+@Tag(name = "Stock Consignment Commands",
+        description = "Stock consignment command operations")
 public class StockConsignmentCommandController {
     private final CreateConsignmentCommandHandler createCommandHandler;
     private final UploadConsignmentCsvCommandHandler uploadCsvCommandHandler;
     private final ValidateConsignmentCommandHandler validateCommandHandler;
     private final StockConsignmentDTOMapper mapper;
 
-    public StockConsignmentCommandController(
-            CreateConsignmentCommandHandler createCommandHandler,
-            UploadConsignmentCsvCommandHandler uploadCsvCommandHandler,
-            ValidateConsignmentCommandHandler validateCommandHandler,
-            StockConsignmentDTOMapper mapper) {
+    public StockConsignmentCommandController(CreateConsignmentCommandHandler createCommandHandler, UploadConsignmentCsvCommandHandler uploadCsvCommandHandler,
+                                             ValidateConsignmentCommandHandler validateCommandHandler,
+                                             StockConsignmentDTOMapper mapper) {
         this.createCommandHandler = createCommandHandler;
         this.uploadCsvCommandHandler = uploadCsvCommandHandler;
         this.validateCommandHandler = validateCommandHandler;
@@ -67,14 +61,16 @@ public class StockConsignmentCommandController {
     }
 
     @PostMapping
-    @Operation(summary = "Create Consignment", description = "Creates a new stock consignment")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OPERATOR')")
+    @Operation(summary = "Create Consignment",
+            description = "Creates a new stock consignment")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK')")
     public ResponseEntity<ApiResponse<CreateConsignmentResultDTO>> createConsignment(
             @RequestHeader("X-Tenant-Id") String tenantId,
-            @Valid @RequestBody CreateConsignmentCommandDTO commandDTO) {
+            @Valid
+            @RequestBody
+            CreateConsignmentCommandDTO commandDTO) {
         // Map DTO to command
-        CreateConsignmentCommand command =
-                mapper.toCreateCommand(commandDTO, tenantId);
+        CreateConsignmentCommand command = mapper.toCreateCommand(commandDTO, tenantId);
 
         // Execute command
         CreateConsignmentResult result = createCommandHandler.handle(command);
@@ -86,16 +82,17 @@ public class StockConsignmentCommandController {
     }
 
     @PostMapping("/upload-csv")
-    @Operation(summary = "Upload Consignment CSV", description = "Uploads consignment data via CSV file")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OPERATOR')")
+    @Operation(summary = "Upload Consignment CSV",
+            description = "Uploads consignment data via CSV file")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK')")
     public ResponseEntity<ApiResponse<UploadConsignmentCsvResultDTO>> uploadConsignmentCsv(
             @RequestHeader("X-Tenant-Id") String tenantId,
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "receivedBy", required = false) String receivedBy) {
+            @RequestParam(value = "receivedBy",
+                    required = false) String receivedBy) {
         try {
             // Map file to command
-            UploadConsignmentCsvCommand command =
-                    mapper.toUploadCsvCommand(file, tenantId, receivedBy);
+            UploadConsignmentCsvCommand command = mapper.toUploadCsvCommand(file, tenantId, receivedBy);
 
             // Execute command
             UploadConsignmentCsvResult result = uploadCsvCommandHandler.handle(command);
@@ -110,14 +107,16 @@ public class StockConsignmentCommandController {
     }
 
     @PostMapping("/validate")
-    @Operation(summary = "Validate Consignment", description = "Validates consignment data before creation")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OPERATOR')")
+    @Operation(summary = "Validate Consignment",
+            description = "Validates consignment data before creation")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK')")
     public ResponseEntity<ApiResponse<ValidateConsignmentResultDTO>> validateConsignment(
             @RequestHeader("X-Tenant-Id") String tenantId,
-            @Valid @RequestBody ValidateConsignmentCommandDTO commandDTO) {
+            @Valid
+            @RequestBody
+            ValidateConsignmentCommandDTO commandDTO) {
         // Map DTO to command
-        ValidateConsignmentCommand command =
-                mapper.toValidateCommand(commandDTO, tenantId);
+        ValidateConsignmentCommand command = mapper.toValidateCommand(commandDTO, tenantId);
 
         // Execute command
         ValidateConsignmentResult result = validateCommandHandler.handle(command);

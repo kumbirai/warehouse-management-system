@@ -5,8 +5,7 @@ import java.util.Objects;
 /**
  * Value Object: TenantName
  * <p>
- * Represents the name of a tenant (LDP).
- * Immutable and validated on construction.
+ * Represents the name of a tenant (LDP). Immutable and validated on construction.
  */
 public final class TenantName {
     private final String value;
@@ -39,8 +38,7 @@ public final class TenantName {
             return false;
         }
         TenantName that = (TenantName) o;
-        return Objects.equals(value,
-                that.value);
+        return Objects.equals(value, that.value);
     }
 
     @Override
@@ -50,8 +48,7 @@ public final class TenantName {
 
     @Override
     public String toString() {
-        return String.format("TenantName{value='%s'}",
-                value);
+        return String.format("TenantName{value='%s'}", value);
     }
 }
 

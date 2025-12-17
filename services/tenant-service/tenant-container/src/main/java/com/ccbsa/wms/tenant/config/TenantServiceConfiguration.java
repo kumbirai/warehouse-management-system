@@ -9,8 +9,7 @@ import com.ccbsa.wms.common.security.ServiceSecurityConfig;
 /**
  * Tenant Service Configuration
  * <p>
- * Imports common security configuration for JWT validation and tenant context.
- * Imports common Kafka configuration to ensure events include @class field for type detection.
+ * Imports common security configuration for JWT validation and tenant context. Imports common Kafka configuration to ensure events include @class field for type detection.
  */
 @Configuration
 @Import( {ServiceSecurityConfig.class, KafkaConfig.class})

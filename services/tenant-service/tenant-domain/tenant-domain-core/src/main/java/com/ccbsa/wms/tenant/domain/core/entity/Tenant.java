@@ -22,21 +22,14 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantStatus;
  * <p>
  * Represents a tenant (LDP - Local Distribution Partner) with lifecycle and configuration.
  * <p>
- * Business Rules:
- * - Tenant ID must be unique
- * - Tenant name is required
- * - Tenant status transitions must be valid:
- * - PENDING → ACTIVE
- * - ACTIVE → INACTIVE or SUSPENDED
- * - SUSPENDED → ACTIVE or INACTIVE
- * - INACTIVE → ACTIVE
- * - Cannot delete active tenant (must deactivate first)
- * - Tenant schema must be created during activation (for schema-per-tenant)
+ * Business Rules: - Tenant ID must be unique - Tenant name is required - Tenant status transitions must be valid: - PENDING → ACTIVE - ACTIVE → INACTIVE or SUSPENDED - SUSPENDED →
+ * ACTIVE or INACTIVE - INACTIVE → ACTIVE - Cannot delete
+ * active tenant (must deactivate first) - Tenant schema must be created during activation (for schema-per-tenant)
  * <p>
- * Note: Tenant is NOT tenant-aware (it IS the tenant), so it extends AggregateRoot,
- * not TenantAwareAggregateRoot.
+ * Note: Tenant is NOT tenant-aware (it IS the tenant), so it extends AggregateRoot, not TenantAwareAggregateRoot.
  */
-public class Tenant extends AggregateRoot<TenantId> {
+public class Tenant
+        extends AggregateRoot<TenantId> {
     // Value Objects
     private TenantName name;
     private TenantStatus status;
@@ -48,8 +41,7 @@ public class Tenant extends AggregateRoot<TenantId> {
     private LocalDateTime deactivatedAt;
 
     /**
-     * Private constructor for builder pattern.
-     * Prevents direct instantiation.
+     * Private constructor for builder pattern. Prevents direct instantiation.
      */
     private Tenant() {
         // Builder will set all fields
@@ -67,9 +59,7 @@ public class Tenant extends AggregateRoot<TenantId> {
     /**
      * Business logic method: Activates the tenant.
      * <p>
-     * Business Rules:
-     * - Only PENDING tenants can be activated
-     * - Tenant must not already be ACTIVE
+     * Business Rules: - Only PENDING tenants can be activated - Tenant must not already be ACTIVE
      *
      * @throws IllegalStateException if tenant cannot be activated
      */
@@ -78,8 +68,7 @@ public class Tenant extends AggregateRoot<TenantId> {
             throw new IllegalStateException("Tenant is already active");
         }
         if (!this.status.canTransitionTo(TenantStatus.ACTIVE)) {
-            throw new IllegalStateException(String.format("Cannot activate tenant: invalid status transition from %s",
-                    this.status));
+            throw new IllegalStateException(String.format("Cannot activate tenant: invalid status transition from %s", this.status));
         }
 
         this.status = TenantStatus.ACTIVE;
@@ -87,8 +76,7 @@ public class Tenant extends AggregateRoot<TenantId> {
         incrementVersion();
 
         // Publish domain event
-        addDomainEvent(new TenantSchemaCreatedEvent(this.getId(),
-                resolveSchemaName()));
+        addDomainEvent(new TenantSchemaCreatedEvent(this.getId(), resolveSchemaName()));
         addDomainEvent(new TenantActivatedEvent(this.getId()));
     }
 
@@ -102,13 +90,13 @@ public class Tenant extends AggregateRoot<TenantId> {
      * <p>
      * Schema naming convention: `tenant_{sanitized_tenant_id}_schema`
      * <p>
-     * This matches the convention used by TenantSchemaResolver in common-dataaccess.
-     * The tenant ID is sanitized to ensure it's a valid PostgreSQL identifier.
+     * This matches the convention used by TenantSchemaResolver in common-dataaccess. The tenant ID is sanitized to ensure it's a valid PostgreSQL identifier.
      *
      * @return Schema name in format: `tenant_{sanitized_tenant_id}_schema`
      */
     String resolveSchemaName() {
-        String tenantIdValue = this.getId().getValue();
+        String tenantIdValue = this.getId()
+                .getValue();
 
         // Sanitize tenant ID to ensure valid PostgreSQL identifier
         // Convert to lowercase and replace special characters with underscores
@@ -139,9 +127,7 @@ public class Tenant extends AggregateRoot<TenantId> {
     /**
      * Business logic method: Deactivates the tenant.
      * <p>
-     * Business Rules:
-     * - Only ACTIVE or SUSPENDED tenants can be deactivated
-     * - Tenant must not already be INACTIVE
+     * Business Rules: - Only ACTIVE or SUSPENDED tenants can be deactivated - Tenant must not already be INACTIVE
      *
      * @throws IllegalStateException if tenant cannot be deactivated
      */
@@ -150,8 +136,7 @@ public class Tenant extends AggregateRoot<TenantId> {
             throw new IllegalStateException("Tenant is already inactive");
         }
         if (!this.status.canTransitionTo(TenantStatus.INACTIVE)) {
-            throw new IllegalStateException(String.format("Cannot deactivate tenant: invalid status transition from %s",
-                    this.status));
+            throw new IllegalStateException(String.format("Cannot deactivate tenant: invalid status transition from %s", this.status));
         }
 
         this.status = TenantStatus.INACTIVE;
@@ -165,9 +150,7 @@ public class Tenant extends AggregateRoot<TenantId> {
     /**
      * Business logic method: Suspends the tenant.
      * <p>
-     * Business Rules:
-     * - Only ACTIVE tenants can be suspended
-     * - Tenant must not already be SUSPENDED
+     * Business Rules: - Only ACTIVE tenants can be suspended - Tenant must not already be SUSPENDED
      *
      * @throws IllegalStateException if tenant cannot be suspended
      */
@@ -176,8 +159,7 @@ public class Tenant extends AggregateRoot<TenantId> {
             throw new IllegalStateException("Tenant is already suspended");
         }
         if (!this.status.canTransitionTo(TenantStatus.SUSPENDED)) {
-            throw new IllegalStateException(String.format("Cannot suspend tenant: invalid status transition from %s",
-                    this.status));
+            throw new IllegalStateException(String.format("Cannot suspend tenant: invalid status transition from %s", this.status));
         }
 
         this.status = TenantStatus.SUSPENDED;
@@ -202,8 +184,7 @@ public class Tenant extends AggregateRoot<TenantId> {
         incrementVersion();
 
         // Publish domain event
-        addDomainEvent(new TenantConfigurationUpdatedEvent(this.getId(),
-                newConfiguration));
+        addDomainEvent(new TenantConfigurationUpdatedEvent(this.getId(), newConfiguration));
     }
 
     /**
@@ -282,8 +263,7 @@ public class Tenant extends AggregateRoot<TenantId> {
     }
 
     /**
-     * Builder class for constructing Tenant instances.
-     * Ensures all required fields are set and validated.
+     * Builder class for constructing Tenant instances. Ensures all required fields are set and validated.
      */
     public static class Builder {
         private Tenant tenant = new Tenant();
@@ -358,8 +338,7 @@ public class Tenant extends AggregateRoot<TenantId> {
         }
 
         /**
-         * Builds and validates the Tenant instance.
-         * Publishes creation event for new tenants.
+         * Builds and validates the Tenant instance. Publishes creation event for new tenants.
          *
          * @return Validated Tenant instance
          * @throws IllegalArgumentException if validation fails
@@ -381,15 +360,11 @@ public class Tenant extends AggregateRoot<TenantId> {
                     email = tenant.contactInformation.getEmail()
                             .orElse(null);
                 }
-                tenant.addDomainEvent(new TenantCreatedEvent(tenant.getId(),
-                        tenant.name,
-                        tenant.status,
-                        email));
+                tenant.addDomainEvent(new TenantCreatedEvent(tenant.getId(), tenant.name, tenant.status, email));
 
                 // Publish schema creation event for new tenants
                 // This triggers schema creation in all tenant-aware services (notification, user, etc.)
-                tenant.addDomainEvent(new TenantSchemaCreatedEvent(tenant.getId(),
-                        tenant.resolveSchemaName()));
+                tenant.addDomainEvent(new TenantSchemaCreatedEvent(tenant.getId(), tenant.resolveSchemaName()));
             }
 
             return consumeTenant();
@@ -428,8 +403,7 @@ public class Tenant extends AggregateRoot<TenantId> {
         }
 
         /**
-         * Builds and validates the Tenant instance without publishing events.
-         * Used when loading from database.
+         * Builds and validates the Tenant instance without publishing events. Used when loading from database.
          *
          * @return Validated Tenant instance
          * @throws IllegalArgumentException if validation fails

@@ -3,8 +3,7 @@ package com.ccbsa.wms.user.domain.core.valueobject;
 /**
  * Value Object: UserStatus
  * <p>
- * Represents the status of a user account.
- * Immutable enum-like value object.
+ * Represents the status of a user account. Immutable enum-like value object.
  */
 public enum UserStatus {
     ACTIVE,

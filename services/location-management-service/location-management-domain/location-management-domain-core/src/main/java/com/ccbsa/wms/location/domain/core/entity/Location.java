@@ -17,15 +17,12 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
  * <p>
  * Represents a warehouse location with barcode support.
  * <p>
- * Business Rules:
- * - Locations are tenant-aware
- * - Each location has a unique barcode per tenant
- * - Locations have coordinates (zone, aisle, rack, level)
- * - Locations have a status (AVAILABLE, OCCUPIED, RESERVED, BLOCKED)
- * - Locations can have capacity constraints
- * - Barcodes can be auto-generated from coordinates or manually provided
+ * Business Rules: - Locations are tenant-aware - Each location has a unique barcode per tenant - Locations have coordinates (zone, aisle, rack, level) - Locations have a status
+ * (AVAILABLE, OCCUPIED, RESERVED, BLOCKED) - Locations can have
+ * capacity constraints - Barcodes can be auto-generated from coordinates or manually provided
  */
-public class Location extends TenantAwareAggregateRoot<LocationId> {
+public class Location
+        extends TenantAwareAggregateRoot<LocationId> {
 
     // Value Objects
     private LocationBarcode barcode;
@@ -39,8 +36,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
     private LocalDateTime lastModifiedAt;
 
     /**
-     * Private constructor for builder pattern.
-     * Prevents direct instantiation.
+     * Private constructor for builder pattern. Prevents direct instantiation.
      */
     private Location() {
     }
@@ -57,9 +53,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
     /**
      * Business logic method: Updates the location barcode.
      * <p>
-     * Business Rules:
-     * - Barcode can be updated if location is AVAILABLE or OCCUPIED
-     * - New barcode must be unique per tenant (validated at application service layer)
+     * Business Rules: - Barcode can be updated if location is AVAILABLE or OCCUPIED - New barcode must be unique per tenant (validated at application service layer)
      *
      * @param newBarcode New barcode value
      * @throws IllegalStateException    if location status prevents barcode update
@@ -80,9 +74,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
     /**
      * Business logic method: Updates the location status.
      * <p>
-     * Business Rules:
-     * - Status transitions must be valid
-     * - BLOCKED status can only be set manually (not automatically)
+     * Business Rules: - Status transitions must be valid - BLOCKED status can only be set manually (not automatically)
      *
      * @param newStatus New status value
      * @throws IllegalArgumentException if newStatus is null
@@ -99,9 +91,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
     /**
      * Business logic method: Updates the location capacity.
      * <p>
-     * Business Rules:
-     * - New maximum capacity cannot be less than current quantity
-     * - Capacity update is allowed for any status
+     * Business Rules: - New maximum capacity cannot be less than current quantity - Capacity update is allowed for any status
      *
      * @param newCapacity New capacity value
      * @throws IllegalArgumentException if newCapacity is null or invalid
@@ -115,10 +105,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
         if (newCapacity.getMaximumQuantity() != null) {
             BigDecimal currentQty = this.capacity != null ? this.capacity.getCurrentQuantity() : BigDecimal.ZERO;
             if (currentQty.compareTo(newCapacity.getMaximumQuantity()) > 0) {
-                throw new IllegalArgumentException(
-                        String.format("Current quantity (%s) exceeds new maximum capacity (%s)",
-                                currentQty, newCapacity.getMaximumQuantity())
-                );
+                throw new IllegalArgumentException(String.format("Current quantity (%s) exceeds new maximum capacity (%s)", currentQty, newCapacity.getMaximumQuantity()));
             }
         }
 
@@ -129,9 +116,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
     /**
      * Business logic method: Updates the current quantity in location.
      * <p>
-     * Business Rules:
-     * - Quantity cannot exceed maximum capacity if set
-     * - Quantity cannot be negative
+     * Business Rules: - Quantity cannot exceed maximum capacity if set - Quantity cannot be negative
      *
      * @param newQuantity New current quantity
      * @throws IllegalArgumentException if newQuantity is invalid
@@ -146,10 +131,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
 
         BigDecimal maxQty = this.capacity != null ? this.capacity.getMaximumQuantity() : null;
         if (maxQty != null && newQuantity.compareTo(maxQty) > 0) {
-            throw new IllegalArgumentException(
-                    String.format("CurrentQuantity (%s) cannot exceed MaximumQuantity (%s)",
-                            newQuantity, maxQty)
-            );
+            throw new IllegalArgumentException(String.format("CurrentQuantity (%s) cannot exceed MaximumQuantity (%s)", newQuantity, maxQty));
         }
 
         LocationCapacity newCapacity = LocationCapacity.of(newQuantity, maxQty);
@@ -240,8 +222,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
     }
 
     /**
-     * Builder class for constructing Location instances.
-     * Ensures all required fields are set and validated.
+     * Builder class for constructing Location instances. Ensures all required fields are set and validated.
      */
     public static class Builder {
         private Location location = new Location();
@@ -350,13 +331,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
 
             // Publish creation event only if this is a new location (no version set)
             if (location.getVersion() == 0) {
-                location.addDomainEvent(new LocationCreatedEvent(
-                        location.getId(),
-                        location.getTenantId(),
-                        location.barcode,
-                        location.coordinates,
-                        location.status
-                ));
+                location.addDomainEvent(new LocationCreatedEvent(location.getId(), location.getTenantId(), location.barcode, location.coordinates, location.status));
             }
 
             return consumeLocation();
@@ -393,8 +368,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
         }
 
         /**
-         * Consumes the location from the builder and returns it.
-         * Creates a new location instance for the next build.
+         * Consumes the location from the builder and returns it. Creates a new location instance for the next build.
          *
          * @return Built location
          */
@@ -405,8 +379,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
         }
 
         /**
-         * Builds Location without publishing creation event.
-         * Used when reconstructing from persistence.
+         * Builds Location without publishing creation event. Used when reconstructing from persistence.
          *
          * @return Validated Location instance
          * @throws IllegalArgumentException if validation fails

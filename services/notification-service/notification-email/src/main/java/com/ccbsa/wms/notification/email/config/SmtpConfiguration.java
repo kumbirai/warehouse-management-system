@@ -10,8 +10,7 @@ import jakarta.validation.constraints.NotNull;
 /**
  * Configuration: SmtpConfiguration
  * <p>
- * SMTP configuration properties for email delivery.
- * Configured via application.yml with prefix: notification.email.smtp
+ * SMTP configuration properties for email delivery. Configured via application.yml with prefix: notification.email.smtp
  */
 @ConfigurationProperties(prefix = "notification.email.smtp")
 @Validated
@@ -20,7 +19,8 @@ public class SmtpConfiguration {
     private String host = "localhost";
 
     @NotNull(message = "SMTP port cannot be null")
-    @Min(value = 1, message = "SMTP port must be positive")
+    @Min(value = 1,
+            message = "SMTP port must be positive")
     private int port = 1025;
 
     private String username;

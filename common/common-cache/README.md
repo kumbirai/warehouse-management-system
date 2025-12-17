@@ -2,7 +2,8 @@
 
 ## Overview
 
-The `common-cache` module provides production-grade distributed caching infrastructure for the Warehouse Management System. It implements tenant-aware caching using Redis with
+The `common-cache` module provides production-grade distributed caching infrastructure for the Warehouse Management
+System. It implements tenant-aware caching using Redis with
 Spring Cache abstraction.
 
 ## Features

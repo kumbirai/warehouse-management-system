@@ -42,19 +42,11 @@ public class NotificationMapper {
      * @return Notification response
      */
     public NotificationResponse toNotificationResponse(GetNotificationQueryResult result) {
-        return new NotificationResponse(
-                result.getNotificationId().getValueAsString(),
-                result.getTenantId().getValue(),
-                result.getRecipientUserId().getValue(),
-                result.getTitle(),
-                result.getMessage(),
-                result.getType(),
-                result.getStatus(),
-                result.getCreatedAt(),
-                result.getLastModifiedAt(),
-                result.getSentAt(),
-                result.getReadAt()
-        );
+        return new NotificationResponse(result.getNotificationId()
+                .getValueAsString(), result.getTenantId()
+                .getValue(), result.getRecipientUserId()
+                .getValue(), result.getTitle(), result.getMessage(), result.getType(), result.getStatus(), result.getCreatedAt(), result.getLastModifiedAt(),
+                result.getSentAt(), result.getReadAt());
     }
 
     /**
@@ -78,13 +70,7 @@ public class NotificationMapper {
      * @param size            Page size (optional)
      * @return ListNotificationsQuery
      */
-    public ListNotificationsQuery toListNotificationsQuery(
-            String tenantId,
-            String recipientUserId,
-            String status,
-            String type,
-            Integer page,
-            Integer size) {
+    public ListNotificationsQuery toListNotificationsQuery(String tenantId, String recipientUserId, String status, String type, Integer page, Integer size) {
         ListNotificationsQuery.Builder builder = ListNotificationsQuery.builder()
                 .tenantId(TenantId.of(tenantId));
 

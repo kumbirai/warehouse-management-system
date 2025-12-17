@@ -13,8 +13,7 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 /**
  * Mapper: LocationEntityMapper
  * <p>
- * Maps between Location domain aggregate and LocationEntity JPA entity.
- * Handles conversion between domain value objects and JPA entity fields.
+ * Maps between Location domain aggregate and LocationEntity JPA entity. Handles conversion between domain value objects and JPA entity fields.
  */
 @Component
 public class LocationEntityMapper {
@@ -22,8 +21,7 @@ public class LocationEntityMapper {
     /**
      * Converts Location domain entity to LocationEntity JPA entity.
      * <p>
-     * For new entities (version == 0), version is set to null to let Hibernate manage it.
-     * For existing entities (version > 0), version is set to enable optimistic locking.
+     * For new entities (version == 0), version is set to null to let Hibernate manage it. For existing entities (version > 0), version is set to enable optimistic locking.
      *
      * @param location Location domain entity
      * @return LocationEntity JPA entity
@@ -35,13 +33,20 @@ public class LocationEntityMapper {
         }
 
         LocationEntity entity = new LocationEntity();
-        entity.setId(location.getId().getValue());
-        entity.setTenantId(location.getTenantId().getValue());
-        entity.setBarcode(location.getBarcode().getValue());
-        entity.setZone(location.getCoordinates().getZone());
-        entity.setAisle(location.getCoordinates().getAisle());
-        entity.setRack(location.getCoordinates().getRack());
-        entity.setLevel(location.getCoordinates().getLevel());
+        entity.setId(location.getId()
+                .getValue());
+        entity.setTenantId(location.getTenantId()
+                .getValue());
+        entity.setBarcode(location.getBarcode()
+                .getValue());
+        entity.setZone(location.getCoordinates()
+                .getZone());
+        entity.setAisle(location.getCoordinates()
+                .getAisle());
+        entity.setRack(location.getCoordinates()
+                .getRack());
+        entity.setLevel(location.getCoordinates()
+                .getLevel());
         entity.setStatus(location.getStatus());
 
         // Map capacity
@@ -83,12 +88,7 @@ public class LocationEntityMapper {
                 .locationId(LocationId.of(entity.getId()))
                 .tenantId(TenantId.of(entity.getTenantId()))
                 .barcode(LocationBarcode.of(entity.getBarcode()))
-                .coordinates(LocationCoordinates.of(
-                        entity.getZone(),
-                        entity.getAisle(),
-                        entity.getRack(),
-                        entity.getLevel()
-                ))
+                .coordinates(LocationCoordinates.of(entity.getZone(), entity.getAisle(), entity.getRack(), entity.getLevel()))
                 .status(entity.getStatus())
                 .createdAt(entity.getCreatedAt())
                 .lastModifiedAt(entity.getLastModifiedAt())
@@ -96,15 +96,15 @@ public class LocationEntityMapper {
 
         // Map capacity
         if (entity.getCurrentQuantity() != null || entity.getMaximumQuantity() != null) {
-            LocationCapacity capacity = LocationCapacity.of(
-                    entity.getCurrentQuantity() != null ? entity.getCurrentQuantity() : java.math.BigDecimal.ZERO,
-                    entity.getMaximumQuantity()
-            );
+            LocationCapacity capacity =
+                    LocationCapacity.of(entity.getCurrentQuantity() != null ? entity.getCurrentQuantity() : java.math.BigDecimal.ZERO, entity.getMaximumQuantity());
             builder.capacity(capacity);
         }
 
         // Set description if available
-        if (entity.getDescription() != null && !entity.getDescription().trim().isEmpty()) {
+        if (entity.getDescription() != null && !entity.getDescription()
+                .trim()
+                .isEmpty()) {
             builder.description(entity.getDescription());
         }
 

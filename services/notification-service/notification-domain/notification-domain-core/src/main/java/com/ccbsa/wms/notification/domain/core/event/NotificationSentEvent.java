@@ -13,7 +13,8 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationId;
  * <p>
  * Event Version: 1.0
  */
-public final class NotificationSentEvent extends NotificationEvent {
+public final class NotificationSentEvent
+        extends NotificationEvent {
     private final NotificationChannel channel;
     private final LocalDateTime sentAt;
 

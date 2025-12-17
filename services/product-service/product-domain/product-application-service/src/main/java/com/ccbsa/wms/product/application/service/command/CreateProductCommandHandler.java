@@ -26,12 +26,8 @@ import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
  * <p>
  * Handles creation of new Product aggregate.
  * <p>
- * Responsibilities:
- * - Validates product code uniqueness
- * - Validates barcode uniqueness (primary and secondary)
- * - Creates Product aggregate
- * - Persists aggregate
- * - Publishes domain events after transaction commit
+ * Responsibilities: - Validates product code uniqueness - Validates barcode uniqueness (primary and secondary) - Creates Product aggregate - Persists aggregate - Publishes domain
+ * events after transaction commit
  */
 @Component
 public class CreateProductCommandHandler {
@@ -40,9 +36,7 @@ public class CreateProductCommandHandler {
     private final ProductRepository repository;
     private final ProductEventPublisher eventPublisher;
 
-    public CreateProductCommandHandler(
-            ProductRepository repository,
-            ProductEventPublisher eventPublisher) {
+    public CreateProductCommandHandler(ProductRepository repository, ProductEventPublisher eventPublisher) {
         this.repository = repository;
         this.eventPublisher = eventPublisher;
     }
@@ -59,7 +53,8 @@ public class CreateProductCommandHandler {
         validateBarcodeUniqueness(command.getPrimaryBarcode(), command.getTenantId());
 
         // 4. Validate secondary barcodes uniqueness
-        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
+        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes()
+                .isEmpty()) {
             for (ProductBarcode barcode : command.getSecondaryBarcodes()) {
                 validateBarcodeUniqueness(barcode, command.getTenantId());
             }
@@ -75,15 +70,20 @@ public class CreateProductCommandHandler {
                 .unitOfMeasure(command.getUnitOfMeasure());
 
         // Add secondary barcodes if provided
-        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
+        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes()
+                .isEmpty()) {
             builder.secondaryBarcodes(command.getSecondaryBarcodes());
         }
 
         // Set optional fields
-        if (command.getCategory() != null && !command.getCategory().trim().isEmpty()) {
+        if (command.getCategory() != null && !command.getCategory()
+                .trim()
+                .isEmpty()) {
             builder.category(command.getCategory());
         }
-        if (command.getBrand() != null && !command.getBrand().trim().isEmpty()) {
+        if (command.getBrand() != null && !command.getBrand()
+                .trim()
+                .isEmpty()) {
             builder.brand(command.getBrand());
         }
 
@@ -128,7 +128,9 @@ public class CreateProductCommandHandler {
         if (command.getProductCode() == null) {
             throw new IllegalArgumentException("ProductCode is required");
         }
-        if (command.getDescription() == null || command.getDescription().trim().isEmpty()) {
+        if (command.getDescription() == null || command.getDescription()
+                .trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Description is required");
         }
         if (command.getPrimaryBarcode() == null) {
@@ -146,12 +148,9 @@ public class CreateProductCommandHandler {
      * @param tenantId    Tenant identifier
      * @throws ProductCodeAlreadyExistsException if product code already exists
      */
-    private void validateProductCodeUniqueness(com.ccbsa.wms.product.domain.core.valueobject.ProductCode productCode,
-                                               com.ccbsa.common.domain.valueobject.TenantId tenantId) {
+    private void validateProductCodeUniqueness(com.ccbsa.wms.product.domain.core.valueobject.ProductCode productCode, com.ccbsa.common.domain.valueobject.TenantId tenantId) {
         if (repository.existsByProductCodeAndTenantId(productCode, tenantId)) {
-            throw new ProductCodeAlreadyExistsException(
-                    String.format("Product code already exists: %s", productCode.getValue())
-            );
+            throw new ProductCodeAlreadyExistsException(String.format("Product code already exists: %s", productCode.getValue()));
         }
     }
 
@@ -164,9 +163,7 @@ public class CreateProductCommandHandler {
      */
     private void validateBarcodeUniqueness(ProductBarcode barcode, com.ccbsa.common.domain.valueobject.TenantId tenantId) {
         if (repository.existsByBarcodeAndTenantId(barcode, tenantId)) {
-            throw new BarcodeAlreadyExistsException(
-                    String.format("Product barcode already exists: %s", barcode.getValue())
-            );
+            throw new BarcodeAlreadyExistsException(String.format("Product barcode already exists: %s", barcode.getValue()));
         }
     }
 

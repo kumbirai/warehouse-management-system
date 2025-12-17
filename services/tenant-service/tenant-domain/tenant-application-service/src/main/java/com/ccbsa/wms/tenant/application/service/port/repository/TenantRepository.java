@@ -9,8 +9,7 @@ import com.ccbsa.wms.tenant.domain.core.entity.Tenant;
 /**
  * Repository port for Tenant aggregate persistence.
  * <p>
- * This port is defined in the application service layer and implemented
- * by the data access layer (tenant-dataaccess).
+ * This port is defined in the application service layer and implemented by the data access layer (tenant-dataaccess).
  */
 public interface TenantRepository {
     /**

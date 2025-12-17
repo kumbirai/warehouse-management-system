@@ -13,10 +13,7 @@ import com.ccbsa.wms.product.domain.core.exception.ProductNotFoundException;
  * <p>
  * Handles retrieval of Product aggregate by ID.
  * <p>
- * Responsibilities:
- * - Load Product aggregate from repository
- * - Map aggregate to query result DTO
- * - Return optimized read model
+ * Responsibilities: - Load Product aggregate from repository - Map aggregate to query result DTO - Return optimized read model
  */
 @Component
 public class GetProductQueryHandler {
@@ -30,11 +27,9 @@ public class GetProductQueryHandler {
     @Transactional(readOnly = true)
     public ProductQueryResult handle(GetProductQuery query) {
         // 1. Load aggregate
-        com.ccbsa.wms.product.domain.core.entity.Product product = repository
-                .findByIdAndTenantId(query.getProductId(), query.getTenantId())
-                .orElseThrow(() -> new ProductNotFoundException(
-                        String.format("Product not found: %s", query.getProductId().getValueAsString())
-                ));
+        com.ccbsa.wms.product.domain.core.entity.Product product = repository.findByIdAndTenantId(query.getProductId(), query.getTenantId())
+                .orElseThrow(() -> new ProductNotFoundException(String.format("Product not found: %s", query.getProductId()
+                        .getValueAsString())));
 
         // 2. Map to query result
         return ProductQueryResult.builder()

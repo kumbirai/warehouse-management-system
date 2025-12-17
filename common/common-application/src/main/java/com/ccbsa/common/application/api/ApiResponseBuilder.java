@@ -53,10 +53,8 @@ public final class ApiResponseBuilder {
      * @param links HATEOAS links
      * @return ResponseEntity with ApiResponse
      */
-    public static <T> ResponseEntity<ApiResponse<T>> ok(T data,
-                                                        Map<String, String> links) {
-        return ResponseEntity.ok(ApiResponse.success(data,
-                links));
+    public static <T> ResponseEntity<ApiResponse<T>> ok(T data, Map<String, String> links) {
+        return ResponseEntity.ok(ApiResponse.success(data, links));
     }
 
     /**
@@ -68,12 +66,8 @@ public final class ApiResponseBuilder {
      * @param meta  Metadata (pagination, etc.)
      * @return ResponseEntity with ApiResponse
      */
-    public static <T> ResponseEntity<ApiResponse<T>> ok(T data,
-                                                        Map<String, String> links,
-                                                        ApiMeta meta) {
-        return ResponseEntity.ok(ApiResponse.success(data,
-                links,
-                meta));
+    public static <T> ResponseEntity<ApiResponse<T>> ok(T data, Map<String, String> links, ApiMeta meta) {
+        return ResponseEntity.ok(ApiResponse.success(data, links, meta));
     }
 
     /**
@@ -96,11 +90,9 @@ public final class ApiResponseBuilder {
      * @param links HATEOAS links
      * @return ResponseEntity with ApiResponse
      */
-    public static <T> ResponseEntity<ApiResponse<T>> created(T data,
-                                                             Map<String, String> links) {
+    public static <T> ResponseEntity<ApiResponse<T>> created(T data, Map<String, String> links) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(data,
-                        links));
+                .body(ApiResponse.success(data, links));
     }
 
     /**
@@ -137,14 +129,11 @@ public final class ApiResponseBuilder {
      * @throws NullPointerException     if status, errorCode, or message is null
      * @throws IllegalArgumentException if errorCode or message is empty
      */
-    public static <T> ResponseEntity<ApiResponse<T>> error(HttpStatus status,
-                                                           String errorCode,
-                                                           String message) {
+    public static <T> ResponseEntity<ApiResponse<T>> error(HttpStatus status, String errorCode, String message) {
         if (status == null) {
             throw new NullPointerException("HTTP status cannot be null");
         }
-        ApiError error = ApiError.builder(errorCode,
-                        message)
+        ApiError error = ApiError.builder(errorCode, message)
                 .build();
         return ResponseEntity.status(status.value())
                 .body(ApiResponse.error(error));
@@ -160,12 +149,8 @@ public final class ApiResponseBuilder {
      * @param details   Additional error details
      * @return ResponseEntity with ApiResponse containing error
      */
-    public static <T> ResponseEntity<ApiResponse<T>> error(HttpStatus status,
-                                                           String errorCode,
-                                                           String message,
-                                                           Map<String, Object> details) {
-        ApiError error = ApiError.builder(errorCode,
-                        message)
+    public static <T> ResponseEntity<ApiResponse<T>> error(HttpStatus status, String errorCode, String message, Map<String, Object> details) {
+        ApiError error = ApiError.builder(errorCode, message)
                 .details(details)
                 .build();
         return ResponseEntity.status(status.value())
@@ -181,8 +166,7 @@ public final class ApiResponseBuilder {
      * @return ResponseEntity with ApiResponse containing error
      * @throws NullPointerException if status or error is null
      */
-    public static <T> ResponseEntity<ApiResponse<T>> error(HttpStatus status,
-                                                           ApiError error) {
+    public static <T> ResponseEntity<ApiResponse<T>> error(HttpStatus status, ApiError error) {
         if (status == null) {
             throw new NullPointerException("HTTP status cannot be null");
         }

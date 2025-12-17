@@ -6,13 +6,12 @@ import com.ccbsa.wms.location.domain.core.event.LocationManagementEvent;
 /**
  * Event Publisher Port: LocationEventPublisher
  * <p>
- * Defines the contract for publishing Location Management domain events.
- * Implemented by messaging adapters (Kafka).
+ * Defines the contract for publishing Location Management domain events. Implemented by messaging adapters (Kafka).
  * <p>
- * This port extends the common EventPublisher interface and adds
- * service-specific event publishing methods.
+ * This port extends the common EventPublisher interface and adds service-specific event publishing methods.
  */
-public interface LocationEventPublisher extends EventPublisher {
+public interface LocationEventPublisher
+        extends EventPublisher {
     /**
      * Publishes a Location Management event.
      *

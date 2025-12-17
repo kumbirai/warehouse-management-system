@@ -122,9 +122,7 @@ public final class RequestContext {
         String queryString = request.getQueryString();
 
         if (queryString != null && !queryString.isEmpty()) {
-            return String.format("%s?%s",
-                    requestUrl,
-                    queryString);
+            return String.format("%s?%s", requestUrl, queryString);
         }
 
         return requestUrl;

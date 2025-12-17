@@ -5,14 +5,10 @@ import java.util.Objects;
 /**
  * Value Object: LocationCoordinates
  *
- * Represents the physical coordinates of a warehouse location.
- * Immutable and self-validating.
+ * Represents the physical coordinates of a warehouse location. Immutable and self-validating.
  *
- * Coordinates consist of:
- * - Zone: Warehouse zone identifier
- * - Aisle: Aisle identifier within the zone
- * - Rack: Rack identifier within the aisle
- * - Level: Level identifier within the rack
+ * Coordinates consist of: - Zone: Warehouse zone identifier - Aisle: Aisle identifier within the zone - Rack: Rack identifier within the aisle - Level: Level identifier within the
+ * rack
  */
 public final class LocationCoordinates {
     private final String zone;
@@ -47,16 +43,20 @@ public final class LocationCoordinates {
      * @throws IllegalArgumentException if validation fails
      */
     private void validate(String zone, String aisle, String rack, String level) {
-        if (zone == null || zone.trim().isEmpty()) {
+        if (zone == null || zone.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Zone cannot be null or empty");
         }
-        if (aisle == null || aisle.trim().isEmpty()) {
+        if (aisle == null || aisle.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Aisle cannot be null or empty");
         }
-        if (rack == null || rack.trim().isEmpty()) {
+        if (rack == null || rack.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Rack cannot be null or empty");
         }
-        if (level == null || level.trim().isEmpty()) {
+        if (level == null || level.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Level cannot be null or empty");
         }
     }
@@ -120,10 +120,7 @@ public final class LocationCoordinates {
             return false;
         }
         LocationCoordinates that = (LocationCoordinates) o;
-        return Objects.equals(zone, that.zone) &&
-                Objects.equals(aisle, that.aisle) &&
-                Objects.equals(rack, that.rack) &&
-                Objects.equals(level, that.level);
+        return Objects.equals(zone, that.zone) && Objects.equals(aisle, that.aisle) && Objects.equals(rack, that.rack) && Objects.equals(level, that.level);
     }
 
     @Override

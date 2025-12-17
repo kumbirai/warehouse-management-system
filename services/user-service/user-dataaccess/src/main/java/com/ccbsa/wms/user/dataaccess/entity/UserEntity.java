@@ -15,12 +15,11 @@ import jakarta.persistence.Version;
  * <p>
  * JPA representation of User aggregate.
  * <p>
- * Note: User is tenant-aware. Uses schema-per-tenant strategy via TenantSchemaResolver
- * for multi-tenant isolation. Each tenant has its own isolated PostgreSQL schema.
- * The schema name is resolved dynamically based on the current tenant context.
+ * Note: User is tenant-aware. Uses schema-per-tenant strategy via TenantSchemaResolver for multi-tenant isolation. Each tenant has its own isolated PostgreSQL schema. The schema
+ * name is resolved dynamically based on the current tenant
+ * context.
  * <p>
- * The schema "tenant_schema" is a placeholder that will be dynamically replaced with
- * the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
+ * The schema "tenant_schema" is a placeholder that will be dynamically replaced with the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
  */
 @Entity
 @Table(name = "users",

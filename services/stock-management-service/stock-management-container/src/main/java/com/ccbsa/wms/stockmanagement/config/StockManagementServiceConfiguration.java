@@ -39,15 +39,14 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 /**
  * Stock Management Service Configuration
  * <p>
- * Imports common security configuration for JWT validation and tenant context.
- * Imports common data access configuration for multi-tenant schema resolution.
- * Imports Kafka configuration for messaging infrastructure (provides kafkaObjectMapper bean).
+ * Imports common security configuration for JWT validation and tenant context. Imports common data access configuration for multi-tenant schema resolution. Imports Kafka
+ * configuration for messaging infrastructure (provides
+ * kafkaObjectMapper bean).
  * <p>
- * The {@link MultiTenantDataAccessConfig} provides the {@link com.ccbsa.wms.common.dataaccess.TenantSchemaResolver}
- * bean which implements schema-per-tenant strategy for multi-tenant isolation.
+ * The {@link MultiTenantDataAccessConfig} provides the {@link com.ccbsa.wms.common.dataaccess.TenantSchemaResolver} bean which implements schema-per-tenant strategy for
+ * multi-tenant isolation.
  * <p>
- * The {@link KafkaConfig} provides the {@code kafkaObjectMapper} bean used for Kafka message
- * serialization/deserialization with type information.
+ * The {@link KafkaConfig} provides the {@code kafkaObjectMapper} bean used for Kafka message serialization/deserialization with type information.
  */
 @Configuration
 @Import( {ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class})
@@ -83,9 +82,8 @@ public class StockManagementServiceConfiguration {
     /**
      * Custom consumer factory for external events (tenant events).
      * <p>
-     * Uses typed deserialization with @class property from JSON payload.
-     * The ObjectMapper is configured with JsonTypeInfo to include @class property,
-     * allowing proper typed deserialization across service boundaries.
+     * Uses typed deserialization with @class property from JSON payload. The ObjectMapper is configured with JsonTypeInfo to include @class property, allowing proper typed
+     * deserialization across service boundaries.
      * <p>
      * Uses ErrorHandlingDeserializer to gracefully handle deserialization errors.
      * <p>
@@ -118,11 +116,9 @@ public class StockManagementServiceConfiguration {
         jsonDeserializer.setUseTypeHeaders(false);
         jsonDeserializer.setRemoveTypeHeaders(true);
 
-        ErrorHandlingDeserializer<Object> errorHandlingDeserializer =
-                new ErrorHandlingDeserializer<>(jsonDeserializer);
+        ErrorHandlingDeserializer<Object> errorHandlingDeserializer = new ErrorHandlingDeserializer<>(jsonDeserializer);
 
-        DefaultKafkaConsumerFactory<String, Object> factory =
-                new DefaultKafkaConsumerFactory<>(configProps);
+        DefaultKafkaConsumerFactory<String, Object> factory = new DefaultKafkaConsumerFactory<>(configProps);
         factory.setValueDeserializer(errorHandlingDeserializer);
         return factory;
     }
@@ -138,21 +134,18 @@ public class StockManagementServiceConfiguration {
      * @return Listener container factory
      */
     @Bean("externalEventKafkaListenerContainerFactory")
-    public ConcurrentKafkaListenerContainerFactory<String, Object> externalEventKafkaListenerContainerFactory(
-            ConsumerFactory<String, Object> externalEventConsumerFactory) {
-        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
+    public ConcurrentKafkaListenerContainerFactory<String, Object> externalEventKafkaListenerContainerFactory(ConsumerFactory<String, Object> externalEventConsumerFactory) {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(externalEventConsumerFactory);
 
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties()
+                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.setConcurrency(concurrency);
 
         BackOff backOff = createExponentialBackOff();
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(backOff);
-        errorHandler.addNotRetryableExceptions(
-                org.apache.kafka.common.errors.SerializationException.class,
-                org.springframework.kafka.support.serializer.DeserializationException.class
-        );
+        errorHandler.addNotRetryableExceptions(org.apache.kafka.common.errors.SerializationException.class,
+                org.springframework.kafka.support.serializer.DeserializationException.class);
         factory.setCommonErrorHandler(errorHandler);
 
         return factory;
@@ -170,8 +163,7 @@ public class StockManagementServiceConfiguration {
     /**
      * Primary ObjectMapper for REST API responses.
      * <p>
-     * This ObjectMapper is used for REST API JSON serialization/deserialization.
-     * It does NOT include type information (@class property) to keep API responses clean.
+     * This ObjectMapper is used for REST API JSON serialization/deserialization. It does NOT include type information (@class property) to keep API responses clean.
      * <p>
      * For Kafka message serialization, use the kafkaObjectMapper bean from KafkaConfig.
      *
@@ -190,8 +182,7 @@ public class StockManagementServiceConfiguration {
     /**
      * RestTemplate bean for external service calls (e.g., Product Service).
      * <p>
-     * Configured with connection pooling and timeouts for production use.
-     * Uses HttpComponentsClientHttpRequestFactory to avoid deprecated RestTemplateBuilder methods.
+     * Configured with connection pooling and timeouts for production use. Uses HttpComponentsClientHttpRequestFactory to avoid deprecated RestTemplateBuilder methods.
      *
      * @param builder RestTemplateBuilder
      * @return RestTemplate configured for external service calls

@@ -5,8 +5,7 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 /**
  * Port interface for tenant service operations.
  * <p>
- * Defines the contract for tenant validation and status checks.
- * Implemented by the messaging layer (user-messaging).
+ * Defines the contract for tenant validation and status checks. Implemented by the messaging layer (user-messaging).
  */
 public interface TenantServicePort {
     /**

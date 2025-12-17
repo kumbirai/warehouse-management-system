@@ -19,17 +19,15 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 /**
  * Repository Adapter: LocationRepositoryAdapter
  * <p>
- * Implements LocationRepository port interface.
- * Adapts between domain Location aggregate and JPA LocationEntity.
+ * Implements LocationRepository port interface. Adapts between domain Location aggregate and JPA LocationEntity.
  */
 @Repository
-public class LocationRepositoryAdapter implements LocationRepository {
+public class LocationRepositoryAdapter
+        implements LocationRepository {
     private final LocationJpaRepository jpaRepository;
     private final LocationEntityMapper mapper;
 
-    public LocationRepositoryAdapter(
-            LocationJpaRepository jpaRepository,
-            LocationEntityMapper mapper) {
+    public LocationRepositoryAdapter(LocationJpaRepository jpaRepository, LocationEntityMapper mapper) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
     }
@@ -37,11 +35,9 @@ public class LocationRepositoryAdapter implements LocationRepository {
     @Override
     public Location save(Location location) {
         // Check if entity already exists to handle version correctly
-        Optional<LocationEntity> existingEntity =
-                jpaRepository.findByTenantIdAndId(
-                        location.getTenantId().getValue(),
-                        location.getId().getValue()
-                );
+        Optional<LocationEntity> existingEntity = jpaRepository.findByTenantIdAndId(location.getTenantId()
+                .getValue(), location.getId()
+                .getValue());
 
         LocationEntity entity;
         if (existingEntity.isPresent()) {
@@ -63,18 +59,22 @@ public class LocationRepositoryAdapter implements LocationRepository {
     }
 
     /**
-     * Updates an existing entity with values from the domain model.
-     * Preserves JPA managed state and version for optimistic locking.
+     * Updates an existing entity with values from the domain model. Preserves JPA managed state and version for optimistic locking.
      *
      * @param entity   Existing JPA entity
      * @param location Domain location aggregate
      */
     private void updateEntityFromDomain(LocationEntity entity, Location location) {
-        entity.setBarcode(location.getBarcode().getValue());
-        entity.setZone(location.getCoordinates().getZone());
-        entity.setAisle(location.getCoordinates().getAisle());
-        entity.setRack(location.getCoordinates().getRack());
-        entity.setLevel(location.getCoordinates().getLevel());
+        entity.setBarcode(location.getBarcode()
+                .getValue());
+        entity.setZone(location.getCoordinates()
+                .getZone());
+        entity.setAisle(location.getCoordinates()
+                .getAisle());
+        entity.setRack(location.getCoordinates()
+                .getRack());
+        entity.setLevel(location.getCoordinates()
+                .getLevel());
         entity.setStatus(location.getStatus());
 
         // Update capacity
@@ -102,7 +102,8 @@ public class LocationRepositoryAdapter implements LocationRepository {
 
     @Override
     public List<Location> findByTenantId(TenantId tenantId) {
-        return jpaRepository.findByTenantId(tenantId.getValue()).stream()
+        return jpaRepository.findByTenantId(tenantId.getValue())
+                .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }

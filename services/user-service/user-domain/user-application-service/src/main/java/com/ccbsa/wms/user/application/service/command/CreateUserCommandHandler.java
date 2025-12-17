@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,13 +33,8 @@ import com.ccbsa.wms.user.domain.core.valueobject.Username;
  * <p>
  * Handles user creation use case.
  * <p>
- * Responsibilities:
- * - Validate tenant exists and is ACTIVE
- * - Create user domain entity
- * - Persist user aggregate
- * - Create user in Keycloak
- * - Assign roles in Keycloak
- * - Publish domain events
+ * Responsibilities: - Validate tenant exists and is ACTIVE - Create user domain entity - Persist user aggregate - Create user in Keycloak - Assign roles in Keycloak - Publish
+ * domain events
  */
 @Component
 public class CreateUserCommandHandler {
@@ -48,23 +44,22 @@ public class CreateUserCommandHandler {
     private final UserEventPublisher eventPublisher;
     private final AuthenticationServicePort authenticationService;
     private final TenantServicePort tenantService;
+    private final String frontendBaseUrl;
 
-    public CreateUserCommandHandler(
-            UserRepository userRepository,
-            UserEventPublisher eventPublisher,
-            AuthenticationServicePort authenticationService,
-            TenantServicePort tenantService) {
+    public CreateUserCommandHandler(UserRepository userRepository, UserEventPublisher eventPublisher, AuthenticationServicePort authenticationService,
+                                    TenantServicePort tenantService,
+                                    @Value("${frontend.base-url:http://localhost:3000}") String frontendBaseUrl) {
         this.userRepository = userRepository;
         this.eventPublisher = eventPublisher;
         this.authenticationService = authenticationService;
         this.tenantService = tenantService;
+        this.frontendBaseUrl = frontendBaseUrl;
     }
 
     /**
      * Handles the CreateUserCommand.
      * <p>
-     * Transaction boundary: One transaction per command execution.
-     * Events published after successful commit.
+     * Transaction boundary: One transaction per command execution. Events published after successful commit.
      *
      * @param command Command to execute
      * @return CreateUserResult with user ID and success status
@@ -79,28 +74,36 @@ public class CreateUserCommandHandler {
         }
 
         logger.debug("Creating user: username={}, tenantId={}", command.getUsername(), command.getTenantId());
-        if (command.getTenantId() == null || command.getTenantId().trim().isEmpty()) {
+        if (command.getTenantId() == null || command.getTenantId()
+                .trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("TenantId is required");
         }
-        if (command.getUsername() == null || command.getUsername().trim().isEmpty()) {
+        if (command.getUsername() == null || command.getUsername()
+                .trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Username is required");
         }
-        if (command.getEmail() == null || command.getEmail().trim().isEmpty()) {
+        if (command.getEmail() == null || command.getEmail()
+                .trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("EmailAddress is required");
         }
-        if (command.getPassword() == null || command.getPassword().trim().isEmpty()) {
+        if (command.getPassword() == null || command.getPassword()
+                .trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Password is required");
         }
 
         // 2. Validate tenant exists and is ACTIVE
         TenantId tenantId = TenantId.of(command.getTenantId());
         if (!tenantService.isTenantActive(tenantId)) {
-            throw new TenantNotActiveException(
-                    String.format("Cannot create user: tenant is not active: %s", tenantId.getValue()));
+            throw new TenantNotActiveException(String.format("Cannot create user: tenant is not active: %s", tenantId.getValue()));
         }
 
         // 3. Build domain entity
-        UserId userId = UserId.of(UUID.randomUUID().toString());
+        UserId userId = UserId.of(UUID.randomUUID()
+                .toString());
         User user = User.builder()
                 .userId(userId)
                 .tenantId(tenantId)
@@ -116,23 +119,32 @@ public class CreateUserCommandHandler {
 
         // 5. Create user in Keycloak
         try {
-            KeycloakUserId keycloakUserId = authenticationService.createUser(
-                    command.getTenantId(),
-                    command.getUsername(),
-                    command.getEmail(),
-                    command.getPassword(),
-                    command.getFirstName(),
-                    command.getLastName());
+            KeycloakUserId keycloakUserId =
+                    authenticationService.createUser(command.getTenantId(), command.getUsername(), command.getEmail(), command.getPassword(), command.getFirstName(),
+                            command.getLastName());
 
             // 6. Link Keycloak user ID
             user.linkKeycloakUser(keycloakUserId);
             userRepository.save(user);
 
             // 7. Assign roles
-            if (!command.getRoles().isEmpty()) {
+            if (!command.getRoles()
+                    .isEmpty()) {
                 for (String role : command.getRoles()) {
                     authenticationService.assignRole(keycloakUserId, role);
                 }
+            }
+
+            // 8. Send email verification and password reset email
+            // This sends a Keycloak email with links for both VERIFY_EMAIL and UPDATE_PASSWORD actions
+            try {
+                String redirectUri = frontendBaseUrl + "/verify-email";
+                authenticationService.sendEmailVerificationAndPasswordReset(keycloakUserId, redirectUri);
+                logger.debug("Email verification and password reset email sent: userId={}", keycloakUserId.getValue());
+            } catch (Exception emailException) {
+                // Log error but don't fail user creation - email can be resent later
+                logger.warn("Failed to send email verification and password reset email: userId={}, error={}", keycloakUserId.getValue(), emailException.getMessage(),
+                        emailException);
             }
         } catch (Exception e) {
             // Rollback: delete user from database
@@ -142,11 +154,10 @@ public class CreateUserCommandHandler {
             } catch (Exception deleteException) {
                 logger.error("Failed to delete user during rollback", deleteException);
             }
-            throw new UserCreationException(
-                    String.format("Failed to create user in Keycloak: %s", e.getMessage()), e);
+            throw new UserCreationException(String.format("Failed to create user in Keycloak: %s", e.getMessage()), e);
         }
 
-        // 8. Publish events
+        // 9. Publish events
         List<DomainEvent<?>> domainEvents = user.getDomainEvents();
         if (!domainEvents.isEmpty()) {
             eventPublisher.publish(domainEvents);
@@ -155,7 +166,7 @@ public class CreateUserCommandHandler {
 
         logger.info("User created successfully: userId={}, username={}", userId.getValue(), command.getUsername());
 
-        // 9. Return result
+        // 10. Return result
         return new CreateUserResult(userId.getValue(), true, "User created successfully");
     }
 }

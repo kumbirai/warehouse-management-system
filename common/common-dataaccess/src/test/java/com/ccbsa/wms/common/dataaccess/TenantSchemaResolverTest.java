@@ -107,8 +107,7 @@ class TenantSchemaResolverTest {
         // Given - no tenant context set
 
         // When/Then
-        assertThatThrownBy(() -> resolver.resolveSchema())
-                .isInstanceOf(IllegalStateException.class)
+        assertThatThrownBy(() -> resolver.resolveSchema()).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Tenant context not set");
     }
 

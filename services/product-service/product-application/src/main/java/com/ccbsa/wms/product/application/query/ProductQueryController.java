@@ -31,26 +31,21 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * <p>
  * Handles product query operations (read operations).
  * <p>
- * Responsibilities:
- * - Get product by ID endpoints
- * - Check product code uniqueness endpoints
- * - Map queries to DTOs
- * - Return standardized API responses
+ * Responsibilities: - Get product by ID endpoints - Check product code uniqueness endpoints - Map queries to DTOs - Return standardized API responses
  */
 @RestController
 @RequestMapping("/api/v1/product-service/products")
-@Tag(name = "Product Queries", description = "Product query operations")
+@Tag(name = "Product Queries",
+        description = "Product query operations")
 public class ProductQueryController {
     private final GetProductQueryHandler getProductQueryHandler;
     private final CheckProductCodeUniquenessQueryHandler checkProductCodeUniquenessQueryHandler;
     private final ValidateProductBarcodeQueryHandler validateProductBarcodeQueryHandler;
     private final ProductDTOMapper mapper;
 
-    public ProductQueryController(
-            GetProductQueryHandler getProductQueryHandler,
-            CheckProductCodeUniquenessQueryHandler checkProductCodeUniquenessQueryHandler,
-            ValidateProductBarcodeQueryHandler validateProductBarcodeQueryHandler,
-            ProductDTOMapper mapper) {
+    public ProductQueryController(GetProductQueryHandler getProductQueryHandler, CheckProductCodeUniquenessQueryHandler checkProductCodeUniquenessQueryHandler,
+                                  ValidateProductBarcodeQueryHandler validateProductBarcodeQueryHandler,
+                                  ProductDTOMapper mapper) {
         this.getProductQueryHandler = getProductQueryHandler;
         this.checkProductCodeUniquenessQueryHandler = checkProductCodeUniquenessQueryHandler;
         this.validateProductBarcodeQueryHandler = validateProductBarcodeQueryHandler;
@@ -58,8 +53,9 @@ public class ProductQueryController {
     }
 
     @GetMapping("/{productId}")
-    @Operation(summary = "Get Product", description = "Retrieves a product by ID")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @Operation(summary = "Get Product",
+            description = "Retrieves a product by ID")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'USER', 'VIEWER', 'OPERATOR', 'PICKER', 'STOCK_CLERK')")
     public ResponseEntity<ApiResponse<ProductQueryResultDTO>> getProduct(
             @RequestHeader("X-Tenant-Id") String tenantId,
             @PathVariable String productId) {
@@ -76,14 +72,14 @@ public class ProductQueryController {
     }
 
     @GetMapping("/check-uniqueness")
-    @Operation(summary = "Check Product Code Uniqueness", description = "Checks if a product code is unique for the tenant")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(summary = "Check Product Code Uniqueness",
+            description = "Checks if a product code is unique for the tenant")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER')")
     public ResponseEntity<ApiResponse<ProductCodeUniquenessResultDTO>> checkProductCodeUniqueness(
             @RequestHeader("X-Tenant-Id") String tenantId,
             @RequestParam("productCode") String productCode) {
         // Map to query
-        com.ccbsa.wms.product.application.service.query.dto.CheckProductCodeUniquenessQuery query =
-                mapper.toCheckProductCodeUniquenessQuery(productCode, tenantId);
+        com.ccbsa.wms.product.application.service.query.dto.CheckProductCodeUniquenessQuery query = mapper.toCheckProductCodeUniquenessQuery(productCode, tenantId);
 
         // Execute query
         ProductCodeUniquenessResult result = checkProductCodeUniquenessQueryHandler.handle(query);
@@ -95,14 +91,14 @@ public class ProductQueryController {
     }
 
     @GetMapping("/validate-barcode")
-    @Operation(summary = "Validate Product Barcode", description = "Validates a product barcode and returns product information if found")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OPERATOR')")
+    @Operation(summary = "Validate Product Barcode",
+            description = "Validates a product barcode and returns product information if found")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'OPERATOR', 'PICKER', 'STOCK_CLERK', 'RECONCILIATION_CLERK', 'RETURNS_CLERK')")
     public ResponseEntity<ApiResponse<ValidateProductBarcodeResultDTO>> validateBarcode(
             @RequestHeader("X-Tenant-Id") String tenantId,
             @RequestParam("barcode") String barcode) {
         // Map to query
-        com.ccbsa.wms.product.application.service.query.dto.ValidateProductBarcodeQuery query =
-                mapper.toValidateProductBarcodeQuery(barcode, tenantId);
+        com.ccbsa.wms.product.application.service.query.dto.ValidateProductBarcodeQuery query = mapper.toValidateProductBarcodeQuery(barcode, tenantId);
 
         // Execute query
         ValidateProductBarcodeResult result = validateProductBarcodeQueryHandler.handle(query);

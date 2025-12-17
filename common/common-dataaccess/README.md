@@ -2,11 +2,13 @@
 
 ## Overview
 
-The `common-dataaccess` module provides shared data access utilities for multi-tenant schema resolution across all services (except `tenant-service`).
+The `common-dataaccess` module provides shared data access utilities for multi-tenant schema resolution across all
+services (except `tenant-service`).
 
 ## Purpose
 
-This module implements the **schema-per-tenant** strategy for multi-tenant isolation, ensuring that each tenant (LDP) has its own isolated PostgreSQL schema.
+This module implements the **schema-per-tenant** strategy for multi-tenant isolation, ensuring that each tenant (LDP)
+has its own isolated PostgreSQL schema.
 
 ## Key Components
 
@@ -88,7 +90,8 @@ spring:
 
 ### 4. Use in JPA Entities
 
-Use the placeholder schema `"tenant_schema"` in your JPA entity annotations. The `TenantAwarePhysicalNamingStrategy` will dynamically replace it with the actual tenant schema at
+Use the placeholder schema `"tenant_schema"` in your JPA entity annotations. The `TenantAwarePhysicalNamingStrategy`
+will dynamically replace it with the actual tenant schema at
 runtime:
 
 ```java
@@ -101,7 +104,8 @@ public class UserEntity {
 }
 ```
 
-**Important:** Do not use SpEL expressions (e.g., `#{@tenantSchemaResolver.resolveSchema()}`) in `@Table` annotations, as Hibernate does not evaluate them. Use the placeholder
+**Important:** Do not use SpEL expressions (e.g., `#{@tenantSchemaResolver.resolveSchema()}`) in `@Table` annotations,
+as Hibernate does not evaluate them. Use the placeholder
 `"tenant_schema"` instead.
 
 ## Schema Resolution Strategy
@@ -119,9 +123,11 @@ The module implements **schema-per-tenant** isolation:
 
 1. **Entity Definition:** Entities use placeholder schema `"tenant_schema"` in `@Table` annotation
 2. **Hibernate Configuration:** `TenantAwarePhysicalNamingStrategy` is configured in `application.yml`
-3. **Startup Validation:** When tenant context is not set (during schema validation), the naming strategy returns `null`, causing Hibernate to use the default schema (public) where
+3. **Startup Validation:** When tenant context is not set (during schema validation), the naming strategy returns
+   `null`, causing Hibernate to use the default schema (public) where
    Flyway creates tables
-4. **Runtime Operations:** When tenant context is available, the naming strategy resolves the actual tenant schema (e.g., `tenant_abc123_schema`) and Hibernate uses it for queries
+4. **Runtime Operations:** When tenant context is available, the naming strategy resolves the actual tenant schema (
+   e.g., `tenant_abc123_schema`) and Hibernate uses it for queries
 
 ## Example
 
@@ -132,7 +138,8 @@ For a tenant with ID `"my-tenant-123"`:
 
 ## Excluded Services
 
-The `tenant-service` does **not** use this module as it manages tenant data itself and does not require multi-tenant isolation.
+The `tenant-service` does **not** use this module as it manages tenant data itself and does not require multi-tenant
+isolation.
 
 ## Dependencies
 

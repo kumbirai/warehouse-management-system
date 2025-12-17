@@ -24,17 +24,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 /**
  * Cached User Repository Adapter.
  * <p>
- * Decorates UserRepositoryAdapter with Redis caching.
- * Implements cache-aside pattern for reads and write-through for writes.
+ * Decorates UserRepositoryAdapter with Redis caching. Implements cache-aside pattern for reads and write-through for writes.
  * <p>
- * Cache Configuration:
- * - Namespace: "users"
- * - TTL: 15 minutes (configurable via application.yml)
- * - Eviction: LRU (configured in Redis)
+ * Cache Configuration: - Namespace: "users" - TTL: 15 minutes (configurable via application.yml) - Eviction: LRU (configured in Redis)
  * <p>
- * Spring Configuration:
- * - @Primary: Ensures this adapter is injected instead of base adapter
- * - @Repository: Marks as Spring Data repository component
+ * Spring Configuration: - @Primary: Ensures this adapter is injected instead of base adapter - @Repository: Marks as Spring Data repository component
  */
 @Repository
 @Primary
@@ -46,18 +40,9 @@ public class CachedUserRepositoryAdapter
 
     private final UserRepositoryAdapter baseRepository;
 
-    public CachedUserRepositoryAdapter(
-            UserRepositoryAdapter baseRepository,
-            RedisTemplate<String, Object> redisTemplate,
-            MeterRegistry meterRegistry
-    ) {
-        super(
-                baseRepository,
-                redisTemplate,
-                CacheNamespace.USERS.getValue(),
-                Duration.ofMinutes(15), // TTL from config
-                meterRegistry
-        );
+    public CachedUserRepositoryAdapter(UserRepositoryAdapter baseRepository, RedisTemplate<String, Object> redisTemplate, MeterRegistry meterRegistry) {
+        super(baseRepository, redisTemplate, CacheNamespace.USERS.getValue(), Duration.ofMinutes(15), // TTL from config
+                meterRegistry);
         this.baseRepository = baseRepository;
     }
 
@@ -78,26 +63,17 @@ public class CachedUserRepositoryAdapter
     /**
      * Finds user by tenant ID and user ID with caching.
      * <p>
-     * This is the primary lookup method in multi-tenant architecture.
-     * Cache-aside pattern:
-     * 1. Check cache
-     * 2. If miss, load from database
-     * 3. Populate cache with TTL
+     * This is the primary lookup method in multi-tenant architecture. Cache-aside pattern: 1. Check cache 2. If miss, load from database 3. Populate cache with TTL
      */
     @Override
     public Optional<User> findByTenantIdAndId(TenantId tenantId, UserId id) {
-        return findWithCache(
-                tenantId,
-                id.getUuid(),
-                entityId -> baseRepository.findByTenantIdAndId(tenantId, id)
-        );
+        return findWithCache(tenantId, id.getUuid(), entityId -> baseRepository.findByTenantIdAndId(tenantId, id));
     }
 
     /**
      * Finds all users for a tenant.
      * <p>
-     * Note: Collection queries are NOT cached to avoid cache bloat.
-     * Use view repositories with pagination for large datasets.
+     * Note: Collection queries are NOT cached to avoid cache bloat. Use view repositories with pagination for large datasets.
      */
     @Override
     public List<User> findByTenantId(TenantId tenantId) {
@@ -138,8 +114,7 @@ public class CachedUserRepositoryAdapter
     /**
      * Finds a user by username.
      * <p>
-     * Not cached - requires tenant context for proper caching.
-     * Use findByTenantIdAndUsername instead.
+     * Not cached - requires tenant context for proper caching. Use findByTenantIdAndUsername instead.
      */
     @Override
     public Optional<User> findByUsername(Username username) {
@@ -189,10 +164,7 @@ public class CachedUserRepositoryAdapter
     /**
      * Saves user with write-through caching.
      * <p>
-     * Write-through pattern:
-     * 1. Save to database (source of truth)
-     * 2. Update cache immediately
-     * 3. Domain event published by command handler triggers collection cache invalidation
+     * Write-through pattern: 1. Save to database (source of truth) 2. Update cache immediately 3. Domain event published by command handler triggers collection cache invalidation
      */
     @Override
     public void save(User user) {
@@ -201,14 +173,12 @@ public class CachedUserRepositoryAdapter
 
         // Write-through cache update
         if (user.getTenantId() != null && user.getId() != null) {
-            String cacheKey = com.ccbsa.common.cache.key.CacheKeyGenerator.forEntity(
-                    user.getTenantId(),
-                    CacheNamespace.USERS.getValue(),
-                    user.getId().getUuid()
-            );
+            String cacheKey = com.ccbsa.common.cache.key.CacheKeyGenerator.forEntity(user.getTenantId(), CacheNamespace.USERS.getValue(), user.getId()
+                    .getUuid());
 
             try {
-                redisTemplate.opsForValue().set(cacheKey, user, Duration.ofMinutes(15));
+                redisTemplate.opsForValue()
+                        .set(cacheKey, user, Duration.ofMinutes(15));
                 log.trace("Cache WRITE (write-through) for key: {}", cacheKey);
             } catch (Exception e) {
                 log.error("Cache write-through failed for key: {}", cacheKey, e);
@@ -220,9 +190,7 @@ public class CachedUserRepositoryAdapter
     /**
      * Deletes user with cache eviction.
      * <p>
-     * Write-through delete:
-     * 1. Delete from database
-     * 2. Evict from cache
+     * Write-through delete: 1. Delete from database 2. Evict from cache
      */
     @Override
     public void deleteById(UserId id) {

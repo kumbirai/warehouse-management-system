@@ -6,8 +6,7 @@ import java.util.Objects;
 /**
  * DTO: DeliveryResult
  * <p>
- * Represents the result of a notification delivery attempt.
- * Immutable DTO with factory methods for success and failure cases.
+ * Represents the result of a notification delivery attempt. Immutable DTO with factory methods for success and failure cases.
  */
 public final class DeliveryResult {
     private final boolean success;
@@ -67,10 +66,7 @@ public final class DeliveryResult {
             return false;
         }
         DeliveryResult that = (DeliveryResult) o;
-        return success == that.success &&
-                Objects.equals(externalId, that.externalId) &&
-                Objects.equals(errorMessage, that.errorMessage) &&
-                Objects.equals(sentAt, that.sentAt);
+        return success == that.success && Objects.equals(externalId, that.externalId) && Objects.equals(errorMessage, that.errorMessage) && Objects.equals(sentAt, that.sentAt);
     }
 
     @Override
@@ -80,8 +76,7 @@ public final class DeliveryResult {
 
     @Override
     public String toString() {
-        return String.format("DeliveryResult{success=%s, externalId='%s', errorMessage='%s', sentAt=%s}",
-                success, externalId, errorMessage, sentAt);
+        return String.format("DeliveryResult{success=%s, externalId='%s', errorMessage='%s', sentAt=%s}", success, externalId, errorMessage, sentAt);
     }
 }
 

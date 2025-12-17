@@ -9,7 +9,8 @@ import com.ccbsa.common.domain.DomainEvent;
  *
  * @param <T> The type of the aggregate root that raised this event
  */
-public abstract class StockManagementEvent<T> extends DomainEvent<T> {
+public abstract class StockManagementEvent<T>
+        extends DomainEvent<T> {
     /**
      * Constructor for stock management events without metadata.
      *
@@ -27,8 +28,7 @@ public abstract class StockManagementEvent<T> extends DomainEvent<T> {
      * @param aggregateType Aggregate type name
      * @param metadata      Event metadata for traceability
      */
-    protected StockManagementEvent(String aggregateId, String aggregateType,
-                                   com.ccbsa.common.domain.EventMetadata metadata) {
+    protected StockManagementEvent(String aggregateId, String aggregateType, com.ccbsa.common.domain.EventMetadata metadata) {
         super(aggregateId, aggregateType, metadata);
     }
 }

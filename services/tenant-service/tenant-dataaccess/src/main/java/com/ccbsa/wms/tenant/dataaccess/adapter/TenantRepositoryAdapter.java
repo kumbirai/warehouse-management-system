@@ -16,16 +16,15 @@ import com.ccbsa.wms.tenant.domain.core.entity.Tenant;
 /**
  * Repository Adapter: TenantRepositoryAdapter
  * <p>
- * Implements TenantRepository port interface.
- * Adapts between domain Tenant aggregate and JPA TenantEntity.
+ * Implements TenantRepository port interface. Adapts between domain Tenant aggregate and JPA TenantEntity.
  */
 @Repository
-public class TenantRepositoryAdapter implements TenantRepository {
+public class TenantRepositoryAdapter
+        implements TenantRepository {
     private final TenantJpaRepository jpaRepository;
     private final TenantEntityMapper mapper;
 
-    public TenantRepositoryAdapter(TenantJpaRepository jpaRepository,
-                                   TenantEntityMapper mapper) {
+    public TenantRepositoryAdapter(TenantJpaRepository jpaRepository, TenantEntityMapper mapper) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
     }
@@ -33,7 +32,8 @@ public class TenantRepositoryAdapter implements TenantRepository {
     @Override
     public void save(Tenant tenant) {
         // Check if entity already exists to handle updates correctly
-        Optional<TenantEntity> existingEntity = jpaRepository.findById(tenant.getId().getValue());
+        Optional<TenantEntity> existingEntity = jpaRepository.findById(tenant.getId()
+                .getValue());
 
         TenantEntity entity;
         if (existingEntity.isPresent()) {
@@ -50,11 +50,11 @@ public class TenantRepositoryAdapter implements TenantRepository {
     }
 
     /**
-     * Updates an existing entity with values from the domain model.
-     * Preserves JPA managed state and version for optimistic locking.
+     * Updates an existing entity with values from the domain model. Preserves JPA managed state and version for optimistic locking.
      */
     private void updateEntityFromDomain(TenantEntity entity, Tenant tenant) {
-        entity.setName(tenant.getName().getValue());
+        entity.setName(tenant.getName()
+                .getValue());
         entity.setStatus(tenant.getStatus());
         entity.setVersion(tenant.getVersion());
 

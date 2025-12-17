@@ -291,6 +291,8 @@ export const authService = {
 
     // Call backend logout endpoint to clear httpOnly refresh token cookie
     try {
+      // Send empty object - backend accepts optional body with @RequestBody(required = false)
+      // Empty object should be handled correctly by Spring's Map deserialization
       await apiClient.post(
         '/bff/auth/logout',
         {},

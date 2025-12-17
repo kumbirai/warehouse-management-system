@@ -14,7 +14,8 @@ import com.ccbsa.wms.user.domain.core.valueobject.Username;
  * <p>
  * Event Version: 1.0
  */
-public final class UserCreatedEvent extends UserEvent {
+public final class UserCreatedEvent
+        extends UserEvent {
     private final Username username;
     private final EmailAddress emailAddress;
     private final UserStatus status;

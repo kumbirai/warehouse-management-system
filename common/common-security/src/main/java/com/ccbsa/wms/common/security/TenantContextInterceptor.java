@@ -21,14 +21,13 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Interceptor that extracts tenant context from HTTP headers and sets it in ThreadLocal.
  * <p>
- * Extracts:
- * - X-Tenant-Id header -> TenantContext.tenantId
- * - X-User-Id header -> TenantContext.userId
+ * Extracts: - X-Tenant-Id header -> TenantContext.tenantId - X-User-Id header -> TenantContext.userId
  * <p>
  * Validates that tenant ID is present for all requests.
  */
 @Component
-public class TenantContextInterceptor implements HandlerInterceptor {
+public class TenantContextInterceptor
+        implements HandlerInterceptor {
     private static final String X_TENANT_ID_HEADER = "X-Tenant-Id";
     private static final String X_USER_ID_HEADER = "X-User-Id";
     private static final String X_ROLE_HEADER = "X-Role";
@@ -37,9 +36,10 @@ public class TenantContextInterceptor implements HandlerInterceptor {
     private static final String TENANTS_LIST_PATH = "/api/v1/tenants";
 
     @Override
-    public boolean preHandle(@NonNull HttpServletRequest request,
-                             @NonNull HttpServletResponse response,
-                             @NonNull Object handler) {
+    public boolean preHandle(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull Object handler) {
 
         String path = request.getRequestURI();
         String method = request.getMethod();
@@ -101,8 +101,7 @@ public class TenantContextInterceptor implements HandlerInterceptor {
     }
 
     /**
-     * Checks if the request is from a SYSTEM_ADMIN user.
-     * Checks both the X-Role header and the JWT token in SecurityContext.
+     * Checks if the request is from a SYSTEM_ADMIN user. Checks both the X-Role header and the JWT token in SecurityContext.
      *
      * @param request The HTTP request
      * @return true if the user has SYSTEM_ADMIN role, false otherwise
@@ -112,8 +111,7 @@ public class TenantContextInterceptor implements HandlerInterceptor {
     }
 
     /**
-     * Checks if the request is from an ADMIN user.
-     * Checks both the X-Role header and the JWT token in SecurityContext.
+     * Checks if the request is from an ADMIN user. Checks both the X-Role header and the JWT token in SecurityContext.
      *
      * @param request The HTTP request
      * @return true if the user has ADMIN role, false otherwise
@@ -123,8 +121,7 @@ public class TenantContextInterceptor implements HandlerInterceptor {
     }
 
     /**
-     * Checks if the request is for the tenants list endpoint.
-     * The list endpoint is GET /api/v1/tenants (without an ID path parameter).
+     * Checks if the request is for the tenants list endpoint. The list endpoint is GET /api/v1/tenants (without an ID path parameter).
      *
      * @param path   The request path
      * @param method The HTTP method
@@ -135,8 +132,7 @@ public class TenantContextInterceptor implements HandlerInterceptor {
     }
 
     /**
-     * Checks if the request is from a user with a specific role.
-     * Checks both the X-Role header and the JWT token in SecurityContext.
+     * Checks if the request is from a user with a specific role. Checks both the X-Role header and the JWT token in SecurityContext.
      *
      * @param request The HTTP request
      * @param role    The role to check for
@@ -171,10 +167,11 @@ public class TenantContextInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public void afterCompletion(@NonNull HttpServletRequest request,
-                                @NonNull HttpServletResponse response,
-                                @NonNull Object handler,
-                                @Nullable Exception ex) {
+    public void afterCompletion(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull Object handler,
+            @Nullable Exception ex) {
         // Clear tenant context to prevent memory leaks
         TenantContext.clear();
     }

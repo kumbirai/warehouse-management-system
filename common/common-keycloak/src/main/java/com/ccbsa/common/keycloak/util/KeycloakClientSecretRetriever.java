@@ -18,16 +18,14 @@ import com.ccbsa.common.keycloak.port.KeycloakClientPort;
 /**
  * Utility class for retrieving Keycloak client secrets.
  * <p>
- * This utility can be used to programmatically retrieve client secrets
- * from Keycloak when they are not configured in the application properties.
+ * This utility can be used to programmatically retrieve client secrets from Keycloak when they are not configured in the application properties.
  */
 public class KeycloakClientSecretRetriever {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakClientSecretRetriever.class);
     private final KeycloakClientPort keycloakClientPort;
     private final KeycloakConfig keycloakConfig;
 
-    public KeycloakClientSecretRetriever(KeycloakClientPort keycloakClientPort,
-                                         KeycloakConfig keycloakConfig) {
+    public KeycloakClientSecretRetriever(KeycloakClientPort keycloakClientPort, KeycloakConfig keycloakConfig) {
         this.keycloakClientPort = Objects.requireNonNull(keycloakClientPort, "KeycloakClientPort must not be null");
         this.keycloakConfig = Objects.requireNonNull(keycloakConfig, "KeycloakConfig must not be null");
     }
@@ -38,8 +36,7 @@ public class KeycloakClientSecretRetriever {
      * @return Optional containing the client secret, or empty if not found or client is public
      */
     public Optional<String> retrieveWmsApiClientSecret() {
-        return retrieveClientSecret("wms-api",
-                null);
+        return retrieveClientSecret("wms-api", null);
     }
 
     /**
@@ -49,8 +46,7 @@ public class KeycloakClientSecretRetriever {
      * @param realm    The realm name (defaults to defaultRealm from config if null)
      * @return Optional containing the client secret, or empty if not found or client is public
      */
-    public Optional<String> retrieveClientSecret(String clientId,
-                                                 String realm) {
+    public Optional<String> retrieveClientSecret(String clientId, String realm) {
         if (clientId == null || clientId.isEmpty()) {
             logger.warn("Client ID is null or empty, cannot retrieve secret");
             return Optional.empty();
@@ -67,9 +63,7 @@ public class KeycloakClientSecretRetriever {
             List<ClientRepresentation> clients = clientsResource.findByClientId(clientId);
 
             if (clients.isEmpty()) {
-                logger.warn("Client '{}' not found in realm '{}'",
-                        clientId,
-                        targetRealm);
+                logger.warn("Client '{}' not found in realm '{}'", clientId, targetRealm);
                 return Optional.empty();
             }
 
@@ -86,28 +80,18 @@ public class KeycloakClientSecretRetriever {
 
                 if (secret != null && secret.getValue() != null && !secret.getValue()
                         .isEmpty()) {
-                    logger.info("Successfully retrieved client secret for client '{}' in realm '{}'",
-                            clientId,
-                            targetRealm);
+                    logger.info("Successfully retrieved client secret for client '{}' in realm '{}'", clientId, targetRealm);
                     return Optional.of(secret.getValue());
                 } else {
-                    logger.warn("Client '{}' is confidential but secret is not set in realm '{}'",
-                            clientId,
-                            targetRealm);
+                    logger.warn("Client '{}' is confidential but secret is not set in realm '{}'", clientId, targetRealm);
                     return Optional.empty();
                 }
             } else {
-                logger.info("Client '{}' is public or bearer-only, no secret required in realm '{}'",
-                        clientId,
-                        targetRealm);
+                logger.info("Client '{}' is public or bearer-only, no secret required in realm '{}'", clientId, targetRealm);
                 return Optional.empty();
             }
         } catch (Exception e) {
-            logger.error("Failed to retrieve client secret for client '{}' in realm '{}': {}",
-                    clientId,
-                    targetRealm,
-                    e.getMessage(),
-                    e);
+            logger.error("Failed to retrieve client secret for client '{}' in realm '{}': {}", clientId, targetRealm, e.getMessage(), e);
             return Optional.empty();
         }
     }

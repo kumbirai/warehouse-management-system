@@ -12,9 +12,7 @@ import com.ccbsa.wms.user.application.service.port.auth.AuthenticationServicePor
  * <p>
  * Handles token refresh command.
  * <p>
- * Responsibilities:
- * - Execute token refresh via authentication service port
- * - Return authentication result with new tokens and user context
+ * Responsibilities: - Execute token refresh via authentication service port - Return authentication result with new tokens and user context
  */
 @Component
 public class RefreshTokenCommandHandler {

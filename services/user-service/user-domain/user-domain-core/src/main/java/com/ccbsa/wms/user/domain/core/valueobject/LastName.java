@@ -5,13 +5,9 @@ import java.util.Objects;
 /**
  * Value Object: LastName
  * <p>
- * Represents a person's last name.
- * Immutable and validated on construction.
+ * Represents a person's last name. Immutable and validated on construction.
  * <p>
- * Business Rules:
- * - Last name is optional (can be null)
- * - If provided, must not be empty after trimming
- * - Maximum length: 100 characters
+ * Business Rules: - Last name is optional (can be null) - If provided, must not be empty after trimming - Maximum length: 100 characters
  */
 public final class LastName {
     private final String value;
@@ -33,14 +29,14 @@ public final class LastName {
     }
 
     /**
-     * Creates a LastName from a string value.
-     * Returns null if value is null or empty.
+     * Creates a LastName from a string value. Returns null if value is null or empty.
      *
      * @param value Last name string (can be null or empty)
      * @return LastName instance or null if value is null/empty
      */
     public static LastName of(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             return null;
         }
         return new LastName(value);

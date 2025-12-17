@@ -12,25 +12,18 @@ public final class CreateTenantResult {
     private final boolean success;
     private final String message;
 
-    public CreateTenantResult(TenantId tenantId,
-                              boolean success,
-                              String message) {
+    public CreateTenantResult(TenantId tenantId, boolean success, String message) {
         this.tenantId = tenantId;
         this.success = success;
         this.message = message;
     }
 
     public static CreateTenantResult success(TenantId tenantId) {
-        return new CreateTenantResult(tenantId,
-                true,
-                "Tenant created successfully");
+        return new CreateTenantResult(tenantId, true, "Tenant created successfully");
     }
 
-    public static CreateTenantResult failure(TenantId tenantId,
-                                             String message) {
-        return new CreateTenantResult(tenantId,
-                false,
-                message);
+    public static CreateTenantResult failure(TenantId tenantId, String message) {
+        return new CreateTenantResult(tenantId, false, message);
     }
 
     public TenantId getTenantId() {

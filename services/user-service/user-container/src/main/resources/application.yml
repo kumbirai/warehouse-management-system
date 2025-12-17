@@ -121,6 +121,10 @@ tenant:
   service:
     url: ${TENANT_SERVICE_URL:http://localhost:8089}
 
+# Frontend Configuration
+frontend:
+  base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
+
 # Application Security Configuration
 app:
   security:

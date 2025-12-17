@@ -4,8 +4,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Value object representing a user identifier.
- * User IDs are immutable and can be UUIDs or string identifiers.
+ * Value object representing a user identifier. User IDs are immutable and can be UUIDs or string identifiers.
  */
 public final class UserId {
     private final String value;
@@ -34,9 +33,7 @@ public final class UserId {
         try {
             return UUID.fromString(value);
         } catch (IllegalArgumentException e) {
-            throw new IllegalStateException(String.format("User ID is not a valid UUID: %s",
-                    value),
-                    e);
+            throw new IllegalStateException(String.format("User ID is not a valid UUID: %s", value), e);
         }
     }
 
@@ -58,8 +55,7 @@ public final class UserId {
             return false;
         }
         UserId userId = (UserId) o;
-        return Objects.equals(value,
-                userId.value);
+        return Objects.equals(value, userId.value);
     }
 
     @Override

@@ -6,8 +6,7 @@ import com.ccbsa.common.domain.valueobject.UserId;
 /**
  * Port: UserServicePort
  * <p>
- * Defines the contract for retrieving user information from user-service.
- * Implemented by service adapters in infrastructure layers.
+ * Defines the contract for retrieving user information from user-service. Implemented by service adapters in infrastructure layers.
  */
 public interface UserServicePort {
 

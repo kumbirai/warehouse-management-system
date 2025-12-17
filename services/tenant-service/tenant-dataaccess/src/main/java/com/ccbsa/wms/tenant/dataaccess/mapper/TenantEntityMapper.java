@@ -66,9 +66,7 @@ public class TenantEntityMapper {
 
         ContactInformation contactInfo = null;
         if (entity.getEmailAddress() != null || entity.getPhone() != null || entity.getAddress() != null) {
-            contactInfo = ContactInformation.of(entity.getEmailAddress(),
-                    entity.getPhone(),
-                    entity.getAddress());
+            contactInfo = ContactInformation.of(entity.getEmailAddress(), entity.getPhone(), entity.getAddress());
         }
 
         TenantConfiguration configuration = TenantConfiguration.builder()

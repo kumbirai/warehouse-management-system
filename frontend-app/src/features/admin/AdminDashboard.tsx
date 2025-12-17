@@ -1,7 +1,7 @@
-import { Box, Button, Card, CardContent, Container, Grid, Paper, Typography } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import { Header } from '../../components/layout/Header';
+import {Box, Button, Card, CardContent, Container, Grid, Paper, Typography} from '@mui/material';
+import {Link as RouterLink} from 'react-router-dom';
+import {useAuth} from '../../hooks/useAuth';
+import {Header} from '../../components/layout/Header';
 
 /**
  * System Admin dashboard component.

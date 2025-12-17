@@ -13,16 +13,11 @@ import com.ccbsa.wms.common.security.TenantContext;
 /**
  * Tenant-Aware Cache Key Generator.
  * <p>
- * Automatically prefixes cache keys with tenant ID from TenantContext.
- * This ensures cache isolation between tenants.
+ * Automatically prefixes cache keys with tenant ID from TenantContext. This ensures cache isolation between tenants.
  * <p>
  * Key Format: tenant:{tenantId}:{cacheName}:{methodParams}
  * <p>
- * Example:
- * - Method: findUserById(UUID id)
- * - Tenant: "acme-corp"
- * - Cache Name: "users"
- * - Generated Key: "tenant:acme-corp:users:550e8400-e29b-41d4-a716-446655440000"
+ * Example: - Method: findUserById(UUID id) - Tenant: "acme-corp" - Cache Name: "users" - Generated Key: "tenant:acme-corp:users:550e8400-e29b-41d4-a716-446655440000"
  * <p>
  * Usage:
  * <pre>
@@ -30,7 +25,8 @@ import com.ccbsa.wms.common.security.TenantContext;
  * public User findUserById(UserId id) { ... }
  * </pre>
  */
-public class TenantAwareCacheKeyGenerator implements KeyGenerator {
+public class TenantAwareCacheKeyGenerator
+        implements KeyGenerator {
 
     private static final Logger log = LoggerFactory.getLogger(TenantAwareCacheKeyGenerator.class);
     private static final String KEY_SEPARATOR = ":";
@@ -39,9 +35,8 @@ public class TenantAwareCacheKeyGenerator implements KeyGenerator {
     @Override
     public Object generate(Object target, Method method, Object... params) {
         // 1. Get tenant ID from security context
-        String tenantId = TenantContext.getTenantId() != null
-                ? TenantContext.getTenantId().getValue()
-                : "unknown";
+        String tenantId = TenantContext.getTenantId() != null ? TenantContext.getTenantId()
+                .getValue() : "unknown";
 
         // 2. Build cache key with tenant prefix
         StringBuilder keyBuilder = new StringBuilder();
@@ -69,10 +64,7 @@ public class TenantAwareCacheKeyGenerator implements KeyGenerator {
     /**
      * Extracts cache key value from method parameter.
      * <p>
-     * Handles:
-     * - Value Objects (calls getValue())
-     * - Domain IDs (calls getValue())
-     * - Primitives and Strings (toString())
+     * Handles: - Value Objects (calls getValue()) - Domain IDs (calls getValue()) - Primitives and Strings (toString())
      */
     private String extractKeyValue(Object param) {
         if (param == null) {
@@ -81,14 +73,16 @@ public class TenantAwareCacheKeyGenerator implements KeyGenerator {
 
         // Handle Value Objects (UserId, TenantId, etc.)
         try {
-            Method getValueMethod = param.getClass().getMethod("getValue");
+            Method getValueMethod = param.getClass()
+                    .getMethod("getValue");
             Object value = getValueMethod.invoke(param);
             return String.valueOf(value);
         } catch (NoSuchMethodException e) {
             // Not a value object, use toString()
             return param.toString();
         } catch (Exception e) {
-            log.warn("Failed to extract value from parameter: {}", param.getClass().getName(), e);
+            log.warn("Failed to extract value from parameter: {}", param.getClass()
+                    .getName(), e);
             return param.toString();
         }
     }

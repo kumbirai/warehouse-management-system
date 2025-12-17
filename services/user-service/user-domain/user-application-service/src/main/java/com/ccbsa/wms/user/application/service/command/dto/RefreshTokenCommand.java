@@ -7,7 +7,8 @@ import com.ccbsa.common.application.command.Command;
  * <p>
  * Represents the intent to refresh an access token.
  */
-public final class RefreshTokenCommand implements Command {
+public final class RefreshTokenCommand
+        implements Command {
     private final String refreshToken;
 
     public RefreshTokenCommand(String refreshToken) {

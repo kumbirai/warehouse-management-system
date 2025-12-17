@@ -18,8 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 /**
  * Global Exception Handler: GlobalExceptionHandler
  * <p>
- * Handles exceptions across all controllers and provides consistent error responses
- * using the standardized ApiResponse format.
+ * Handles exceptions across all controllers and provides consistent error responses using the standardized ApiResponse format.
  *
  * <p>This handler extends {@link BaseGlobalExceptionHandler} to inherit common exception
  * handling and can add tenant-service-specific exception handlers if needed.</p>
@@ -37,34 +36,28 @@ import jakarta.servlet.http.HttpServletRequest;
  * </ul>
  */
 @RestControllerAdvice
-public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
+public class GlobalExceptionHandler
+        extends BaseGlobalExceptionHandler {
 
     /**
-     * Handles authorization denied exceptions from Spring Security method security.
-     * Returns 403 Forbidden instead of 500 Internal Server Error.
+     * Handles authorization denied exceptions from Spring Security method security. Returns 403 Forbidden instead of 500 Internal Server Error.
      *
      * @param ex      The authorization exception
      * @param request The HTTP request
      * @return Error response with 403 Forbidden
      */
     @ExceptionHandler( {AuthorizationDeniedException.class, AccessDeniedException.class})
-    public ResponseEntity<ApiResponse<Void>> handleAuthorizationDenied(Exception ex,
-                                                                       HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleAuthorizationDenied(Exception ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Access denied - RequestId: {}, Path: {}, Message: {}",
-                requestId,
-                path,
-                ex.getMessage());
+        logger.warn("Access denied - RequestId: {}, Path: {}, Message: {}", requestId, path, ex.getMessage());
 
-        ApiError error = ApiError.builder("ACCESS_DENIED",
-                        "Access denied. Insufficient permissions to perform this operation.")
+        ApiError error = ApiError.builder("ACCESS_DENIED", "Access denied. Insufficient permissions to perform this operation.")
                 .path(path)
                 .requestId(requestId)
                 .build();
-        return ApiResponseBuilder.error(HttpStatus.FORBIDDEN,
-                error);
+        return ApiResponseBuilder.error(HttpStatus.FORBIDDEN, error);
     }
 }
 

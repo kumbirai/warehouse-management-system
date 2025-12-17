@@ -20,14 +20,12 @@ import com.ccbsa.wms.stockmanagement.domain.core.valueobject.ConsignmentStatus;
  * <p>
  * Represents a stock consignment received at the warehouse.
  * <p>
- * Business Rules:
- * - Consignment reference must be unique per tenant
- * - At least one line item is required
- * - Status transitions: RECEIVED -> CONFIRMED -> CANCELLED
- * - Cannot confirm a cancelled consignment
- * - Cannot cancel a confirmed consignment
+ * Business Rules: - Consignment reference must be unique per tenant - At least one line item is required - Status transitions: RECEIVED -> CONFIRMED -> CANCELLED - Cannot confirm
+ * a cancelled consignment - Cannot cancel a confirmed
+ * consignment
  */
-public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
+public class StockConsignment
+        extends TenantAwareAggregateRoot<ConsignmentId> {
     private ConsignmentReference consignmentReference;
     private WarehouseId warehouseId;
     private ConsignmentStatus status;
@@ -39,8 +37,7 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
     private LocalDateTime lastModifiedAt;
 
     /**
-     * Private constructor for builder pattern.
-     * Prevents direct instantiation.
+     * Private constructor for builder pattern. Prevents direct instantiation.
      */
     private StockConsignment() {
         this.lineItems = new ArrayList<>();
@@ -58,20 +55,13 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
     /**
      * Business logic method: Confirms the consignment.
      * <p>
-     * Business Rules:
-     * - Can only confirm received consignments
-     * - Sets status to CONFIRMED
-     * - Records confirmation timestamp
-     * - Publishes StockConsignmentConfirmedEvent
+     * Business Rules: - Can only confirm received consignments - Sets status to CONFIRMED - Records confirmation timestamp - Publishes StockConsignmentConfirmedEvent
      *
      * @throws IllegalStateException if consignment is not in RECEIVED status
      */
     public void confirm() {
         if (this.status != ConsignmentStatus.RECEIVED) {
-            throw new IllegalStateException(
-                    String.format("Cannot confirm consignment in status: %s. Only RECEIVED consignments can be confirmed.",
-                            this.status)
-            );
+            throw new IllegalStateException(String.format("Cannot confirm consignment in status: %s. Only RECEIVED consignments can be confirmed.", this.status));
         }
 
         this.status = ConsignmentStatus.CONFIRMED;
@@ -79,29 +69,20 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish domain event
-        addDomainEvent(new StockConsignmentConfirmedEvent(
-                this.getId().getValueAsString(),
-                this.consignmentReference,
-                this.getTenantId(),
-                this.warehouseId
-        ));
+        addDomainEvent(new StockConsignmentConfirmedEvent(this.getId()
+                .getValueAsString(), this.consignmentReference, this.getTenantId(), this.warehouseId));
     }
 
     /**
      * Business logic method: Cancels the consignment.
      * <p>
-     * Business Rules:
-     * - Can only cancel received consignments
-     * - Sets status to CANCELLED
+     * Business Rules: - Can only cancel received consignments - Sets status to CANCELLED
      *
      * @throws IllegalStateException if consignment is not in RECEIVED status
      */
     public void cancel() {
         if (this.status != ConsignmentStatus.RECEIVED) {
-            throw new IllegalStateException(
-                    String.format("Cannot cancel consignment in status: %s. Only RECEIVED consignments can be cancelled.",
-                            this.status)
-            );
+            throw new IllegalStateException(String.format("Cannot cancel consignment in status: %s. Only RECEIVED consignments can be cancelled.", this.status));
         }
 
         this.status = ConsignmentStatus.CANCELLED;
@@ -111,9 +92,7 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
     /**
      * Business logic method: Adds a line item to the consignment.
      * <p>
-     * Business Rules:
-     * - Can only add line items to received consignments
-     * - Line item cannot be null
+     * Business Rules: - Can only add line items to received consignments - Line item cannot be null
      *
      * @param lineItem Line item to add
      * @throws IllegalStateException    if consignment is not in RECEIVED status
@@ -121,10 +100,7 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
      */
     public void addLineItem(ConsignmentLineItem lineItem) {
         if (this.status != ConsignmentStatus.RECEIVED) {
-            throw new IllegalStateException(
-                    String.format("Cannot add line item to consignment in status: %s. Only RECEIVED consignments can be modified.",
-                            this.status)
-            );
+            throw new IllegalStateException(String.format("Cannot add line item to consignment in status: %s. Only RECEIVED consignments can be modified.", this.status));
         }
         if (lineItem == null) {
             throw new IllegalArgumentException("LineItem cannot be null");
@@ -209,8 +185,7 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
     }
 
     /**
-     * Builder class for constructing StockConsignment instances.
-     * Ensures all required fields are set and validated.
+     * Builder class for constructing StockConsignment instances. Ensures all required fields are set and validated.
      */
     public static class Builder {
         private StockConsignment consignment = new StockConsignment();
@@ -303,13 +278,8 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
 
             // Publish creation event only if this is a new consignment (no version set)
             if (consignment.getVersion() == 0) {
-                consignment.addDomainEvent(new StockConsignmentReceivedEvent(
-                        consignment.getId().getValueAsString(),
-                        consignment.consignmentReference,
-                        consignment.getTenantId(),
-                        consignment.warehouseId,
-                        consignment.lineItems
-                ));
+                consignment.addDomainEvent(new StockConsignmentReceivedEvent(consignment.getId()
+                        .getValueAsString(), consignment.consignmentReference, consignment.getTenantId(), consignment.warehouseId, consignment.lineItems));
             }
 
             return consumeConsignment();
@@ -354,8 +324,7 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
         }
 
         /**
-         * Consumes the consignment from the builder and returns it.
-         * Creates a new consignment instance for the next build.
+         * Consumes the consignment from the builder and returns it. Creates a new consignment instance for the next build.
          *
          * @return Built consignment
          */
@@ -366,8 +335,7 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
         }
 
         /**
-         * Builds StockConsignment without publishing creation event.
-         * Used when reconstructing from persistence.
+         * Builds StockConsignment without publishing creation event. Used when reconstructing from persistence.
          *
          * @return Validated StockConsignment instance
          * @throws IllegalArgumentException if validation fails

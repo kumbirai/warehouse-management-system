@@ -13,18 +13,14 @@ public final class TenantListResult {
     private final int size;
     private final long totalElements;
 
-    public TenantListResult(List<TenantView> tenants,
-                            int page,
-                            int size,
-                            long totalElements) {
+    public TenantListResult(List<TenantView> tenants, int page, int size, long totalElements) {
         if (size <= 0) {
             throw new IllegalArgumentException("Page size must be greater than zero");
         }
         this.tenants = tenants == null ? Collections.emptyList() : List.copyOf(tenants);
         this.page = page;
         this.size = size;
-        this.totalElements = Math.max(totalElements,
-                0L);
+        this.totalElements = Math.max(totalElements, 0L);
     }
 
     public List<TenantView> getTenants() {

@@ -19,15 +19,12 @@ import com.ccbsa.wms.product.domain.core.valueobject.UnitOfMeasure;
  * <p>
  * Represents a product in the warehouse management system.
  * <p>
- * Business Rules:
- * - Products are tenant-aware
- * - Each product has a unique product code per tenant
- * - Each product has a unique primary barcode per tenant
- * - Products can have multiple secondary barcodes
- * - Product code cannot be changed after creation
- * - Primary barcode can be updated (must remain unique)
+ * Business Rules: - Products are tenant-aware - Each product has a unique product code per tenant - Each product has a unique primary barcode per tenant - Products can have
+ * multiple secondary barcodes - Product code cannot be changed after
+ * creation - Primary barcode can be updated (must remain unique)
  */
-public class Product extends TenantAwareAggregateRoot<ProductId> {
+public class Product
+        extends TenantAwareAggregateRoot<ProductId> {
 
     // Value Objects
     private ProductCode productCode;
@@ -45,8 +42,7 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
     private LocalDateTime lastModifiedAt;
 
     /**
-     * Private constructor for builder pattern.
-     * Prevents direct instantiation.
+     * Private constructor for builder pattern. Prevents direct instantiation.
      */
     private Product() {
         this.secondaryBarcodes = new ArrayList<>();
@@ -64,15 +60,14 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
     /**
      * Business logic method: Updates the product description.
      * <p>
-     * Business Rules:
-     * - Description cannot be null or empty
-     * - Description cannot exceed 500 characters
+     * Business Rules: - Description cannot be null or empty - Description cannot exceed 500 characters
      *
      * @param newDescription New description value
      * @throws IllegalArgumentException if newDescription is invalid
      */
     public void updateDescription(String newDescription) {
-        if (newDescription == null || newDescription.trim().isEmpty()) {
+        if (newDescription == null || newDescription.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Description cannot be null or empty");
         }
         if (newDescription.length() > 500) {
@@ -83,26 +78,16 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish update event
-        addDomainEvent(new ProductUpdatedEvent(
-                this.getId(),
-                this.getTenantId(),
-                this.productCode,
-                this.description,
-                this.primaryBarcode,
-                this.secondaryBarcodes,
-                this.unitOfMeasure,
-                this.category,
-                this.brand
-        ));
+        addDomainEvent(
+                new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description, this.primaryBarcode, this.secondaryBarcodes, this.unitOfMeasure,
+                        this.category, this.brand));
     }
 
     /**
      * Business logic method: Updates the primary barcode.
      * <p>
-     * Business Rules:
-     * - Primary barcode must be unique per tenant (validated at application service layer)
-     * - Primary barcode cannot be null
-     * - New primary barcode cannot be the same as any secondary barcode
+     * Business Rules: - Primary barcode must be unique per tenant (validated at application service layer) - Primary barcode cannot be null - New primary barcode cannot be the
+     * same as any secondary barcode
      *
      * @param newBarcode New primary barcode value
      * @throws IllegalArgumentException if newBarcode is null or conflicts with secondary barcodes
@@ -112,26 +97,16 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
             throw new IllegalArgumentException("PrimaryBarcode cannot be null");
         }
         if (hasBarcode(newBarcode.getValue())) {
-            throw new IllegalArgumentException(
-                    String.format("Primary barcode %s conflicts with existing secondary barcode", newBarcode.getValue())
-            );
+            throw new IllegalArgumentException(String.format("Primary barcode %s conflicts with existing secondary barcode", newBarcode.getValue()));
         }
 
         this.primaryBarcode = newBarcode;
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish update event
-        addDomainEvent(new ProductUpdatedEvent(
-                this.getId(),
-                this.getTenantId(),
-                this.productCode,
-                this.description,
-                this.primaryBarcode,
-                this.secondaryBarcodes,
-                this.unitOfMeasure,
-                this.category,
-                this.brand
-        ));
+        addDomainEvent(
+                new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description, this.primaryBarcode, this.secondaryBarcodes, this.unitOfMeasure,
+                        this.category, this.brand));
     }
 
     /**
@@ -141,28 +116,29 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
      * @return true if product has the barcode
      */
     public boolean hasBarcode(String barcodeValue) {
-        if (barcodeValue == null || barcodeValue.trim().isEmpty()) {
+        if (barcodeValue == null || barcodeValue.trim()
+                .isEmpty()) {
             return false;
         }
 
         // Check primary barcode
-        if (primaryBarcode != null && primaryBarcode.getValue().equals(barcodeValue.trim())) {
+        if (primaryBarcode != null && primaryBarcode.getValue()
+                .equals(barcodeValue.trim())) {
             return true;
         }
 
         // Check secondary barcodes
         return secondaryBarcodes.stream()
-                .anyMatch(barcode -> barcode.getValue().equals(barcodeValue.trim()));
+                .anyMatch(barcode -> barcode.getValue()
+                        .equals(barcodeValue.trim()));
     }
 
     /**
      * Business logic method: Adds a secondary barcode.
      * <p>
-     * Business Rules:
-     * - Secondary barcode must be unique per tenant (validated at application service layer)
-     * - Secondary barcode cannot be null
-     * - Secondary barcode cannot be the same as primary barcode
-     * - Secondary barcode cannot be duplicated in the list
+     * Business Rules: - Secondary barcode must be unique per tenant (validated at application service layer) - Secondary barcode cannot be null - Secondary barcode cannot be the
+     * same as primary barcode - Secondary barcode cannot be
+     * duplicated in the list
      *
      * @param barcode Secondary barcode to add
      * @throws IllegalArgumentException if barcode is invalid or conflicts
@@ -171,37 +147,27 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
         if (barcode == null) {
             throw new IllegalArgumentException("SecondaryBarcode cannot be null");
         }
-        if (primaryBarcode != null && primaryBarcode.getValue().equals(barcode.getValue())) {
+        if (primaryBarcode != null && primaryBarcode.getValue()
+                .equals(barcode.getValue())) {
             throw new IllegalArgumentException("Secondary barcode cannot be the same as primary barcode");
         }
         if (hasBarcode(barcode.getValue())) {
-            throw new IllegalArgumentException(
-                    String.format("Secondary barcode %s already exists", barcode.getValue())
-            );
+            throw new IllegalArgumentException(String.format("Secondary barcode %s already exists", barcode.getValue()));
         }
 
         this.secondaryBarcodes.add(barcode);
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish update event
-        addDomainEvent(new ProductUpdatedEvent(
-                this.getId(),
-                this.getTenantId(),
-                this.productCode,
-                this.description,
-                this.primaryBarcode,
-                this.secondaryBarcodes,
-                this.unitOfMeasure,
-                this.category,
-                this.brand
-        ));
+        addDomainEvent(
+                new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description, this.primaryBarcode, this.secondaryBarcodes, this.unitOfMeasure,
+                        this.category, this.brand));
     }
 
     /**
      * Business logic method: Removes a secondary barcode.
      * <p>
-     * Business Rules:
-     * - Barcode must exist in the secondary barcodes list
+     * Business Rules: - Barcode must exist in the secondary barcodes list
      *
      * @param barcode Secondary barcode to remove
      * @throws IllegalArgumentException if barcode is null or not found
@@ -211,25 +177,15 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
             throw new IllegalArgumentException("SecondaryBarcode cannot be null");
         }
         if (!this.secondaryBarcodes.remove(barcode)) {
-            throw new IllegalArgumentException(
-                    String.format("Secondary barcode %s not found", barcode.getValue())
-            );
+            throw new IllegalArgumentException(String.format("Secondary barcode %s not found", barcode.getValue()));
         }
 
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish update event
-        addDomainEvent(new ProductUpdatedEvent(
-                this.getId(),
-                this.getTenantId(),
-                this.productCode,
-                this.description,
-                this.primaryBarcode,
-                this.secondaryBarcodes,
-                this.unitOfMeasure,
-                this.category,
-                this.brand
-        ));
+        addDomainEvent(
+                new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description, this.primaryBarcode, this.secondaryBarcodes, this.unitOfMeasure,
+                        this.category, this.brand));
     }
 
     /**
@@ -247,17 +203,9 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish update event
-        addDomainEvent(new ProductUpdatedEvent(
-                this.getId(),
-                this.getTenantId(),
-                this.productCode,
-                this.description,
-                this.primaryBarcode,
-                this.secondaryBarcodes,
-                this.unitOfMeasure,
-                this.category,
-                this.brand
-        ));
+        addDomainEvent(
+                new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description, this.primaryBarcode, this.secondaryBarcodes, this.unitOfMeasure,
+                        this.category, this.brand));
     }
 
     /**
@@ -272,17 +220,9 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish update event
-        addDomainEvent(new ProductUpdatedEvent(
-                this.getId(),
-                this.getTenantId(),
-                this.productCode,
-                this.description,
-                this.primaryBarcode,
-                this.secondaryBarcodes,
-                this.unitOfMeasure,
-                this.category,
-                this.brand
-        ));
+        addDomainEvent(
+                new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description, this.primaryBarcode, this.secondaryBarcodes, this.unitOfMeasure,
+                        this.category, this.brand));
     }
 
     /**
@@ -338,8 +278,7 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
     }
 
     /**
-     * Builder class for constructing Product instances.
-     * Ensures all required fields are set and validated.
+     * Builder class for constructing Product instances. Ensures all required fields are set and validated.
      */
     public static class Builder {
         private Product product = new Product();
@@ -466,17 +405,9 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
 
             // Publish creation event only if this is a new product (no version set)
             if (product.getVersion() == 0) {
-                product.addDomainEvent(new ProductCreatedEvent(
-                        product.getId(),
-                        product.getTenantId(),
-                        product.productCode,
-                        product.description,
-                        product.primaryBarcode,
-                        product.secondaryBarcodes,
-                        product.unitOfMeasure,
-                        product.category,
-                        product.brand
-                ));
+                product.addDomainEvent(
+                        new ProductCreatedEvent(product.getId(), product.getTenantId(), product.productCode, product.description, product.primaryBarcode, product.secondaryBarcodes,
+                                product.unitOfMeasure, product.category, product.brand));
             }
 
             return consumeProduct();
@@ -497,7 +428,8 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
             if (product.productCode == null) {
                 throw new IllegalArgumentException("ProductCode is required");
             }
-            if (product.description == null || product.description.trim().isEmpty()) {
+            if (product.description == null || product.description.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("Description is required");
             }
             if (product.description.length() > 500) {
@@ -521,8 +453,7 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
         }
 
         /**
-         * Consumes the product from the builder and returns it.
-         * Creates a new product instance for the next build.
+         * Consumes the product from the builder and returns it. Creates a new product instance for the next build.
          *
          * @return Built product
          */
@@ -533,8 +464,7 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
         }
 
         /**
-         * Builds Product without publishing creation event.
-         * Used when reconstructing from persistence.
+         * Builds Product without publishing creation event. Used when reconstructing from persistence.
          *
          * @return Validated Product instance
          * @throws IllegalArgumentException if validation fails

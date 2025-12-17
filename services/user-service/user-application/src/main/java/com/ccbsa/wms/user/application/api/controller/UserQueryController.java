@@ -37,23 +37,22 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/users")
-@Tag(name = "User Queries", description = "User management query operations")
+@Tag(name = "User Queries",
+        description = "User management query operations")
 public class UserQueryController {
     private final GetUserQueryHandler getUserQueryHandler;
     private final ListUsersQueryHandler listUsersQueryHandler;
     private final UserMapper mapper;
 
-    public UserQueryController(
-            GetUserQueryHandler getUserQueryHandler,
-            ListUsersQueryHandler listUsersQueryHandler,
-            UserMapper mapper) {
+    public UserQueryController(GetUserQueryHandler getUserQueryHandler, ListUsersQueryHandler listUsersQueryHandler, UserMapper mapper) {
         this.getUserQueryHandler = getUserQueryHandler;
         this.listUsersQueryHandler = listUsersQueryHandler;
         this.mapper = mapper;
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get User by ID", description = "Retrieves a user by ID")
+    @Operation(summary = "Get User by ID",
+            description = "Retrieves a user by ID")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
     public ResponseEntity<ApiResponse<UserResponse>> getUser(
             @PathVariable String id) {
@@ -63,13 +62,17 @@ public class UserQueryController {
     }
 
     @GetMapping
-    @Operation(summary = "List Users", description = "Lists users with optional filtering and pagination")
+    @Operation(summary = "List Users",
+            description = "Lists users with optional filtering and pagination")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
     public ResponseEntity<ApiResponse<List<UserResponse>>> listUsers(
-            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
+            @RequestHeader(value = "X-Tenant-Id",
+                    required = false) String tenantId,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false, defaultValue = "1") Integer page,
-            @RequestParam(required = false, defaultValue = "20") Integer size) {
+            @RequestParam(required = false,
+                    defaultValue = "1") Integer page,
+            @RequestParam(required = false,
+                    defaultValue = "20") Integer size) {
         // Extract user roles from SecurityContext
         boolean isTenantAdmin = isTenantAdmin();
 
@@ -91,16 +94,14 @@ public class UserQueryController {
         // Frontend uses 1-indexed pages (page 1 = first page), backend uses 0-indexed for array slicing
         int zeroIndexedPage = page != null && page > 0 ? page - 1 : 0;
 
-        ListUsersQueryResult result = listUsersQueryHandler.handle(
-                mapper.toListUsersQuery(resolvedTenantId, status, zeroIndexedPage, size));
+        ListUsersQueryResult result = listUsersQueryHandler.handle(mapper.toListUsersQuery(resolvedTenantId, status, zeroIndexedPage, size));
         List<UserResponse> responses = mapper.toUserResponseList(result);
 
         // Build pagination metadata (using 1-indexed page for response)
-        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(
-                page != null && page > 0 ? page : 1,
-                size != null && size > 0 ? size : 20,
-                result.getTotalCount());
-        ApiMeta meta = ApiMeta.builder().pagination(pagination).build();
+        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page != null && page > 0 ? page : 1, size != null && size > 0 ? size : 20, result.getTotalCount());
+        ApiMeta meta = ApiMeta.builder()
+                .pagination(pagination)
+                .build();
 
         return ApiResponseBuilder.ok(responses, null, meta);
     }
@@ -111,7 +112,8 @@ public class UserQueryController {
      * @return true if user has TENANT_ADMIN role, false otherwise
      */
     private boolean isTenantAdmin() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext()
+                .getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
             return false;
         }

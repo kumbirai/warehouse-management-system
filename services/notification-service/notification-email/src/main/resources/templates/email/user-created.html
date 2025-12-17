@@ -8,7 +8,7 @@
 <div th:fragment="content">
     <h2>Welcome to the Warehouse Management System!</h2>
     <p>Hello <span th:text="${userName ?: username}">User</span>,</p>
-    <p>Your account has been successfully created. You can now access the Warehouse Management System using your credentials.</p>
+    <p>Your account has been successfully created in the Warehouse Management System.</p>
 
     <div class="info-box">
         <p><strong>Account Details:</strong></p>
@@ -17,6 +17,24 @@
             <li><strong>Email:</strong> <span th:text="${email}">email</span></li>
             <li th:if="${tenantName}"><strong>Tenant:</strong> <span th:text="${tenantName}">tenant</span></li>
         </ul>
+    </div>
+
+    <div class="info-box" style="background-color: #fff3cd; border-left-color: #ffc107;">
+        <p><strong>Next Steps - Account Setup Required:</strong></p>
+        <p>To complete your account setup and start using the system, you need to:</p>
+        <ol>
+            <li><strong>Verify your email address</strong> - You will receive a separate email from our authentication
+                system with a verification link. Please click the link to
+                verify your email address.
+            </li>
+            <li><strong>Set your password</strong> - The same email will also contain a link to set your password. Click
+                the link and create a secure password for your account.
+            </li>
+        </ol>
+        <p><strong>Important:</strong> You will not be able to log in until you have verified your email address and set
+            your password.</p>
+        <p>If you do not receive the verification email within a few minutes, please check your spam folder or contact
+            your system administrator.</p>
     </div>
 
     <p>If you have any questions or need assistance, please contact your system administrator.</p>

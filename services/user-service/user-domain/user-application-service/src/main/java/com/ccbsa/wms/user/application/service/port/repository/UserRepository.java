@@ -11,8 +11,7 @@ import com.ccbsa.wms.user.domain.core.valueobject.Username;
 /**
  * Repository port for User aggregate persistence.
  * <p>
- * This port is defined in the application service layer and implemented
- * by the data access layer (user-dataaccess).
+ * This port is defined in the application service layer and implemented by the data access layer (user-dataaccess).
  */
 public interface UserRepository {
     /**
@@ -57,8 +56,7 @@ public interface UserRepository {
     /**
      * Finds all users across all tenant schemas (for SYSTEM_ADMIN only).
      * <p>
-     * This method queries users from all tenant schemas in the database.
-     * It is used when SYSTEM_ADMIN wants to list users from all tenants.
+     * This method queries users from all tenant schemas in the database. It is used when SYSTEM_ADMIN wants to list users from all tenants.
      *
      * @param status Optional user status filter. If null, returns all users regardless of status.
      * @return List of all users across all tenant schemas
@@ -68,8 +66,7 @@ public interface UserRepository {
     /**
      * Finds a user by ID across all tenant schemas (for SYSTEM_ADMIN only).
      * <p>
-     * This method queries all tenant schemas to find a user by ID.
-     * It is used when SYSTEM_ADMIN needs to find a user without knowing which tenant they belong to.
+     * This method queries all tenant schemas to find a user by ID. It is used when SYSTEM_ADMIN needs to find a user without knowing which tenant they belong to.
      *
      * @param userId User identifier
      * @return User if found, empty otherwise

@@ -5,7 +5,8 @@ package com.ccbsa.wms.notification.application.service.exception;
  * <p>
  * Thrown when a notification is not found.
  */
-public class NotificationNotFoundException extends RuntimeException {
+public class NotificationNotFoundException
+        extends RuntimeException {
     private final String notificationId;
     private final String reason;
 

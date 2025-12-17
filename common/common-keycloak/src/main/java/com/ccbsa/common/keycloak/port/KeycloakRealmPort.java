@@ -5,12 +5,9 @@ import org.keycloak.representations.idm.RealmRepresentation;
 import com.ccbsa.common.domain.valueobject.TenantId;
 
 /**
- * Port interface for Keycloak realm operations.
- * Used by tenant-service for realm management.
+ * Port interface for Keycloak realm operations. Used by tenant-service for realm management.
  * <p>
- * Realms in Keycloak represent isolated security domains.
- * In a multi-tenant system, each tenant can have its own realm
- * or all tenants can share a single realm with tenant groups.
+ * Realms in Keycloak represent isolated security domains. In a multi-tenant system, each tenant can have its own realm or all tenants can share a single realm with tenant groups.
  */
 public interface KeycloakRealmPort {
     /**
@@ -22,8 +19,7 @@ public interface KeycloakRealmPort {
      * @throws IllegalArgumentException if realm name is invalid
      * @throws RuntimeException         if realm creation fails
      */
-    RealmRepresentation createRealm(TenantId tenantId,
-                                    String realmName);
+    RealmRepresentation createRealm(TenantId tenantId, String realmName);
 
     /**
      * Gets a realm by name.
@@ -40,8 +36,7 @@ public interface KeycloakRealmPort {
      * @param realm     Realm representation with updates
      * @throws IllegalArgumentException if realm does not exist
      */
-    void updateRealm(String realmName,
-                     RealmRepresentation realm);
+    void updateRealm(String realmName, RealmRepresentation realm);
 
     /**
      * Enables a realm.

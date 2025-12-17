@@ -10,8 +10,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 /**
  * Cache Warming Configuration.
  * <p>
- * Configures async executor for cache warming tasks.
- * Separate thread pool ensures warming doesn't block application startup.
+ * Configures async executor for cache warming tasks. Separate thread pool ensures warming doesn't block application startup.
  */
 @Configuration
 @EnableAsync
@@ -20,11 +19,7 @@ public class CacheWarmingConfiguration {
     /**
      * Thread pool for cache warming tasks.
      * <p>
-     * Configuration:
-     * - Core pool size: 2 threads
-     * - Max pool size: 4 threads
-     * - Queue capacity: 100 tasks
-     * - Thread name prefix: cache-warming-
+     * Configuration: - Core pool size: 2 threads - Max pool size: 4 threads - Queue capacity: 100 tasks - Thread name prefix: cache-warming-
      */
     @Bean("cacheWarmingExecutor")
     public Executor cacheWarmingExecutor() {

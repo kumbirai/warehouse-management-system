@@ -8,17 +8,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 /**
  * Location Management Service Application
  * <p>
- * Provides:
- * - Warehouse location management
- * - Location barcode generation and validation
- * - Location capacity tracking
- * - Service discovery via Eureka (auto-configured)
+ * Provides: - Warehouse location management - Location barcode generation and validation - Location capacity tracking - Service discovery via Eureka (auto-configured)
  * <p>
  * Note: Eureka client is auto-configured when spring-cloud-starter-netflix-eureka-client is on the classpath.
  */
-@SpringBootApplication(scanBasePackages = {"com.ccbsa.wms.locationmanagement",
-        "com.ccbsa.wms.common.security",
-        "com.ccbsa.common.cache"})
+@SpringBootApplication(scanBasePackages = {"com.ccbsa.wms.locationmanagement", "com.ccbsa.wms.common.security", "com.ccbsa.common.cache"})
 @EnableJpaRepositories(basePackages = "com.ccbsa.wms.location.dataaccess.jpa")
 @EntityScan(basePackages = "com.ccbsa.wms.location.dataaccess.entity")
 public class LocationManagementServiceApplication {

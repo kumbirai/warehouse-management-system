@@ -11,7 +11,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * <p>
  * All location-specific events extend this class.
  */
-public abstract class LocationManagementEvent extends DomainEvent<LocationId> {
+public abstract class LocationManagementEvent
+        extends DomainEvent<LocationId> {
     /**
      * Constructor for Location Management events without metadata.
      *
@@ -34,7 +35,8 @@ public abstract class LocationManagementEvent extends DomainEvent<LocationId> {
         if (locationId == null) {
             throw new IllegalArgumentException("LocationId cannot be null");
         }
-        return locationId.getValue().toString();
+        return locationId.getValue()
+                .toString();
     }
 
     /**

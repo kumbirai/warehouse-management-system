@@ -6,8 +6,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Base class for all aggregate roots in the system.
- * An aggregate root is the entry point to an aggregate and maintains consistency boundaries.
+ * Base class for all aggregate roots in the system. An aggregate root is the entry point to an aggregate and maintains consistency boundaries.
  *
  * @param <ID> The type of the aggregate identifier
  */
@@ -47,8 +46,7 @@ public abstract class AggregateRoot<ID> {
     }
 
     /**
-     * Adds a domain event to the aggregate's event list.
-     * Events are published after the aggregate is persisted.
+     * Adds a domain event to the aggregate's event list. Events are published after the aggregate is persisted.
      *
      * @param event The domain event to add
      */

@@ -10,15 +10,12 @@ import com.ccbsa.wms.common.security.TenantContext;
 /**
  * Resolves the database schema name based on the current tenant context.
  * <p>
- * Implements schema-per-tenant strategy for multi-tenant isolation.
- * Each tenant has its own isolated PostgreSQL schema.
+ * Implements schema-per-tenant strategy for multi-tenant isolation. Each tenant has its own isolated PostgreSQL schema.
  * <p>
  * Schema naming convention: `tenant_{sanitized_tenant_id}_schema`
  * <p>
- * The tenant ID is sanitized to ensure it's a valid PostgreSQL identifier:
- * - Converted to lowercase
- * - Hyphens and other special characters replaced with underscores
- * - Invalid characters removed
+ * The tenant ID is sanitized to ensure it's a valid PostgreSQL identifier: - Converted to lowercase - Hyphens and other special characters replaced with underscores - Invalid
+ * characters removed
  *
  * @see TenantContext
  */
@@ -28,8 +25,7 @@ public class TenantSchemaResolver {
     /**
      * Resolves the schema name for the current tenant.
      * <p>
-     * Uses schema-per-tenant strategy where each tenant has its own isolated schema.
-     * The schema name is derived from the tenant ID in the current tenant context.
+     * Uses schema-per-tenant strategy where each tenant has its own isolated schema. The schema name is derived from the tenant ID in the current tenant context.
      *
      * @return Schema name in format: `tenant_{sanitized_tenant_id}_schema`
      * @throws IllegalStateException if tenant context is not set
@@ -47,17 +43,15 @@ public class TenantSchemaResolver {
     /**
      * Sanitizes the tenant ID to ensure it's a valid PostgreSQL identifier.
      * <p>
-     * PostgreSQL identifiers:
-     * - Must start with a letter or underscore
-     * - Can contain letters, digits, and underscores
-     * - Case-insensitive (converted to lowercase)
-     * - Special characters are replaced with underscores
+     * PostgreSQL identifiers: - Must start with a letter or underscore - Can contain letters, digits, and underscores - Case-insensitive (converted to lowercase) - Special
+     * characters are replaced with underscores
      *
      * @param tenantId The tenant ID value to sanitize
      * @return Sanitized tenant ID suitable for use in PostgreSQL schema name
      */
     private String sanitizeTenantId(String tenantId) {
-        if (tenantId == null || tenantId.trim().isEmpty()) {
+        if (tenantId == null || tenantId.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Tenant ID cannot be null or empty");
         }
 

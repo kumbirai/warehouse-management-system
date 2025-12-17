@@ -59,7 +59,8 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping("/users")
-@Tag(name = "User Commands", description = "User management command operations")
+@Tag(name = "User Commands",
+        description = "User management command operations")
 public class UserCommandController {
     private final CreateUserCommandHandler createUserCommandHandler;
     private final UpdateUserProfileCommandHandler updateUserProfileCommandHandler;
@@ -69,20 +70,15 @@ public class UserCommandController {
     private final AssignUserRoleCommandHandler assignUserRoleCommandHandler;
     private final RemoveUserRoleCommandHandler removeUserRoleCommandHandler;
     private final UserMapper mapper;
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "UserRepository is a Spring-managed interface. The field is final and the reference is immutable in Spring's "
-            + "dependency injection context.")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+            justification = "UserRepository is a Spring-managed interface. The field is final and the reference is immutable in Spring's " + "dependency injection context.")
     private final UserRepository userRepository;
 
-    public UserCommandController(
-            CreateUserCommandHandler createUserCommandHandler,
-            UpdateUserProfileCommandHandler updateUserProfileCommandHandler,
-            ActivateUserCommandHandler activateUserCommandHandler,
-            DeactivateUserCommandHandler deactivateUserCommandHandler,
-            SuspendUserCommandHandler suspendUserCommandHandler,
-            AssignUserRoleCommandHandler assignUserRoleCommandHandler,
-            RemoveUserRoleCommandHandler removeUserRoleCommandHandler,
-            UserMapper mapper,
-            UserRepository userRepository) {
+    public UserCommandController(CreateUserCommandHandler createUserCommandHandler, UpdateUserProfileCommandHandler updateUserProfileCommandHandler,
+                                 ActivateUserCommandHandler activateUserCommandHandler,
+                                 DeactivateUserCommandHandler deactivateUserCommandHandler, SuspendUserCommandHandler suspendUserCommandHandler,
+                                 AssignUserRoleCommandHandler assignUserRoleCommandHandler,
+                                 RemoveUserRoleCommandHandler removeUserRoleCommandHandler, UserMapper mapper, UserRepository userRepository) {
         this.createUserCommandHandler = createUserCommandHandler;
         this.updateUserProfileCommandHandler = updateUserProfileCommandHandler;
         this.activateUserCommandHandler = activateUserCommandHandler;
@@ -95,11 +91,15 @@ public class UserCommandController {
     }
 
     @PostMapping
-    @Operation(summary = "Create User", description = "Creates a new user in the system")
+    @Operation(summary = "Create User",
+            description = "Creates a new user in the system")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
     public ResponseEntity<ApiResponse<CreateUserResponse>> createUser(
-            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
-            @Valid @RequestBody CreateUserRequest request) {
+            @RequestHeader(value = "X-Tenant-Id",
+                    required = false) String tenantId,
+            @Valid
+            @RequestBody
+            CreateUserRequest request) {
         // Extract user roles to determine tenant isolation rules
         boolean isTenantAdmin = isTenantAdmin();
 
@@ -119,7 +119,8 @@ public class UserCommandController {
             if (resolvedTenantId == null) {
                 resolvedTenantId = request.getTenantId();
             }
-            if (resolvedTenantId == null || resolvedTenantId.trim().isEmpty()) {
+            if (resolvedTenantId == null || resolvedTenantId.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("TenantId is required when creating a user");
             }
         }
@@ -131,17 +132,16 @@ public class UserCommandController {
 
         // Log context setting for debugging
         Logger logger = LoggerFactory.getLogger(UserCommandController.class);
-        logger.info("Setting TenantContext to '{}' before creating user (previous: {})",
-                tenantIdToSet.getValue(), previousTenantId != null ? previousTenantId.getValue() : "null");
+        logger.info("Setting TenantContext to '{}' before creating user (previous: {})", tenantIdToSet.getValue(), previousTenantId != null ? previousTenantId.getValue() : "null");
 
         try {
             TenantContext.setTenantId(tenantIdToSet);
 
             // Verify TenantContext is set correctly
             TenantId verifyTenantId = TenantContext.getTenantId();
-            if (verifyTenantId == null || !verifyTenantId.getValue().equals(resolvedTenantId)) {
-                logger.error("TenantContext verification failed! Expected: '{}', Actual: {}",
-                        resolvedTenantId, verifyTenantId != null ? verifyTenantId.getValue() : "null");
+            if (verifyTenantId == null || !verifyTenantId.getValue()
+                    .equals(resolvedTenantId)) {
+                logger.error("TenantContext verification failed! Expected: '{}', Actual: {}", resolvedTenantId, verifyTenantId != null ? verifyTenantId.getValue() : "null");
                 throw new IllegalStateException("Failed to set TenantContext correctly");
             }
             logger.debug("TenantContext verified: '{}'", verifyTenantId.getValue());
@@ -168,7 +168,8 @@ public class UserCommandController {
      * @return true if user has TENANT_ADMIN role, false otherwise
      */
     private boolean isTenantAdmin() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext()
+                .getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
             return false;
         }
@@ -200,12 +201,16 @@ public class UserCommandController {
     }
 
     @PutMapping("/{id}/profile")
-    @Operation(summary = "Update User Profile", description = "Updates user profile information")
+    @Operation(summary = "Update User Profile",
+            description = "Updates user profile information")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
     public ResponseEntity<ApiResponse<Void>> updateUserProfile(
             @PathVariable String id,
-            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
-            @Valid @RequestBody UpdateUserProfileRequest request) {
+            @RequestHeader(value = "X-Tenant-Id",
+                    required = false) String tenantId,
+            @Valid
+            @RequestBody
+            UpdateUserProfileRequest request) {
         return executeWithTenantContext(tenantId, UserId.of(id), () -> {
             UpdateUserProfileCommand command = mapper.toUpdateUserProfileCommand(id, request);
             updateUserProfileCommandHandler.handle(command);
@@ -216,16 +221,14 @@ public class UserCommandController {
     /**
      * Executes an operation with TenantContext set appropriately.
      * <p>
-     * For TENANT_ADMIN: Uses TenantContext from interceptor (their own tenant)
-     * For SYSTEM_ADMIN: Uses tenantId from header, or finds user across schemas if not provided
+     * For TENANT_ADMIN: Uses TenantContext from interceptor (their own tenant) For SYSTEM_ADMIN: Uses tenantId from header, or finds user across schemas if not provided
      *
      * @param tenantId  Tenant ID from header (for SYSTEM_ADMIN, optional)
      * @param userId    User ID to find tenant for (for SYSTEM_ADMIN when tenantId not provided)
      * @param operation Operation to execute
      * @return Response entity
      */
-    private <T> ResponseEntity<ApiResponse<T>> executeWithTenantContext(
-            String tenantId, UserId userId, Supplier<ResponseEntity<ApiResponse<T>>> operation) {
+    private <T> ResponseEntity<ApiResponse<T>> executeWithTenantContext(String tenantId, UserId userId, Supplier<ResponseEntity<ApiResponse<T>>> operation) {
         boolean isTenantAdmin = isTenantAdmin();
         Logger logger = LoggerFactory.getLogger(UserCommandController.class);
 
@@ -240,13 +243,14 @@ public class UserCommandController {
             }
         } else {
             // SYSTEM_ADMIN: If tenantId not provided, find user across schemas to get their tenantId
-            if (resolvedTenantId == null || resolvedTenantId.trim().isEmpty()) {
+            if (resolvedTenantId == null || resolvedTenantId.trim()
+                    .isEmpty()) {
                 if (userId != null) {
                     logger.debug("TenantId not provided for SYSTEM_ADMIN, finding user across schemas: userId={}", userId.getValue());
                     var user = userRepository.findByIdAcrossTenants(userId)
-                            .orElseThrow(() -> new IllegalArgumentException(
-                                    String.format("User not found: %s", userId.getValue())));
-                    resolvedTenantId = user.getTenantId().getValue();
+                            .orElseThrow(() -> new IllegalArgumentException(String.format("User not found: %s", userId.getValue())));
+                    resolvedTenantId = user.getTenantId()
+                            .getValue();
                     logger.debug("Found user tenantId: {}", resolvedTenantId);
                 } else {
                     throw new IllegalArgumentException("X-Tenant-Id header is required for SYSTEM_ADMIN operations when userId is not available");
@@ -258,8 +262,7 @@ public class UserCommandController {
         TenantId tenantIdToSet = TenantId.of(resolvedTenantId);
         TenantId previousTenantId = TenantContext.getTenantId();
 
-        logger.debug("Setting TenantContext to '{}' for operation (previous: {})",
-                tenantIdToSet.getValue(), previousTenantId != null ? previousTenantId.getValue() : "null");
+        logger.debug("Setting TenantContext to '{}' for operation (previous: {})", tenantIdToSet.getValue(), previousTenantId != null ? previousTenantId.getValue() : "null");
 
         try {
             TenantContext.setTenantId(tenantIdToSet);
@@ -275,11 +278,13 @@ public class UserCommandController {
     }
 
     @PutMapping("/{id}/activate")
-    @Operation(summary = "Activate User", description = "Activates a user account")
+    @Operation(summary = "Activate User",
+            description = "Activates a user account")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> activateUser(
             @PathVariable String id,
-            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
+            @RequestHeader(value = "X-Tenant-Id",
+                    required = false) String tenantId) {
         return executeWithTenantContext(tenantId, UserId.of(id), () -> {
             ActivateUserCommand command = new ActivateUserCommand(UserId.of(id));
             activateUserCommandHandler.handle(command);
@@ -288,11 +293,13 @@ public class UserCommandController {
     }
 
     @PutMapping("/{id}/deactivate")
-    @Operation(summary = "Deactivate User", description = "Deactivates a user account")
+    @Operation(summary = "Deactivate User",
+            description = "Deactivates a user account")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deactivateUser(
             @PathVariable String id,
-            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
+            @RequestHeader(value = "X-Tenant-Id",
+                    required = false) String tenantId) {
         return executeWithTenantContext(tenantId, UserId.of(id), () -> {
             DeactivateUserCommand command = new DeactivateUserCommand(UserId.of(id));
             deactivateUserCommandHandler.handle(command);
@@ -301,11 +308,13 @@ public class UserCommandController {
     }
 
     @PutMapping("/{id}/suspend")
-    @Operation(summary = "Suspend User", description = "Suspends a user account")
+    @Operation(summary = "Suspend User",
+            description = "Suspends a user account")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> suspendUser(
             @PathVariable String id,
-            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
+            @RequestHeader(value = "X-Tenant-Id",
+                    required = false) String tenantId) {
         return executeWithTenantContext(tenantId, UserId.of(id), () -> {
             SuspendUserCommand command = new SuspendUserCommand(UserId.of(id));
             suspendUserCommandHandler.handle(command);
@@ -314,12 +323,16 @@ public class UserCommandController {
     }
 
     @PostMapping("/{id}/roles")
-    @Operation(summary = "Assign Role", description = "Assigns a role to a user")
+    @Operation(summary = "Assign Role",
+            description = "Assigns a role to a user")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> assignRole(
             @PathVariable String id,
-            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
-            @Valid @RequestBody AssignRoleRequest request) {
+            @RequestHeader(value = "X-Tenant-Id",
+                    required = false) String tenantId,
+            @Valid
+            @RequestBody
+            AssignRoleRequest request) {
         return executeWithTenantContext(tenantId, UserId.of(id), () -> {
             AssignUserRoleCommand command = mapper.toAssignUserRoleCommand(id, request);
             assignUserRoleCommandHandler.handle(command);
@@ -328,12 +341,14 @@ public class UserCommandController {
     }
 
     @DeleteMapping("/{id}/roles/{roleId}")
-    @Operation(summary = "Remove Role", description = "Removes a role from a user")
+    @Operation(summary = "Remove Role",
+            description = "Removes a role from a user")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> removeRole(
             @PathVariable String id,
             @PathVariable String roleId,
-            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
+            @RequestHeader(value = "X-Tenant-Id",
+                    required = false) String tenantId) {
         return executeWithTenantContext(tenantId, UserId.of(id), () -> {
             RemoveUserRoleCommand command = mapper.toRemoveUserRoleCommand(id, roleId);
             removeUserRoleCommandHandler.handle(command);

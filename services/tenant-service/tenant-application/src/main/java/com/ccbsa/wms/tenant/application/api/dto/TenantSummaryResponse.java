@@ -18,13 +18,7 @@ public final class TenantSummaryResponse {
     private final LocalDateTime activatedAt;
     private final boolean usePerTenantRealm;
 
-    public TenantSummaryResponse(String tenantId,
-                                 String name,
-                                 String status,
-                                 String emailAddress,
-                                 String phone,
-                                 LocalDateTime createdAt,
-                                 LocalDateTime activatedAt,
+    public TenantSummaryResponse(String tenantId, String name, String status, String emailAddress, String phone, LocalDateTime createdAt, LocalDateTime activatedAt,
                                  boolean usePerTenantRealm) {
         this.tenantId = tenantId;
         this.name = name;

@@ -26,8 +26,7 @@ class TenantTest {
 
         List<DomainEvent<?>> events = tenant.getDomainEvents();
         assertTrue(events.stream()
-                        .anyMatch(event -> event instanceof TenantSchemaCreatedEvent),
-                "Activation should publish TenantSchemaCreatedEvent");
+                .anyMatch(event -> event instanceof TenantSchemaCreatedEvent), "Activation should publish TenantSchemaCreatedEvent");
     }
 }
 

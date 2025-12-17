@@ -10,32 +10,37 @@ import jakarta.validation.constraints.Size;
  */
 public final class CreateLocationCommandDTO {
     @NotBlank(message = "Zone is required")
-    @Size(max = 100, message = "Zone must not exceed 100 characters")
+    @Size(max = 100,
+            message = "Zone must not exceed 100 characters")
     private String zone;
 
     @NotBlank(message = "Aisle is required")
-    @Size(max = 100, message = "Aisle must not exceed 100 characters")
+    @Size(max = 100,
+            message = "Aisle must not exceed 100 characters")
     private String aisle;
 
     @NotBlank(message = "Rack is required")
-    @Size(max = 100, message = "Rack must not exceed 100 characters")
+    @Size(max = 100,
+            message = "Rack must not exceed 100 characters")
     private String rack;
 
     @NotBlank(message = "Level is required")
-    @Size(max = 100, message = "Level must not exceed 100 characters")
+    @Size(max = 100,
+            message = "Level must not exceed 100 characters")
     private String level;
 
-    @Size(max = 255, message = "Barcode must not exceed 255 characters")
+    @Size(max = 255,
+            message = "Barcode must not exceed 255 characters")
     private String barcode; // Optional - will be auto-generated if not provided
 
-    @Size(max = 500, message = "Description must not exceed 500 characters")
+    @Size(max = 500,
+            message = "Description must not exceed 500 characters")
     private String description;
 
     public CreateLocationCommandDTO() {
     }
 
-    public CreateLocationCommandDTO(String zone, String aisle, String rack, String level,
-                                    String barcode, String description) {
+    public CreateLocationCommandDTO(String zone, String aisle, String rack, String level, String barcode, String description) {
         this.zone = zone;
         this.aisle = aisle;
         this.rack = rack;

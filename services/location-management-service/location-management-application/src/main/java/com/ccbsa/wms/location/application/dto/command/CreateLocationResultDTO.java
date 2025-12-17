@@ -17,8 +17,7 @@ public final class CreateLocationResultDTO {
     public CreateLocationResultDTO() {
     }
 
-    public CreateLocationResultDTO(String locationId, String barcode, LocationCoordinatesDTO coordinates,
-                                   String status, LocalDateTime createdAt) {
+    public CreateLocationResultDTO(String locationId, String barcode, LocationCoordinatesDTO coordinates, String status, LocalDateTime createdAt) {
         this.locationId = locationId;
         this.barcode = barcode;
         this.coordinates = coordinates;

@@ -5,13 +5,9 @@ import java.util.Objects;
 /**
  * Value Object: ConsignmentReference
  * <p>
- * Represents a unique consignment reference from D365 or external system.
- * Immutable and self-validating.
+ * Represents a unique consignment reference from D365 or external system. Immutable and self-validating.
  * <p>
- * Business Rules:
- * - Consignment reference must be unique per tenant
- * - Cannot be null or empty
- * - Maximum length: 100 characters
+ * Business Rules: - Consignment reference must be unique per tenant - Cannot be null or empty - Maximum length: 100 characters
  */
 public final class ConsignmentReference {
     private static final int MAX_LENGTH = 100;
@@ -30,13 +26,13 @@ public final class ConsignmentReference {
      * @throws IllegalArgumentException if validation fails
      */
     private void validate(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("ConsignmentReference cannot be null or empty");
         }
-        if (value.trim().length() > MAX_LENGTH) {
-            throw new IllegalArgumentException(
-                    String.format("ConsignmentReference cannot exceed %d characters", MAX_LENGTH)
-            );
+        if (value.trim()
+                .length() > MAX_LENGTH) {
+            throw new IllegalArgumentException(String.format("ConsignmentReference cannot exceed %d characters", MAX_LENGTH));
         }
     }
 

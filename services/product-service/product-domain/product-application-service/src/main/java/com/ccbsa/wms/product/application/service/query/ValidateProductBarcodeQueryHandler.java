@@ -18,21 +18,15 @@ import com.ccbsa.wms.product.domain.core.valueobject.ProductBarcode;
  * <p>
  * Handles product barcode validation queries.
  * <p>
- * Responsibilities:
- * - Validate barcode format
- * - Check cache for product information
- * - Look up product by barcode from repository
- * - Cache product information for future lookups
- * - Return validation result with product info or error message
+ * Responsibilities: - Validate barcode format - Check cache for product information - Look up product by barcode from repository - Cache product information for future lookups -
+ * Return validation result with product info or error message
  */
 @Component
 public class ValidateProductBarcodeQueryHandler {
     private final ProductRepository repository;
     private final ProductBarcodeCache cache;
 
-    public ValidateProductBarcodeQueryHandler(
-            ProductRepository repository,
-            ProductBarcodeCache cache) {
+    public ValidateProductBarcodeQueryHandler(ProductRepository repository, ProductBarcodeCache cache) {
         this.repository = repository;
         this.cache = cache;
     }
@@ -63,10 +57,7 @@ public class ValidateProductBarcodeQueryHandler {
         }
 
         // 3. Look up product by barcode
-        Optional<Product> product = repository.findByBarcodeAndTenantId(
-                query.getBarcode(),
-                query.getTenantId()
-        );
+        Optional<Product> product = repository.findByBarcodeAndTenantId(query.getBarcode(), query.getTenantId());
 
         if (product.isEmpty()) {
             return ValidateProductBarcodeResult.builder()
@@ -97,11 +88,15 @@ public class ValidateProductBarcodeQueryHandler {
     private ProductInfo mapToProductInfo(Product product, String barcode) {
         // Find the matching barcode (could be primary or secondary)
         ProductBarcode matchingBarcode = null;
-        if (product.getPrimaryBarcode().getValue().equals(barcode)) {
+        if (product.getPrimaryBarcode()
+                .getValue()
+                .equals(barcode)) {
             matchingBarcode = product.getPrimaryBarcode();
         } else {
-            matchingBarcode = product.getSecondaryBarcodes().stream()
-                    .filter(b -> b.getValue().equals(barcode))
+            matchingBarcode = product.getSecondaryBarcodes()
+                    .stream()
+                    .filter(b -> b.getValue()
+                            .equals(barcode))
                     .findFirst()
                     .orElse(product.getPrimaryBarcode()); // Fallback to primary
         }

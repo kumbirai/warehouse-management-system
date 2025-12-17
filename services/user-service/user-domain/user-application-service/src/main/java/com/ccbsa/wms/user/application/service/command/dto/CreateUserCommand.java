@@ -17,9 +17,7 @@ public class CreateUserCommand {
     private final String lastName;
     private final List<String> roles;
 
-    public CreateUserCommand(String tenantId, String username, String email,
-                             String password, String firstName, String lastName,
-                             List<String> roles) {
+    public CreateUserCommand(String tenantId, String username, String email, String password, String firstName, String lastName, List<String> roles) {
         this.tenantId = Objects.requireNonNull(tenantId, "TenantId is required");
         this.username = Objects.requireNonNull(username, "Username is required");
         this.email = Objects.requireNonNull(email, "EmailAddress is required");

@@ -12,14 +12,17 @@ import jakarta.validation.constraints.Size;
 public class UpdateUserProfileRequest {
     @NotBlank(message = "EmailAddress is required")
     @Email(message = "EmailAddress must be valid")
-    @Size(max = 255, message = "EmailAddress cannot exceed 255 characters")
+    @Size(max = 255,
+            message = "EmailAddress cannot exceed 255 characters")
     @JsonProperty("emailAddress")
     private String emailAddress;
 
-    @Size(max = 100, message = "First name cannot exceed 100 characters")
+    @Size(max = 100,
+            message = "First name cannot exceed 100 characters")
     private String firstName;
 
-    @Size(max = 100, message = "Last name cannot exceed 100 characters")
+    @Size(max = 100,
+            message = "Last name cannot exceed 100 characters")
     private String lastName;
 
     // Getters and setters

@@ -5,8 +5,7 @@ import com.ccbsa.wms.product.domain.core.valueobject.BarcodeType;
 /**
  * Query Result DTO: ValidateProductBarcodeResult
  * <p>
- * Result object returned from barcode validation query.
- * Contains validation status, product information (if found), and barcode format.
+ * Result object returned from barcode validation query. Contains validation status, product information (if found), and barcode format.
  */
 public final class ValidateProductBarcodeResult {
     private final boolean valid;

@@ -7,13 +7,9 @@ import java.util.regex.Pattern;
 /**
  * Value Object: LocationBarcode
  *
- * Represents a barcode identifier for a warehouse location.
- * Immutable and self-validating according to CCBSA standards.
+ * Represents a barcode identifier for a warehouse location. Immutable and self-validating according to CCBSA standards.
  *
- * Business Rules:
- * - Barcode must follow CCBSA format standards
- * - Barcode must be unique per tenant
- * - Barcode can be auto-generated from coordinates or manually provided
+ * Business Rules: - Barcode must follow CCBSA format standards - Barcode must be unique per tenant - Barcode can be auto-generated from coordinates or manually provided
  */
 public final class LocationBarcode {
     private static final Pattern CCBSA_BARCODE_PATTERN = Pattern.compile("^[A-Z0-9]{8,20}$");
@@ -38,17 +34,18 @@ public final class LocationBarcode {
      * @throws IllegalArgumentException if validation fails
      */
     private void validateFormat(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("LocationBarcode cannot be null or empty");
         }
 
-        String trimmedValue = value.trim().toUpperCase(Locale.ROOT);
+        String trimmedValue = value.trim()
+                .toUpperCase(Locale.ROOT);
 
         // Basic CCBSA format validation: alphanumeric, 8-20 characters
-        if (!CCBSA_BARCODE_PATTERN.matcher(trimmedValue).matches()) {
-            throw new IllegalArgumentException(
-                    String.format("LocationBarcode must be 8-20 alphanumeric characters: %s", value)
-            );
+        if (!CCBSA_BARCODE_PATTERN.matcher(trimmedValue)
+                .matches()) {
+            throw new IllegalArgumentException(String.format("LocationBarcode must be 8-20 alphanumeric characters: %s", value));
         }
     }
 
@@ -64,8 +61,7 @@ public final class LocationBarcode {
     }
 
     /**
-     * Generates a barcode from location coordinates.
-     * Format: {ZONE}{AISLE}{RACK}{LEVEL} (e.g., "A010101")
+     * Generates a barcode from location coordinates. Format: {ZONE}{AISLE}{RACK}{LEVEL} (e.g., "A010101")
      *
      * @param coordinates Location coordinates
      * @return Generated LocationBarcode instance

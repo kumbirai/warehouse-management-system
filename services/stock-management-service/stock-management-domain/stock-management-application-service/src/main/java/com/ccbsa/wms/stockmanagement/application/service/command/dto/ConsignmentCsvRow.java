@@ -104,16 +104,19 @@ public final class ConsignmentCsvRow {
         }
 
         public ConsignmentCsvRow build() {
-            if (consignmentReference == null || consignmentReference.trim().isEmpty()) {
+            if (consignmentReference == null || consignmentReference.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("ConsignmentReference is required");
             }
-            if (productCode == null || productCode.trim().isEmpty()) {
+            if (productCode == null || productCode.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("ProductCode is required");
             }
             if (quantity <= 0) {
                 throw new IllegalArgumentException("Quantity must be positive");
             }
-            if (warehouseId == null || warehouseId.trim().isEmpty()) {
+            if (warehouseId == null || warehouseId.trim()
+                    .isEmpty()) {
                 throw new IllegalArgumentException("WarehouseId is required");
             }
             return new ConsignmentCsvRow(this);

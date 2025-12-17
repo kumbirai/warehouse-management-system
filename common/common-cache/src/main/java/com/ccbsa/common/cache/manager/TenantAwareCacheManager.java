@@ -20,12 +20,11 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * Tenant-Aware Cache Manager.
  * <p>
- * Extends RedisCacheManager to provide:
- * - Automatic tenant prefix injection in cache keys
- * - Per-cache TTL configuration from CacheProperties
- * - Support for cache-specific configurations
+ * Extends RedisCacheManager to provide: - Automatic tenant prefix injection in cache keys - Per-cache TTL configuration from CacheProperties - Support for cache-specific
+ * configurations
  */
-public class TenantAwareCacheManager extends RedisCacheManager {
+public class TenantAwareCacheManager
+        extends RedisCacheManager {
 
     private final CacheProperties cacheProperties;
     private final Map<String, RedisCacheConfiguration> cacheConfigurations;
@@ -35,9 +34,7 @@ public class TenantAwareCacheManager extends RedisCacheManager {
             justification = "CacheProperties is a Spring @ConfigurationProperties bean managed by Spring. It is initialized once and not mutated after construction. The "
                     + "reference is safe to store. getDefaultCacheConfiguration() is called to initialize cache configurations, and this is safe as the method is not overridden "
                     + "in practice.")
-    public TenantAwareCacheManager(RedisConnectionFactory connectionFactory,
-                                   RedisCacheConfiguration defaultCacheConfiguration,
-                                   CacheProperties cacheProperties) {
+    public TenantAwareCacheManager(RedisConnectionFactory connectionFactory, RedisCacheConfiguration defaultCacheConfiguration, CacheProperties cacheProperties) {
         super(RedisCacheWriter.nonLockingRedisCacheWriter(connectionFactory), defaultCacheConfiguration);
         this.cacheProperties = cacheProperties;
         this.cacheConfigurations = new ConcurrentHashMap<>();
@@ -50,16 +47,15 @@ public class TenantAwareCacheManager extends RedisCacheManager {
     private void initializeCacheConfigurations() {
         // Build cache configurations from properties
         if (cacheProperties.getCacheConfigs() != null) {
-            cacheProperties.getCacheConfigs().forEach((cacheName, config) -> {
-                RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
-                        .entryTtl(Duration.ofMinutes(config.getTtlMinutes() != null
-                                ? config.getTtlMinutes()
-                                : cacheProperties.getDefaultTtlMinutes()))
-                        .serializeKeysWith(getDefaultCacheConfiguration().getKeySerializationPair())
-                        .serializeValuesWith(getDefaultCacheConfiguration().getValueSerializationPair());
+            cacheProperties.getCacheConfigs()
+                    .forEach((cacheName, config) -> {
+                        RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
+                                .entryTtl(Duration.ofMinutes(config.getTtlMinutes() != null ? config.getTtlMinutes() : cacheProperties.getDefaultTtlMinutes()))
+                                .serializeKeysWith(getDefaultCacheConfiguration().getKeySerializationPair())
+                                .serializeValuesWith(getDefaultCacheConfiguration().getValueSerializationPair());
 
-                cacheConfigurations.put(cacheName, cacheConfig);
-            });
+                        cacheConfigurations.put(cacheName, cacheConfig);
+                    });
         }
     }
 
@@ -85,10 +81,7 @@ public class TenantAwareCacheManager extends RedisCacheManager {
 
         // Create cache on-demand if enabled
         if (cacheProperties.getEnabled()) {
-            RedisCacheConfiguration cacheConfig = cacheConfigurations.getOrDefault(
-                    name,
-                    getDefaultCacheConfiguration()
-            );
+            RedisCacheConfiguration cacheConfig = cacheConfigurations.getOrDefault(name, getDefaultCacheConfiguration());
             cache = createRedisCache(name, cacheConfig);
             dynamicCaches.put(name, cache);
         }

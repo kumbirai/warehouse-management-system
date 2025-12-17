@@ -37,11 +37,11 @@ import jakarta.persistence.PersistenceContext;
 /**
  * Repository Adapter: UserRepositoryAdapter
  * <p>
- * Implements UserRepository port interface.
- * Adapts between domain User aggregate and JPA UserEntity.
+ * Implements UserRepository port interface. Adapts between domain User aggregate and JPA UserEntity.
  */
 @Repository
-public class UserRepositoryAdapter implements UserRepository {
+public class UserRepositoryAdapter
+        implements UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepositoryAdapter.class);
 
     private final UserJpaRepository jpaRepository;
@@ -53,10 +53,7 @@ public class UserRepositoryAdapter implements UserRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public UserRepositoryAdapter(UserJpaRepository jpaRepository,
-                                 UserEntityMapper mapper,
-                                 JdbcTemplate jdbcTemplate,
-                                 TenantSchemaResolver schemaResolver,
+    public UserRepositoryAdapter(UserJpaRepository jpaRepository, UserEntityMapper mapper, JdbcTemplate jdbcTemplate, TenantSchemaResolver schemaResolver,
                                  TenantSchemaProvisioner schemaProvisioner) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
@@ -70,16 +67,18 @@ public class UserRepositoryAdapter implements UserRepository {
         // Verify TenantContext is set before saving (critical for schema resolution)
         com.ccbsa.common.domain.valueobject.TenantId tenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
         if (tenantId == null) {
-            logger.error("TenantContext is not set when saving user! User will be saved to wrong schema. User tenantId: {}",
-                    user.getTenantId() != null ? user.getTenantId().getValue() : "null");
-            throw new IllegalStateException("TenantContext must be set before saving user. Expected tenantId: " +
-                    (user.getTenantId() != null ? user.getTenantId().getValue() : "null"));
+            logger.error("TenantContext is not set when saving user! User will be saved to wrong schema. User tenantId: {}", user.getTenantId() != null ? user.getTenantId()
+                    .getValue() : "null");
+            throw new IllegalStateException("TenantContext must be set before saving user. Expected tenantId: " + (user.getTenantId() != null ? user.getTenantId()
+                    .getValue() : "null"));
         }
 
         // Verify tenantId matches
-        if (!tenantId.getValue().equals(user.getTenantId().getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, User: {}",
-                    tenantId.getValue(), user.getTenantId().getValue());
+        if (!tenantId.getValue()
+                .equals(user.getTenantId()
+                        .getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, User: {}", tenantId.getValue(), user.getTenantId()
+                    .getValue());
             throw new IllegalStateException("TenantContext tenantId does not match user tenantId");
         }
 
@@ -102,7 +101,8 @@ public class UserRepositoryAdapter implements UserRepository {
         setSearchPath(session, schemaName);
 
         // Check if entity already exists to handle optimistic locking correctly
-        Optional<UserEntity> existingEntity = jpaRepository.findById(user.getId().getValue());
+        Optional<UserEntity> existingEntity = jpaRepository.findById(user.getId()
+                .getValue());
 
         if (existingEntity.isPresent()) {
             // Update existing entity to preserve JPA managed state and version
@@ -121,15 +121,14 @@ public class UserRepositoryAdapter implements UserRepository {
     /**
      * Validates that a schema name matches expected patterns to prevent SQL injection.
      * <p>
-     * Schema names must match one of these patterns:
-     * - 'public' (for legacy users)
-     * - 'tenant_*_schema' (for tenant-specific schemas)
+     * Schema names must match one of these patterns: - 'public' (for legacy users) - 'tenant_*_schema' (for tenant-specific schemas)
      *
      * @param schemaName The schema name to validate
      * @throws IllegalArgumentException if schema name does not match expected patterns
      */
     private void validateSchemaName(String schemaName) {
-        if (schemaName == null || schemaName.trim().isEmpty()) {
+        if (schemaName == null || schemaName.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Schema name cannot be null or empty");
         }
 
@@ -144,15 +143,13 @@ public class UserRepositoryAdapter implements UserRepository {
             return;
         }
 
-        throw new IllegalArgumentException(
-                String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName));
+        throw new IllegalArgumentException(String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName));
     }
 
     /**
      * Sets the PostgreSQL search_path for the current database connection.
      * <p>
-     * This method sets the search_path to the specified schema name.
-     * The schema name must be validated before calling this method.
+     * This method sets the search_path to the specified schema name. The schema name must be validated before calling this method.
      *
      * @param session    Hibernate session
      * @param schemaName Validated schema name
@@ -162,19 +159,27 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     /**
-     * Updates an existing JPA entity from domain object.
-     * Preserves JPA managed state and version for optimistic locking.
+     * Updates an existing JPA entity from domain object. Preserves JPA managed state and version for optimistic locking.
      *
      * @param entity Existing JPA entity (managed)
      * @param user   Domain user object
      */
     private void updateEntityFromDomain(UserEntity entity, User user) {
-        entity.setTenantId(user.getTenantId().getValue());
-        entity.setUsername(user.getUsername().getValue());
-        entity.setEmailAddress(user.getEmail().getValue());
-        entity.setFirstName(user.getFirstName().map(FirstName::getValue).orElse(null));
-        entity.setLastName(user.getLastName().map(LastName::getValue).orElse(null));
-        entity.setKeycloakUserId(user.getKeycloakUserId().map(KeycloakUserId::getValue).orElse(null));
+        entity.setTenantId(user.getTenantId()
+                .getValue());
+        entity.setUsername(user.getUsername()
+                .getValue());
+        entity.setEmailAddress(user.getEmail()
+                .getValue());
+        entity.setFirstName(user.getFirstName()
+                .map(FirstName::getValue)
+                .orElse(null));
+        entity.setLastName(user.getLastName()
+                .map(LastName::getValue)
+                .orElse(null));
+        entity.setKeycloakUserId(user.getKeycloakUserId()
+                .map(KeycloakUserId::getValue)
+                .orElse(null));
         entity.setStatus(mapToEntityStatus(user.getStatus()));
         entity.setCreatedAt(user.getCreatedAt());
         entity.setLastModifiedAt(user.getLastModifiedAt());
@@ -191,9 +196,8 @@ public class UserRepositoryAdapter implements UserRepository {
      * @param schemaName Validated and escaped schema name
      */
     @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
-            justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " +
-                    "and properly escaped using escapeIdentifier() method. " +
-                    "PostgreSQL SET search_path command does not support parameterized queries.")
+            justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " + "and properly escaped using escapeIdentifier() method. "
+                    + "PostgreSQL SET search_path command does not support parameterized queries.")
     private void executeSetSearchPath(java.sql.Connection connection, String schemaName) {
         try (java.sql.Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
@@ -221,9 +225,7 @@ public class UserRepositoryAdapter implements UserRepository {
     /**
      * Escapes a PostgreSQL identifier to prevent SQL injection.
      * <p>
-     * PostgreSQL identifiers should be quoted if they contain special characters
-     * or are case-sensitive. For our schema names (which follow a pattern),
-     * we can safely quote them.
+     * PostgreSQL identifiers should be quoted if they contain special characters or are case-sensitive. For our schema names (which follow a pattern), we can safely quote them.
      *
      * @param identifier The identifier to escape
      * @return Escaped identifier
@@ -323,10 +325,9 @@ public class UserRepositoryAdapter implements UserRepository {
     /**
      * Retrieves all tenant schemas from the database.
      * <p>
-     * Queries information_schema.schemata to find all schemas matching the pattern
-     * 'tenant_%_schema', and also includes the 'public' schema (for legacy users
-     * that may have been created before schema-per-tenant was fully implemented).
-     * Uses JdbcTemplate to bypass Hibernate's naming strategy.
+     * Queries information_schema.schemata to find all schemas matching the pattern 'tenant_%_schema', and also includes the 'public' schema (for legacy users that may have been
+     * created before schema-per-tenant was fully implemented). Uses
+     * JdbcTemplate to bypass Hibernate's naming strategy.
      *
      * @return List of schema names (tenant schemas + public schema)
      */
@@ -345,16 +346,10 @@ public class UserRepositoryAdapter implements UserRepository {
     /**
      * Builds a UNION query to query users from all tenant schemas.
      * <p>
-     * The query structure:
-     * SELECT user_id, tenant_id, username, email_address, first_name, last_name,
-     * keycloak_user_id, status, created_at, last_modified_at, version
-     * FROM tenant_schema1.users
-     * UNION ALL
-     * SELECT user_id, tenant_id, username, email_address, first_name, last_name,
-     * keycloak_user_id, status, created_at, last_modified_at, version
-     * FROM tenant_schema2.users
-     * ...
-     * WHERE status = ? (if status filter is provided - using ? for JdbcTemplate)
+     * The query structure: SELECT user_id, tenant_id, username, email_address, first_name, last_name, keycloak_user_id, status, created_at, last_modified_at, version FROM
+     * tenant_schema1.users UNION ALL SELECT user_id, tenant_id, username,
+     * email_address, first_name, last_name, keycloak_user_id, status, created_at, last_modified_at, version FROM tenant_schema2.users ... WHERE status = ? (if status filter is
+     * provided - using ? for JdbcTemplate)
      *
      * @param schemas List of tenant schema names
      * @param status  Optional status filter
@@ -366,8 +361,7 @@ public class UserRepositoryAdapter implements UserRepository {
         }
 
         // Explicitly list all columns to ensure proper JPA entity mapping
-        String columns = "user_id, tenant_id, username, email_address, first_name, last_name, " +
-                "keycloak_user_id, status, created_at, last_modified_at, version";
+        String columns = "user_id, tenant_id, username, email_address, first_name, last_name, " + "keycloak_user_id, status, created_at, last_modified_at, version";
 
         StringBuilder sql = new StringBuilder();
         List<String> unionParts = new ArrayList<>();
@@ -378,8 +372,7 @@ public class UserRepositoryAdapter implements UserRepository {
             String escapedSchema = escapeIdentifier(schema);
             if (status != null) {
                 // Apply status filter to each SELECT statement using ? placeholder for JdbcTemplate
-                unionParts.add(String.format("SELECT %s FROM %s.users WHERE status = ?",
-                        columns, escapedSchema));
+                unionParts.add(String.format("SELECT %s FROM %s.users WHERE status = ?", columns, escapedSchema));
             } else {
                 unionParts.add(String.format("SELECT %s FROM %s.users", columns, escapedSchema));
             }
@@ -404,8 +397,7 @@ public class UserRepositoryAdapter implements UserRepository {
             }
 
             // 2. Build UNION query with WHERE user_id = ?
-            String columns = "user_id, tenant_id, username, email_address, first_name, last_name, " +
-                    "keycloak_user_id, status, created_at, last_modified_at, version";
+            String columns = "user_id, tenant_id, username, email_address, first_name, last_name, " + "keycloak_user_id, status, created_at, last_modified_at, version";
 
             List<String> unionParts = new ArrayList<>();
             for (String schema : tenantSchemas) {
@@ -430,8 +422,7 @@ public class UserRepositoryAdapter implements UserRepository {
             }
 
             if (entities.size() > 1) {
-                logger.warn("Found {} users with same ID across schemas (should not happen): userId={}",
-                        entities.size(), userId.getValue());
+                logger.warn("Found {} users with same ID across schemas (should not happen): userId={}", entities.size(), userId.getValue());
             }
 
             // 4. Map to domain object
@@ -475,9 +466,11 @@ public class UserRepositoryAdapter implements UserRepository {
     /**
      * RowMapper for UserEntity to map ResultSet rows to UserEntity objects.
      */
-    private static class UserEntityRowMapper implements RowMapper<UserEntity> {
+    private static class UserEntityRowMapper
+            implements RowMapper<UserEntity> {
         @Override
-        public UserEntity mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
+        public UserEntity mapRow(
+                @NonNull ResultSet rs, int rowNum) throws SQLException {
             UserEntity entity = new UserEntity();
             entity.setUserId(rs.getString("user_id"));
             entity.setTenantId(rs.getString("tenant_id"));
@@ -492,12 +485,10 @@ public class UserRepositoryAdapter implements UserRepository {
                 entity.setStatus(UserEntity.UserStatus.valueOf(statusStr));
             }
 
-            entity.setCreatedAt(rs.getTimestamp("created_at") != null
-                    ? rs.getTimestamp("created_at").toLocalDateTime()
-                    : null);
-            entity.setLastModifiedAt(rs.getTimestamp("last_modified_at") != null
-                    ? rs.getTimestamp("last_modified_at").toLocalDateTime()
-                    : null);
+            entity.setCreatedAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at")
+                    .toLocalDateTime() : null);
+            entity.setLastModifiedAt(rs.getTimestamp("last_modified_at") != null ? rs.getTimestamp("last_modified_at")
+                    .toLocalDateTime() : null);
             entity.setVersion(rs.getLong("version"));
 
             return entity;

@@ -37,12 +37,10 @@ class ApiResponseBuilderTest {
     void shouldCreateOkResponseWithLinks() {
         // Given
         String data = "test-data";
-        Map<String, String> links = Map.of("self",
-                "/api/v1/resource");
+        Map<String, String> links = Map.of("self", "/api/v1/resource");
 
         // When
-        ResponseEntity<ApiResponse<String>> response = ApiResponseBuilder.ok(data,
-                links);
+        ResponseEntity<ApiResponse<String>> response = ApiResponseBuilder.ok(data, links);
 
         // Then
         assertThat(response).isNotNull();
@@ -59,18 +57,13 @@ class ApiResponseBuilderTest {
     void shouldCreateOkResponseWithLinksAndMeta() {
         // Given
         String data = "test-data";
-        Map<String, String> links = Map.of("self",
-                "/api/v1/resource");
+        Map<String, String> links = Map.of("self", "/api/v1/resource");
         ApiMeta meta = ApiMeta.builder()
-                .pagination(ApiMeta.Pagination.of(1,
-                        20,
-                        100))
+                .pagination(ApiMeta.Pagination.of(1, 20, 100))
                 .build();
 
         // When
-        ResponseEntity<ApiResponse<String>> response = ApiResponseBuilder.ok(data,
-                links,
-                meta);
+        ResponseEntity<ApiResponse<String>> response = ApiResponseBuilder.ok(data, links, meta);
 
         // Then
         assertThat(response).isNotNull();
@@ -106,12 +99,10 @@ class ApiResponseBuilderTest {
     void shouldCreateCreatedResponseWithLinks() {
         // Given
         String data = "test-data";
-        Map<String, String> links = Map.of("self",
-                "/api/v1/resource/123");
+        Map<String, String> links = Map.of("self", "/api/v1/resource/123");
 
         // When
-        ResponseEntity<ApiResponse<String>> response = ApiResponseBuilder.created(data,
-                links);
+        ResponseEntity<ApiResponse<String>> response = ApiResponseBuilder.created(data, links);
 
         // Then
         assertThat(response).isNotNull();
@@ -163,9 +154,7 @@ class ApiResponseBuilderTest {
         String message = "Validation failed";
 
         // When
-        ResponseEntity<ApiResponse<Void>> response = ApiResponseBuilder.error(status,
-                errorCode,
-                message);
+        ResponseEntity<ApiResponse<Void>> response = ApiResponseBuilder.error(status, errorCode, message);
 
         // Then
         assertThat(response).isNotNull();
@@ -190,16 +179,10 @@ class ApiResponseBuilderTest {
         HttpStatus status = HttpStatus.BAD_REQUEST;
         String errorCode = "VALIDATION_ERROR";
         String message = "Validation failed";
-        Map<String, Object> details = Map.of("field",
-                "quantity",
-                "message",
-                "Must be positive");
+        Map<String, Object> details = Map.of("field", "quantity", "message", "Must be positive");
 
         // When
-        ResponseEntity<ApiResponse<Void>> response = ApiResponseBuilder.error(status,
-                errorCode,
-                message,
-                details);
+        ResponseEntity<ApiResponse<Void>> response = ApiResponseBuilder.error(status, errorCode, message, details);
 
         // Then
         assertThat(response).isNotNull();
@@ -220,15 +203,13 @@ class ApiResponseBuilderTest {
     void shouldCreateErrorResponseWithApiErrorObject() {
         // Given
         HttpStatus status = HttpStatus.NOT_FOUND;
-        ApiError error = ApiError.builder("RESOURCE_NOT_FOUND",
-                        "Resource not found")
+        ApiError error = ApiError.builder("RESOURCE_NOT_FOUND", "Resource not found")
                 .path("/api/v1/resource")
                 .requestId("req-123")
                 .build();
 
         // When
-        ResponseEntity<ApiResponse<Void>> response = ApiResponseBuilder.error(status,
-                error);
+        ResponseEntity<ApiResponse<Void>> response = ApiResponseBuilder.error(status, error);
 
         // Then
         assertThat(response).isNotNull();
@@ -244,9 +225,7 @@ class ApiResponseBuilderTest {
     @DisplayName("Should throw exception when status is null")
     void shouldThrowExceptionWhenStatusIsNull() {
         // When/Then
-        assertThatThrownBy(() -> ApiResponseBuilder.error(null,
-                "ERROR_CODE",
-                "message")).isInstanceOf(NullPointerException.class)
+        assertThatThrownBy(() -> ApiResponseBuilder.error(null, "ERROR_CODE", "message")).isInstanceOf(NullPointerException.class)
                 .hasMessage("HTTP status cannot be null");
     }
 
@@ -254,8 +233,7 @@ class ApiResponseBuilderTest {
     @DisplayName("Should throw exception when ApiError is null")
     void shouldThrowExceptionWhenApiErrorIsNull() {
         // When/Then
-        assertThatThrownBy(() -> ApiResponseBuilder.error(HttpStatus.BAD_REQUEST,
-                (ApiError) null)).isInstanceOf(NullPointerException.class)
+        assertThatThrownBy(() -> ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, (ApiError) null)).isInstanceOf(NullPointerException.class)
                 .hasMessage("ApiError cannot be null");
     }
 }

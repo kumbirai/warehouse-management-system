@@ -68,12 +68,7 @@ public final class ApiMeta {
         private final boolean hasNext;
         private final boolean hasPrevious;
 
-        public Pagination(int page,
-                          int size,
-                          long totalElements,
-                          int totalPages,
-                          boolean hasNext,
-                          boolean hasPrevious) {
+        public Pagination(int page, int size, long totalElements, int totalPages, boolean hasNext, boolean hasPrevious) {
             this.page = page;
             this.size = size;
             this.totalElements = totalElements;
@@ -82,18 +77,11 @@ public final class ApiMeta {
             this.hasPrevious = hasPrevious;
         }
 
-        public static Pagination of(int page,
-                                    int size,
-                                    long totalElements) {
+        public static Pagination of(int page, int size, long totalElements) {
             int totalPages = (int) Math.ceil((double) totalElements / size);
             boolean hasNext = page < totalPages;
             boolean hasPrevious = page > 1;
-            return new Pagination(page,
-                    size,
-                    totalElements,
-                    totalPages,
-                    hasNext,
-                    hasPrevious);
+            return new Pagination(page, size, totalElements, totalPages, hasNext, hasPrevious);
         }
 
         public int getPage() {

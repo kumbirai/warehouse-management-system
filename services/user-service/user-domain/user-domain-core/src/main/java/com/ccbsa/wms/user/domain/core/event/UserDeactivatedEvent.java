@@ -11,7 +11,8 @@ import com.ccbsa.common.domain.valueobject.UserId;
  * <p>
  * Event Version: 1.0
  */
-public final class UserDeactivatedEvent extends UserEvent {
+public final class UserDeactivatedEvent
+        extends UserEvent {
 
     /**
      * Constructor for UserDeactivatedEvent without metadata.

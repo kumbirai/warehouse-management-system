@@ -16,16 +16,13 @@ import com.ccbsa.common.domain.EventMetadata;
 /**
  * Utility class for enriching domain events with metadata.
  * <p>
- * Creates immutable enriched copies of events with metadata added.
- * Uses reflection to find constructors that accept EventMetadata and
- * extract values from the original event using getters.
+ * Creates immutable enriched copies of events with metadata added. Uses reflection to find constructors that accept EventMetadata and extract values from the original event using
+ * getters.
  * <p>
- * This maintains event immutability while allowing infrastructure layer
- * to add traceability information.
+ * This maintains event immutability while allowing infrastructure layer to add traceability information.
  * <p>
- * Note: This implementation uses reflection to extract event field values
- * via getters and create enriched copies. If enrichment fails, the original
- * event is returned to avoid breaking event publishing.
+ * Note: This implementation uses reflection to extract event field values via getters and create enriched copies. If enrichment fails, the original event is returned to avoid
+ * breaking event publishing.
  */
 public final class EventEnricher {
     private static final Logger logger = LoggerFactory.getLogger(EventEnricher.class);
@@ -68,7 +65,8 @@ public final class EventEnricher {
         }
         if (event.getMetadata() != null) {
             // Event already has metadata, return as-is
-            logger.debug("Event {} already has metadata, skipping enrichment", event.getClass().getSimpleName());
+            logger.debug("Event {} already has metadata, skipping enrichment", event.getClass()
+                    .getSimpleName());
             return event;
         }
 
@@ -78,9 +76,7 @@ public final class EventEnricher {
             // Find constructor that accepts EventMetadata as last parameter
             Constructor<?> enrichedConstructor = findEnrichedConstructor(eventClass);
             if (enrichedConstructor == null) {
-                logger.warn("No constructor with EventMetadata found for event class: {}. " +
-                                "Event will be published without metadata.",
-                        eventClass.getName());
+                logger.warn("No constructor with EventMetadata found for event class: {}. " + "Event will be published without metadata.", eventClass.getName());
                 return event;
             }
 
@@ -90,9 +86,7 @@ public final class EventEnricher {
             Class<?>[] paramTypes = enrichedConstructor.getParameterTypes();
             int expectedParamCount = paramTypes.length - 1; // Exclude EventMetadata
             if (originalParams.length == 0 && expectedParamCount > 0) {
-                logger.warn("Failed to extract constructor parameters for event class: {}. " +
-                                "Event will be published without metadata.",
-                        eventClass.getName());
+                logger.warn("Failed to extract constructor parameters for event class: {}. " + "Event will be published without metadata.", eventClass.getName());
                 return event;
             }
 
@@ -104,8 +98,8 @@ public final class EventEnricher {
             // Create enriched event instance
             return (T) enrichedConstructor.newInstance(enrichedParams);
         } catch (ReflectiveOperationException | IllegalArgumentException | SecurityException e) {
-            logger.error("Failed to enrich event {} with metadata: {}",
-                    event.getClass().getSimpleName(), e.getMessage(), e);
+            logger.error("Failed to enrich event {} with metadata: {}", event.getClass()
+                    .getSimpleName(), e.getMessage(), e);
             // Return original event on failure to avoid breaking event publishing
             return event;
         }
@@ -147,18 +141,14 @@ public final class EventEnricher {
             Object[] params = new Object[paramCount];
 
             // Get all getter methods from the event class
-            Method[] methods = event.getClass().getMethods();
+            Method[] methods = event.getClass()
+                    .getMethods();
             List<Method> getters = new ArrayList<>();
             for (Method method : methods) {
                 String methodName = method.getName();
-                if (methodName.startsWith("get") && method.getParameterCount() == 0
-                        && !methodName.equals("getClass")
-                        && !methodName.equals("getEventId")
-                        && !methodName.equals("getAggregateId")
-                        && !methodName.equals("getAggregateType")
-                        && !methodName.equals("getOccurredOn")
-                        && !methodName.equals("getVersion")
-                        && !methodName.equals("getMetadata")) {
+                if (methodName.startsWith("get") && method.getParameterCount() == 0 && !methodName.equals("getClass") && !methodName.equals("getEventId") && !methodName.equals(
+                        "getAggregateId") && !methodName.equals("getAggregateType")
+                        && !methodName.equals("getOccurredOn") && !methodName.equals("getVersion") && !methodName.equals("getMetadata")) {
                     getters.add(method);
                 }
             }
@@ -182,8 +172,8 @@ public final class EventEnricher {
                 } else {
                     // If no matching getter found, try to infer from common patterns
                     // For UserEvent, TenantEvent, etc., we might need special handling
-                    logger.debug("No matching getter found for parameter {} of type {} in event {}",
-                            i, paramType.getSimpleName(), event.getClass().getSimpleName());
+                    logger.debug("No matching getter found for parameter {} of type {} in event {}", i, paramType.getSimpleName(), event.getClass()
+                            .getSimpleName());
                     // Return empty array to indicate failure (SpotBugs prefers zero-length arrays)
                     return new Object[0];
                 }

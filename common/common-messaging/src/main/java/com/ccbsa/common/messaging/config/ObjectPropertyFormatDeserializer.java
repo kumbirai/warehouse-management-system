@@ -16,24 +16,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * Custom deserializer for Object.class that uses PROPERTY format (@class property).
  * <p>
- * ARCHITECTURAL FIX: This deserializer ensures that when deserializing to Object.class,
- * Jackson uses PROPERTY format (@class property in JSON) instead of the default WRAPPER_ARRAY format.
+ * ARCHITECTURAL FIX: This deserializer ensures that when deserializing to Object.class, Jackson uses PROPERTY format (@class property in JSON) instead of the default WRAPPER_ARRAY
+ * format.
  * <p>
  * This is critical for cross-service event consumption where events are serialized with
  *
- * @class property (PROPERTY format) but need to be deserialized as Map&lt;String, Object&gt;
- * for loose coupling and flexibility.
+ * @class property (PROPERTY format) but need to be deserialized as Map&lt;String, Object&gt; for loose coupling and flexibility.
  * <p>
- * CRITICAL FIX: Always deserializes to Map&lt;String, Object&gt; regardless of @class property.
- * The @class property is preserved in the Map for event type detection, but we do NOT attempt
- * to deserialize to the actual class type. This prevents deserialization failures when event
- * classes don't have default constructors (which is the case for immutable domain events).
+ * CRITICAL FIX: Always deserializes to Map&lt;String, Object&gt; regardless of @class property. The @class property is preserved in the Map for event type detection, but we do NOT
+ * attempt to deserialize to the actual class type. This
+ * prevents deserialization failures when event classes don't have default constructors (which is the case for immutable domain events).
  * <p>
- * Implementation: Reads the JSON as a tree and always deserializes to Map, preserving all
- * properties including @class. This bypasses Jackson's default typing mechanism which expects
- * WRAPPER_ARRAY format, and avoids deserialization failures for immutable domain events.
+ * Implementation: Reads the JSON as a tree and always deserializes to Map, preserving all properties including @class. This bypasses Jackson's default typing mechanism which
+ * expects WRAPPER_ARRAY format, and avoids deserialization failures
+ * for immutable domain events.
  */
-public class ObjectPropertyFormatDeserializer extends JsonDeserializer<Object> {
+public class ObjectPropertyFormatDeserializer
+        extends JsonDeserializer<Object> {
 
     public ObjectPropertyFormatDeserializer(ObjectMapper objectMapper) {
         // ObjectMapper parameter kept for API consistency, but we use the context's mapper
@@ -43,7 +42,8 @@ public class ObjectPropertyFormatDeserializer extends JsonDeserializer<Object> {
     @Override
     public Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         // Read the JSON as a tree to bypass Jackson's type resolution
-        JsonNode node = p.getCodec().readTree(p);
+        JsonNode node = p.getCodec()
+                .readTree(p);
 
         // CRITICAL FIX: Manually convert JsonNode to Map to bypass Jackson's type resolution
         // This ensures:
@@ -59,8 +59,7 @@ public class ObjectPropertyFormatDeserializer extends JsonDeserializer<Object> {
     }
 
     /**
-     * Converts a JsonNode to a Map, recursively handling nested objects and arrays.
-     * This bypasses Jackson's type resolution and ensures @class property is preserved as a string.
+     * Converts a JsonNode to a Map, recursively handling nested objects and arrays. This bypasses Jackson's type resolution and ensures @class property is preserved as a string.
      *
      * @param node The JsonNode to convert
      * @return Map representation of the JSON node

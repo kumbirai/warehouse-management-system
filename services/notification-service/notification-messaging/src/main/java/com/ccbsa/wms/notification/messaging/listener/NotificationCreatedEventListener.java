@@ -24,8 +24,8 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
 /**
  * Event Listener: NotificationCreatedEventListener
  * <p>
- * Listens to NotificationCreatedEvent and triggers notification delivery via appropriate channel.
- * For MVP, defaults to EMAIL channel. Future: determine channel based on user preferences or notification type.
+ * Listens to NotificationCreatedEvent and triggers notification delivery via appropriate channel. For MVP, defaults to EMAIL channel. Future: determine channel based on user
+ * preferences or notification type.
  * <p>
  * Uses Map deserialization to avoid deserialization issues when type headers are not present.
  */
@@ -39,15 +39,14 @@ public class NotificationCreatedEventListener {
         this.sendHandler = sendHandler;
     }
 
-    @KafkaListener(
-            topics = "notification-events",
+    @KafkaListener(topics = "notification-events",
             groupId = "notification-service",
-            containerFactory = "internalEventKafkaListenerContainerFactory"
-    )
-    public void handle(@Payload Map<String, Object> eventData,
-                       @Header(value = "__TypeId__", required = false) String eventType,
-                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic,
-                       Acknowledgment acknowledgment) {
+            containerFactory = "internalEventKafkaListenerContainerFactory")
+    public void handle(
+            @Payload Map<String, Object> eventData,
+            @Header(value = "__TypeId__",
+                    required = false) String eventType,
+            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         try {
             // Extract and set correlation ID from event metadata for traceability
             extractAndSetCorrelationId(eventData);
@@ -55,8 +54,7 @@ public class NotificationCreatedEventListener {
             // Detect event type from payload or header
             String detectedEventType = detectEventType(eventData, eventType);
             if (!isNotificationCreatedEvent(detectedEventType)) {
-                logger.debug("Skipping event - not NotificationCreatedEvent: detectedType={}, headerType={}",
-                        detectedEventType, eventType);
+                logger.debug("Skipping event - not NotificationCreatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
                 acknowledgment.acknowledge();
                 return;
             }
@@ -72,8 +70,8 @@ public class NotificationCreatedEventListener {
             // Extract notification type
             NotificationType notificationType = extractNotificationType(eventData);
 
-            logger.info("Received NotificationCreatedEvent: notificationId={}, tenantId={}, type={}, eventDataKeys={}",
-                    notificationId, tenantId.getValue(), notificationType, eventData.keySet());
+            logger.info("Received NotificationCreatedEvent: notificationId={}, tenantId={}, type={}, eventDataKeys={}", notificationId, tenantId.getValue(), notificationType,
+                    eventData.keySet());
 
             // Determine delivery channel
             // For MVP: default to EMAIL
@@ -92,29 +90,26 @@ public class NotificationCreatedEventListener {
             // Pass tenantId to ensure it's available during retries
             sendNotificationWithRetry(command, notificationId, channel, tenantId);
 
-            logger.info("Notification delivery initiated: notificationId={}, channel={}",
-                    notificationId, channel);
+            logger.info("Notification delivery initiated: notificationId={}, channel={}", notificationId, channel);
 
             // Acknowledge message
             acknowledgment.acknowledge();
 
         } catch (IllegalArgumentException e) {
             // Invalid event format - acknowledge to skip (don't retry malformed events)
-            logger.error("Invalid event format for NotificationCreatedEvent: eventData={}, error={}",
-                    eventData, e.getMessage(), e);
+            logger.error("Invalid event format for NotificationCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             acknowledgment.acknowledge();
         } catch (NotificationNotFoundException e) {
             // Notification not found after retries - likely race condition where event consumed before transaction commits
             // Log warning - Kafka retry mechanism will handle if notification appears later
             String aggregateId = extractAggregateId(eventData);
-            logger.warn("Notification not found when processing NotificationCreatedEvent: notificationId={}, error={}. " +
-                            "This may be a race condition. Event will be retried by Kafka if notification appears.",
-                    aggregateId, e.getMessage());
+            logger.warn("Notification not found when processing NotificationCreatedEvent: notificationId={}, error={}. "
+                            + "This may be a race condition. Event will be retried by Kafka if notification appears.", aggregateId,
+                    e.getMessage());
             // Don't acknowledge - let Kafka retry mechanism handle it
             throw new RuntimeException("Notification not found - will retry", e);
         } catch (Exception e) {
-            logger.error("Failed to process NotificationCreatedEvent: eventData={}, error={}",
-                    eventData, e.getMessage(), e);
+            logger.error("Failed to process NotificationCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             // Don't acknowledge - will retry for transient failures
             throw new RuntimeException("Failed to process NotificationCreatedEvent", e);
         } finally {
@@ -125,8 +120,7 @@ public class NotificationCreatedEventListener {
     }
 
     /**
-     * Extracts correlation ID from event metadata and sets it in CorrelationContext.
-     * This enables traceability through event chains.
+     * Extracts correlation ID from event metadata and sets it in CorrelationContext. This enables traceability through event chains.
      *
      * @param eventData the event data map
      */
@@ -159,9 +153,7 @@ public class NotificationCreatedEventListener {
     private String detectEventType(Map<String, Object> eventData, String headerType) {
         // Check header first if available
         if (headerType != null) {
-            String simpleName = headerType.contains(".")
-                    ? headerType.substring(headerType.lastIndexOf('.') + 1)
-                    : headerType;
+            String simpleName = headerType.contains(".") ? headerType.substring(headerType.lastIndexOf('.') + 1) : headerType;
             return simpleName;
         }
 
@@ -217,8 +209,7 @@ public class NotificationCreatedEventListener {
     }
 
     /**
-     * Extracts and validates tenantId from event data.
-     * Handles both simple string serialization and value object serialization.
+     * Extracts and validates tenantId from event data. Handles both simple string serialization and value object serialization.
      *
      * @param eventData Event data map
      * @return TenantId
@@ -279,14 +270,14 @@ public class NotificationCreatedEventListener {
             }
         }
 
-        throw new IllegalArgumentException(String.format("Unsupported type format: %s", typeObj.getClass().getName()));
+        throw new IllegalArgumentException(String.format("Unsupported type format: %s", typeObj.getClass()
+                .getName()));
     }
 
     /**
      * Determines the delivery channel for the notification.
      * <p>
-     * For MVP: Always returns EMAIL.
-     * Future: Check user preferences, notification type, etc.
+     * For MVP: Always returns EMAIL. Future: Check user preferences, notification type, etc.
      *
      * @param notificationType Notification type
      * @return Delivery channel
@@ -303,10 +294,9 @@ public class NotificationCreatedEventListener {
     /**
      * Sends notification with retry logic to handle race conditions and eventual consistency.
      * <p>
-     * Retries with exponential backoff if notification is not found. This handles:
-     * - Race conditions where event is consumed before transaction commits
-     * - Database replication lag in multi-database setups
-     * - Temporary database connectivity issues
+     * Retries with exponential backoff if notification is not found. This handles: - Race conditions where event is consumed before transaction commits - Database replication lag
+     * in multi-database setups - Temporary database connectivity
+     * issues
      * <p>
      * Production-grade retry strategy with sufficient delays to handle transaction commit delays.
      *
@@ -316,54 +306,49 @@ public class NotificationCreatedEventListener {
      * @param tenantId       Tenant identifier (ensures tenant context is preserved during retries)
      * @throws NotificationNotFoundException if notification not found after all retries
      */
-    private void sendNotificationWithRetry(SendNotificationCommand command,
-                                           NotificationId notificationId,
-                                           NotificationChannel channel,
-                                           TenantId tenantId) {
+    private void sendNotificationWithRetry(SendNotificationCommand command, NotificationId notificationId, NotificationChannel channel, TenantId tenantId) {
         // Production-grade retry configuration
         // Increased retries and delays to handle transaction commit delays and eventual consistency
         int maxRetries = 5;
         long initialDelayMs = 200; // 200ms initial delay
         long maxDelayMs = 5000; // 5 seconds max delay (handles longer transaction commit times)
 
-        logger.info("Starting notification send with retry: notificationId={}, tenantId={}, channel={}",
-                notificationId, tenantId.getValue(), channel);
+        logger.info("Starting notification send with retry: notificationId={}, tenantId={}, channel={}", notificationId, tenantId.getValue(), channel);
 
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 // Ensure tenant context is set before each attempt (may be cleared between retries)
                 TenantId currentTenantId = TenantContext.getTenantId();
                 if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-                    logger.warn("Tenant context missing or incorrect before attempt {}: notificationId={}, expected={}, actual={}. Re-setting.",
-                            attempt, notificationId, tenantId.getValue(),
+                    logger.warn("Tenant context missing or incorrect before attempt {}: notificationId={}, expected={}, actual={}. Re-setting.", attempt, notificationId,
+                            tenantId.getValue(),
                             currentTenantId != null ? currentTenantId.getValue() : "null");
                     TenantContext.setTenantId(tenantId);
                 }
                 logger.debug("Attempt {}: tenantId={}, notificationId={}", attempt, tenantId.getValue(), notificationId);
 
                 sendHandler.handle(command);
-                logger.info("Successfully sent notification on attempt {}: notificationId={}, channel={}",
-                        attempt, notificationId, channel);
+                logger.info("Successfully sent notification on attempt {}: notificationId={}, channel={}", attempt, notificationId, channel);
                 return;
             } catch (NotificationNotFoundException e) {
                 TenantId tenantIdOnError = TenantContext.getTenantId();
                 if (attempt == maxRetries) {
                     // Last attempt failed - rethrow to trigger Kafka retry or dead letter queue
-                    logger.warn("Notification not found after {} retries: notificationId={}, tenantId={}. " +
-                                    "This may indicate the notification was never created, was deleted, " +
-                                    "or there is a persistent consistency issue. Event will be retried by Kafka.",
-                            maxRetries, notificationId, tenantIdOnError != null ? tenantIdOnError.getValue() : "null");
+                    logger.warn("Notification not found after {} retries: notificationId={}, tenantId={}. " + "This may indicate the notification was never created, was deleted, "
+                                    + "or there is a persistent consistency issue. Event will be retried by Kafka.", maxRetries, notificationId,
+                            tenantIdOnError != null ? tenantIdOnError.getValue() : "null");
                     throw e;
                 }
                 // Calculate delay with exponential backoff
                 long delayMs = Math.min(initialDelayMs * (long) Math.pow(2, attempt - 1), maxDelayMs);
-                logger.warn("Notification not found on attempt {}: notificationId={}, tenantId={}. " +
-                                "Retrying in {}ms (handling eventual consistency - transaction may not have committed yet).",
-                        attempt, notificationId, tenantIdOnError != null ? tenantIdOnError.getValue() : "null", delayMs);
+                logger.warn("Notification not found on attempt {}: notificationId={}, tenantId={}. "
+                                + "Retrying in {}ms (handling eventual consistency - transaction may not have committed yet).", attempt, notificationId,
+                        tenantIdOnError != null ? tenantIdOnError.getValue() : "null", delayMs);
                 try {
                     Thread.sleep(delayMs);
                 } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
+                    Thread.currentThread()
+                            .interrupt();
                     throw new RuntimeException("Interrupted while waiting to retry notification send", ie);
                 }
             }

@@ -12,9 +12,7 @@ import com.ccbsa.wms.user.application.service.query.dto.UserContextView;
  * <p>
  * Handles user context query.
  * <p>
- * Responsibilities:
- * - Extract user context from JWT token
- * - Return user context view
+ * Responsibilities: - Extract user context from JWT token - Return user context view
  */
 @Component
 public class GetUserContextQueryHandler {

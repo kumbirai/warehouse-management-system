@@ -8,8 +8,7 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 /**
  * Port: TenantServicePort
  * <p>
- * Defines the contract for retrieving tenant information from tenant-service.
- * Implemented by service adapters in infrastructure layers.
+ * Defines the contract for retrieving tenant information from tenant-service. Implemented by service adapters in infrastructure layers.
  */
 public interface TenantServicePort {
 
@@ -34,13 +33,7 @@ public interface TenantServicePort {
     /**
      * Tenant details DTO.
      */
-    record TenantDetails(
-            String tenantId,
-            String name,
-            String status,
-            String emailAddress,
-            String phone,
-            String address) {
+    record TenantDetails(String tenantId, String name, String status, String emailAddress, String phone, String address) {
     }
 }
 

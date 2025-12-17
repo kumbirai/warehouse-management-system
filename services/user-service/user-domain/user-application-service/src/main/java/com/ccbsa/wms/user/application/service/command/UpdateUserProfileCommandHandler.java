@@ -23,12 +23,7 @@ import com.ccbsa.wms.user.domain.core.valueobject.LastName;
  * <p>
  * Handles user profile update use case.
  * <p>
- * Responsibilities:
- * - Load user aggregate
- * - Update profile information
- * - Persist aggregate changes
- * - Sync with Keycloak
- * - Publish domain events
+ * Responsibilities: - Load user aggregate - Update profile information - Persist aggregate changes - Sync with Keycloak - Publish domain events
  */
 @Component
 public class UpdateUserProfileCommandHandler {
@@ -38,10 +33,7 @@ public class UpdateUserProfileCommandHandler {
     private final UserEventPublisher eventPublisher;
     private final AuthenticationServicePort authenticationService;
 
-    public UpdateUserProfileCommandHandler(
-            UserRepository userRepository,
-            UserEventPublisher eventPublisher,
-            AuthenticationServicePort authenticationService) {
+    public UpdateUserProfileCommandHandler(UserRepository userRepository, UserEventPublisher eventPublisher, AuthenticationServicePort authenticationService) {
         this.userRepository = userRepository;
         this.eventPublisher = eventPublisher;
         this.authenticationService = authenticationService;
@@ -50,8 +42,7 @@ public class UpdateUserProfileCommandHandler {
     /**
      * Handles the UpdateUserProfileCommand.
      * <p>
-     * Transaction boundary: One transaction per command execution.
-     * Events published after successful commit.
+     * Transaction boundary: One transaction per command execution. Events published after successful commit.
      *
      * @param command Command to execute
      * @throws UserNotFoundException if user not found
@@ -63,36 +54,34 @@ public class UpdateUserProfileCommandHandler {
             throw new IllegalArgumentException("Command cannot be null");
         }
 
-        logger.debug("Updating user profile: userId={}", command.getUserId().getValue());
+        logger.debug("Updating user profile: userId={}", command.getUserId()
+                .getValue());
         if (command.getUserId() == null) {
             throw new IllegalArgumentException("UserId is required");
         }
-        if (command.getEmail() == null || command.getEmail().trim().isEmpty()) {
+        if (command.getEmail() == null || command.getEmail()
+                .trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("EmailAddress is required");
         }
 
         // 2. Load user
         User user = userRepository.findById(command.getUserId())
-                .orElseThrow(() -> new UserNotFoundException(
-                        String.format("User not found: %s", command.getUserId().getValue())));
+                .orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", command.getUserId()
+                        .getValue())));
 
         // 3. Update profile (domain logic)
-        user.updateProfile(
-                EmailAddress.of(command.getEmail()),
-                FirstName.of(command.getFirstName()),
-                LastName.of(command.getLastName()));
+        user.updateProfile(EmailAddress.of(command.getEmail()), FirstName.of(command.getFirstName()), LastName.of(command.getLastName()));
 
         // 4. Persist
         userRepository.save(user);
 
         // 5. Sync with Keycloak
-        if (user.getKeycloakUserId().isPresent()) {
+        if (user.getKeycloakUserId()
+                .isPresent()) {
             try {
-                authenticationService.updateUser(
-                        user.getKeycloakUserId().get(),
-                        command.getEmail(),
-                        command.getFirstName(),
-                        command.getLastName());
+                authenticationService.updateUser(user.getKeycloakUserId()
+                        .get(), command.getEmail(), command.getFirstName(), command.getLastName());
             } catch (Exception e) {
                 // Log error but don't fail the operation
                 // User data is source of truth, Keycloak sync can be retried
@@ -107,7 +96,8 @@ public class UpdateUserProfileCommandHandler {
             user.clearDomainEvents();
         }
 
-        logger.info("User profile updated successfully: userId={}", command.getUserId().getValue());
+        logger.info("User profile updated successfully: userId={}", command.getUserId()
+                .getValue());
     }
 }
 

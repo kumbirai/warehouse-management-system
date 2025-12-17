@@ -19,8 +19,7 @@ class ApiErrorTest {
         String message = "Error message";
 
         // When
-        ApiError error = ApiError.builder(code,
-                        message)
+        ApiError error = ApiError.builder(code, message)
                 .build();
 
         // Then
@@ -39,15 +38,13 @@ class ApiErrorTest {
         // Given
         String code = "ERROR_CODE";
         String message = "Error message";
-        Map<String, Object> details = Map.of("field",
-                "value");
+        Map<String, Object> details = Map.of("field", "value");
         String path = "/api/v1/resource";
         String requestId = "req-123";
         Instant timestamp = Instant.now();
 
         // When
-        ApiError error = ApiError.builder(code,
-                        message)
+        ApiError error = ApiError.builder(code, message)
                 .details(details)
                 .path(path)
                 .requestId(requestId)
@@ -71,8 +68,7 @@ class ApiErrorTest {
         Instant before = Instant.now();
 
         // When
-        ApiError error = ApiError.builder("ERROR_CODE",
-                        "Error message")
+        ApiError error = ApiError.builder("ERROR_CODE", "Error message")
                 .build();
 
         // Then
@@ -86,8 +82,7 @@ class ApiErrorTest {
     @DisplayName("Should throw exception when code is null")
     void shouldThrowExceptionWhenCodeIsNull() {
         // When/Then
-        assertThatThrownBy(() -> ApiError.builder(null,
-                        "message")
+        assertThatThrownBy(() -> ApiError.builder(null, "message")
                 .build()).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Error code is required");
     }
@@ -96,8 +91,7 @@ class ApiErrorTest {
     @DisplayName("Should throw exception when code is empty")
     void shouldThrowExceptionWhenCodeIsEmpty() {
         // When/Then
-        assertThatThrownBy(() -> ApiError.builder("",
-                        "message")
+        assertThatThrownBy(() -> ApiError.builder("", "message")
                 .build()).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Error code is required");
     }
@@ -106,8 +100,7 @@ class ApiErrorTest {
     @DisplayName("Should throw exception when code is blank")
     void shouldThrowExceptionWhenCodeIsBlank() {
         // When/Then
-        assertThatThrownBy(() -> ApiError.builder("   ",
-                        "message")
+        assertThatThrownBy(() -> ApiError.builder("   ", "message")
                 .build()).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Error code is required");
     }
@@ -116,8 +109,7 @@ class ApiErrorTest {
     @DisplayName("Should throw exception when message is null")
     void shouldThrowExceptionWhenMessageIsNull() {
         // When/Then
-        assertThatThrownBy(() -> ApiError.builder("ERROR_CODE",
-                        null)
+        assertThatThrownBy(() -> ApiError.builder("ERROR_CODE", null)
                 .build()).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Error message is required");
     }
@@ -126,8 +118,7 @@ class ApiErrorTest {
     @DisplayName("Should throw exception when message is empty")
     void shouldThrowExceptionWhenMessageIsEmpty() {
         // When/Then
-        assertThatThrownBy(() -> ApiError.builder("ERROR_CODE",
-                        "")
+        assertThatThrownBy(() -> ApiError.builder("ERROR_CODE", "")
                 .build()).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Error message is required");
     }
@@ -136,8 +127,7 @@ class ApiErrorTest {
     @DisplayName("Should throw exception when message is blank")
     void shouldThrowExceptionWhenMessageIsBlank() {
         // When/Then
-        assertThatThrownBy(() -> ApiError.builder("ERROR_CODE",
-                        "   ")
+        assertThatThrownBy(() -> ApiError.builder("ERROR_CODE", "   ")
                 .build()).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Error message is required");
     }

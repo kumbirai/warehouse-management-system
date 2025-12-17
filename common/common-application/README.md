@@ -1,6 +1,7 @@
 # Common Application Module
 
-This module provides shared application layer utilities and base classes for all services in the Warehouse Management System.
+This module provides shared application layer utilities and base classes for all services in the Warehouse Management
+System.
 
 ## Standardized API Response
 

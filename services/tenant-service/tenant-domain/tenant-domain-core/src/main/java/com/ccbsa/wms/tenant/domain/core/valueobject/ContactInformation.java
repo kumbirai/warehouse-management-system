@@ -8,17 +8,14 @@ import com.ccbsa.common.domain.valueobject.EmailAddress;
 /**
  * Value Object: ContactInformation
  * <p>
- * Represents contact information for a tenant.
- * Immutable and validated on construction.
+ * Represents contact information for a tenant. Immutable and validated on construction.
  */
 public final class ContactInformation {
     private final EmailAddress emailAddress;
     private final String phone;
     private final String address;
 
-    private ContactInformation(EmailAddress emailAddress,
-                               String phone,
-                               String address) {
+    private ContactInformation(EmailAddress emailAddress, String phone, String address) {
         this.emailAddress = emailAddress;
 
         // Phone validation
@@ -52,30 +49,21 @@ public final class ContactInformation {
      * @param address      Address string (can be null)
      * @return ContactInformation instance
      */
-    public static ContactInformation of(EmailAddress emailAddress,
-                                        String phone,
-                                        String address) {
-        return new ContactInformation(emailAddress,
-                phone,
-                address);
+    public static ContactInformation of(EmailAddress emailAddress, String phone, String address) {
+        return new ContactInformation(emailAddress, phone, address);
     }
 
     /**
-     * Creates ContactInformation from string values.
-     * EmailAddress string will be converted to EmailAddress value object.
+     * Creates ContactInformation from string values. EmailAddress string will be converted to EmailAddress value object.
      *
      * @param email   EmailAddress string (can be null or empty)
      * @param phone   Phone number string (can be null)
      * @param address Address string (can be null)
      * @return ContactInformation instance
      */
-    public static ContactInformation of(String email,
-                                        String phone,
-                                        String address) {
+    public static ContactInformation of(String email, String phone, String address) {
         EmailAddress emailAddressValueObject = EmailAddress.ofNullable(email);
-        return new ContactInformation(emailAddressValueObject,
-                phone,
-                address);
+        return new ContactInformation(emailAddressValueObject, phone, address);
     }
 
     /**
@@ -85,9 +73,7 @@ public final class ContactInformation {
      * @return ContactInformation instance
      */
     public static ContactInformation emailOnly(EmailAddress emailAddress) {
-        return new ContactInformation(emailAddress,
-                null,
-                null);
+        return new ContactInformation(emailAddress, null, null);
     }
 
     /**
@@ -98,9 +84,7 @@ public final class ContactInformation {
      */
     public static ContactInformation emailOnly(String email) {
         EmailAddress emailAddressValueObject = EmailAddress.ofNullable(email);
-        return new ContactInformation(emailAddressValueObject,
-                null,
-                null);
+        return new ContactInformation(emailAddressValueObject, null, null);
     }
 
     public Optional<EmailAddress> getEmail() {
@@ -133,25 +117,17 @@ public final class ContactInformation {
             return false;
         }
         ContactInformation that = (ContactInformation) o;
-        return Objects.equals(emailAddress,
-                that.emailAddress) && Objects.equals(phone,
-                that.phone) && Objects.equals(address,
-                that.address);
+        return Objects.equals(emailAddress, that.emailAddress) && Objects.equals(phone, that.phone) && Objects.equals(address, that.address);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(emailAddress,
-                phone,
-                address);
+        return Objects.hash(emailAddress, phone, address);
     }
 
     @Override
     public String toString() {
-        return String.format("ContactInformation{emailAddress='%s', phone='%s', address='%s'}",
-                emailAddress,
-                phone,
-                address);
+        return String.format("ContactInformation{emailAddress='%s', phone='%s', address='%s'}", emailAddress, phone, address);
     }
 }
 

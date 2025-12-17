@@ -3,8 +3,7 @@ package com.ccbsa.common.domain.valueobject;
 import java.util.Objects;
 
 /**
- * Value object representing a tenant identifier (LDP identifier).
- * Tenant IDs are immutable and validated.
+ * Value object representing a tenant identifier (LDP identifier). Tenant IDs are immutable and validated.
  */
 public final class TenantId {
     private final String value;
@@ -37,8 +36,7 @@ public final class TenantId {
             return false;
         }
         TenantId tenantId = (TenantId) o;
-        return Objects.equals(value,
-                tenantId.value);
+        return Objects.equals(value, tenantId.value);
     }
 
     @Override

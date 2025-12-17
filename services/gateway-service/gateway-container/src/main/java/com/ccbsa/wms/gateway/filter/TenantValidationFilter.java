@@ -38,7 +38,8 @@ import reactor.core.publisher.Mono;
  * via the X-Tenant-Id header, it validates that it matches the JWT tenant ID.
  */
 @Component
-public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantValidationFilter.Config> {
+public class TenantValidationFilter
+        extends AbstractGatewayFilterFactory<TenantValidationFilter.Config> {
     private static final Logger logger = LoggerFactory.getLogger(TenantValidationFilter.class);
     private static final String TENANT_ID_CLAIM = "tenant_id";
     private static final String X_TENANT_ID_HEADER = "X-Tenant-Id";
@@ -61,8 +62,7 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
                 .filter(authentication -> authentication instanceof JwtAuthenticationToken)
                 .cast(JwtAuthenticationToken.class)
                 .map(JwtAuthenticationToken::getToken)
-                .flatMap(jwt ->
-                {
+                .flatMap(jwt -> {
                     String jwtTenantId = extractTenantId(jwt);
                     String path = exchange.getRequest()
                             .getPath()
@@ -78,9 +78,7 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
 
                     // Allow SYSTEM_ADMIN users to bypass tenant validation for all endpoints
                     if (isSystemAdmin) {
-                        logger.debug("SYSTEM_ADMIN user detected for {} {} - bypassing tenant validation",
-                                method,
-                                path);
+                        logger.debug("SYSTEM_ADMIN user detected for {} {} - bypassing tenant validation", method, path);
                         // SYSTEM_ADMIN users don't need tenant_id, allow request to proceed
                         ServerHttpRequest request = exchange.getRequest();
                         ServerHttpRequest.Builder requestBuilder = request.mutate();
@@ -93,9 +91,7 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
 
                     // Allow ADMIN users to access list endpoint without tenant_id requirement
                     if (isListEndpoint && isAdmin) {
-                        logger.debug("ADMIN user detected for list endpoint {} {} - bypassing tenant validation",
-                                method,
-                                path);
+                        logger.debug("ADMIN user detected for list endpoint {} {} - bypassing tenant validation", method, path);
                         ServerHttpRequest request = exchange.getRequest();
                         ServerHttpRequest.Builder requestBuilder = request.mutate();
                         // Don't set X-Tenant-Id header for list endpoint
@@ -107,14 +103,9 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
 
                     // For non-SYSTEM_ADMIN and non-ADMIN users, or non-list endpoints, tenant_id is required
                     if (jwtTenantId == null || jwtTenantId.isEmpty()) {
-                        logger.warn("Tenant ID not found in JWT token for {} {} from {}",
-                                method,
-                                path,
-                                exchange.getRequest()
-                                        .getRemoteAddress());
-                        return handleError(exchange,
-                                HttpStatus.FORBIDDEN,
-                                "Tenant ID not found in token");
+                        logger.warn("Tenant ID not found in JWT token for {} {} from {}", method, path, exchange.getRequest()
+                                .getRemoteAddress());
+                        return handleError(exchange, HttpStatus.FORBIDDEN, "Tenant ID not found in token");
                     }
 
                     ServerHttpRequest request = exchange.getRequest();
@@ -124,26 +115,16 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
                     // If tenant ID is explicitly requested, validate it matches JWT tenant
                     if (requestedTenantId != null && !requestedTenantId.isEmpty()) {
                         if (!jwtTenantId.equals(requestedTenantId)) {
-                            logger.warn("Tenant ID mismatch for {} {}: JWT tenant={}, requested tenant={}",
-                                    method,
-                                    path,
-                                    jwtTenantId,
-                                    requestedTenantId);
-                            return handleError(exchange,
-                                    HttpStatus.FORBIDDEN,
-                                    String.format("Tenant ID mismatch: token tenant does not match requested tenant"));
+                            logger.warn("Tenant ID mismatch for {} {}: JWT tenant={}, requested tenant={}", method, path, jwtTenantId, requestedTenantId);
+                            return handleError(exchange, HttpStatus.FORBIDDEN, String.format("Tenant ID mismatch: token tenant does not match requested tenant"));
                         }
                     }
 
                     // Ensure X-Tenant-Id header is set from JWT
                     ServerHttpRequest.Builder requestBuilder = request.mutate();
-                    requestBuilder.header(X_TENANT_ID_HEADER,
-                            jwtTenantId);
+                    requestBuilder.header(X_TENANT_ID_HEADER, jwtTenantId);
 
-                    logger.debug("Tenant validation passed for {} {}: tenant={}",
-                            method,
-                            path,
-                            jwtTenantId);
+                    logger.debug("Tenant validation passed for {} {}: tenant={}", method, path, jwtTenantId);
 
                     ServerHttpRequest modifiedRequest = requestBuilder.build();
                     return chain.filter(exchange.mutate()
@@ -156,10 +137,13 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
                 // However, we should not block the request here - let it proceed and let the
                 // downstream service or OAuth2 Resource Server handle it
                 .switchIfEmpty(Mono.defer(() -> {
-                    String path = exchange.getRequest().getPath().value();
-                    String method = exchange.getRequest().getMethod().name();
-                    logger.warn("No JWT authentication found in SecurityContext for {} {} - this should not happen if OAuth2 Resource Server is configured correctly",
-                            method,
+                    String path = exchange.getRequest()
+                            .getPath()
+                            .value();
+                    String method = exchange.getRequest()
+                            .getMethod()
+                            .name();
+                    logger.warn("No JWT authentication found in SecurityContext for {} {} - this should not happen if OAuth2 Resource Server is configured correctly", method,
                             path);
                     // Log warning but allow request to proceed - OAuth2 Resource Server should have handled this
                     // If authentication is truly missing, the downstream service will reject it
@@ -202,8 +186,7 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
     }
 
     /**
-     * Checks if the request is for the tenants list endpoint.
-     * The list endpoint is GET /api/v1/tenants (without an ID path parameter).
+     * Checks if the request is for the tenants list endpoint. The list endpoint is GET /api/v1/tenants (without an ID path parameter).
      *
      * @param path   The request path
      * @param method The HTTP method
@@ -221,28 +204,20 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
      * @param message  The error message
      * @return Mono that completes when the error response is written
      */
-    private Mono<Void> handleError(ServerWebExchange exchange,
-                                   HttpStatus status,
-                                   String message) {
+    private Mono<Void> handleError(ServerWebExchange exchange, HttpStatus status, String message) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(status);
         response.getHeaders()
-                .add("Content-Type",
-                        "application/json");
+                .add("Content-Type", "application/json");
 
-        String errorBody = String.format("{\"error\":{\"code\":\"%s\",\"message\":\"%s\",\"timestamp\":\"%s\"}}",
-                status.name(),
-                message,
-                Instant.now()
-                        .toString());
+        String errorBody = String.format("{\"error\":{\"code\":\"%s\",\"message\":\"%s\",\"timestamp\":\"%s\"}}", status.name(), message, Instant.now()
+                .toString());
 
-        byte[] errorBytes = Objects.requireNonNull(errorBody.getBytes(StandardCharsets.UTF_8),
-                "Error body bytes cannot be null");
+        byte[] errorBytes = Objects.requireNonNull(errorBody.getBytes(StandardCharsets.UTF_8), "Error body bytes cannot be null");
         DataBuffer buffer = response.bufferFactory()
                 .wrap(errorBytes);
 
-        Mono<DataBuffer> bufferMono = Objects.requireNonNull(Mono.just(buffer),
-                "Buffer mono cannot be null");
+        Mono<DataBuffer> bufferMono = Objects.requireNonNull(Mono.just(buffer), "Buffer mono cannot be null");
         return response.writeWith(bufferMono);
     }
 
@@ -269,8 +244,7 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
     }
 
     /**
-     * Configuration class for TenantValidationFilter.
-     * Currently empty but available for future configuration options.
+     * Configuration class for TenantValidationFilter. Currently empty but available for future configuration options.
      */
     public static class Config {
         // Configuration properties if needed

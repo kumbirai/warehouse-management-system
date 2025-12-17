@@ -29,15 +29,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * Notification Service Configuration
  * <p>
- * Imports common security configuration for JWT validation and tenant context.
- * Imports Kafka configuration for messaging infrastructure (provides kafkaObjectMapper bean).
- * Imports common data access configuration for multi-tenant schema resolution.
+ * Imports common security configuration for JWT validation and tenant context. Imports Kafka configuration for messaging infrastructure (provides kafkaObjectMapper bean). Imports
+ * common data access configuration for multi-tenant schema
+ * resolution.
  * <p>
- * The {@link MultiTenantDataAccessConfig} provides the {@link com.ccbsa.wms.common.dataaccess.TenantSchemaResolver}
- * bean which implements schema-per-tenant strategy for multi-tenant isolation.
+ * The {@link MultiTenantDataAccessConfig} provides the {@link com.ccbsa.wms.common.dataaccess.TenantSchemaResolver} bean which implements schema-per-tenant strategy for
+ * multi-tenant isolation.
  * <p>
- * The naming strategy is configured in application.yml and will be automatically
- * used by Hibernate for dynamic schema resolution.
+ * The naming strategy is configured in application.yml and will be automatically used by Hibernate for dynamic schema resolution.
  */
 @Configuration
 @Import( {ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class})
@@ -78,12 +77,10 @@ public class NotificationServiceConfiguration {
     /**
      * Custom consumer factory for external events (tenant and user events).
      * <p>
-     * Uses typed deserialization with @class property from JSON payload.
-     * The ObjectMapper is configured with JsonTypeInfo to include @class property,
-     * allowing proper typed deserialization across service boundaries.
+     * Uses typed deserialization with @class property from JSON payload. The ObjectMapper is configured with JsonTypeInfo to include @class property, allowing proper typed
+     * deserialization across service boundaries.
      * <p>
-     * This factory is used for both tenant and user events to maintain service boundaries
-     * while enabling proper typed deserialization.
+     * This factory is used for both tenant and user events to maintain service boundaries while enabling proper typed deserialization.
      * <p>
      * Uses ErrorHandlingDeserializer to gracefully handle deserialization errors.
      * <p>
@@ -93,7 +90,8 @@ public class NotificationServiceConfiguration {
      * @return Consumer factory configured for typed deserialization
      */
     @Bean("externalEventConsumerFactory")
-    public ConsumerFactory<String, Object> externalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ConsumerFactory<String, Object> externalEventConsumerFactory(
+            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service");
@@ -117,11 +115,9 @@ public class NotificationServiceConfiguration {
         jsonDeserializer.setRemoveTypeHeaders(true);
 
         // Wrap with ErrorHandlingDeserializer to handle deserialization errors gracefully
-        ErrorHandlingDeserializer<Object> errorHandlingDeserializer =
-                new ErrorHandlingDeserializer<>(jsonDeserializer);
+        ErrorHandlingDeserializer<Object> errorHandlingDeserializer = new ErrorHandlingDeserializer<>(jsonDeserializer);
 
-        DefaultKafkaConsumerFactory<String, Object> factory =
-                new DefaultKafkaConsumerFactory<>(configProps);
+        DefaultKafkaConsumerFactory<String, Object> factory = new DefaultKafkaConsumerFactory<>(configProps);
         factory.setValueDeserializer(errorHandlingDeserializer);
         return factory;
     }
@@ -129,8 +125,8 @@ public class NotificationServiceConfiguration {
     /**
      * Custom listener container factory for external events (tenant and user events).
      * <p>
-     * Uses the externalEventConsumerFactory to properly deserialize external events as Map.
-     * This factory is shared by both tenant and user event listeners to maintain loose coupling.
+     * Uses the externalEventConsumerFactory to properly deserialize external events as Map. This factory is shared by both tenant and user event listeners to maintain loose
+     * coupling.
      * <p>
      * Includes error handling to skip deserialization errors and continue processing other messages.
      *
@@ -138,14 +134,13 @@ public class NotificationServiceConfiguration {
      * @return Listener container factory
      */
     @Bean("externalEventKafkaListenerContainerFactory")
-    public ConcurrentKafkaListenerContainerFactory<String, Object> externalEventKafkaListenerContainerFactory(
-            ConsumerFactory<String, Object> externalEventConsumerFactory) {
-        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
+    public ConcurrentKafkaListenerContainerFactory<String, Object> externalEventKafkaListenerContainerFactory(ConsumerFactory<String, Object> externalEventConsumerFactory) {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(externalEventConsumerFactory);
 
         // Manual acknowledgment mode for reliable processing
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties()
+                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         // Concurrency for parallel processing
         factory.setConcurrency(concurrency);
@@ -155,10 +150,8 @@ public class NotificationServiceConfiguration {
         BackOff backOff = createExponentialBackOff();
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(backOff);
         // Skip deserialization errors - acknowledge and move on
-        errorHandler.addNotRetryableExceptions(
-                org.apache.kafka.common.errors.SerializationException.class,
-                org.springframework.kafka.support.serializer.DeserializationException.class
-        );
+        errorHandler.addNotRetryableExceptions(org.apache.kafka.common.errors.SerializationException.class,
+                org.springframework.kafka.support.serializer.DeserializationException.class);
         factory.setCommonErrorHandler(errorHandler);
 
         return factory;
@@ -167,9 +160,9 @@ public class NotificationServiceConfiguration {
     /**
      * Creates exponential backoff configuration for retry mechanism.
      * <p>
-     * Configures exponential backoff with initial interval, multiplier, and max interval
-     * as specified in application.yml. This provides production-grade error handling
-     * for transient failures (e.g., race conditions, temporary database unavailability).
+     * Configures exponential backoff with initial interval, multiplier, and max interval as specified in application.yml. This provides production-grade error handling for
+     * transient failures (e.g., race conditions, temporary database
+     * unavailability).
      *
      * @return BackOff configuration with exponential backoff
      */
@@ -186,9 +179,8 @@ public class NotificationServiceConfiguration {
     /**
      * Consumer factory for internal notification events (NotificationCreatedEvent, etc.).
      * <p>
-     * Uses typed deserialization with @class property from JSON payload.
-     * The ObjectMapper is configured with JsonTypeInfo to include @class property,
-     * allowing proper typed deserialization of internal events.
+     * Uses typed deserialization with @class property from JSON payload. The ObjectMapper is configured with JsonTypeInfo to include @class property, allowing proper typed
+     * deserialization of internal events.
      * <p>
      * Explicitly uses kafkaObjectMapper to ensure type information is properly deserialized.
      *
@@ -196,7 +188,8 @@ public class NotificationServiceConfiguration {
      * @return Consumer factory configured for internal events with typed deserialization
      */
     @Bean("internalEventConsumerFactory")
-    public ConsumerFactory<String, Object> internalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ConsumerFactory<String, Object> internalEventConsumerFactory(
+            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service");
@@ -219,11 +212,9 @@ public class NotificationServiceConfiguration {
         jsonDeserializer.setRemoveTypeHeaders(true);
 
         // Wrap with ErrorHandlingDeserializer to handle deserialization errors gracefully
-        ErrorHandlingDeserializer<Object> errorHandlingDeserializer =
-                new ErrorHandlingDeserializer<>(jsonDeserializer);
+        ErrorHandlingDeserializer<Object> errorHandlingDeserializer = new ErrorHandlingDeserializer<>(jsonDeserializer);
 
-        DefaultKafkaConsumerFactory<String, Object> factory =
-                new DefaultKafkaConsumerFactory<>(configProps);
+        DefaultKafkaConsumerFactory<String, Object> factory = new DefaultKafkaConsumerFactory<>(configProps);
         factory.setValueDeserializer(errorHandlingDeserializer);
         return factory;
     }
@@ -231,34 +222,28 @@ public class NotificationServiceConfiguration {
     /**
      * Listener container factory for internal notification events.
      * <p>
-     * Uses the internalEventConsumerFactory to handle NotificationCreatedEvent with
-     * production-grade error handling without overriding the common factory bean.
+     * Uses the internalEventConsumerFactory to handle NotificationCreatedEvent with production-grade error handling without overriding the common factory bean.
      *
      * @param internalEventConsumerFactory Consumer factory for internal events
      * @return Listener container factory
      */
     @Bean("internalEventKafkaListenerContainerFactory")
-    public ConcurrentKafkaListenerContainerFactory<String, Object> internalEventKafkaListenerContainerFactory(
-            ConsumerFactory<String, Object> internalEventConsumerFactory) {
-        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
+    public ConcurrentKafkaListenerContainerFactory<String, Object> internalEventKafkaListenerContainerFactory(ConsumerFactory<String, Object> internalEventConsumerFactory) {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(internalEventConsumerFactory);
 
         // Manual acknowledgment mode for reliable processing
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties()
+                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         // Concurrency for parallel processing
         factory.setConcurrency(concurrency);
 
         // Error handler to skip deserialization errors and continue processing
-        DefaultErrorHandler errorHandler = new DefaultErrorHandler(
-                createExponentialBackOff()
-        );
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(createExponentialBackOff());
         // Skip deserialization errors - acknowledge and move on
-        errorHandler.addNotRetryableExceptions(
-                org.apache.kafka.common.errors.SerializationException.class,
-                org.springframework.kafka.support.serializer.DeserializationException.class
-        );
+        errorHandler.addNotRetryableExceptions(org.apache.kafka.common.errors.SerializationException.class,
+                org.springframework.kafka.support.serializer.DeserializationException.class);
         factory.setCommonErrorHandler(errorHandler);
 
         return factory;

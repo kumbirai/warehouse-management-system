@@ -31,24 +31,24 @@ import io.lettuce.core.TimeoutOptions;
 /**
  * Redis Cache Configuration.
  * <p>
- * Configures distributed caching infrastructure with:
- * - Tenant-aware cache key generation
- * - JSON serialization with type information
- * - Connection pooling and timeouts
- * - TTL-based eviction policies
+ * Configures distributed caching infrastructure with: - Tenant-aware cache key generation - JSON serialization with type information - Connection pooling and timeouts - TTL-based
+ * eviction policies
  * <p>
  * Activated via: spring.cache.type=redis
  */
 @Configuration
 @EnableCaching
 @EnableConfigurationProperties(CacheProperties.class)
-@ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis", matchIfMissing = true)
+@ConditionalOnProperty(name = "spring.cache.type",
+        havingValue = "redis",
+        matchIfMissing = true)
 public class CacheConfiguration {
 
     private final CacheProperties cacheProperties;
 
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "CacheProperties is a Spring @ConfigurationProperties bean managed by Spring. It is initialized once and not "
-            + "mutated after construction. The reference is safe to store.")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+            justification = "CacheProperties is a Spring @ConfigurationProperties bean managed by Spring. It is initialized once and not "
+                    + "mutated after construction. The reference is safe to store.")
     public CacheConfiguration(CacheProperties cacheProperties) {
         this.cacheProperties = cacheProperties;
     }
@@ -56,21 +56,23 @@ public class CacheConfiguration {
     /**
      * Redis Connection Factory with optimized Lettuce client configuration.
      * <p>
-     * Configuration:
-     * - Connection pooling: 10 max connections per node
-     * - Timeout: 2 seconds for commands
-     * - Socket timeout: 3 seconds for TCP operations
-     * - Auto-reconnect: Enabled
+     * Configuration: - Connection pooling: 10 max connections per node - Timeout: 2 seconds for commands - Socket timeout: 3 seconds for TCP operations - Auto-reconnect: Enabled
      */
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
         // Redis server configuration
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
-        redisConfig.setHostName(cacheProperties.getRedis().getHost());
-        redisConfig.setPort(cacheProperties.getRedis().getPort());
+        redisConfig.setHostName(cacheProperties.getRedis()
+                .getHost());
+        redisConfig.setPort(cacheProperties.getRedis()
+                .getPort());
 
-        if (cacheProperties.getRedis().getPassword() != null && !cacheProperties.getRedis().getPassword().isEmpty()) {
-            redisConfig.setPassword(cacheProperties.getRedis().getPassword());
+        if (cacheProperties.getRedis()
+                .getPassword() != null && !cacheProperties.getRedis()
+                .getPassword()
+                .isEmpty()) {
+            redisConfig.setPassword(cacheProperties.getRedis()
+                    .getPassword());
         }
 
         // Lettuce client configuration (async/reactive client)
@@ -102,54 +104,38 @@ public class CacheConfiguration {
     /**
      * ObjectMapper for Redis cache value serialization.
      * <p>
-     * PRODUCTION-GRADE DESIGN: This ObjectMapper is explicitly named and scoped for Redis cache use only.
-     * It includes type information (default typing) which is REQUIRED for polymorphic cache value
-     * deserialization, but should NOT be used for REST API responses or Kafka messages.
+     * PRODUCTION-GRADE DESIGN: This ObjectMapper is explicitly named and scoped for Redis cache use only. It includes type information (default typing) which is REQUIRED for
+     * polymorphic cache value deserialization, but should NOT be used
+     * for REST API responses or Kafka messages.
      * <p>
-     * IMPORTANT: All Redis cache-related beans must explicitly inject this bean by name using
-     * {@code @Qualifier("redisCacheObjectMapper")} to ensure proper separation from REST API and Kafka ObjectMappers.
+     * IMPORTANT: All Redis cache-related beans must explicitly inject this bean by name using {@code @Qualifier("redisCacheObjectMapper")} to ensure proper separation from REST
+     * API and Kafka ObjectMappers.
      */
     @Bean("redisCacheObjectMapper")
     public ObjectMapper redisCacheObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.activateDefaultTyping(
-                objectMapper.getPolymorphicTypeValidator(),
-                ObjectMapper.DefaultTyping.NON_FINAL
-        );
-        objectMapper.configure(
-                com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
-                false
-        );
+        objectMapper.activateDefaultTyping(objectMapper.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL);
+        objectMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return objectMapper;
     }
 
     /**
      * Tenant-Aware Cache Manager.
      * <p>
-     * Features:
-     * - Automatic tenant prefix injection
-     * - Per-cache TTL configuration
-     * - JSON serialization with type safety
-     * - Cache-aside pattern support
+     * Features: - Automatic tenant prefix injection - Per-cache TTL configuration - JSON serialization with type safety - Cache-aside pattern support
      */
     @Bean
-    public CacheManager cacheManager(RedisConnectionFactory connectionFactory,
-                                     ObjectMapper redisCacheObjectMapper) {
+    public CacheManager cacheManager(RedisConnectionFactory connectionFactory, ObjectMapper redisCacheObjectMapper) {
         // JSON serializer for cache values
-        GenericJackson2JsonRedisSerializer serializer =
-                new GenericJackson2JsonRedisSerializer(redisCacheObjectMapper);
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisCacheObjectMapper);
 
         // Default cache configuration
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(cacheProperties.getDefaultTtlMinutes()))
                 .disableCachingNullValues()
-                .serializeKeysWith(
-                        RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer())
-                )
-                .serializeValuesWith(
-                        RedisSerializationContext.SerializationPair.fromSerializer(serializer)
-                );
+                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));
 
         return new TenantAwareCacheManager(connectionFactory, defaultConfig, cacheProperties);
     }
@@ -157,8 +143,7 @@ public class CacheConfiguration {
     /**
      * Tenant-Aware Cache Key Generator.
      * <p>
-     * Automatically prefixes cache keys with tenant ID from TenantContext.
-     * Format: tenant:{tenantId}:{cacheName}:{key}
+     * Automatically prefixes cache keys with tenant ID from TenantContext. Format: tenant:{tenantId}:{cacheName}:{key}
      */
     @Bean("tenantAwareCacheKeyGenerator")
     public TenantAwareCacheKeyGenerator tenantAwareCacheKeyGenerator() {
@@ -168,10 +153,7 @@ public class CacheConfiguration {
     /**
      * RedisTemplate for manual cache operations.
      * <p>
-     * Use cases:
-     * - Custom cache operations not covered by @Cacheable
-     * - Batch cache operations
-     * - Cache statistics queries
+     * Use cases: - Custom cache operations not covered by @Cacheable - Batch cache operations - Cache statistics queries
      */
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory,
@@ -179,8 +161,7 @@ public class CacheConfiguration {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
-        GenericJackson2JsonRedisSerializer serializer =
-                new GenericJackson2JsonRedisSerializer(redisCacheObjectMapper);
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisCacheObjectMapper);
 
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(serializer);

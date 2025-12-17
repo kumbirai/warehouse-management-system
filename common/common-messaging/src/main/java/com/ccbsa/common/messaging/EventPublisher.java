@@ -5,8 +5,7 @@ import java.util.List;
 import com.ccbsa.common.domain.DomainEvent;
 
 /**
- * Interface for publishing domain events.
- * Implementations handle the actual event publishing mechanism (e.g., Kafka).
+ * Interface for publishing domain events. Implementations handle the actual event publishing mechanism (e.g., Kafka).
  */
 public interface EventPublisher {
     /**

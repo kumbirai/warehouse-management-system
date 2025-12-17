@@ -23,12 +23,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Base security configuration for backend services.
- * Imports SecurityConfig for tenant context interceptor.
- * Configures OAuth2 Resource Server with JWT token validation.
+ * Base security configuration for backend services. Imports SecurityConfig for tenant context interceptor. Configures OAuth2 Resource Server with JWT token validation.
  * <p>
- * Services should extend this class or import it to enable security.
- * Services that need custom security configuration can override the securityFilterChain bean.
+ * Services should extend this class or import it to enable security. Services that need custom security configuration can override the securityFilterChain bean.
  */
 @Configuration
 @EnableWebSecurity
@@ -39,8 +36,7 @@ public class ServiceSecurityConfig {
     private String jwkSetUri;
 
     /**
-     * Base security filter chain configuration.
-     * Only created if no other SecurityFilterChain bean exists, allowing services to override.
+     * Base security filter chain configuration. Only created if no other SecurityFilterChain bean exists, allowing services to override.
      */
     @Bean
     @ConditionalOnMissingBean(SecurityFilterChain.class)
@@ -49,10 +45,7 @@ public class ServiceSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder())
                         .jwtAuthenticationConverter(jwtAuthenticationConverter())))
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/**",
-                                "/error",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**")
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/**", "/error", "/swagger-ui/**", "/v3/api-docs/**")
                         .permitAll()
                         .anyRequest()
                         .authenticated());
@@ -61,8 +54,7 @@ public class ServiceSecurityConfig {
     }
 
     /**
-     * JWT decoder bean for OAuth2 Resource Server.
-     * Only created if no other JwtDecoder bean exists, allowing services to override.
+     * JWT decoder bean for OAuth2 Resource Server. Only created if no other JwtDecoder bean exists, allowing services to override.
      */
     @Bean
     @ConditionalOnMissingBean(JwtDecoder.class)
@@ -74,12 +66,11 @@ public class ServiceSecurityConfig {
     /**
      * JWT authentication converter that extracts roles from Keycloak JWT tokens.
      * <p>
-     * Extracts roles from the {@code realm_access.roles} claim in the JWT token
-     * and converts them to Spring Security authorities with the {@code ROLE_} prefix.
-     * This enables {@code @PreAuthorize("hasRole('ADMIN')")} annotations to work correctly.
+     * Extracts roles from the {@code realm_access.roles} claim in the JWT token and converts them to Spring Security authorities with the {@code ROLE_} prefix. This enables
+     * {@code @PreAuthorize("hasRole('ADMIN')")} annotations to work
+     * correctly.
      * <p>
-     * Example: If the JWT contains {@code realm_access.roles: ["ADMIN", "USER"]},
-     * this converter will create authorities {@code ROLE_ADMIN} and {@code ROLE_USER}.
+     * Example: If the JWT contains {@code realm_access.roles: ["ADMIN", "USER"]}, this converter will create authorities {@code ROLE_ADMIN} and {@code ROLE_USER}.
      *
      * @return JwtAuthenticationConverter configured to extract roles from Keycloak JWT tokens
      */
@@ -94,8 +85,7 @@ public class ServiceSecurityConfig {
     /**
      * Extracts authorities (roles) from a JWT token.
      * <p>
-     * Extracts roles from the {@code realm_access.roles} claim and converts them
-     * to {@code GrantedAuthority} objects with the {@code ROLE_} prefix.
+     * Extracts roles from the {@code realm_access.roles} claim and converts them to {@code GrantedAuthority} objects with the {@code ROLE_} prefix.
      *
      * @param jwt The JWT token
      * @return Collection of granted authorities extracted from the JWT

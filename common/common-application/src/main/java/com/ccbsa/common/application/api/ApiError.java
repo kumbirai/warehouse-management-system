@@ -44,8 +44,7 @@ public final class ApiError {
         return new Builder();
     }
 
-    public static Builder builder(String code,
-                                  String message) {
+    public static Builder builder(String code, String message) {
         return new Builder().code(code)
                 .message(message);
     }

@@ -42,11 +42,8 @@ public class GatewaySecurityConfig {
     /**
      * Public endpoints that do not require authentication.
      */
-    private static final Set<String> PUBLIC_ENDPOINTS = Set.of("/actuator/health",
-            "/actuator/info",
-            "/api/v1/bff/auth/login",
-            "/api/v1/bff/auth/refresh",
-            "/api/v1/bff/auth/logout");
+    private static final Set<String> PUBLIC_ENDPOINTS =
+            Set.of("/actuator/health", "/actuator/info", "/api/v1/bff/auth/login", "/api/v1/bff/auth/refresh", "/api/v1/bff/auth/logout");
     @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
     private String jwkSetUri;
 
@@ -69,15 +66,14 @@ public class GatewaySecurityConfig {
      * @return Configured SecurityWebFilterChain
      */
     /**
-     * Public endpoints security filter chain - processes first, allows anonymous access.
-     * CORS is handled by Spring Cloud Gateway's global CORS configuration in application.yml.
-     * This chain also handles OPTIONS (preflight) requests for CORS.
+     * Public endpoints security filter chain - processes first, allows anonymous access. CORS is handled by Spring Cloud Gateway's global CORS configuration in application.yml.
+     * This chain also handles OPTIONS (preflight) requests for
+     * CORS.
      */
     @Bean
     @org.springframework.core.annotation.Order(1)
     public SecurityWebFilterChain publicSecurityWebFilterChain(ServerHttpSecurity http) {
-        http.securityMatcher(exchange ->
-                {
+        http.securityMatcher(exchange -> {
                     String path = exchange.getRequest()
                             .getPath()
                             .value();
@@ -85,23 +81,18 @@ public class GatewaySecurityConfig {
                             .getMethod()
                             .name();
 
-                    logger.debug("Public chain checking path: {} method: {}",
-                            path,
-                            method);
+                    logger.debug("Public chain checking path: {} method: {}", path, method);
 
                     // Allow all OPTIONS requests for CORS preflight
                     if ("OPTIONS".equals(method)) {
-                        logger.info("Matched OPTIONS request for CORS preflight: {}",
-                                path);
+                        logger.info("Matched OPTIONS request for CORS preflight: {}", path);
                         return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.match();
                     }
 
                     boolean isPublic = isPublicEndpoint(path);
-                    logger.debug("Is public endpoint: {}",
-                            isPublic);
+                    logger.debug("Is public endpoint: {}", isPublic);
                     if (isPublic) {
-                        logger.info("Matched public endpoint: {}",
-                                path);
+                        logger.info("Matched public endpoint: {}", path);
                         return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.match();
                     }
                     return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.notMatch();
@@ -128,8 +119,7 @@ public class GatewaySecurityConfig {
      * Creates a CORS configuration source for Spring Security.
      *
      * <p>This configuration allows cross-origin requests from the frontend origins.
-     * The configuration matches the global CORS configuration in application.yml
-     * and ensures that Spring Security does not block CORS headers.
+     * The configuration matches the global CORS configuration in application.yml and ensures that Spring Security does not block CORS headers.
      *
      * <p>Allowed origins:
      * <ul>
@@ -162,32 +152,28 @@ public class GatewaySecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfig);
 
-        logger.info("CORS configuration created with allowed origins: {}",
-                corsConfig.getAllowedOrigins());
+        logger.info("CORS configuration created with allowed origins: {}", corsConfig.getAllowedOrigins());
         return source;
     }
 
     /**
-     * Protected endpoints security filter chain - processes second, requires JWT authentication.
-     * CORS is handled by Spring Cloud Gateway's global CORS configuration in application.yml.
+     * Protected endpoints security filter chain - processes second, requires JWT authentication. CORS is handled by Spring Cloud Gateway's global CORS configuration in
+     * application.yml.
      *
      * <p>This chain only processes requests that don't match public endpoints.
-     * It uses a securityMatcher that excludes public endpoints to ensure they
-     * are handled by the public chain (Order 1).
+     * It uses a securityMatcher that excludes public endpoints to ensure they are handled by the public chain (Order 1).
      */
     @Bean
     @org.springframework.core.annotation.Order(2)
     public SecurityWebFilterChain protectedSecurityWebFilterChain(ServerHttpSecurity http) {
-        http.securityMatcher(exchange ->
-                {
+        http.securityMatcher(exchange -> {
                     String path = exchange.getRequest()
                             .getPath()
                             .value();
                     // Only match if NOT a public endpoint
                     boolean isPublic = isPublicEndpoint(path);
                     if (!isPublic) {
-                        logger.debug("Protected chain matched path: {}",
-                                path);
+                        logger.debug("Protected chain matched path: {}", path);
                         return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.match();
                     }
                     return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.notMatch();
@@ -212,8 +198,7 @@ public class GatewaySecurityConfig {
      */
     @Bean
     public ReactiveJwtDecoder jwtDecoder() {
-        logger.info("Configuring JWT decoder with JWK set URI: {}",
-                jwkSetUri);
+        logger.info("Configuring JWT decoder with JWK set URI: {}", jwkSetUri);
         return NimbusReactiveJwtDecoder.withJwkSetUri(jwkSetUri)
                 .build();
     }

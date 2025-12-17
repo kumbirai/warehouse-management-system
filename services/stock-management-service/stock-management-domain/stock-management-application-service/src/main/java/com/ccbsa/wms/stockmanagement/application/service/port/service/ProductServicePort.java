@@ -8,11 +8,9 @@ import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
 /**
  * Service Port: ProductServicePort
  * <p>
- * Defines the contract for Product Service integration.
- * Implemented by infrastructure adapters (REST client).
+ * Defines the contract for Product Service integration. Implemented by infrastructure adapters (REST client).
  * <p>
- * This port allows Stock Management Service to query Product Service
- * for product validation without direct coupling.
+ * This port allows Stock Management Service to query Product Service for product validation without direct coupling.
  */
 public interface ProductServicePort {
     /**
@@ -34,8 +32,7 @@ public interface ProductServicePort {
     Optional<ProductInfo> getProductByCode(ProductCode productCode, TenantId tenantId);
 
     /**
-     * Product information DTO.
-     * Lightweight representation of product data for validation.
+     * Product information DTO. Lightweight representation of product data for validation.
      */
     class ProductInfo {
         private final String productId;

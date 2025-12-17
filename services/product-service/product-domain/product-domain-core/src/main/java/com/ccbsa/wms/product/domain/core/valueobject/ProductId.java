@@ -5,8 +5,7 @@ import java.util.UUID;
 /**
  * Value Object: ProductId
  *
- * Represents the unique identifier for Product.
- * Immutable and validated on construction.
+ * Represents the unique identifier for Product. Immutable and validated on construction.
  */
 public final class ProductId {
     private final UUID value;
@@ -43,7 +42,8 @@ public final class ProductId {
      * @throws IllegalArgumentException if value is invalid
      */
     public static ProductId of(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("ProductId string cannot be null or empty");
         }
         try {

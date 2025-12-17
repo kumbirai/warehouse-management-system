@@ -15,10 +15,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * <p>
  * Caches product barcode lookups for performance.
  * <p>
- * Cache Strategy:
- * - Key: {tenantId}:{barcode}
- * - TTL: 1 hour
- * - Maximum size: 10,000 entries
+ * Cache Strategy: - Key: {tenantId}:{barcode} - TTL: 1 hour - Maximum size: 10,000 entries
  */
 @Component
 public class ProductBarcodeCache {

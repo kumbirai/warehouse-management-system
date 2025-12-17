@@ -22,19 +22,14 @@ import com.ccbsa.wms.user.domain.core.valueobject.Username;
  * <p>
  * Represents a user account with profile information and IAM integration.
  * <p>
- * Business Rules:
- * - User ID must be unique within tenant
- * - Username must be unique within tenant
- * - EmailAddress must be valid format
- * - User status transitions must be valid:
- * - ACTIVE → INACTIVE or SUSPENDED
- * - INACTIVE → ACTIVE
- * - SUSPENDED → ACTIVE or INACTIVE
- * - Keycloak user ID is optional but must be unique if provided
+ * Business Rules: - User ID must be unique within tenant - Username must be unique within tenant - EmailAddress must be valid format - User status transitions must be valid: -
+ * ACTIVE → INACTIVE or SUSPENDED - INACTIVE → ACTIVE - SUSPENDED
+ * → ACTIVE or INACTIVE - Keycloak user ID is optional but must be unique if provided
  * <p>
  * Note: User is tenant-aware, so it extends TenantAwareAggregateRoot.
  */
-public class User extends TenantAwareAggregateRoot<UserId> {
+public class User
+        extends TenantAwareAggregateRoot<UserId> {
 
     // Value Objects
     private Username username;
@@ -49,8 +44,7 @@ public class User extends TenantAwareAggregateRoot<UserId> {
     private LocalDateTime lastModifiedAt;
 
     /**
-     * Private constructor for builder pattern.
-     * Prevents direct instantiation.
+     * Private constructor for builder pattern. Prevents direct instantiation.
      */
     private User() {
         // Builder will set all fields
@@ -68,9 +62,7 @@ public class User extends TenantAwareAggregateRoot<UserId> {
     /**
      * Business logic method: Deactivates the user.
      * <p>
-     * Business Rules:
-     * - Only ACTIVE or SUSPENDED users can be deactivated
-     * - User must not already be INACTIVE
+     * Business Rules: - Only ACTIVE or SUSPENDED users can be deactivated - User must not already be INACTIVE
      *
      * @throws IllegalStateException if user cannot be deactivated
      */
@@ -98,9 +90,7 @@ public class User extends TenantAwareAggregateRoot<UserId> {
     /**
      * Business logic method: Activates the user.
      * <p>
-     * Business Rules:
-     * - Only INACTIVE users can be activated
-     * - User must not already be ACTIVE
+     * Business Rules: - Only INACTIVE users can be activated - User must not already be ACTIVE
      *
      * @throws IllegalStateException if user cannot be activated
      */
@@ -123,9 +113,7 @@ public class User extends TenantAwareAggregateRoot<UserId> {
     /**
      * Business logic method: Suspends the user.
      * <p>
-     * Business Rules:
-     * - Only ACTIVE users can be suspended
-     * - User must not already be SUSPENDED
+     * Business Rules: - Only ACTIVE users can be suspended - User must not already be SUSPENDED
      *
      * @throws IllegalStateException if user cannot be suspended
      */
@@ -276,8 +264,7 @@ public class User extends TenantAwareAggregateRoot<UserId> {
     }
 
     /**
-     * Builder class for constructing User instances.
-     * Ensures all required fields are set and validated.
+     * Builder class for constructing User instances. Ensures all required fields are set and validated.
      */
     public static class Builder {
         private User user = new User();
@@ -377,8 +364,7 @@ public class User extends TenantAwareAggregateRoot<UserId> {
         }
 
         /**
-         * Builds and validates the User instance.
-         * Publishes creation event for new users.
+         * Builds and validates the User instance. Publishes creation event for new users.
          *
          * @return Validated User instance
          * @throws IllegalArgumentException if validation fails
@@ -436,8 +422,7 @@ public class User extends TenantAwareAggregateRoot<UserId> {
         }
 
         /**
-         * Builds and validates the User instance without publishing events.
-         * Used when loading from database.
+         * Builds and validates the User instance without publishing events. Used when loading from database.
          *
          * @return Validated User instance
          * @throws IllegalArgumentException if validation fails

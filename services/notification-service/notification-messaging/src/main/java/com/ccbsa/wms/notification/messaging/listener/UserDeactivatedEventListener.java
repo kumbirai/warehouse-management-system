@@ -39,15 +39,14 @@ public class UserDeactivatedEventListener {
         this.createNotificationCommandHandler = createNotificationCommandHandler;
     }
 
-    @KafkaListener(
-            topics = "user-events",
+    @KafkaListener(topics = "user-events",
             groupId = "notification-service",
-            containerFactory = "externalEventKafkaListenerContainerFactory"
-    )
-    public void handle(@Payload Map<String, Object> eventData,
-                       @Header(value = "__TypeId__", required = false) String eventType,
-                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic,
-                       Acknowledgment acknowledgment) {
+            containerFactory = "externalEventKafkaListenerContainerFactory")
+    public void handle(
+            @Payload Map<String, Object> eventData,
+            @Header(value = "__TypeId__",
+                    required = false) String eventType,
+            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         try {
             // Extract and set correlation ID from event metadata for traceability
             extractAndSetCorrelationId(eventData);
@@ -55,8 +54,7 @@ public class UserDeactivatedEventListener {
             // Detect event type from payload (aggregateType field) or header
             String detectedEventType = detectEventType(eventData, eventType);
             if (!isUserDeactivatedEvent(detectedEventType)) {
-                logger.debug("Skipping event - not UserDeactivatedEvent: detectedType={}, headerType={}",
-                        detectedEventType, eventType);
+                logger.debug("Skipping event - not UserDeactivatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
                 acknowledgment.acknowledge();
                 return;
             }
@@ -66,8 +64,8 @@ public class UserDeactivatedEventListener {
             TenantId tenantId = extractTenantId(eventData);
             EmailAddress recipientEmail = extractEmail(eventData);
 
-            logger.info("Received UserDeactivatedEvent: userId={}, tenantId={}, email={}, eventId={}, eventDataKeys={}",
-                    aggregateId, tenantId.getValue(), recipientEmail.getValue(), extractEventId(eventData), eventData.keySet());
+            logger.info("Received UserDeactivatedEvent: userId={}, tenantId={}, email={}, eventId={}, eventDataKeys={}", aggregateId, tenantId.getValue(),
+                    recipientEmail.getValue(), extractEventId(eventData), eventData.keySet());
 
             // Set tenant context for multi-tenant schema resolution
             TenantContext.setTenantId(tenantId);
@@ -84,8 +82,7 @@ public class UserDeactivatedEventListener {
 
                 createNotificationCommandHandler.handle(command);
 
-                logger.info("Created deactivation notification for user: userId={}, email={}",
-                        aggregateId, recipientEmail.getValue());
+                logger.info("Created deactivation notification for user: userId={}, email={}", aggregateId, recipientEmail.getValue());
 
                 // Acknowledge message
                 acknowledgment.acknowledge();
@@ -95,12 +92,10 @@ public class UserDeactivatedEventListener {
             }
         } catch (IllegalArgumentException e) {
             // Invalid event format - acknowledge to skip (don't retry malformed events)
-            logger.error("Invalid event format for UserDeactivatedEvent: eventData={}, error={}",
-                    eventData, e.getMessage(), e);
+            logger.error("Invalid event format for UserDeactivatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             acknowledgment.acknowledge();
         } catch (Exception e) {
-            logger.error("Failed to process UserDeactivatedEvent: eventData={}, error={}",
-                    eventData, e.getMessage(), e);
+            logger.error("Failed to process UserDeactivatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             // Don't acknowledge - will retry for transient failures
             throw new RuntimeException("Failed to process UserDeactivatedEvent", e);
         } finally {
@@ -110,8 +105,7 @@ public class UserDeactivatedEventListener {
     }
 
     /**
-     * Extracts correlation ID from event metadata and sets it in CorrelationContext.
-     * This enables traceability through event chains.
+     * Extracts correlation ID from event metadata and sets it in CorrelationContext. This enables traceability through event chains.
      *
      * @param eventData the event data map
      */
@@ -137,8 +131,7 @@ public class UserDeactivatedEventListener {
     /**
      * Detects event type from payload or header.
      * <p>
-     * Since type information is disabled in serialization, we detect event type by checking
-     * for @class field first (most reliable), then header, then event-specific fields.
+     * Since type information is disabled in serialization, we detect event type by checking for @class field first (most reliable), then header, then event-specific fields.
      *
      * @param eventData  Event data map
      * @param headerType Event type from header (may be null)
@@ -160,9 +153,7 @@ public class UserDeactivatedEventListener {
 
         // Check header if @class is not available
         if (headerType != null) {
-            String simpleName = headerType.contains(".")
-                    ? headerType.substring(headerType.lastIndexOf('.') + 1)
-                    : headerType;
+            String simpleName = headerType.contains(".") ? headerType.substring(headerType.lastIndexOf('.') + 1) : headerType;
             logger.debug("Detected event type from header: {}", simpleName);
             return simpleName;
         }
@@ -200,8 +191,7 @@ public class UserDeactivatedEventListener {
     }
 
     /**
-     * Extracts and validates tenantId from event data.
-     * Handles both simple string serialization and value object serialization.
+     * Extracts and validates tenantId from event data. Handles both simple string serialization and value object serialization.
      *
      * @param eventData Event data map
      * @return TenantId
@@ -228,8 +218,7 @@ public class UserDeactivatedEventListener {
     }
 
     /**
-     * Extracts email address from event data.
-     * Handles both direct email field and nested emailAddress object.
+     * Extracts email address from event data. Handles both direct email field and nested emailAddress object.
      */
     private EmailAddress extractEmail(Map<String, Object> eventData) {
         // Try direct email field first

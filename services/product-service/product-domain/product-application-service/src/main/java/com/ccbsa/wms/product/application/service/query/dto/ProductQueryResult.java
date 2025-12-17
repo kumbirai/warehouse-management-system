@@ -11,8 +11,7 @@ import com.ccbsa.wms.product.domain.core.valueobject.UnitOfMeasure;
 /**
  * Query Result DTO: ProductQueryResult
  * <p>
- * Result object returned from product queries.
- * Contains optimized read model data for product information.
+ * Result object returned from product queries. Contains optimized read model data for product information.
  */
 public final class ProductQueryResult {
     private final ProductId productId;

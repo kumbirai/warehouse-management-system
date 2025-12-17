@@ -21,17 +21,15 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
 /**
  * Repository Adapter: NotificationRepositoryAdapter
  * <p>
- * Implements NotificationRepository port interface.
- * Adapts between domain Notification aggregate and JPA NotificationEntity.
+ * Implements NotificationRepository port interface. Adapts between domain Notification aggregate and JPA NotificationEntity.
  */
 @Repository
-public class NotificationRepositoryAdapter implements NotificationRepository {
+public class NotificationRepositoryAdapter
+        implements NotificationRepository {
     private final NotificationJpaRepository jpaRepository;
     private final NotificationEntityMapper mapper;
 
-    public NotificationRepositoryAdapter(
-            NotificationJpaRepository jpaRepository,
-            NotificationEntityMapper mapper) {
+    public NotificationRepositoryAdapter(NotificationJpaRepository jpaRepository, NotificationEntityMapper mapper) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
     }
@@ -39,11 +37,9 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     @Override
     public Notification save(Notification notification) {
         // Check if entity already exists to handle version correctly
-        Optional<NotificationEntity> existingEntity =
-                jpaRepository.findByTenantIdAndId(
-                        notification.getTenantId().getValue(),
-                        notification.getId().getValue()
-                );
+        Optional<NotificationEntity> existingEntity = jpaRepository.findByTenantIdAndId(notification.getTenantId()
+                .getValue(), notification.getId()
+                .getValue());
 
         NotificationEntity entity;
         if (existingEntity.isPresent()) {
@@ -66,19 +62,20 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     }
 
     /**
-     * Updates an existing entity with values from the domain model.
-     * Preserves JPA managed state and version for optimistic locking.
+     * Updates an existing entity with values from the domain model. Preserves JPA managed state and version for optimistic locking.
      *
      * @param entity       Existing JPA entity
      * @param notification Domain notification aggregate
      */
     private void updateEntityFromDomain(NotificationEntity entity, Notification notification) {
-        entity.setRecipientUserId(notification.getRecipientUserId().getValue());
-        entity.setRecipientEmail(notification.getRecipientEmail() != null
-                ? notification.getRecipientEmail().getValue()
-                : null);
-        entity.setTitle(notification.getTitle().getValue());
-        entity.setMessage(notification.getMessage().getValue());
+        entity.setRecipientUserId(notification.getRecipientUserId()
+                .getValue());
+        entity.setRecipientEmail(notification.getRecipientEmail() != null ? notification.getRecipientEmail()
+                .getValue() : null);
+        entity.setTitle(notification.getTitle()
+                .getValue());
+        entity.setMessage(notification.getMessage()
+                .getValue());
         entity.setType(notification.getType());
         entity.setStatus(notification.getStatus());
         entity.setCreatedAt(notification.getCreatedAt());
@@ -100,23 +97,15 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
 
     @Override
     public List<Notification> findByRecipientUserId(TenantId tenantId, UserId recipientUserId) {
-        return jpaRepository.findByTenantIdAndRecipientUserId(
-                        tenantId.getValue(),
-                        recipientUserId.getValue())
+        return jpaRepository.findByTenantIdAndRecipientUserId(tenantId.getValue(), recipientUserId.getValue())
                 .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<Notification> findByRecipientUserIdAndStatus(
-            TenantId tenantId,
-            UserId recipientUserId,
-            NotificationStatus status) {
-        return jpaRepository.findByTenantIdAndRecipientUserIdAndStatus(
-                        tenantId.getValue(),
-                        recipientUserId.getValue(),
-                        status)
+    public List<Notification> findByRecipientUserIdAndStatus(TenantId tenantId, UserId recipientUserId, NotificationStatus status) {
+        return jpaRepository.findByTenantIdAndRecipientUserIdAndStatus(tenantId.getValue(), recipientUserId.getValue(), status)
                 .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
@@ -124,9 +113,7 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
 
     @Override
     public List<Notification> findByType(TenantId tenantId, NotificationType type) {
-        return jpaRepository.findByTenantIdAndType(
-                        tenantId.getValue(),
-                        type)
+        return jpaRepository.findByTenantIdAndType(tenantId.getValue(), type)
                 .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
@@ -134,9 +121,7 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
 
     @Override
     public long countUnreadByRecipientUserId(TenantId tenantId, UserId recipientUserId) {
-        return jpaRepository.countUnreadByTenantIdAndRecipientUserId(
-                tenantId.getValue(),
-                recipientUserId.getValue());
+        return jpaRepository.countUnreadByTenantIdAndRecipientUserId(tenantId.getValue(), recipientUserId.getValue());
     }
 }
 

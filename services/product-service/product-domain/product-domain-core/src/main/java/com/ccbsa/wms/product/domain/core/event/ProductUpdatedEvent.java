@@ -16,7 +16,8 @@ import com.ccbsa.wms.product.domain.core.valueobject.UnitOfMeasure;
  * <p>
  * Event Version: 1.0
  */
-public final class ProductUpdatedEvent extends ProductEvent {
+public final class ProductUpdatedEvent
+        extends ProductEvent {
     private final ProductCode productCode;
     private final String description;
     private final ProductBarcode primaryBarcode;
@@ -40,10 +41,9 @@ public final class ProductUpdatedEvent extends ProductEvent {
      * @param brand             Product brand (optional)
      * @throws IllegalArgumentException if any required parameter is null
      */
-    public ProductUpdatedEvent(ProductId productId, TenantId tenantId, ProductCode productCode,
-                               String description, ProductBarcode primaryBarcode,
-                               List<ProductBarcode> secondaryBarcodes, UnitOfMeasure unitOfMeasure,
-                               String category, String brand) {
+    public ProductUpdatedEvent(ProductId productId, TenantId tenantId, ProductCode productCode, String description, ProductBarcode primaryBarcode,
+                               List<ProductBarcode> secondaryBarcodes, UnitOfMeasure unitOfMeasure, String category,
+                               String brand) {
         super(productId);
         if (tenantId == null) {
             throw new IllegalArgumentException("TenantId cannot be null");
@@ -51,7 +51,8 @@ public final class ProductUpdatedEvent extends ProductEvent {
         if (productCode == null) {
             throw new IllegalArgumentException("ProductCode cannot be null");
         }
-        if (description == null || description.trim().isEmpty()) {
+        if (description == null || description.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Description cannot be null or empty");
         }
         if (primaryBarcode == null) {
@@ -85,10 +86,9 @@ public final class ProductUpdatedEvent extends ProductEvent {
      * @param metadata          Event metadata for traceability
      * @throws IllegalArgumentException if any required parameter is null
      */
-    public ProductUpdatedEvent(ProductId productId, TenantId tenantId, ProductCode productCode,
-                               String description, ProductBarcode primaryBarcode,
-                               List<ProductBarcode> secondaryBarcodes, UnitOfMeasure unitOfMeasure,
-                               String category, String brand, EventMetadata metadata) {
+    public ProductUpdatedEvent(ProductId productId, TenantId tenantId, ProductCode productCode, String description, ProductBarcode primaryBarcode,
+                               List<ProductBarcode> secondaryBarcodes, UnitOfMeasure unitOfMeasure, String category,
+                               String brand, EventMetadata metadata) {
         super(productId, metadata);
         if (tenantId == null) {
             throw new IllegalArgumentException("TenantId cannot be null");
@@ -96,7 +96,8 @@ public final class ProductUpdatedEvent extends ProductEvent {
         if (productCode == null) {
             throw new IllegalArgumentException("ProductCode cannot be null");
         }
-        if (description == null || description.trim().isEmpty()) {
+        if (description == null || description.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Description cannot be null or empty");
         }
         if (primaryBarcode == null) {

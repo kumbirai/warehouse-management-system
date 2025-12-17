@@ -6,11 +6,10 @@ import com.ccbsa.wms.notification.domain.core.event.NotificationEvent;
 /**
  * Event Publisher Port: NotificationEventPublisher
  * <p>
- * Extends common EventPublisher interface.
- * Service-specific event publishing contract.
- * Implemented by messaging adapters.
+ * Extends common EventPublisher interface. Service-specific event publishing contract. Implemented by messaging adapters.
  */
-public interface NotificationEventPublisher extends EventPublisher {
+public interface NotificationEventPublisher
+        extends EventPublisher {
 
     /**
      * Publishes a Notification domain event.

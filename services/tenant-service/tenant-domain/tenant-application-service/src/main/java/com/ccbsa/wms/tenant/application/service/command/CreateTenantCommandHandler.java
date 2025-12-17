@@ -17,13 +17,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Handles the creation of a new tenant.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Ports are managed singletons injected by Spring and kept immutable")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+        justification = "Ports are managed singletons injected by Spring and kept immutable")
 public class CreateTenantCommandHandler {
     private final TenantRepository tenantRepository;
     private final TenantEventPublisher eventPublisher;
 
-    public CreateTenantCommandHandler(TenantRepository tenantRepository,
-                                      TenantEventPublisher eventPublisher) {
+    public CreateTenantCommandHandler(TenantRepository tenantRepository, TenantEventPublisher eventPublisher) {
         this.tenantRepository = tenantRepository;
         this.eventPublisher = eventPublisher;
     }
@@ -32,9 +32,7 @@ public class CreateTenantCommandHandler {
     public CreateTenantResult handle(CreateTenantCommand command) {
         // Check if tenant already exists
         if (tenantRepository.existsById(command.getTenantId())) {
-            return CreateTenantResult.failure(command.getTenantId(),
-                    String.format("Tenant with ID %s already exists",
-                            command.getTenantId()));
+            return CreateTenantResult.failure(command.getTenantId(), String.format("Tenant with ID %s already exists", command.getTenantId()));
         }
 
         // Create tenant aggregate

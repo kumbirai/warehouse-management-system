@@ -9,7 +9,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 /**
  * Health indicator for database connectivity.
  */
-public class DatabaseHealthIndicator implements HealthIndicator {
+public class DatabaseHealthIndicator
+        implements HealthIndicator {
     private final JdbcTemplate jdbcTemplate;
 
     public DatabaseHealthIndicator(JdbcTemplate jdbcTemplate) {
@@ -19,16 +20,13 @@ public class DatabaseHealthIndicator implements HealthIndicator {
     @Override
     public Health health() {
         try {
-            jdbcTemplate.queryForObject("SELECT 1",
-                    Integer.class);
+            jdbcTemplate.queryForObject("SELECT 1", Integer.class);
             return Health.up()
-                    .withDetail("database",
-                            "Available")
+                    .withDetail("database", "Available")
                     .build();
         } catch (Exception e) {
             return Health.down()
-                    .withDetail("database",
-                            "Unavailable")
+                    .withDetail("database", "Unavailable")
                     .withException(e)
                     .build();
         }

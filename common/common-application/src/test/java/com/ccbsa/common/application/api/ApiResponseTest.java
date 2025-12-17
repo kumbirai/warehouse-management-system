@@ -46,14 +46,10 @@ class ApiResponseTest {
     void shouldCreateSuccessResponseWithDataAndLinks() {
         // Given
         String testData = "test-data";
-        Map<String, String> links = Map.of("self",
-                "/api/v1/resource",
-                "next",
-                "/api/v1/resource/next");
+        Map<String, String> links = Map.of("self", "/api/v1/resource", "next", "/api/v1/resource/next");
 
         // When
-        ApiResponse<String> response = ApiResponse.success(testData,
-                links);
+        ApiResponse<String> response = ApiResponse.success(testData, links);
 
         // Then
         assertThat(response).isNotNull();
@@ -67,19 +63,14 @@ class ApiResponseTest {
     void shouldCreateSuccessResponseWithDataLinksAndMeta() {
         // Given
         String testData = "test-data";
-        Map<String, String> links = Map.of("self",
-                "/api/v1/resource");
-        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(1,
-                20,
-                100);
+        Map<String, String> links = Map.of("self", "/api/v1/resource");
+        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(1, 20, 100);
         ApiMeta meta = ApiMeta.builder()
                 .pagination(pagination)
                 .build();
 
         // When
-        ApiResponse<String> response = ApiResponse.success(testData,
-                links,
-                meta);
+        ApiResponse<String> response = ApiResponse.success(testData, links, meta);
 
         // Then
         assertThat(response).isNotNull();
@@ -93,8 +84,7 @@ class ApiResponseTest {
     @DisplayName("Should create error response")
     void shouldCreateErrorResponse() {
         // Given
-        ApiError error = ApiError.builder("ERROR_CODE",
-                        "Error message")
+        ApiError error = ApiError.builder("ERROR_CODE", "Error message")
                 .build();
 
         // When
@@ -133,8 +123,7 @@ class ApiResponseTest {
     @DisplayName("Should correctly identify error response")
     void shouldCorrectlyIdentifyErrorResponse() {
         // Given
-        ApiError error = ApiError.builder("ERROR_CODE",
-                        "Error message")
+        ApiError error = ApiError.builder("ERROR_CODE", "Error message")
                 .build();
         ApiResponse<String> errorResponse = ApiResponse.error(error);
 

@@ -5,14 +5,9 @@ import java.util.Objects;
 /**
  * Value Object: Title
  * <p>
- * Represents a title for notifications, events, or other domain concepts.
- * Immutable and self-validating.
+ * Represents a title for notifications, events, or other domain concepts. Immutable and self-validating.
  * <p>
- * This is a shared value object used across multiple services.
- * Business Rules:
- * - Title cannot be null or empty
- * - Maximum length: 200 characters
- * - Automatically trimmed
+ * This is a shared value object used across multiple services. Business Rules: - Title cannot be null or empty - Maximum length: 200 characters - Automatically trimmed
  */
 public final class Title {
     private final String value;
@@ -35,10 +30,12 @@ public final class Title {
      * @throws IllegalArgumentException if validation fails
      */
     private void validate(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Title cannot be null or empty");
         }
-        if (value.trim().length() > 200) {
+        if (value.trim()
+                .length() > 200) {
             throw new IllegalArgumentException("Title cannot exceed 200 characters");
         }
     }

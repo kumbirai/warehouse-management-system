@@ -23,18 +23,9 @@ public final class NotificationResponse {
     private final LocalDateTime sentAt;
     private final LocalDateTime readAt;
 
-    public NotificationResponse(
-            String notificationId,
-            String tenantId,
-            String recipientUserId,
-            String title,
-            String message,
-            NotificationType type,
-            NotificationStatus status,
-            LocalDateTime createdAt,
-            LocalDateTime lastModifiedAt,
-            LocalDateTime sentAt,
-            LocalDateTime readAt) {
+    public NotificationResponse(String notificationId, String tenantId, String recipientUserId, String title, String message, NotificationType type, NotificationStatus status,
+                                LocalDateTime createdAt, LocalDateTime lastModifiedAt,
+                                LocalDateTime sentAt, LocalDateTime readAt) {
         this.notificationId = notificationId;
         this.tenantId = tenantId;
         this.recipientUserId = recipientUserId;

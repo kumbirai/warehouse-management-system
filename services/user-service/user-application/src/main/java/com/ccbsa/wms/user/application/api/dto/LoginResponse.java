@@ -28,11 +28,7 @@ public final class LoginResponse {
     public LoginResponse() {
     }
 
-    public LoginResponse(String accessToken,
-                         String refreshToken,
-                         String tokenType,
-                         int expiresIn,
-                         UserContext userContext) {
+    public LoginResponse(String accessToken, String refreshToken, String tokenType, int expiresIn, UserContext userContext) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         this.tokenType = tokenType;
@@ -97,10 +93,7 @@ public final class LoginResponse {
 
     @Override
     public String toString() {
-        return String.format("LoginResponse{tokenType='%s', expiresIn=%d, userContext=%s}",
-                tokenType,
-                expiresIn,
-                userContext);
+        return String.format("LoginResponse{tokenType='%s', expiresIn=%d, userContext=%s}", tokenType, expiresIn, userContext);
     }
 
     /**
@@ -131,13 +124,7 @@ public final class LoginResponse {
         public UserContext() {
         }
 
-        public UserContext(String userId,
-                           String username,
-                           String tenantId,
-                           List<String> roles,
-                           String email,
-                           String firstName,
-                           String lastName) {
+        public UserContext(String userId, String username, String tenantId, List<String> roles, String email, String firstName, String lastName) {
             this.userId = userId;
             this.username = username;
             this.tenantId = tenantId;
@@ -205,14 +192,8 @@ public final class LoginResponse {
 
         @Override
         public String toString() {
-            return String.format("UserContext{userId='%s', username='%s', tenantId='%s', roles=%s, email='%s', firstName='%s', lastName='%s'}",
-                    userId,
-                    username,
-                    tenantId,
-                    roles,
-                    email,
-                    firstName,
-                    lastName);
+            return String.format("UserContext{userId='%s', username='%s', tenantId='%s', roles=%s, email='%s', firstName='%s', lastName='%s'}", userId, username, tenantId, roles,
+                    email, firstName, lastName);
         }
     }
 }

@@ -12,10 +12,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * Base class for all User domain events.
  * <p>
- * All user-specific events extend this class.
- * Includes tenantId for tenant-aware aggregates.
+ * All user-specific events extend this class. Includes tenantId for tenant-aware aggregates.
  */
-public abstract class UserEvent extends DomainEvent<UserId> {
+public abstract class UserEvent
+        extends DomainEvent<UserId> {
     private final TenantId tenantId;
 
     /**

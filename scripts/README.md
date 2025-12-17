@@ -18,8 +18,10 @@ Utility scripts for development and operations.
     - Stops all Docker containers
 
 - **`build-services.sh`** - Build all services
-    - Builds common modules first (common-domain, common-messaging, common-application, common-infrastructure, common-security, common-keycloak)
-    - Builds all service modules (gateway, user, tenant, notification, stock-management, location-management, product, picking, returns, reconciliation, integration)
+    - Builds common modules first (common-domain, common-messaging, common-application, common-infrastructure,
+      common-security, common-keycloak)
+    - Builds all service modules (gateway, user, tenant, notification, stock-management, location-management, product,
+      picking, returns, reconciliation, integration)
 
 - **`run-tests.sh`** - Run all tests
     - Executes Maven test phase
@@ -68,7 +70,8 @@ Utility scripts for development and operations.
     - Creates namespace
     - Applies ConfigMaps
     - Applies Secrets (with validation)
-    - Applies Deployments (currently: stock-management, location-management, product, picking, returns, reconciliation, integration)
+    - Applies Deployments (currently: stock-management, location-management, product, picking, returns, reconciliation,
+      integration)
     - Applies Services
     - Applies Ingress
     - Notes missing deployments (gateway, user, tenant services)

@@ -31,12 +31,8 @@ import com.ccbsa.wms.product.domain.core.valueobject.UnitOfMeasure;
  * <p>
  * Handles uploading product master data via CSV file.
  * <p>
- * Responsibilities:
- * - Parse CSV content
- * - Validate each CSV row
- * - Create or update products based on product code
- * - Collect and publish domain events
- * - Return upload result with statistics and errors
+ * Responsibilities: - Parse CSV content - Validate each CSV row - Create or update products based on product code - Collect and publish domain events - Return upload result with
+ * statistics and errors
  */
 @Component
 public class UploadProductCsvCommandHandler {
@@ -46,10 +42,7 @@ public class UploadProductCsvCommandHandler {
     private final ProductEventPublisher eventPublisher;
     private final ProductCsvParser csvParser;
 
-    public UploadProductCsvCommandHandler(
-            ProductRepository repository,
-            ProductEventPublisher eventPublisher,
-            ProductCsvParser csvParser) {
+    public UploadProductCsvCommandHandler(ProductRepository repository, ProductEventPublisher eventPublisher, ProductCsvParser csvParser) {
         this.repository = repository;
         this.eventPublisher = eventPublisher;
         this.csvParser = csvParser;
@@ -82,10 +75,7 @@ public class UploadProductCsvCommandHandler {
 
                 // Check if product exists by product code
                 ProductCode productCode = ProductCode.of(row.getProductCode());
-                Optional<Product> existingProduct = repository.findByProductCodeAndTenantId(
-                        productCode,
-                        command.getTenantId()
-                );
+                Optional<Product> existingProduct = repository.findByProductCodeAndTenantId(productCode, command.getTenantId());
 
                 Product product;
                 if (existingProduct.isPresent()) {
@@ -146,7 +136,9 @@ public class UploadProductCsvCommandHandler {
         if (command.getTenantId() == null) {
             throw new IllegalArgumentException("TenantId is required");
         }
-        if (command.getCsvContent() == null || command.getCsvContent().trim().isEmpty()) {
+        if (command.getCsvContent() == null || command.getCsvContent()
+                .trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("CSV content is required");
         }
     }
@@ -163,31 +155,26 @@ public class UploadProductCsvCommandHandler {
         try {
             ProductCode.of(row.getProductCode());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(
-                    String.format("Invalid product code format: %s", row.getProductCode()), e
-            );
+            throw new IllegalArgumentException(String.format("Invalid product code format: %s", row.getProductCode()), e);
         }
 
         // Validate primary barcode format
         try {
             ProductBarcode.of(row.getPrimaryBarcode());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(
-                    String.format("Invalid primary barcode format: %s", row.getPrimaryBarcode()), e
-            );
+            throw new IllegalArgumentException(String.format("Invalid primary barcode format: %s", row.getPrimaryBarcode()), e);
         }
 
         // Validate unit of measure
         try {
             UnitOfMeasure.valueOf(row.getUnitOfMeasure());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(
-                    String.format("Invalid unit of measure: %s", row.getUnitOfMeasure()), e
-            );
+            throw new IllegalArgumentException(String.format("Invalid unit of measure: %s", row.getUnitOfMeasure()), e);
         }
 
         // Validate description length
-        if (row.getDescription().length() > 500) {
+        if (row.getDescription()
+                .length() > 500) {
             throw new IllegalArgumentException("Description cannot exceed 500 characters");
         }
     }
@@ -201,18 +188,19 @@ public class UploadProductCsvCommandHandler {
      */
     private void updateProductFromRow(Product product, ProductCsvRow row, TenantId tenantId) {
         // Update description
-        if (!product.getDescription().equals(row.getDescription())) {
+        if (!product.getDescription()
+                .equals(row.getDescription())) {
             product.updateDescription(row.getDescription());
         }
 
         // Update primary barcode if changed
         ProductBarcode newPrimaryBarcode = ProductBarcode.of(row.getPrimaryBarcode());
-        if (!product.getPrimaryBarcode().getValue().equals(newPrimaryBarcode.getValue())) {
+        if (!product.getPrimaryBarcode()
+                .getValue()
+                .equals(newPrimaryBarcode.getValue())) {
             // Validate uniqueness
             if (repository.existsByBarcodeAndTenantId(newPrimaryBarcode, tenantId)) {
-                throw new BarcodeAlreadyExistsException(
-                        String.format("Primary barcode already exists: %s", newPrimaryBarcode.getValue())
-                );
+                throw new BarcodeAlreadyExistsException(String.format("Primary barcode already exists: %s", newPrimaryBarcode.getValue()));
             }
             product.updatePrimaryBarcode(newPrimaryBarcode);
         }
@@ -231,13 +219,13 @@ public class UploadProductCsvCommandHandler {
         }
 
         // Add new secondary barcode if provided
-        if (row.getSecondaryBarcode() != null && !row.getSecondaryBarcode().trim().isEmpty()) {
+        if (row.getSecondaryBarcode() != null && !row.getSecondaryBarcode()
+                .trim()
+                .isEmpty()) {
             ProductBarcode secondaryBarcode = ProductBarcode.of(row.getSecondaryBarcode());
             // Validate uniqueness
             if (repository.existsByBarcodeAndTenantId(secondaryBarcode, tenantId)) {
-                throw new BarcodeAlreadyExistsException(
-                        String.format("Secondary barcode already exists: %s", secondaryBarcode.getValue())
-                );
+                throw new BarcodeAlreadyExistsException(String.format("Secondary barcode already exists: %s", secondaryBarcode.getValue()));
             }
             product.addSecondaryBarcode(secondaryBarcode);
         }
@@ -257,19 +245,17 @@ public class UploadProductCsvCommandHandler {
         // Validate barcode uniqueness for new products
         ProductBarcode primaryBarcode = ProductBarcode.of(row.getPrimaryBarcode());
         if (repository.existsByBarcodeAndTenantId(primaryBarcode, tenantId)) {
-            throw new BarcodeAlreadyExistsException(
-                    String.format("Primary barcode already exists: %s", primaryBarcode.getValue())
-            );
+            throw new BarcodeAlreadyExistsException(String.format("Primary barcode already exists: %s", primaryBarcode.getValue()));
         }
 
         // Validate secondary barcode uniqueness if provided
         List<ProductBarcode> secondaryBarcodes = new ArrayList<>();
-        if (row.getSecondaryBarcode() != null && !row.getSecondaryBarcode().trim().isEmpty()) {
+        if (row.getSecondaryBarcode() != null && !row.getSecondaryBarcode()
+                .trim()
+                .isEmpty()) {
             ProductBarcode secondaryBarcode = ProductBarcode.of(row.getSecondaryBarcode());
             if (repository.existsByBarcodeAndTenantId(secondaryBarcode, tenantId)) {
-                throw new BarcodeAlreadyExistsException(
-                        String.format("Secondary barcode already exists: %s", secondaryBarcode.getValue())
-                );
+                throw new BarcodeAlreadyExistsException(String.format("Secondary barcode already exists: %s", secondaryBarcode.getValue()));
             }
             secondaryBarcodes.add(secondaryBarcode);
         }
@@ -286,11 +272,15 @@ public class UploadProductCsvCommandHandler {
             builder.secondaryBarcodes(secondaryBarcodes);
         }
 
-        if (row.getCategory() != null && !row.getCategory().trim().isEmpty()) {
+        if (row.getCategory() != null && !row.getCategory()
+                .trim()
+                .isEmpty()) {
             builder.category(row.getCategory());
         }
 
-        if (row.getBrand() != null && !row.getBrand().trim().isEmpty()) {
+        if (row.getBrand() != null && !row.getBrand()
+                .trim()
+                .isEmpty()) {
             builder.brand(row.getBrand());
         }
 

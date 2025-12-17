@@ -21,12 +21,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * Event Publisher Implementation: LocationEventPublisherImpl
  * <p>
- * Implements LocationEventPublisher port interface.
- * Publishes location domain events to Kafka.
+ * Implements LocationEventPublisher port interface. Publishes location domain events to Kafka.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is a managed bean and treated as immutable port")
-public class LocationEventPublisherImpl implements LocationEventPublisher {
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+        justification = "Kafka template is a managed bean and treated as immutable port")
+public class LocationEventPublisherImpl
+        implements LocationEventPublisher {
     private static final Logger logger = LoggerFactory.getLogger(LocationEventPublisherImpl.class);
     private static final String LOCATION_EVENTS_TOPIC = "location-management-events";
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -45,8 +46,8 @@ public class LocationEventPublisherImpl implements LocationEventPublisher {
         if (event instanceof LocationManagementEvent) {
             publish((LocationManagementEvent) event);
         } else {
-            throw new IllegalArgumentException(String.format("Event must be a LocationManagementEvent: %s",
-                    event.getClass().getName()));
+            throw new IllegalArgumentException(String.format("Event must be a LocationManagementEvent: %s", event.getClass()
+                    .getName()));
         }
     }
 
@@ -58,21 +59,18 @@ public class LocationEventPublisherImpl implements LocationEventPublisher {
 
             String key = enrichedEvent.getAggregateId();
             kafkaTemplate.send(LOCATION_EVENTS_TOPIC, key, enrichedEvent);
-            logger.debug("Published location event: {} with key: {} [correlationId: {}]",
-                    enrichedEvent.getClass().getSimpleName(),
-                    key,
-                    enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
+            logger.debug("Published location event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass()
+                    .getSimpleName(), key, enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata()
+                    .getCorrelationId() : "none");
         } catch (Exception e) {
-            logger.error("Failed to publish location event: {}",
-                    event.getClass().getSimpleName(),
-                    e);
+            logger.error("Failed to publish location event: {}", event.getClass()
+                    .getSimpleName(), e);
             throw new RuntimeException("Failed to publish location event", e);
         }
     }
 
     /**
-     * Enriches event with metadata by creating an immutable copy.
-     * Uses event-specific logic to create enriched copies.
+     * Enriches event with metadata by creating an immutable copy. Uses event-specific logic to create enriched copies.
      *
      * @param event The original event
      * @return Enriched event with metadata, or original if enrichment fails
@@ -96,18 +94,13 @@ public class LocationEventPublisherImpl implements LocationEventPublisher {
         // Create enriched copy based on event type
         if (event instanceof LocationCreatedEvent) {
             LocationCreatedEvent locationCreatedEvent = (LocationCreatedEvent) event;
-            return new LocationCreatedEvent(
-                    locationId,
-                    locationCreatedEvent.getTenantId(),
-                    locationCreatedEvent.getBarcode(),
-                    locationCreatedEvent.getCoordinates(),
-                    locationCreatedEvent.getStatus(),
-                    metadata);
+            return new LocationCreatedEvent(locationId, locationCreatedEvent.getTenantId(), locationCreatedEvent.getBarcode(), locationCreatedEvent.getCoordinates(),
+                    locationCreatedEvent.getStatus(), metadata);
         }
 
         // Unknown event type, return original
-        logger.warn("Unknown location event type: {}. Event will be published without metadata.",
-                event.getClass().getName());
+        logger.warn("Unknown location event type: {}. Event will be published without metadata.", event.getClass()
+                .getName());
         return event;
     }
 
@@ -118,9 +111,8 @@ public class LocationEventPublisherImpl implements LocationEventPublisher {
      */
     private EventMetadata buildEventMetadata() {
         String correlationId = CorrelationContext.getCorrelationId();
-        String userId = TenantContext.getUserId() != null
-                ? TenantContext.getUserId().getValue()
-                : null;
+        String userId = TenantContext.getUserId() != null ? TenantContext.getUserId()
+                .getValue() : null;
 
         if (correlationId == null && userId == null) {
             return null;

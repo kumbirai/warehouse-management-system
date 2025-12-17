@@ -13,11 +13,13 @@ import jakarta.validation.constraints.Size;
  */
 public final class CreateProductCommandDTO {
     @NotBlank(message = "Product code is required")
-    @Size(max = 50, message = "Product code must not exceed 50 characters")
+    @Size(max = 50,
+            message = "Product code must not exceed 50 characters")
     private String productCode;
 
     @NotBlank(message = "Description is required")
-    @Size(max = 500, message = "Description must not exceed 500 characters")
+    @Size(max = 500,
+            message = "Description must not exceed 500 characters")
     private String description;
 
     @NotBlank(message = "Primary barcode is required")

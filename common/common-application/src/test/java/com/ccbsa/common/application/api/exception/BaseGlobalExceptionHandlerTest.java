@@ -38,8 +38,7 @@ class BaseGlobalExceptionHandlerTest {
         EntityNotFoundException ex = new EntityNotFoundException("Resource not found");
 
         // When
-        ResponseEntity<ApiResponse<Void>> response = handler.handleEntityNotFound(ex,
-                request);
+        ResponseEntity<ApiResponse<Void>> response = handler.handleEntityNotFound(ex, request);
 
         // Then
         assertThat(response).isNotNull();
@@ -65,8 +64,7 @@ class BaseGlobalExceptionHandlerTest {
         InvalidOperationException ex = new InvalidOperationException("Cannot perform operation");
 
         // When
-        ResponseEntity<ApiResponse<Void>> response = handler.handleInvalidOperation(ex,
-                request);
+        ResponseEntity<ApiResponse<Void>> response = handler.handleInvalidOperation(ex, request);
 
         // Then
         assertThat(response).isNotNull();
@@ -87,8 +85,7 @@ class BaseGlobalExceptionHandlerTest {
         };
 
         // When
-        ResponseEntity<ApiResponse<Void>> response = handler.handleDomainException(ex,
-                request);
+        ResponseEntity<ApiResponse<Void>> response = handler.handleDomainException(ex, request);
 
         // Then
         assertThat(response).isNotNull();
@@ -108,8 +105,7 @@ class BaseGlobalExceptionHandlerTest {
         IllegalArgumentException ex = new IllegalArgumentException("Invalid argument");
 
         // When
-        ResponseEntity<ApiResponse<Void>> response = handler.handleIllegalArgument(ex,
-                request);
+        ResponseEntity<ApiResponse<Void>> response = handler.handleIllegalArgument(ex, request);
 
         // Then
         assertThat(response).isNotNull();
@@ -129,8 +125,7 @@ class BaseGlobalExceptionHandlerTest {
         IllegalStateException ex = new IllegalStateException("Invalid state");
 
         // When
-        ResponseEntity<ApiResponse<Void>> response = handler.handleIllegalState(ex,
-                request);
+        ResponseEntity<ApiResponse<Void>> response = handler.handleIllegalState(ex, request);
 
         // Then
         assertThat(response).isNotNull();
@@ -150,8 +145,7 @@ class BaseGlobalExceptionHandlerTest {
         Exception ex = new Exception("Unexpected error");
 
         // When
-        ResponseEntity<ApiResponse<Void>> response = handler.handleGeneric(ex,
-                request);
+        ResponseEntity<ApiResponse<Void>> response = handler.handleGeneric(ex, request);
 
         // Then
         assertThat(response).isNotNull();
@@ -173,8 +167,7 @@ class BaseGlobalExceptionHandlerTest {
         when(request.getRequestURI()).thenReturn("/api/v1/custom");
 
         // When
-        ResponseEntity<ApiResponse<Void>> response = handler.handleEntityNotFound(ex,
-                request);
+        ResponseEntity<ApiResponse<Void>> response = handler.handleEntityNotFound(ex, request);
 
         // Then
         ApiResponse<Void> body = response.getBody();

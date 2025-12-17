@@ -19,12 +19,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * Event Publisher Implementation: UserEventPublisherImpl
  * <p>
- * Implements UserEventPublisher port interface.
- * Publishes user domain events to Kafka.
+ * Implements UserEventPublisher port interface. Publishes user domain events to Kafka.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is a managed bean and treated as immutable port")
-public class UserEventPublisherImpl implements UserEventPublisher {
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+        justification = "Kafka template is a managed bean and treated as immutable port")
+public class UserEventPublisherImpl
+        implements UserEventPublisher {
     private static final Logger logger = LoggerFactory.getLogger(UserEventPublisherImpl.class);
     private static final String USER_EVENTS_TOPIC = "user-events";
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -43,9 +44,8 @@ public class UserEventPublisherImpl implements UserEventPublisher {
         if (event instanceof UserEvent) {
             publish((UserEvent) event);
         } else {
-            throw new IllegalArgumentException(String.format("Event must be a UserEvent: %s",
-                    event.getClass()
-                            .getName()));
+            throw new IllegalArgumentException(String.format("Event must be a UserEvent: %s", event.getClass()
+                    .getName()));
         }
     }
 
@@ -56,27 +56,19 @@ public class UserEventPublisherImpl implements UserEventPublisher {
             UserEvent enrichedEvent = enrichEventWithMetadata(event);
 
             String key = enrichedEvent.getAggregateId();
-            kafkaTemplate.send(USER_EVENTS_TOPIC,
-                    key,
-                    enrichedEvent);
-            logger.debug("Published user event: {} with key: {} [correlationId: {}]",
-                    enrichedEvent.getClass()
-                            .getSimpleName(),
-                    key,
-                    enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
+            kafkaTemplate.send(USER_EVENTS_TOPIC, key, enrichedEvent);
+            logger.debug("Published user event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass()
+                    .getSimpleName(), key, enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata()
+                    .getCorrelationId() : "none");
         } catch (Exception e) {
-            logger.error("Failed to publish user event: {}",
-                    event.getClass()
-                            .getSimpleName(),
-                    e);
-            throw new RuntimeException("Failed to publish user event",
-                    e);
+            logger.error("Failed to publish user event: {}", event.getClass()
+                    .getSimpleName(), e);
+            throw new RuntimeException("Failed to publish user event", e);
         }
     }
 
     /**
-     * Enriches event with metadata by creating an immutable copy.
-     * Uses event-specific logic to create enriched copies.
+     * Enriches event with metadata by creating an immutable copy. Uses event-specific logic to create enriched copies.
      *
      * @param event The original event
      * @return Enriched event with metadata, or original if enrichment fails
@@ -95,57 +87,31 @@ public class UserEventPublisherImpl implements UserEventPublisher {
         }
 
         // Extract userId from aggregateId (now a String)
-        com.ccbsa.common.domain.valueobject.UserId userId = com.ccbsa.common.domain.valueobject.UserId.of(
-                event.getAggregateId());
+        com.ccbsa.common.domain.valueobject.UserId userId = com.ccbsa.common.domain.valueobject.UserId.of(event.getAggregateId());
 
         // Create enriched copy based on event type
         if (event instanceof com.ccbsa.wms.user.domain.core.event.UserCreatedEvent) {
-            com.ccbsa.wms.user.domain.core.event.UserCreatedEvent userCreatedEvent =
-                    (com.ccbsa.wms.user.domain.core.event.UserCreatedEvent) event;
-            return new com.ccbsa.wms.user.domain.core.event.UserCreatedEvent(
-                    userId,
-                    userCreatedEvent.getTenantId(),
-                    userCreatedEvent.getUsername(),
-                    userCreatedEvent.getEmail(),
-                    userCreatedEvent.getStatus(),
-                    metadata);
+            com.ccbsa.wms.user.domain.core.event.UserCreatedEvent userCreatedEvent = (com.ccbsa.wms.user.domain.core.event.UserCreatedEvent) event;
+            return new com.ccbsa.wms.user.domain.core.event.UserCreatedEvent(userId, userCreatedEvent.getTenantId(), userCreatedEvent.getUsername(), userCreatedEvent.getEmail(),
+                    userCreatedEvent.getStatus(), metadata);
         } else if (event instanceof com.ccbsa.wms.user.domain.core.event.UserUpdatedEvent) {
-            com.ccbsa.wms.user.domain.core.event.UserUpdatedEvent userUpdatedEvent =
-                    (com.ccbsa.wms.user.domain.core.event.UserUpdatedEvent) event;
-            return new com.ccbsa.wms.user.domain.core.event.UserUpdatedEvent(
-                    userId,
-                    userUpdatedEvent.getTenantId(),
-                    userUpdatedEvent.getStatus(),
-                    userUpdatedEvent.getDescription(),
-                    metadata);
+            com.ccbsa.wms.user.domain.core.event.UserUpdatedEvent userUpdatedEvent = (com.ccbsa.wms.user.domain.core.event.UserUpdatedEvent) event;
+            return new com.ccbsa.wms.user.domain.core.event.UserUpdatedEvent(userId, userUpdatedEvent.getTenantId(), userUpdatedEvent.getStatus(),
+                    userUpdatedEvent.getDescription(), metadata);
         } else if (event instanceof com.ccbsa.wms.user.domain.core.event.UserDeactivatedEvent) {
-            com.ccbsa.wms.user.domain.core.event.UserDeactivatedEvent userDeactivatedEvent =
-                    (com.ccbsa.wms.user.domain.core.event.UserDeactivatedEvent) event;
-            return new com.ccbsa.wms.user.domain.core.event.UserDeactivatedEvent(
-                    userId,
-                    userDeactivatedEvent.getTenantId(),
-                    metadata);
+            com.ccbsa.wms.user.domain.core.event.UserDeactivatedEvent userDeactivatedEvent = (com.ccbsa.wms.user.domain.core.event.UserDeactivatedEvent) event;
+            return new com.ccbsa.wms.user.domain.core.event.UserDeactivatedEvent(userId, userDeactivatedEvent.getTenantId(), metadata);
         } else if (event instanceof com.ccbsa.wms.user.domain.core.event.UserRoleAssignedEvent) {
-            com.ccbsa.wms.user.domain.core.event.UserRoleAssignedEvent userRoleAssignedEvent =
-                    (com.ccbsa.wms.user.domain.core.event.UserRoleAssignedEvent) event;
-            return new com.ccbsa.wms.user.domain.core.event.UserRoleAssignedEvent(
-                    userId,
-                    userRoleAssignedEvent.getTenantId(),
-                    userRoleAssignedEvent.getRoleName(),
-                    metadata);
+            com.ccbsa.wms.user.domain.core.event.UserRoleAssignedEvent userRoleAssignedEvent = (com.ccbsa.wms.user.domain.core.event.UserRoleAssignedEvent) event;
+            return new com.ccbsa.wms.user.domain.core.event.UserRoleAssignedEvent(userId, userRoleAssignedEvent.getTenantId(), userRoleAssignedEvent.getRoleName(), metadata);
         } else if (event instanceof com.ccbsa.wms.user.domain.core.event.UserRoleRemovedEvent) {
-            com.ccbsa.wms.user.domain.core.event.UserRoleRemovedEvent userRoleRemovedEvent =
-                    (com.ccbsa.wms.user.domain.core.event.UserRoleRemovedEvent) event;
-            return new com.ccbsa.wms.user.domain.core.event.UserRoleRemovedEvent(
-                    userId,
-                    userRoleRemovedEvent.getTenantId(),
-                    userRoleRemovedEvent.getRoleName(),
-                    metadata);
+            com.ccbsa.wms.user.domain.core.event.UserRoleRemovedEvent userRoleRemovedEvent = (com.ccbsa.wms.user.domain.core.event.UserRoleRemovedEvent) event;
+            return new com.ccbsa.wms.user.domain.core.event.UserRoleRemovedEvent(userId, userRoleRemovedEvent.getTenantId(), userRoleRemovedEvent.getRoleName(), metadata);
         }
 
         // Unknown event type, return original
-        logger.warn("Unknown user event type: {}. Event will be published without metadata.",
-                event.getClass().getName());
+        logger.warn("Unknown user event type: {}. Event will be published without metadata.", event.getClass()
+                .getName());
         return event;
     }
 
@@ -156,9 +122,8 @@ public class UserEventPublisherImpl implements UserEventPublisher {
      */
     private EventMetadata buildEventMetadata() {
         String correlationId = CorrelationContext.getCorrelationId();
-        String userId = TenantContext.getUserId() != null
-                ? TenantContext.getUserId().getValue()
-                : null;
+        String userId = TenantContext.getUserId() != null ? TenantContext.getUserId()
+                .getValue() : null;
 
         if (correlationId == null && userId == null) {
             return null;

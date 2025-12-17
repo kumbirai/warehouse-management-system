@@ -16,19 +16,20 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Request logging interceptor.
- * Adds correlation ID and logs request/response details.
+ * Request logging interceptor. Adds correlation ID and logs request/response details.
  */
 @Component
-public class RequestLoggingInterceptor implements HandlerInterceptor {
+public class RequestLoggingInterceptor
+        implements HandlerInterceptor {
     private static final Logger logger = LoggerFactory.getLogger(RequestLoggingInterceptor.class);
     private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
     private static final String CORRELATION_ID_MDC = "correlationId";
 
     @Override
-    public boolean preHandle(@NonNull HttpServletRequest request,
-                             @NonNull HttpServletResponse response,
-                             @NonNull Object handler) {
+    public boolean preHandle(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull Object handler) {
         // Generate or extract correlation ID
         String correlationId = request.getHeader(CORRELATION_ID_HEADER);
         if (correlationId == null || correlationId.isEmpty()) {
@@ -40,28 +41,20 @@ public class RequestLoggingInterceptor implements HandlerInterceptor {
         CorrelationContext.setCorrelationId(correlationId);
 
         // Add to MDC for logging
-        MDC.put(CORRELATION_ID_MDC,
-                correlationId);
+        MDC.put(CORRELATION_ID_MDC, correlationId);
 
         // Add to response header
-        response.setHeader(CORRELATION_ID_HEADER,
-                correlationId);
+        response.setHeader(CORRELATION_ID_HEADER, correlationId);
 
         // Add API version header
-        response.setHeader("X-API-Version",
-                "1.0");
+        response.setHeader("X-API-Version", "1.0");
 
         // Add request ID header (same as correlation ID for tracking)
-        response.setHeader("X-Request-ID",
-                correlationId);
+        response.setHeader("X-Request-ID", correlationId);
 
         // Log request (excluding sensitive endpoints)
         if (!isSensitiveEndpoint(request.getRequestURI())) {
-            logger.debug("Incoming request: {} {} from {} [{}]",
-                    request.getMethod(),
-                    request.getRequestURI(),
-                    request.getRemoteAddr(),
-                    correlationId);
+            logger.debug("Incoming request: {} {} from {} [{}]", request.getMethod(), request.getRequestURI(), request.getRemoteAddr(), correlationId);
         }
 
         return true;
@@ -73,16 +66,14 @@ public class RequestLoggingInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public void afterCompletion(@NonNull HttpServletRequest request,
-                                @NonNull HttpServletResponse response,
-                                @NonNull Object handler,
-                                @Nullable Exception ex) {
+    public void afterCompletion(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull Object handler,
+            @Nullable Exception ex) {
         // Log response (excluding sensitive endpoints)
         if (!isSensitiveEndpoint(request.getRequestURI())) {
-            logger.debug("Completed request: {} {} - Status: {}",
-                    request.getMethod(),
-                    request.getRequestURI(),
-                    response.getStatus());
+            logger.debug("Completed request: {} {} - Status: {}", request.getMethod(), request.getRequestURI(), response.getStatus());
         }
 
         // Clear MDC

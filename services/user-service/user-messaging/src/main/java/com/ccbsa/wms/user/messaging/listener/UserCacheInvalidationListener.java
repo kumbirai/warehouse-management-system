@@ -19,15 +19,13 @@ import com.ccbsa.wms.user.domain.core.event.UserUpdatedEvent;
  * <p>
  * Listens to user domain events and invalidates affected caches.
  * <p>
- * Invalidation Strategy:
- * - UserCreatedEvent: No invalidation needed (cache-aside pattern)
- * - UserUpdatedEvent: Invalidate user entity + all user collections
- * - UserDeactivatedEvent: Invalidate user entity + all user collections
- * - UserRoleAssignedEvent: Invalidate user roles + permissions
- * - UserRoleRemovedEvent: Invalidate user roles + permissions
+ * Invalidation Strategy: - UserCreatedEvent: No invalidation needed (cache-aside pattern) - UserUpdatedEvent: Invalidate user entity + all user collections - UserDeactivatedEvent:
+ * Invalidate user entity + all user collections -
+ * UserRoleAssignedEvent: Invalidate user roles + permissions - UserRoleRemovedEvent: Invalidate user roles + permissions
  */
 @Component
-public class UserCacheInvalidationListener extends CacheInvalidationEventListener {
+public class UserCacheInvalidationListener
+        extends CacheInvalidationEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(UserCacheInvalidationListener.class);
 
@@ -35,11 +33,9 @@ public class UserCacheInvalidationListener extends CacheInvalidationEventListene
         super(cacheInvalidator);
     }
 
-    @KafkaListener(
-            topics = "user-events",
+    @KafkaListener(topics = "user-events",
             groupId = "user-service-cache-invalidation",
-            containerFactory = "cacheInvalidationKafkaListenerContainerFactory"
-    )
+            containerFactory = "cacheInvalidationKafkaListenerContainerFactory")
     public void handleUserEvent(Object event) {
         if (event instanceof UserCreatedEvent userCreated) {
             handleUserCreated(userCreated);
@@ -62,33 +58,21 @@ public class UserCacheInvalidationListener extends CacheInvalidationEventListene
 
     private void handleUserUpdated(UserUpdatedEvent event) {
         // Invalidate user entity cache and all user collection caches
-        invalidateForEvent(event,
-                CacheNamespace.USERS.getValue()
-        );
+        invalidateForEvent(event, CacheNamespace.USERS.getValue());
     }
 
     private void handleUserDeactivated(UserDeactivatedEvent event) {
         // Invalidate user entity cache and all user collection caches
-        invalidateForEvent(event,
-                CacheNamespace.USERS.getValue()
-        );
+        invalidateForEvent(event, CacheNamespace.USERS.getValue());
     }
 
     private void handleRoleAssigned(UserRoleAssignedEvent event) {
         // Invalidate user roles and permissions (cascade invalidation)
-        invalidateForEvent(event,
-                CacheNamespace.USERS.getValue(),
-                CacheNamespace.USER_ROLES.getValue(),
-                CacheNamespace.USER_PERMISSIONS.getValue()
-        );
+        invalidateForEvent(event, CacheNamespace.USERS.getValue(), CacheNamespace.USER_ROLES.getValue(), CacheNamespace.USER_PERMISSIONS.getValue());
     }
 
     private void handleRoleRemoved(UserRoleRemovedEvent event) {
         // Invalidate user roles and permissions (cascade invalidation)
-        invalidateForEvent(event,
-                CacheNamespace.USERS.getValue(),
-                CacheNamespace.USER_ROLES.getValue(),
-                CacheNamespace.USER_PERMISSIONS.getValue()
-        );
+        invalidateForEvent(event, CacheNamespace.USERS.getValue(), CacheNamespace.USER_ROLES.getValue(), CacheNamespace.USER_PERMISSIONS.getValue());
     }
 }

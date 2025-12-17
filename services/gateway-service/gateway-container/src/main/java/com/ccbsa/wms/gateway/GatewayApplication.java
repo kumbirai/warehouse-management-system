@@ -9,26 +9,17 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfigurat
 /**
  * API Gateway Service Application
  * <p>
- * Provides:
- * - Request routing to backend services
- * - JWT token validation via Keycloak
- * - Tenant context extraction and propagation
- * - Rate limiting per tenant/user
- * - CORS handling
- * - Request/response transformation
- * - Service discovery via Eureka (auto-configured)
+ * Provides: - Request routing to backend services - JWT token validation via Keycloak - Tenant context extraction and propagation - Rate limiting per tenant/user - CORS handling -
+ * Request/response transformation - Service discovery via
+ * Eureka (auto-configured)
  * <p>
- * Note: This service does not require database connectivity.
- * DataSource, JPA, and Flyway auto-configurations are excluded.
- * Eureka client is auto-configured when spring-cloud-starter-netflix-eureka-client is on the classpath.
+ * Note: This service does not require database connectivity. DataSource, JPA, and Flyway auto-configurations are excluded. Eureka client is auto-configured when
+ * spring-cloud-starter-netflix-eureka-client is on the classpath.
  */
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class,
-        HibernateJpaAutoConfiguration.class,
-        FlywayAutoConfiguration.class})
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class, FlywayAutoConfiguration.class})
 public class GatewayApplication {
     public static void main(String[] args) {
-        SpringApplication.run(GatewayApplication.class,
-                args);
+        SpringApplication.run(GatewayApplication.class, args);
     }
 }
 

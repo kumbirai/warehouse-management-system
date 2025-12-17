@@ -40,8 +40,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 /**
  * REST Controller: TenantQueryController
  * <p>
- * Handles query operations (read operations) for tenants.
- * Separated from command operations following CQRS principles.
+ * Handles query operations (read operations) for tenants. Separated from command operations following CQRS principles.
  */
 @RestController
 @RequestMapping("/api/v1/tenants")
@@ -54,9 +53,7 @@ public class TenantQueryController {
     private final ListTenantsQueryHandler listTenantsHandler;
     private final TenantMapper mapper;
 
-    public TenantQueryController(GetTenantQueryHandler getTenantHandler,
-                                 GetTenantRealmQueryHandler getTenantRealmHandler,
-                                 ListTenantsQueryHandler listTenantsQueryHandler,
+    public TenantQueryController(GetTenantQueryHandler getTenantHandler, GetTenantRealmQueryHandler getTenantRealmHandler, ListTenantsQueryHandler listTenantsQueryHandler,
                                  TenantMapper mapper) {
         this.getTenantHandler = getTenantHandler;
         this.getTenantRealmHandler = getTenantRealmHandler;
@@ -67,51 +64,37 @@ public class TenantQueryController {
     @GetMapping
     @Operation(summary = "List tenants",
             description = "Lists tenants with pagination, filtering, and search support")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public ResponseEntity<ApiResponse<List<TenantSummaryResponse>>> listTenants(
-            @RequestParam(value = "page", required = false) Integer page,
-            @RequestParam(value = "size", required = false) Integer size,
-            @RequestParam(value = "status", required = false) String status,
-            @RequestParam(value = "search", required = false) String search) {
-        logger.debug("Listing tenants - page: {}, size: {}, status: {}, search: {}",
-                page,
-                size,
-                status,
-                search);
+            @RequestParam(value = "page",
+                    required = false) Integer page,
+            @RequestParam(value = "size",
+                    required = false) Integer size,
+            @RequestParam(value = "status",
+                    required = false) String status,
+            @RequestParam(value = "search",
+                    required = false) String search) {
+        logger.debug("Listing tenants - page: {}, size: {}, status: {}, search: {}", page, size, status, search);
 
         TenantStatus tenantStatus = parseStatus(status);
-        TenantListQuery query = TenantListQuery.of(page,
-                size,
-                tenantStatus,
-                search);
+        TenantListQuery query = TenantListQuery.of(page, size, tenantStatus, search);
         TenantListResult result = listTenantsHandler.handle(query);
 
-        logger.debug("Query result - totalElements: {}, totalPages: {}, tenants count: {}",
-                result.getTotalElements(),
-                result.getTotalPages(),
-                result.getTenants()
-                        .size());
+        logger.debug("Query result - totalElements: {}, totalPages: {}, tenants count: {}", result.getTotalElements(), result.getTotalPages(), result.getTenants()
+                .size());
 
         List<TenantSummaryResponse> responses = result.getTenants()
                 .stream()
                 .map(mapper::toTenantSummaryResponse)
                 .collect(Collectors.toList());
 
-        logger.debug("Mapped {} tenant responses",
-                responses.size());
+        logger.debug("Mapped {} tenant responses", responses.size());
 
         ApiMeta meta = ApiMeta.builder()
-                .pagination(new ApiMeta.Pagination(result.getPage(),
-                        result.getSize(),
-                        result.getTotalElements(),
-                        result.getTotalPages(),
-                        result.hasNext(),
-                        result.hasPrevious()))
+                .pagination(new ApiMeta.Pagination(result.getPage(), result.getSize(), result.getTotalElements(), result.getTotalPages(), result.hasNext(), result.hasPrevious()))
                 .build();
 
-        return ApiResponseBuilder.ok(responses,
-                Collections.emptyMap(),
-                meta);
+        return ApiResponseBuilder.ok(responses, Collections.emptyMap(), meta);
     }
 
     private TenantStatus parseStatus(String status) {
@@ -123,23 +106,22 @@ public class TenantQueryController {
             return TenantStatus.valueOf(status.trim()
                     .toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException(String.format("Unsupported status filter: %s",
-                    status));
+            throw new IllegalArgumentException(String.format("Unsupported status filter: %s", status));
         }
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get tenant",
             description = "Gets a tenant by ID")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM_ADMIN') or (hasRole('USER') and @tenantSecurityService.isUserTenant(#id))")
-    public ResponseEntity<ApiResponse<TenantResponse>> getTenant(@PathVariable String id) {
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or (hasRole('USER') and @tenantSecurityService.isUserTenant(#id))")
+    public ResponseEntity<ApiResponse<TenantResponse>> getTenant(
+            @PathVariable String id) {
         TenantId tenantId = TenantId.of(id);
         GetTenantQuery query = new GetTenantQuery(tenantId);
 
         Optional<TenantView> view = getTenantHandler.handle(query);
         if (view.isEmpty()) {
-            throw new EntityNotFoundException(String.format("Tenant not found: %s",
-                    id));
+            throw new EntityNotFoundException(String.format("Tenant not found: %s", id));
         }
 
         TenantResponse response = mapper.toTenantResponse(view.get());
@@ -150,12 +132,12 @@ public class TenantQueryController {
     @Operation(summary = "Get tenant realm",
             description = "Gets the Keycloak realm name for a tenant. Used by user-service.")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM_ADMIN') or hasRole('SERVICE')")
-    public ResponseEntity<ApiResponse<TenantRealmResponse>> getTenantRealm(@PathVariable String id) {
+    public ResponseEntity<ApiResponse<TenantRealmResponse>> getTenantRealm(
+            @PathVariable String id) {
         TenantId tenantId = TenantId.of(id);
         Optional<String> realmName = getTenantRealmHandler.handle(tenantId);
 
-        TenantRealmResponse response = new TenantRealmResponse(tenantId.getValue(),
-                realmName.orElse(null));
+        TenantRealmResponse response = new TenantRealmResponse(tenantId.getValue(), realmName.orElse(null));
 
         return ApiResponseBuilder.ok(response);
     }
@@ -163,15 +145,15 @@ public class TenantQueryController {
     @GetMapping("/{id}/status")
     @Operation(summary = "Get tenant status",
             description = "Gets the status of a tenant")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM_ADMIN') or (hasRole('USER') and @tenantSecurityService.isUserTenant(#id))")
-    public ResponseEntity<ApiResponse<String>> getTenantStatus(@PathVariable String id) {
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or (hasRole('USER') and @tenantSecurityService.isUserTenant(#id))")
+    public ResponseEntity<ApiResponse<String>> getTenantStatus(
+            @PathVariable String id) {
         TenantId tenantId = TenantId.of(id);
         GetTenantQuery query = new GetTenantQuery(tenantId);
 
         Optional<TenantView> view = getTenantHandler.handle(query);
         if (view.isEmpty()) {
-            throw new EntityNotFoundException(String.format("Tenant not found: %s",
-                    id));
+            throw new EntityNotFoundException(String.format("Tenant not found: %s", id));
         }
 
         return ApiResponseBuilder.ok(view.get()

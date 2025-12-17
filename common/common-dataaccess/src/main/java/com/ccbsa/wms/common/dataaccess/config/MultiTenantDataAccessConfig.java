@@ -10,11 +10,9 @@ import com.ccbsa.wms.common.dataaccess.naming.TenantAwarePhysicalNamingStrategy;
 /**
  * Configuration for multi-tenant data access.
  * <p>
- * Provides auto-configuration for multi-tenant schema resolution.
- * Services can import this configuration to enable schema-per-tenant isolation.
+ * Provides auto-configuration for multi-tenant schema resolution. Services can import this configuration to enable schema-per-tenant isolation.
  * <p>
- * The {@link TenantSchemaResolver} component is automatically registered
- * and can be used in JPA entity annotations with placeholder schema:
+ * The {@link TenantSchemaResolver} component is automatically registered and can be used in JPA entity annotations with placeholder schema:
  * <pre>
  * {@code
  * @Entity
@@ -25,8 +23,7 @@ import com.ccbsa.wms.common.dataaccess.naming.TenantAwarePhysicalNamingStrategy;
  * }
  * </pre>
  * <p>
- * The {@link TenantAwarePhysicalNamingStrategy} is registered as a bean and should be
- * configured in application.yml:
+ * The {@link TenantAwarePhysicalNamingStrategy} is registered as a bean and should be configured in application.yml:
  * <pre>
  * {@code
  * spring:
@@ -55,8 +52,7 @@ public class MultiTenantDataAccessConfig {
     /**
      * Registers TenantAwarePhysicalNamingStrategy as a Spring bean.
      * <p>
-     * This allows the naming strategy to access Spring beans (like TenantSchemaResolver)
-     * through ApplicationContextAware.
+     * This allows the naming strategy to access Spring beans (like TenantSchemaResolver) through ApplicationContextAware.
      *
      * @return TenantAwarePhysicalNamingStrategy instance
      */

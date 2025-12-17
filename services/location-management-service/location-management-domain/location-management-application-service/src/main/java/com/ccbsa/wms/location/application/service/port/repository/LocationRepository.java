@@ -11,11 +11,9 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 /**
  * Repository Port: LocationRepository
  * <p>
- * Defines the contract for Location aggregate persistence.
- * Implemented by data access adapters.
+ * Defines the contract for Location aggregate persistence. Implemented by data access adapters.
  * <p>
- * This port is defined in the application service layer (not domain core)
- * to maintain proper dependency direction in hexagonal architecture.
+ * This port is defined in the application service layer (not domain core) to maintain proper dependency direction in hexagonal architecture.
  */
 public interface LocationRepository {
     /**

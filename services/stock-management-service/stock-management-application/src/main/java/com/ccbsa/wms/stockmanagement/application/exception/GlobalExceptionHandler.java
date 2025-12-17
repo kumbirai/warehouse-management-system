@@ -22,37 +22,29 @@ import jakarta.servlet.http.HttpServletRequest;
 /**
  * Global Exception Handler: GlobalExceptionHandler
  * <p>
- * Handles exceptions across all controllers and provides consistent error responses
- * using the standardized ApiResponse format.
+ * Handles exceptions across all controllers and provides consistent error responses using the standardized ApiResponse format.
  * <p>
- * This handler extends {@link BaseGlobalExceptionHandler} to inherit common exception
- * handling and adds stock-management-service-specific exception handlers.
+ * This handler extends {@link BaseGlobalExceptionHandler} to inherit common exception handling and adds stock-management-service-specific exception handlers.
  */
 @RestControllerAdvice
-public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
+public class GlobalExceptionHandler
+        extends BaseGlobalExceptionHandler {
 
     /**
-     * Handles ConsignmentNotFoundException.
-     * Returns 404 Not Found.
+     * Handles ConsignmentNotFoundException. Returns 404 Not Found.
      *
      * @param ex      The exception
      * @param request The HTTP request
      * @return Error response with 404 Not Found
      */
     @ExceptionHandler(ConsignmentNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleConsignmentNotFound(
-            ConsignmentNotFoundException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleConsignmentNotFound(ConsignmentNotFoundException ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Consignment not found: {} - RequestId: {}, Path: {}",
-                ex.getMessage(),
-                requestId,
-                path);
+        logger.warn("Consignment not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("CONSIGNMENT_NOT_FOUND",
-                        ex.getMessage())
+        ApiError error = ApiError.builder("CONSIGNMENT_NOT_FOUND", ex.getMessage())
                 .path(path)
                 .requestId(requestId)
                 .build();
@@ -60,27 +52,20 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
     }
 
     /**
-     * Handles InvalidConsignmentReferenceException.
-     * Returns 400 Bad Request.
+     * Handles InvalidConsignmentReferenceException. Returns 400 Bad Request.
      *
      * @param ex      The exception
      * @param request The HTTP request
      * @return Error response with 400 Bad Request
      */
     @ExceptionHandler(InvalidConsignmentReferenceException.class)
-    public ResponseEntity<ApiResponse<Void>> handleInvalidConsignmentReference(
-            InvalidConsignmentReferenceException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleInvalidConsignmentReference(InvalidConsignmentReferenceException ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Invalid consignment reference: {} - RequestId: {}, Path: {}",
-                ex.getMessage(),
-                requestId,
-                path);
+        logger.warn("Invalid consignment reference: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("INVALID_CONSIGNMENT_REFERENCE",
-                        ex.getMessage())
+        ApiError error = ApiError.builder("INVALID_CONSIGNMENT_REFERENCE", ex.getMessage())
                 .path(path)
                 .requestId(requestId)
                 .build();
@@ -88,27 +73,20 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
     }
 
     /**
-     * Handles InvalidQuantityException.
-     * Returns 400 Bad Request.
+     * Handles InvalidQuantityException. Returns 400 Bad Request.
      *
      * @param ex      The exception
      * @param request The HTTP request
      * @return Error response with 400 Bad Request
      */
     @ExceptionHandler(InvalidQuantityException.class)
-    public ResponseEntity<ApiResponse<Void>> handleInvalidQuantity(
-            InvalidQuantityException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleInvalidQuantity(InvalidQuantityException ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Invalid quantity: {} - RequestId: {}, Path: {}",
-                ex.getMessage(),
-                requestId,
-                path);
+        logger.warn("Invalid quantity: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("INVALID_QUANTITY",
-                        ex.getMessage())
+        ApiError error = ApiError.builder("INVALID_QUANTITY", ex.getMessage())
                 .path(path)
                 .requestId(requestId)
                 .build();
@@ -116,27 +94,20 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
     }
 
     /**
-     * Handles InvalidExpirationDateException.
-     * Returns 400 Bad Request.
+     * Handles InvalidExpirationDateException. Returns 400 Bad Request.
      *
      * @param ex      The exception
      * @param request The HTTP request
      * @return Error response with 400 Bad Request
      */
     @ExceptionHandler(InvalidExpirationDateException.class)
-    public ResponseEntity<ApiResponse<Void>> handleInvalidExpirationDate(
-            InvalidExpirationDateException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleInvalidExpirationDate(InvalidExpirationDateException ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Invalid expiration date: {} - RequestId: {}, Path: {}",
-                ex.getMessage(),
-                requestId,
-                path);
+        logger.warn("Invalid expiration date: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("INVALID_EXPIRATION_DATE",
-                        ex.getMessage())
+        ApiError error = ApiError.builder("INVALID_EXPIRATION_DATE", ex.getMessage())
                 .path(path)
                 .requestId(requestId)
                 .build();
@@ -144,27 +115,20 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
     }
 
     /**
-     * Handles authorization denied exceptions from Spring Security method security.
-     * Returns 403 Forbidden instead of 500 Internal Server Error.
+     * Handles authorization denied exceptions from Spring Security method security. Returns 403 Forbidden instead of 500 Internal Server Error.
      *
      * @param ex      The authorization exception
      * @param request The HTTP request
      * @return Error response with 403 Forbidden
      */
     @ExceptionHandler( {AccessDeniedException.class, AuthorizationDeniedException.class})
-    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(
-            Exception ex,
-            HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(Exception ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Access denied: {} - RequestId: {}, Path: {}",
-                ex.getMessage(),
-                requestId,
-                path);
+        logger.warn("Access denied: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("ACCESS_DENIED",
-                        "You do not have permission to perform this action")
+        ApiError error = ApiError.builder("ACCESS_DENIED", "You do not have permission to perform this action")
                 .path(path)
                 .requestId(requestId)
                 .build();

@@ -11,7 +11,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * <p>
  * All notification-specific events extend this class.
  */
-public abstract class NotificationEvent extends DomainEvent<NotificationId> {
+public abstract class NotificationEvent
+        extends DomainEvent<NotificationId> {
     /**
      * Constructor for Notification events without metadata.
      *
@@ -34,7 +35,8 @@ public abstract class NotificationEvent extends DomainEvent<NotificationId> {
         if (notificationId == null) {
             throw new IllegalArgumentException("NotificationId cannot be null");
         }
-        return notificationId.getValue().toString();
+        return notificationId.getValue()
+                .toString();
     }
 
     /**

@@ -52,7 +52,8 @@ class TenantActivatedEventListenerTest {
 
     @BeforeEach
     void setUp() {
-        tenantId = TenantId.of(UUID.randomUUID().toString());
+        tenantId = TenantId.of(UUID.randomUUID()
+                .toString());
         tenantEmail = EmailAddress.of("test@example.com");
 
         // Clear contexts before each test
@@ -77,15 +78,15 @@ class TenantActivatedEventListenerTest {
         verify(createNotificationCommandHandler).handle(any(CreateNotificationCommand.class));
         verify(acknowledgment).acknowledge();
 
-        ArgumentCaptor<CreateNotificationCommand> commandCaptor =
-                ArgumentCaptor.forClass(CreateNotificationCommand.class);
+        ArgumentCaptor<CreateNotificationCommand> commandCaptor = ArgumentCaptor.forClass(CreateNotificationCommand.class);
         verify(createNotificationCommandHandler).handle(commandCaptor.capture());
 
         CreateNotificationCommand command = commandCaptor.getValue();
         assertThat(command.getTenantId()).isEqualTo(tenantId);
         assertThat(command.getRecipientEmail()).isEqualTo(tenantEmail);
         assertThat(command.getType()).isEqualTo(NotificationType.TENANT_ACTIVATED);
-        assertThat(command.getTitle().getValue()).isEqualTo("Tenant Activated");
+        assertThat(command.getTitle()
+                .getValue()).isEqualTo("Tenant Activated");
     }
 
     /**
@@ -95,7 +96,8 @@ class TenantActivatedEventListenerTest {
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("aggregateId", tenantId.getValue());
         eventData.put("aggregateType", "Tenant");
-        eventData.put("eventId", UUID.randomUUID().toString());
+        eventData.put("eventId", UUID.randomUUID()
+                .toString());
         eventData.put("@class", "com.ccbsa.wms.tenant.domain.core.event.TenantActivatedEvent");
 
         if (correlationId != null) {
@@ -148,7 +150,8 @@ class TenantActivatedEventListenerTest {
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("aggregateId", tenantId.getValue());
         eventData.put("aggregateType", "Tenant");
-        eventData.put("eventId", UUID.randomUUID().toString());
+        eventData.put("eventId", UUID.randomUUID()
+                .toString());
         eventData.put("@class", "com.ccbsa.wms.tenant.domain.core.event.TenantCreatedEvent");
         eventData.put("name", "Test Tenant");
         eventData.put("status", "PENDING");
@@ -178,7 +181,8 @@ class TenantActivatedEventListenerTest {
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("aggregateId", tenantId.getValue());
         eventData.put("aggregateType", "Tenant");
-        eventData.put("eventId", UUID.randomUUID().toString());
+        eventData.put("eventId", UUID.randomUUID()
+                .toString());
         eventData.put("@class", "com.ccbsa.wms.tenant.domain.core.event.TenantSchemaCreatedEvent");
         eventData.put("schemaName", "tenant_schema");
         return eventData;
@@ -211,8 +215,7 @@ class TenantActivatedEventListenerTest {
         Map<String, Object> eventData = createTenantActivatedEventMap(null);
         String eventType = "TenantActivatedEvent";
 
-        when(tenantServicePort.getTenantEmail(tenantId))
-                .thenThrow(new RuntimeException("Service unavailable"));
+        when(tenantServicePort.getTenantEmail(tenantId)).thenThrow(new RuntimeException("Service unavailable"));
 
         // When & Then
         try {
@@ -248,8 +251,7 @@ class TenantActivatedEventListenerTest {
         Map<String, Object> eventData = createTenantActivatedEventMap(null);
         String eventType = "TenantActivatedEvent";
 
-        when(tenantServicePort.getTenantEmail(tenantId))
-                .thenThrow(new RuntimeException("Service error"));
+        when(tenantServicePort.getTenantEmail(tenantId)).thenThrow(new RuntimeException("Service error"));
 
         // When & Then
         try {

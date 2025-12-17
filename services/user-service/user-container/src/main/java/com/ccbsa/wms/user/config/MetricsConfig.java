@@ -7,8 +7,7 @@ import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;
 
 /**
- * Metrics configuration.
- * Configures Micrometer metrics for monitoring and observability.
+ * Metrics configuration. Configures Micrometer metrics for monitoring and observability.
  */
 @Configuration
 public class MetricsConfig {

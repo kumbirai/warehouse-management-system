@@ -4,8 +4,7 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
 
 /**
- * Thread-local tenant context holder.
- * Stores tenant ID and user ID for the current request thread.
+ * Thread-local tenant context holder. Stores tenant ID and user ID for the current request thread.
  */
 public final class TenantContext {
     private static final ThreadLocal<TenantId> TENANT_ID = new ThreadLocal<>();
@@ -52,8 +51,7 @@ public final class TenantContext {
     }
 
     /**
-     * Clears the tenant context for the current thread.
-     * Should be called after request processing to prevent memory leaks.
+     * Clears the tenant context for the current thread. Should be called after request processing to prevent memory leaks.
      */
     public static void clear() {
         TENANT_ID.remove();

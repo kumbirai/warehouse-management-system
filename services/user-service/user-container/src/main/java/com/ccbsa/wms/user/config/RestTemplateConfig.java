@@ -12,14 +12,9 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * RestTemplate configuration for BFF service.
- * Configures timeouts, connection pooling, and connection settings for Keycloak API calls.
+ * RestTemplate configuration for BFF service. Configures timeouts, connection pooling, and connection settings for Keycloak API calls.
  * <p>
- * Production-grade features:
- * - Connection pooling for better performance
- * - Configurable timeouts
- * - Connection reuse
- * - Maximum connections per route
+ * Production-grade features: - Connection pooling for better performance - Configurable timeouts - Connection reuse - Maximum connections per route
  */
 @Configuration
 public class RestTemplateConfig {

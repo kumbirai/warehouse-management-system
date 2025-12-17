@@ -3,8 +3,7 @@ package com.ccbsa.common.messaging;
 import com.ccbsa.common.domain.DomainEvent;
 
 /**
- * Interface for consuming domain events.
- * Implementations handle event consumption and processing.
+ * Interface for consuming domain events. Implementations handle event consumption and processing.
  *
  * @param <T> The type of domain event this consumer handles
  */

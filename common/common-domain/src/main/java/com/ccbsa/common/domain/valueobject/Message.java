@@ -5,14 +5,9 @@ import java.util.Objects;
 /**
  * Value Object: Message
  * <p>
- * Represents message content for notifications, events, or other domain concepts.
- * Immutable and self-validating.
+ * Represents message content for notifications, events, or other domain concepts. Immutable and self-validating.
  * <p>
- * This is a shared value object used across multiple services.
- * Business Rules:
- * - Message cannot be null or empty
- * - Maximum length: 1000 characters
- * - Automatically trimmed
+ * This is a shared value object used across multiple services. Business Rules: - Message cannot be null or empty - Maximum length: 1000 characters - Automatically trimmed
  */
 public final class Message {
     private final String value;
@@ -35,10 +30,12 @@ public final class Message {
      * @throws IllegalArgumentException if validation fails
      */
     private void validate(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+                .isEmpty()) {
             throw new IllegalArgumentException("Message cannot be null or empty");
         }
-        if (value.trim().length() > 1000) {
+        if (value.trim()
+                .length() > 1000) {
             throw new IllegalArgumentException("Message cannot exceed 1000 characters");
         }
     }

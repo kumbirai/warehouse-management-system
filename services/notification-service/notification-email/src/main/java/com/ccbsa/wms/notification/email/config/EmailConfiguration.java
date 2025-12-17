@@ -16,11 +16,12 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 /**
  * Configuration: EmailConfiguration
  * <p>
- * Configures JavaMailSender bean for SMTP email delivery.
- * Only enabled when notification.email.enabled is true (default: true).
+ * Configures JavaMailSender bean for SMTP email delivery. Only enabled when notification.email.enabled is true (default: true).
  */
 @Configuration
-@ConditionalOnProperty(name = "notification.email.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "notification.email.enabled",
+        havingValue = "true",
+        matchIfMissing = true)
 @EnableConfigurationProperties( {SmtpConfiguration.class, EmailConfigurationProperties.class})
 public class EmailConfiguration {
 
@@ -31,10 +32,12 @@ public class EmailConfiguration {
         mailSender.setPort(smtpConfig.getPort());
 
         // Set username and password if provided
-        if (smtpConfig.getUsername() != null && !smtpConfig.getUsername().isEmpty()) {
+        if (smtpConfig.getUsername() != null && !smtpConfig.getUsername()
+                .isEmpty()) {
             mailSender.setUsername(smtpConfig.getUsername());
         }
-        if (smtpConfig.getPassword() != null && !smtpConfig.getPassword().isEmpty()) {
+        if (smtpConfig.getPassword() != null && !smtpConfig.getPassword()
+                .isEmpty()) {
             mailSender.setPassword(smtpConfig.getPassword());
         }
 
@@ -49,8 +52,7 @@ public class EmailConfiguration {
     }
 
     /**
-     * Configures Thymeleaf TemplateEngine for email templates.
-     * Templates are loaded from classpath:templates/email/
+     * Configures Thymeleaf TemplateEngine for email templates. Templates are loaded from classpath:templates/email/
      */
     @Bean
     public TemplateEngine emailTemplateEngine() {

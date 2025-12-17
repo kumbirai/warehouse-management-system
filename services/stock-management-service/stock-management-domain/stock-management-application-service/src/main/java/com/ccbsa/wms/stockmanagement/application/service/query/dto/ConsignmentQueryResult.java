@@ -13,8 +13,7 @@ import com.ccbsa.wms.stockmanagement.domain.core.valueobject.ConsignmentStatus;
 /**
  * Query Result DTO: ConsignmentQueryResult
  * <p>
- * Result object returned from consignment queries.
- * Contains optimized read model data for consignment information.
+ * Result object returned from consignment queries. Contains optimized read model data for consignment information.
  */
 public final class ConsignmentQueryResult {
     private final ConsignmentId consignmentId;

@@ -24,28 +24,25 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * <p>
  * Handles stock consignment query operations (read operations).
  * <p>
- * Responsibilities:
- * - Get consignment by ID endpoints
- * - Map queries to DTOs
- * - Return standardized API responses
+ * Responsibilities: - Get consignment by ID endpoints - Map queries to DTOs - Return standardized API responses
  */
 @RestController
 @RequestMapping("/api/v1/stock-management/consignments")
-@Tag(name = "Stock Consignment Queries", description = "Stock consignment query operations")
+@Tag(name = "Stock Consignment Queries",
+        description = "Stock consignment query operations")
 public class StockConsignmentQueryController {
     private final GetConsignmentQueryHandler getConsignmentQueryHandler;
     private final StockConsignmentDTOMapper mapper;
 
-    public StockConsignmentQueryController(
-            GetConsignmentQueryHandler getConsignmentQueryHandler,
-            StockConsignmentDTOMapper mapper) {
+    public StockConsignmentQueryController(GetConsignmentQueryHandler getConsignmentQueryHandler, StockConsignmentDTOMapper mapper) {
         this.getConsignmentQueryHandler = getConsignmentQueryHandler;
         this.mapper = mapper;
     }
 
     @GetMapping("/{consignmentId}")
-    @Operation(summary = "Get Consignment", description = "Retrieves a consignment by ID")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OPERATOR', 'VIEWER')")
+    @Operation(summary = "Get Consignment",
+            description = "Retrieves a consignment by ID")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
     public ResponseEntity<ApiResponse<ConsignmentQueryDTO>> getConsignment(
             @RequestHeader("X-Tenant-Id") String tenantId,
             @PathVariable String consignmentId) {

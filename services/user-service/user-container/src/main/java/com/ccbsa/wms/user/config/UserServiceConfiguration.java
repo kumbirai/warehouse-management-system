@@ -28,15 +28,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * User Service Configuration
  * <p>
- * Imports common security configuration for JWT validation and tenant context.
- * Imports common data access configuration for multi-tenant schema resolution.
- * Imports Kafka configuration for messaging infrastructure (provides kafkaObjectMapper bean).
+ * Imports common security configuration for JWT validation and tenant context. Imports common data access configuration for multi-tenant schema resolution. Imports Kafka
+ * configuration for messaging infrastructure (provides
+ * kafkaObjectMapper bean).
  * <p>
- * The {@link MultiTenantDataAccessConfig} provides the {@link com.ccbsa.wms.common.dataaccess.TenantSchemaResolver}
- * bean which implements schema-per-tenant strategy for multi-tenant isolation.
+ * The {@link MultiTenantDataAccessConfig} provides the {@link com.ccbsa.wms.common.dataaccess.TenantSchemaResolver} bean which implements schema-per-tenant strategy for
+ * multi-tenant isolation.
  * <p>
- * The {@link KafkaConfig} provides the {@code kafkaObjectMapper} bean used for Kafka message
- * serialization/deserialization with type information.
+ * The {@link KafkaConfig} provides the {@code kafkaObjectMapper} bean used for Kafka message serialization/deserialization with type information.
  */
 @Configuration
 @Import( {ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class})
@@ -72,9 +71,8 @@ public class UserServiceConfiguration {
     /**
      * Custom consumer factory for external events (tenant events).
      * <p>
-     * Uses typed deserialization with @class property from JSON payload.
-     * The ObjectMapper is configured with JsonTypeInfo to include @class property,
-     * allowing proper typed deserialization across service boundaries.
+     * Uses typed deserialization with @class property from JSON payload. The ObjectMapper is configured with JsonTypeInfo to include @class property, allowing proper typed
+     * deserialization across service boundaries.
      * <p>
      * Uses ErrorHandlingDeserializer to gracefully handle deserialization errors.
      * <p>
@@ -107,11 +105,9 @@ public class UserServiceConfiguration {
         jsonDeserializer.setUseTypeHeaders(false);
         jsonDeserializer.setRemoveTypeHeaders(true);
 
-        ErrorHandlingDeserializer<Object> errorHandlingDeserializer =
-                new ErrorHandlingDeserializer<>(jsonDeserializer);
+        ErrorHandlingDeserializer<Object> errorHandlingDeserializer = new ErrorHandlingDeserializer<>(jsonDeserializer);
 
-        DefaultKafkaConsumerFactory<String, Object> factory =
-                new DefaultKafkaConsumerFactory<>(configProps);
+        DefaultKafkaConsumerFactory<String, Object> factory = new DefaultKafkaConsumerFactory<>(configProps);
         factory.setValueDeserializer(errorHandlingDeserializer);
         return factory;
     }
@@ -127,21 +123,18 @@ public class UserServiceConfiguration {
      * @return Listener container factory
      */
     @Bean("externalEventKafkaListenerContainerFactory")
-    public ConcurrentKafkaListenerContainerFactory<String, Object> externalEventKafkaListenerContainerFactory(
-            ConsumerFactory<String, Object> externalEventConsumerFactory) {
-        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
+    public ConcurrentKafkaListenerContainerFactory<String, Object> externalEventKafkaListenerContainerFactory(ConsumerFactory<String, Object> externalEventConsumerFactory) {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(externalEventConsumerFactory);
 
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties()
+                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.setConcurrency(concurrency);
 
         BackOff backOff = createExponentialBackOff();
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(backOff);
-        errorHandler.addNotRetryableExceptions(
-                org.apache.kafka.common.errors.SerializationException.class,
-                org.springframework.kafka.support.serializer.DeserializationException.class
-        );
+        errorHandler.addNotRetryableExceptions(org.apache.kafka.common.errors.SerializationException.class,
+                org.springframework.kafka.support.serializer.DeserializationException.class);
         factory.setCommonErrorHandler(errorHandler);
 
         return factory;
@@ -159,9 +152,8 @@ public class UserServiceConfiguration {
     /**
      * Custom consumer factory for cache invalidation events (user events).
      * <p>
-     * Uses typed deserialization with @class property from JSON payload.
-     * The ObjectMapper is configured with JsonTypeInfo to include @class property,
-     * allowing proper typed deserialization of user domain events.
+     * Uses typed deserialization with @class property from JSON payload. The ObjectMapper is configured with JsonTypeInfo to include @class property, allowing proper typed
+     * deserialization of user domain events.
      * <p>
      * Uses ErrorHandlingDeserializer to gracefully handle deserialization errors.
      * <p>
@@ -194,11 +186,9 @@ public class UserServiceConfiguration {
         jsonDeserializer.setUseTypeHeaders(false);
         jsonDeserializer.setRemoveTypeHeaders(true);
 
-        ErrorHandlingDeserializer<Object> errorHandlingDeserializer =
-                new ErrorHandlingDeserializer<>(jsonDeserializer);
+        ErrorHandlingDeserializer<Object> errorHandlingDeserializer = new ErrorHandlingDeserializer<>(jsonDeserializer);
 
-        DefaultKafkaConsumerFactory<String, Object> factory =
-                new DefaultKafkaConsumerFactory<>(configProps);
+        DefaultKafkaConsumerFactory<String, Object> factory = new DefaultKafkaConsumerFactory<>(configProps);
         factory.setValueDeserializer(errorHandlingDeserializer);
         return factory;
     }
@@ -206,8 +196,7 @@ public class UserServiceConfiguration {
     /**
      * Custom listener container factory for cache invalidation events.
      * <p>
-     * Uses the cacheInvalidationConsumerFactory to properly deserialize user events
-     * with error handling support.
+     * Uses the cacheInvalidationConsumerFactory to properly deserialize user events with error handling support.
      * <p>
      * Includes error handling to skip deserialization errors and continue processing other messages.
      *
@@ -217,19 +206,17 @@ public class UserServiceConfiguration {
     @Bean("cacheInvalidationKafkaListenerContainerFactory")
     public ConcurrentKafkaListenerContainerFactory<String, Object> cacheInvalidationKafkaListenerContainerFactory(
             ConsumerFactory<String, Object> cacheInvalidationConsumerFactory) {
-        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(cacheInvalidationConsumerFactory);
 
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties()
+                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.setConcurrency(concurrency);
 
         BackOff backOff = createExponentialBackOff();
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(backOff);
-        errorHandler.addNotRetryableExceptions(
-                org.apache.kafka.common.errors.SerializationException.class,
-                org.springframework.kafka.support.serializer.DeserializationException.class
-        );
+        errorHandler.addNotRetryableExceptions(org.apache.kafka.common.errors.SerializationException.class,
+                org.springframework.kafka.support.serializer.DeserializationException.class);
         factory.setCommonErrorHandler(errorHandler);
 
         return factory;
