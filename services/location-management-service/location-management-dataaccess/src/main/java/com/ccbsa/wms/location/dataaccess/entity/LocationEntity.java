@@ -21,7 +21,11 @@ import jakarta.persistence.Version;
  * <p>
  * This entity maps to the Location domain aggregate and uses domain enums directly to maintain consistency between domain and persistence layers.
  * <p>
- * The schema "tenant_schema" is a placeholder that will be dynamically replaced with the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
+ * Note: Location is tenant-aware. Uses schema-per-tenant strategy via TenantAwarePhysicalNamingStrategy
+ * for multi-tenant isolation. Each tenant has its own isolated PostgreSQL schema.
+ * <p>
+ * The schema "tenant_schema" is a placeholder that will be dynamically replaced with
+ * the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
  */
 @Entity
 @Table(name = "locations",
@@ -41,6 +45,18 @@ public class LocationEntity {
             length = 255,
             nullable = false)
     private String barcode;
+
+    @Column(name = "code",
+            length = 100)
+    private String code;
+
+    @Column(name = "name",
+            length = 255)
+    private String name;
+
+    @Column(name = "type",
+            length = 50)
+    private String type;
 
     @Column(name = "zone",
             length = 100,
@@ -210,6 +226,30 @@ public class LocationEntity {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }
 

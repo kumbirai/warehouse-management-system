@@ -57,9 +57,36 @@ const formatMessage = (
     ...(correlationId ? { correlationId } : {}),
   };
 
+  // Serialize context, handling Error objects and circular references
+  const serializeContext = (ctx: Record<string, unknown>): string => {
+    try {
+      return JSON.stringify(ctx, (key, value) => {
+        // Handle Error objects
+        if (value instanceof Error) {
+          return {
+            name: value.name,
+            message: value.message,
+            stack: value.stack,
+          };
+        }
+        // Handle objects that might have circular references
+        if (typeof value === 'object' && value !== null) {
+          // Check for common circular reference patterns
+          if (key === 'config' || key === 'request' || key === 'response') {
+            return '[Object]';
+          }
+        }
+        return value;
+      });
+    } catch (e) {
+      // If serialization fails, return a safe string representation
+      return `[Context serialization failed: ${String(e)}]`;
+    }
+  };
+
   const contextStr =
     enhancedContext && Object.keys(enhancedContext).length > 0
-      ? ` ${JSON.stringify(enhancedContext)}`
+      ? ` ${serializeContext(enhancedContext)}`
       : '';
   return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}`;
 };

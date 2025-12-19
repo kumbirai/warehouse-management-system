@@ -12,13 +12,17 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.application.api.ApiResponseBuilder;
 import com.ccbsa.wms.product.application.dto.mapper.ProductDTOMapper;
+import com.ccbsa.wms.product.application.dto.query.ListProductsQueryResultDTO;
 import com.ccbsa.wms.product.application.dto.query.ProductCodeUniquenessResultDTO;
 import com.ccbsa.wms.product.application.dto.query.ProductQueryResultDTO;
 import com.ccbsa.wms.product.application.dto.query.ValidateProductBarcodeResultDTO;
 import com.ccbsa.wms.product.application.service.query.CheckProductCodeUniquenessQueryHandler;
 import com.ccbsa.wms.product.application.service.query.GetProductQueryHandler;
+import com.ccbsa.wms.product.application.service.query.ListProductsQueryHandler;
 import com.ccbsa.wms.product.application.service.query.ValidateProductBarcodeQueryHandler;
 import com.ccbsa.wms.product.application.service.query.dto.GetProductQuery;
+import com.ccbsa.wms.product.application.service.query.dto.ListProductsQuery;
+import com.ccbsa.wms.product.application.service.query.dto.ListProductsQueryResult;
 import com.ccbsa.wms.product.application.service.query.dto.ProductCodeUniquenessResult;
 import com.ccbsa.wms.product.application.service.query.dto.ProductQueryResult;
 import com.ccbsa.wms.product.application.service.query.dto.ValidateProductBarcodeResult;
@@ -34,28 +38,55 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * Responsibilities: - Get product by ID endpoints - Check product code uniqueness endpoints - Map queries to DTOs - Return standardized API responses
  */
 @RestController
-@RequestMapping("/api/v1/product-service/products")
+@RequestMapping("/products")
 @Tag(name = "Product Queries",
         description = "Product query operations")
 public class ProductQueryController {
     private final GetProductQueryHandler getProductQueryHandler;
+    private final ListProductsQueryHandler listProductsQueryHandler;
     private final CheckProductCodeUniquenessQueryHandler checkProductCodeUniquenessQueryHandler;
     private final ValidateProductBarcodeQueryHandler validateProductBarcodeQueryHandler;
     private final ProductDTOMapper mapper;
 
-    public ProductQueryController(GetProductQueryHandler getProductQueryHandler, CheckProductCodeUniquenessQueryHandler checkProductCodeUniquenessQueryHandler,
+    public ProductQueryController(GetProductQueryHandler getProductQueryHandler,
+                                  ListProductsQueryHandler listProductsQueryHandler,
+                                  CheckProductCodeUniquenessQueryHandler checkProductCodeUniquenessQueryHandler,
                                   ValidateProductBarcodeQueryHandler validateProductBarcodeQueryHandler,
                                   ProductDTOMapper mapper) {
         this.getProductQueryHandler = getProductQueryHandler;
+        this.listProductsQueryHandler = listProductsQueryHandler;
         this.checkProductCodeUniquenessQueryHandler = checkProductCodeUniquenessQueryHandler;
         this.validateProductBarcodeQueryHandler = validateProductBarcodeQueryHandler;
         this.mapper = mapper;
     }
 
+    @GetMapping
+    @Operation(summary = "List Products",
+            description = "Retrieves a list of products with optional filtering and pagination")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
+    public ResponseEntity<ApiResponse<ListProductsQueryResultDTO>> listProducts(
+            @RequestHeader("X-Tenant-Id") String tenantId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String brand,
+            @RequestParam(required = false) String search) {
+        // Map to query
+        ListProductsQuery query = mapper.toListProductsQuery(tenantId, page, size, category, brand, search);
+
+        // Execute query
+        ListProductsQueryResult result = listProductsQueryHandler.handle(query);
+
+        // Map result to DTO
+        ListProductsQueryResultDTO resultDTO = mapper.toListProductsQueryResultDTO(result);
+
+        return ApiResponseBuilder.ok(resultDTO);
+    }
+
     @GetMapping("/{productId}")
     @Operation(summary = "Get Product",
             description = "Retrieves a product by ID")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'USER', 'VIEWER', 'OPERATOR', 'PICKER', 'STOCK_CLERK')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
     public ResponseEntity<ApiResponse<ProductQueryResultDTO>> getProduct(
             @RequestHeader("X-Tenant-Id") String tenantId,
             @PathVariable String productId) {

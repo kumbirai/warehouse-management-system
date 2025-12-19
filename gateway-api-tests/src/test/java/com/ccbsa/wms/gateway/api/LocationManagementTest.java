@@ -1,185 +1,204 @@
 package com.ccbsa.wms.gateway.api;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-
+import com.ccbsa.common.application.api.ApiResponse;
+import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
+import com.ccbsa.wms.gateway.api.dto.CreateLocationRequest;
+import com.ccbsa.wms.gateway.api.dto.CreateLocationResponse;
+import com.ccbsa.wms.gateway.api.dto.LocationResponse;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
-import com.ccbsa.wms.gateway.api.util.RequestHeaderHelper;
+import org.junit.jupiter.api.*;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
 
-import reactor.core.publisher.Mono;
+import java.time.Duration;
 
-/**
- * Gateway API integration tests for Location Management Service.
- * <p>
- * These tests validate end-to-end flow from gateway through to backend services,
- * ensuring proper routing, authentication, authorization, and data flow.
- */
-@DisplayName("Location Management API Tests")
-class LocationManagementTest extends BaseIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    @Test
-    @DisplayName("Should create location with valid data")
-    void shouldCreateLocation() {
-        Map<String, Object> createLocationRequest = LocationTestDataBuilder.builder()
-                .zone("A")
-                .aisle("01")
-                .rack("01")
-                .level("01")
-                .description("Main storage area")
-                .build();
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class LocationManagementTest extends BaseIntegrationTest {
 
-        RequestHeaderHelper.addTenantHeaderIfNeeded(
-                        webTestClient
-                                .post()
-                                .uri("/location-management/locations")
-                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .body(Mono.just(createLocationRequest), Map.class),
-                        authHelper,
-                        accessToken)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.data.locationId").exists()
-                .jsonPath("$.data.barcode").exists()
-                .jsonPath("$.data.coordinates.zone").isEqualTo("A")
-                .jsonPath("$.data.coordinates.aisle").isEqualTo("01")
-                .jsonPath("$.data.coordinates.rack").isEqualTo("01")
-                .jsonPath("$.data.coordinates.level").isEqualTo("01")
-                .jsonPath("$.data.status").isEqualTo("AVAILABLE");
+    private static AuthenticationResult tenantAdminAuth;
+    private static String testTenantId;
+
+    @BeforeAll
+    public static void setupTestData() {
+        // Login as TENANT_ADMIN
+        // Note: This will be set up in first test
     }
 
-    @Test
-    @DisplayName("Should generate barcode automatically if not provided")
-    void shouldGenerateBarcodeAutomatically() {
-        Map<String, Object> createLocationRequest = LocationTestDataBuilder.builder()
-                .zone("B")
-                .aisle("02")
-                .rack("02")
-                .level("02")
-                .build();
-
-        RequestHeaderHelper.addTenantHeaderIfNeeded(
-                        webTestClient
-                                .post()
-                                .uri("/location-management/locations")
-                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .body(Mono.just(createLocationRequest), Map.class),
-                        authHelper,
-                        accessToken)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.data.barcode").exists()
-                .jsonPath("$.data.barcode").isNotEmpty();
-    }
-
-    @Test
-    @DisplayName("Should get location by ID")
-    void shouldGetLocationById() {
-        // First create a location
-        String locationId = createTestLocation();
-
-        // Then retrieve it
-        RequestHeaderHelper.addTenantHeaderIfNeeded(
-                        webTestClient
-                                .get()
-                                .uri(String.format("/location-management/locations/%s", locationId))
-                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
-                        authHelper,
-                        accessToken)
-                .exchange()
-                .expectStatus().isOk()
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.data.locationId").isEqualTo(locationId)
-                .jsonPath("$.data.barcode").exists()
-                .jsonPath("$.data.coordinates").exists();
-    }
-
-    /**
-     * Helper method to create a test location and return its ID.
-     *
-     * @return Location ID
-     */
-    private String createTestLocation() {
-        Map<String, Object> request = LocationTestDataBuilder.createDefault();
-
-        byte[] responseBody = RequestHeaderHelper.addTenantHeaderIfNeeded(
-                        webTestClient
-                                .post()
-                                .uri("/location-management/locations")
-                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .body(Mono.just(request), Map.class),
-                        authHelper,
-                        accessToken)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectBody()
-                .returnResult()
-                .getResponseBody();
-
-        return extractLocationId(responseBody);
-    }
-
-    /**
-     * Extracts location ID from API response.
-     */
-    private String extractLocationId(byte[] responseBody) {
-        try {
-            com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(responseBody);
-            com.fasterxml.jackson.databind.JsonNode data = root.path("data");
-            com.fasterxml.jackson.databind.JsonNode locationIdNode = data.path("locationId");
-
-            if (locationIdNode.isMissingNode()) {
-                throw new RuntimeException("Location ID not found in response");
-            }
-
-            return locationIdNode.asText();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to extract location ID from response", e);
+    @BeforeEach
+    public void setUpLocationTest() {
+        if (tenantAdminAuth == null) {
+            tenantAdminAuth = loginAsTenantAdmin();
+            testTenantId = tenantAdminAuth.getTenantId();
         }
+        
+        // Note: Service availability check removed - tests will run and show actual errors
+        // if service is not properly configured
+    }
+
+    // ==================== LOCATION CREATION TESTS ====================
+
+    @Test
+    @Order(1)
+    public void testCreateWarehouse_Success() {
+        // Arrange
+        CreateLocationRequest request = LocationTestDataBuilder.buildWarehouseRequest();
+
+        // Act
+        WebTestClient.ResponseSpec response = authenticatedPost(
+                "/api/v1/location-management/locations",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                request
+        ).exchange();
+
+        // Assert
+        EntityExchangeResult<ApiResponse<CreateLocationResponse>> exchangeResult = response
+                .expectStatus().isCreated()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {})
+                .returnResult();
+        
+        ApiResponse<CreateLocationResponse> apiResponse = exchangeResult.getResponseBody();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isTrue();
+        
+        CreateLocationResponse location = apiResponse.getData();
+        assertThat(location).isNotNull();
+        assertThat(location.getLocationId()).isNotBlank();
+        assertThat(location.getCode()).isEqualTo(request.getCode());
+        assertThat(location.getPath()).isEqualTo("/" + request.getCode());
     }
 
     @Test
-    @DisplayName("Should return 404 for non-existent location")
-    void shouldReturn404ForNonExistentLocation() {
-        String nonExistentId = "00000000-0000-0000-0000-000000000000";
+    @Order(2)
+    public void testCreateZone_Success() {
+        // Arrange - Create warehouse first
+        CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
+        EntityExchangeResult<ApiResponse<CreateLocationResponse>> warehouseExchangeResult = authenticatedPost(
+                "/api/v1/location-management/locations",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                warehouseRequest
+        ).exchange()
+                .expectStatus().isCreated()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {})
+                .returnResult();
+        
+        ApiResponse<CreateLocationResponse> warehouseApiResponse = warehouseExchangeResult.getResponseBody();
+        assertThat(warehouseApiResponse).isNotNull();
+        assertThat(warehouseApiResponse.isSuccess()).isTrue();
+        
+        CreateLocationResponse warehouse = warehouseApiResponse.getData();
+        assertThat(warehouse).isNotNull();
 
-        RequestHeaderHelper.addTenantHeaderIfNeeded(
-                        webTestClient
-                                .get()
-                                .uri(String.format("/location-management/locations/%s", nonExistentId))
-                                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", accessToken)),
-                        authHelper,
-                        accessToken)
-                .exchange()
-                .expectStatus().isNotFound();
+        CreateLocationRequest zoneRequest = LocationTestDataBuilder.buildZoneRequest(warehouse.getLocationId());
+
+        // Act
+        WebTestClient.ResponseSpec response = authenticatedPost(
+                "/api/v1/location-management/locations",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                zoneRequest
+        ).exchange();
+
+        // Assert
+        EntityExchangeResult<ApiResponse<CreateLocationResponse>> zoneExchangeResult = response
+                .expectStatus().isCreated()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {})
+                .returnResult();
+        
+        ApiResponse<CreateLocationResponse> zoneApiResponse = zoneExchangeResult.getResponseBody();
+        assertThat(zoneApiResponse).isNotNull();
+        assertThat(zoneApiResponse.isSuccess()).isTrue();
+        
+        CreateLocationResponse zone = zoneApiResponse.getData();
+        assertThat(zone).isNotNull();
+        assertThat(zone.getPath()).contains(warehouse.getCode());
     }
 
     @Test
-    @DisplayName("Should require authentication")
-    void shouldRequireAuthentication() {
-        Map<String, Object> createLocationRequest = new HashMap<>();
+    @Order(3)
+    public void testCreateLocation_DuplicateCode() {
+        // Arrange
+        CreateLocationRequest request = LocationTestDataBuilder.buildWarehouseRequest();
 
-        webTestClient
-                .post()
-                .uri("/location-management/locations")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(createLocationRequest), Map.class)
+        // Create first location
+        authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, request)
                 .exchange()
-                .expectStatus().isUnauthorized();
+                .expectStatus().isCreated();
+
+        // Act - Try to create duplicate
+        WebTestClient.ResponseSpec response = authenticatedPost(
+                "/api/v1/location-management/locations",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                request
+        ).exchange();
+
+        // Assert
+        response.expectStatus().isBadRequest(); // or 409 CONFLICT
+    }
+
+    // ==================== LOCATION QUERY TESTS ====================
+
+    @Test
+    @Order(10)
+    public void testListLocations_Success() {
+        // Act
+        WebTestClient.ResponseSpec response = authenticatedGet(
+                "/api/v1/location-management/locations?page=0&size=10",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId
+        ).exchange();
+
+        // Assert
+        response.expectStatus().isOk();
+    }
+
+    @Test
+    @Order(11)
+    public void testGetLocationById_Success() {
+        // Arrange - Create location first
+        CreateLocationRequest request = LocationTestDataBuilder.buildWarehouseRequest();
+        EntityExchangeResult<ApiResponse<CreateLocationResponse>> createExchangeResult = authenticatedPost(
+                "/api/v1/location-management/locations",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                request
+        ).exchange()
+                .expectStatus().isCreated()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {})
+                .returnResult();
+        
+        ApiResponse<CreateLocationResponse> createApiResponse = createExchangeResult.getResponseBody();
+        assertThat(createApiResponse).isNotNull();
+        assertThat(createApiResponse.isSuccess()).isTrue();
+        
+        CreateLocationResponse createdLocation = createApiResponse.getData();
+        assertThat(createdLocation).isNotNull();
+
+        // Act
+        WebTestClient.ResponseSpec response = authenticatedGet(
+                "/api/v1/location-management/locations/" + createdLocation.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId
+        ).exchange();
+
+        // Assert
+        EntityExchangeResult<ApiResponse<LocationResponse>> getExchangeResult = response
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {})
+                .returnResult();
+        
+        ApiResponse<LocationResponse> getApiResponse = getExchangeResult.getResponseBody();
+        assertThat(getApiResponse).isNotNull();
+        assertThat(getApiResponse.isSuccess()).isTrue();
+        
+        LocationResponse location = getApiResponse.getData();
+        assertThat(location).isNotNull();
+        assertThat(location.getLocationId()).isEqualTo(createdLocation.getLocationId());
     }
 }
 

@@ -5,12 +5,13 @@ import {
   CreateLocationResponse,
   Location,
   LocationListFilters,
+  LocationListQueryResult,
 } from '../types/location';
 import { logger } from '../../../utils/logger';
 
 const LOCATION_BASE_PATH = '/location-management/locations';
 
-export interface LocationListApiResponse extends ApiResponse<Location[]> {}
+export interface LocationListApiResponse extends ApiResponse<LocationListQueryResult> {}
 
 export const locationService = {
   async createLocation(
@@ -62,7 +63,8 @@ export const locationService = {
       logger.debug('Location list response:', {
         status: response.status,
         hasData: !!response.data,
-        dataLength: Array.isArray(response.data?.data) ? response.data.data.length : 'N/A',
+        locationsLength: Array.isArray(response.data?.locations) ? response.data.locations.length : 'N/A',
+        totalCount: response.data?.totalCount ?? 'N/A',
       });
     }
 

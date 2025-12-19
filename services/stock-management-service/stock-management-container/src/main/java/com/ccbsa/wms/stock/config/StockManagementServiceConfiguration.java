@@ -1,0 +1,223 @@
+package com.ccbsa.wms.stock.config;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.core5.util.Timeout;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.util.backoff.BackOff;
+import org.springframework.util.backoff.ExponentialBackOff;
+import org.springframework.web.client.RestTemplate;
+
+import com.ccbsa.common.messaging.config.KafkaConfig;
+import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
+import com.ccbsa.wms.common.security.ServiceSecurityConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+/**
+ * Stock Management Service Configuration
+ * <p>
+ * Imports common security configuration for JWT validation and tenant context. Imports common data access configuration for multi-tenant schema resolution. Imports Kafka
+ * configuration for messaging infrastructure (provides
+ * kafkaObjectMapper bean).
+ * <p>
+ * The {@link MultiTenantDataAccessConfig} provides the {@link com.ccbsa.wms.common.dataaccess.TenantSchemaResolver} bean which implements schema-per-tenant strategy for
+ * multi-tenant isolation.
+ * <p>
+ * The {@link KafkaConfig} provides the {@code kafkaObjectMapper} bean used for Kafka message serialization/deserialization with type information.
+ */
+@Configuration
+@Import( {ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class})
+public class StockManagementServiceConfiguration {
+
+    @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
+    private String bootstrapServers;
+
+    @Value("${spring.kafka.consumer.max-poll-records:500}")
+    private Integer maxPollRecords;
+
+    @Value("${spring.kafka.consumer.max-poll-interval-ms:300000}")
+    private Integer maxPollIntervalMs;
+
+    @Value("${spring.kafka.consumer.session-timeout-ms:30000}")
+    private Integer sessionTimeoutMs;
+
+    @Value("${spring.kafka.listener.concurrency:3}")
+    private Integer concurrency;
+
+    @Value("${spring.kafka.error-handling.max-retries:3}")
+    private Integer maxRetries;
+
+    @Value("${spring.kafka.error-handling.initial-interval:1000}")
+    private Long initialInterval;
+
+    @Value("${spring.kafka.error-handling.multiplier:2.0}")
+    private Double multiplier;
+
+    @Value("${spring.kafka.error-handling.max-interval:10000}")
+    private Long maxInterval;
+
+    /**
+     * Custom consumer factory for external events (tenant events).
+     * <p>
+     * Uses typed deserialization with @class property from JSON payload. The ObjectMapper is configured with JsonTypeInfo to include @class property, allowing proper typed
+     * deserialization across service boundaries.
+     * <p>
+     * Uses ErrorHandlingDeserializer to gracefully handle deserialization errors.
+     * <p>
+     * Explicitly uses kafkaObjectMapper to ensure type information is properly deserialized.
+     *
+     * @param kafkaObjectMapper Kafka ObjectMapper for JSON deserialization (configured with JsonTypeInfo)
+     * @return Consumer factory configured for typed deserialization
+     */
+    @Bean("externalEventConsumerFactory")
+    public ConsumerFactory<String, Object> externalEventConsumerFactory(
+            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "stock-management-service");
+        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+
+        configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
+        configProps.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollIntervalMs);
+        configProps.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, sessionTimeoutMs);
+        configProps.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
+
+        // Configure JsonDeserializer to properly handle polymorphic deserialization
+        // When deserializing to Object.class, Jackson uses the ObjectMapper's type information
+        // configuration (mixin with @class property in As.PROPERTY format)
+        // The ObjectMapper is configured with mixins for DomainEvent and Object.class to use PROPERTY format
+        JsonDeserializer<Object> jsonDeserializer = new JsonDeserializer<>(Object.class, kafkaObjectMapper);
+        jsonDeserializer.addTrustedPackages("*");
+        jsonDeserializer.setUseTypeHeaders(false);
+        jsonDeserializer.setRemoveTypeHeaders(true);
+
+        ErrorHandlingDeserializer<Object> errorHandlingDeserializer = new ErrorHandlingDeserializer<>(jsonDeserializer);
+
+        DefaultKafkaConsumerFactory<String, Object> factory = new DefaultKafkaConsumerFactory<>(configProps);
+        factory.setValueDeserializer(errorHandlingDeserializer);
+        return factory;
+    }
+
+    /**
+     * Custom listener container factory for external events (tenant events).
+     * <p>
+     * Uses the externalEventConsumerFactory to properly deserialize external events as Map.
+     * <p>
+     * Includes error handling to skip deserialization errors and continue processing other messages.
+     *
+     * @param externalEventConsumerFactory Consumer factory for external events
+     * @return Listener container factory
+     */
+    @Bean("externalEventKafkaListenerContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory<String, Object> externalEventKafkaListenerContainerFactory(ConsumerFactory<String, Object> externalEventConsumerFactory) {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(externalEventConsumerFactory);
+
+        factory.getContainerProperties()
+                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.setConcurrency(concurrency);
+
+        BackOff backOff = createExponentialBackOff();
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(backOff);
+        errorHandler.addNotRetryableExceptions(org.apache.kafka.common.errors.SerializationException.class,
+                org.springframework.kafka.support.serializer.DeserializationException.class);
+        factory.setCommonErrorHandler(errorHandler);
+
+        return factory;
+    }
+
+    private BackOff createExponentialBackOff() {
+        ExponentialBackOff backOff = new ExponentialBackOff();
+        backOff.setInitialInterval(initialInterval);
+        backOff.setMultiplier(multiplier);
+        backOff.setMaxInterval(maxInterval);
+        backOff.setMaxElapsedTime(maxInterval * maxRetries);
+        return backOff;
+    }
+
+    /**
+     * Primary ObjectMapper for REST API responses.
+     * <p>
+     * This ObjectMapper is used for REST API JSON serialization/deserialization. It does NOT include type information (@class property) to keep API responses clean.
+     * <p>
+     * For Kafka message serialization, use the kafkaObjectMapper bean from KafkaConfig.
+     *
+     * @return ObjectMapper configured for REST API (no type information)
+     */
+    @Bean
+    @Primary
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        // Do NOT configure JsonTypeInfo - REST API should not include type information
+        return mapper;
+    }
+
+    /**
+     * RestTemplate bean for external service calls (e.g., Product Service).
+     * <p>
+     * Configured with connection pooling and timeouts for production use. Uses HttpComponentsClientHttpRequestFactory to avoid deprecated RestTemplateBuilder methods.
+     *
+     * @param builder RestTemplateBuilder
+     * @return RestTemplate configured for external service calls
+     */
+    @Bean
+    public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        // Create connection pool manager
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+        connectionManager.setMaxTotal(200);
+        connectionManager.setDefaultMaxPerRoute(50);
+
+        // Configure request timeouts using HttpClient 5 API
+        // Note: setConnectTimeout is deprecated in HttpClient 5 but still functional.
+        // The replacement API is not yet stable, so we continue using this method.
+        // This is a known limitation and will be updated when HttpClient 5 provides a stable replacement.
+        @SuppressWarnings("deprecation")
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectTimeout(Timeout.ofSeconds(10))
+                .setResponseTimeout(Timeout.ofSeconds(30))
+                .setConnectionRequestTimeout(Timeout.ofSeconds(10))
+                .build();
+
+        // Create HTTP client with connection pooling
+        HttpClient httpClient = HttpClientBuilder.create()
+                .setConnectionManager(connectionManager)
+                .setDefaultRequestConfig(requestConfig)
+                .evictIdleConnections(Timeout.ofSeconds(30))
+                .evictExpiredConnections()
+                .build();
+
+        // Create request factory with pooled HTTP client
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+
+        return builder.requestFactory(() -> requestFactory)
+                .build();
+    }
+}
+

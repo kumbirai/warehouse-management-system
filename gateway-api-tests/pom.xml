@@ -21,6 +21,16 @@
     <properties>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        
+        <!-- Test execution properties -->
+        <skipTests>false</skipTests>
+        <skipITs>false</skipITs>
+        
+        <!-- Test environment -->
+        <gateway.base.url>http://localhost:8080</gateway.base.url>
+        <test.system.admin.username>sysadmin</test.system.admin.username>
+        <test.system.admin.password>Password123@</test.system.admin.password>
     </properties>
 
     <dependencies>
@@ -84,11 +94,26 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- JavaFaker for realistic test data generation -->
+        <!-- Datafaker for realistic test data generation -->
         <dependency>
-            <groupId>com.github.javafaker</groupId>
-            <artifactId>javafaker</artifactId>
-            <version>1.0.2</version>
+            <groupId>net.datafaker</groupId>
+            <artifactId>datafaker</artifactId>
+            <version>2.1.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Nimbus JOSE JWT for JWT parsing and validation -->
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>9.37.3</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Jackson datatype for Java 8 time support -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -99,17 +124,136 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
             </plugin>
+            
+            <!-- Surefire Plugin for Unit Tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0</version>
                 <configuration>
+                    <skipTests>${skipTests}</skipTests>
                     <includes>
                         <include>**/*Test.java</include>
-                        <include>**/*Tests.java</include>
                     </includes>
+                    <excludes>
+                        <exclude>**/*IntegrationTest.java</exclude>
+                    </excludes>
                 </configuration>
+            </plugin>
+
+            <!-- Failsafe Plugin for Integration Tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                    <skipITs>${skipITs}</skipITs>
+                    <includes>
+                        <include>**/*IntegrationTest.java</include>
+                        <include>**/AuthenticationTest.java</include>
+                        <include>**/TenantManagementTest.java</include>
+                        <include>**/UserManagementTest.java</include>
+                        <include>**/ProductManagementTest.java</include>
+                        <include>**/LocationManagementTest.java</include>
+                        <include>**/StockManagementTest.java</include>
+                        <include>**/PickingServiceTest.java</include>
+                        <include>**/ReturnsServiceTest.java</include>
+                        <include>**/ReconciliationServiceTest.java</include>
+                    </includes>
+                    <systemPropertyVariables>
+                        <gateway.base.url>${gateway.base.url}</gateway.base.url>
+                        <test.system.admin.username>${test.system.admin.username}</test.system.admin.username>
+                        <test.system.admin.password>${test.system.admin.password}</test.system.admin.password>
+                    </systemPropertyVariables>
+                    <argLine>
+                        -Xmx2048m
+                        -Dfile.encoding=UTF-8
+                    </argLine>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Surefire Report Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Smoke Tests Profile -->
+        <profile>
+            <id>smoke</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>**/AuthenticationTest.java</include>
+                                <include>**/TenantManagementTest.java#testCreateTenant_Success</include>
+                                <include>**/UserManagementTest.java#testCreateUser_Success_SystemAdmin</include>
+                            </includes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Full Regression Profile -->
+        <profile>
+            <id>regression</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>**/*Test.java</include>
+                            </includes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- CI/CD Profile -->
+        <profile>
+            <id>ci</id>
+            <properties>
+                <gateway.base.url>http://gateway:8080</gateway.base.url>
+            </properties>
+        </profile>
+
+        <!-- Local Development Profile -->
+        <profile>
+            <id>local</id>
+            <properties>
+                <gateway.base.url>http://localhost:8080</gateway.base.url>
+            </properties>
+        </profile>
+    </profiles>
 </project>
 

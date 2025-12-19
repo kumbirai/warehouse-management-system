@@ -39,6 +39,20 @@ const getBaseURL = (): string => {
     return envUrl;
   }
 
+  // If absolute URL is provided, check if it's localhost in development
+  // In development, force HTTP for localhost connections (gateway SSL is disabled by default)
+  if (import.meta.env.DEV && envUrl.includes('localhost')) {
+    // Replace HTTPS with HTTP for localhost in development
+    const httpUrl = envUrl.replace(/^https:\/\//i, 'http://');
+    if (httpUrl !== envUrl) {
+      logger.debug('Converting HTTPS to HTTP for localhost in development', {
+        original: envUrl,
+        converted: httpUrl,
+      });
+      return httpUrl;
+    }
+  }
+
   // If absolute URL is provided, use it (for production or direct connection)
   logger.debug('Using absolute URL from VITE_API_BASE_URL', { url: envUrl });
   return envUrl;
@@ -107,13 +121,48 @@ apiClient.interceptors.response.use(
 
     // Log error details for debugging
     if (import.meta.env.DEV) {
-      logger.error('API Error:', {
+      // Extract error response data if available, ensuring proper serialization
+      let errorResponseData: unknown = undefined;
+      if (error.response?.data) {
+        try {
+          // Try to serialize response data, handling circular references
+          if (typeof error.response.data === 'object' && error.response.data !== null) {
+            errorResponseData = JSON.parse(JSON.stringify(error.response.data, (key, value) => {
+              // Handle circular references
+              if (key === 'config' && typeof value === 'object') {
+                return '[Circular]';
+              }
+              // Handle Error objects
+              if (value instanceof Error) {
+                return {
+                  name: value.name,
+                  message: value.message,
+                  stack: value.stack,
+                };
+              }
+              return value;
+            }));
+          } else {
+            errorResponseData = error.response.data;
+          }
+        } catch (e) {
+          // If serialization fails, use string representation
+          errorResponseData = String(error.response.data);
+        }
+      }
+
+      // Use logger.error with error as second parameter for proper error handling
+      logger.error('API Error:', error, {
         message: error.message,
         code: error.code,
         status: error.response?.status,
+        statusText: error.response?.statusText,
         url: error.config?.url,
         baseURL: error.config?.baseURL,
         timeout: error.code === 'ECONNABORTED',
+        responseData: errorResponseData,
+        // Include correlation ID if available
+        correlationId: error.config?.headers?.[correlationIdService.getCorrelationIdHeader()],
       });
     }
 
@@ -154,11 +203,22 @@ apiClient.interceptors.response.use(
             // Refresh token is now in httpOnly cookie (automatically sent by browser)
             // No need to get it from storage - backend will read from cookie
             // Attempt token refresh (use direct axios to avoid interceptor loop)
+            // Get base URL using the same logic as getBaseURL (handles HTTP/HTTPS conversion for localhost)
+            const refreshBaseURL = (() => {
+              const envUrl = import.meta.env.VITE_API_BASE_URL;
+              if (!envUrl) return '/api/v1';
+              if (envUrl.startsWith('/')) return envUrl;
+              // In development, force HTTP for localhost connections
+              if (import.meta.env.DEV && envUrl.includes('localhost')) {
+                return envUrl.replace(/^https:\/\//i, 'http://');
+              }
+              return envUrl;
+            })();
             const response = await axios.post<
               | { data: LoginResponse; error?: never }
               | { data?: never; error: { code: string; message: string } }
             >(
-              `${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/bff/auth/refresh`,
+              `${refreshBaseURL}/bff/auth/refresh`,
               {}, // Empty body - backend will read refresh token from httpOnly cookie
               {
                 headers: {

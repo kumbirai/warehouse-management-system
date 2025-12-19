@@ -71,7 +71,7 @@ public class UserRepositoryAdapter
         if (tenantId == null) {
             logger.error("TenantContext is not set when saving user! User will be saved to wrong schema. User tenantId: {}", user.getTenantId() != null ? user.getTenantId()
                     .getValue() : "null");
-            throw new IllegalStateException(String.format("TenantContext must be set before saving user. Expected tenantId: %s", 
+            throw new IllegalStateException(String.format("TenantContext must be set before saving user. Expected tenantId: %s",
                     user.getTenantId() != null ? user.getTenantId().getValue() : "null"));
         }
 
@@ -256,7 +256,7 @@ public class UserRepositoryAdapter
         com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
         if (contextTenantId == null) {
             logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
-            throw new IllegalStateException(String.format("TenantContext must be set before querying users. Expected tenantId: %s", 
+            throw new IllegalStateException(String.format("TenantContext must be set before querying users. Expected tenantId: %s",
                     tenantId != null ? tenantId.getValue() : "null"));
         }
 
@@ -477,7 +477,7 @@ public class UserRepositoryAdapter
         com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
         if (contextTenantId == null) {
             logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
-            throw new IllegalStateException(String.format("TenantContext must be set before querying users. Expected tenantId: %s", 
+            throw new IllegalStateException(String.format("TenantContext must be set before querying users. Expected tenantId: %s",
                     tenantId != null ? tenantId.getValue() : "null"));
         }
 

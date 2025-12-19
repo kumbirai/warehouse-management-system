@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ccbsa.wms.location.application.service.port.repository.LocationRepository;
 import com.ccbsa.wms.location.application.service.query.dto.GetLocationQuery;
 import com.ccbsa.wms.location.application.service.query.dto.LocationQueryResult;
+import com.ccbsa.wms.location.domain.core.entity.Location;
 import com.ccbsa.wms.location.domain.core.exception.LocationNotFoundException;
 
 /**
@@ -27,7 +28,7 @@ public class GetLocationQueryHandler {
     @Transactional(readOnly = true)
     public LocationQueryResult handle(GetLocationQuery query) {
         // 1. Load aggregate
-        com.ccbsa.wms.location.domain.core.entity.Location location = repository.findByIdAndTenantId(query.getLocationId(), query.getTenantId())
+        Location location = repository.findByIdAndTenantId(query.getLocationId(), query.getTenantId())
                 .orElseThrow(() -> new LocationNotFoundException(String.format("Location not found: %s", query.getLocationId()
                         .getValueAsString())));
 
@@ -38,10 +39,30 @@ public class GetLocationQueryHandler {
                 .coordinates(location.getCoordinates())
                 .status(location.getStatus())
                 .capacity(location.getCapacity())
+                .code(location.getCode())
+                .name(location.getName())
+                .type(location.getType())
+                .path(generatePath(location))
                 .description(location.getDescription())
                 .createdAt(location.getCreatedAt())
                 .lastModifiedAt(location.getLastModifiedAt())
                 .build();
+    }
+
+    /**
+     * Generates a hierarchical path for the location.
+     * For warehouses, returns "/{code}".
+     * For child locations, returns "/{code}" (parent hierarchy not stored in entity yet).
+     *
+     * @param location Location aggregate
+     * @return Path string
+     */
+    private String generatePath(Location location) {
+        String locationCode = location.getCode();
+        if (locationCode == null || locationCode.trim().isEmpty()) {
+            locationCode = location.getBarcode().getValue();
+        }
+        return "/" + locationCode;
     }
 }
 

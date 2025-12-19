@@ -14,12 +14,20 @@ public final class CreateLocationCommand {
     private final LocationCoordinates coordinates;
     private final LocationBarcode barcode; // Optional - will be generated if null
     private final String description;
+    private final String code; // Original location code from request
+    private final String name; // Location name from request
+    private final String type; // Location type from request
+    private final String parentLocationId; // Parent location ID for hierarchical relationships
 
     private CreateLocationCommand(Builder builder) {
         this.tenantId = builder.tenantId;
         this.coordinates = builder.coordinates;
         this.barcode = builder.barcode;
         this.description = builder.description;
+        this.code = builder.code;
+        this.name = builder.name;
+        this.type = builder.type;
+        this.parentLocationId = builder.parentLocationId;
     }
 
     public static Builder builder() {
@@ -42,11 +50,31 @@ public final class CreateLocationCommand {
         return description;
     }
 
+    public String getCode() {
+        return code;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getParentLocationId() {
+        return parentLocationId;
+    }
+
     public static class Builder {
         private TenantId tenantId;
         private LocationCoordinates coordinates;
         private LocationBarcode barcode;
         private String description;
+        private String code;
+        private String name;
+        private String type;
+        private String parentLocationId;
 
         public Builder tenantId(TenantId tenantId) {
             this.tenantId = tenantId;
@@ -65,6 +93,26 @@ public final class CreateLocationCommand {
 
         public Builder description(String description) {
             this.description = description;
+            return this;
+        }
+
+        public Builder code(String code) {
+            this.code = code;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder type(String type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder parentLocationId(String parentLocationId) {
+            this.parentLocationId = parentLocationId;
             return this;
         }
 

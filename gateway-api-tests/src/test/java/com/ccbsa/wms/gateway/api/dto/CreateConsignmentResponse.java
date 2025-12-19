@@ -1,0 +1,19 @@
+package com.ccbsa.wms.gateway.api.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CreateConsignmentResponse {
+    private String consignmentId;
+    private String productId;
+    private String locationId;
+    private Integer quantity;
+    private String batchNumber;
+}
+

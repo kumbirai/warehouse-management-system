@@ -2,6 +2,7 @@ package com.ccbsa.wms.location.domain.core.valueobject;
 
 import java.util.Locale;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -68,6 +69,20 @@ public final class LocationBarcode {
      * @throws IllegalArgumentException if coordinates is null
      */
     public static LocationBarcode generate(LocationCoordinates coordinates) {
+        return generate(coordinates, null);
+    }
+
+    /**
+     * Generates a barcode from location coordinates with optional unique identifier.
+     * Format: {ZONE}{AISLE}{RACK}{LEVEL}{UNIQUE_SUFFIX} (e.g., "A010101AB")
+     * The unique suffix ensures barcode uniqueness when coordinates might collide.
+     *
+     * @param coordinates Location coordinates
+     * @param uniqueId    Optional unique identifier (e.g., location ID) to ensure uniqueness
+     * @return Generated LocationBarcode instance
+     * @throws IllegalArgumentException if coordinates is null
+     */
+    public static LocationBarcode generate(LocationCoordinates coordinates, UUID uniqueId) {
         if (coordinates == null) {
             throw new IllegalArgumentException("LocationCoordinates cannot be null");
         }
@@ -80,6 +95,23 @@ public final class LocationBarcode {
         String level = padIfNumeric(coordinates.getLevel());
 
         String barcodeValue = zone + aisle + rack + level;
+
+        // If uniqueId is provided, append a short hash to ensure uniqueness
+        // This prevents collisions when sanitized codes are the same (e.g., "WH-18" and "WH18" both become "WH18")
+        if (uniqueId != null) {
+            // Generate a 2-character alphanumeric suffix from UUID hash
+            int hash = uniqueId.hashCode();
+            // Use absolute value and modulo to get a positive number, then convert to base-36 (0-9, A-Z)
+            String suffix = Integer.toString(Math.abs(hash) % 1296, 36).toUpperCase();
+            // Pad to 2 characters if needed
+            if (suffix.length() < 2) {
+                suffix = "0" + suffix;
+            } else if (suffix.length() > 2) {
+                suffix = suffix.substring(0, 2);
+            }
+            barcodeValue = barcodeValue + suffix;
+        }
+
         return new LocationBarcode(barcodeValue);
     }
 

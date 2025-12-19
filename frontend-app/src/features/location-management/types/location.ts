@@ -53,3 +53,10 @@ export interface LocationListFilters {
   status?: string;
   search?: string;
 }
+
+export interface LocationListQueryResult {
+  locations: Location[];
+  totalCount: number;
+  page: number;
+  size: number;
+}

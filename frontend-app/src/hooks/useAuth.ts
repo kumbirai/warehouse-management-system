@@ -7,6 +7,22 @@ import {correlationIdService} from '../services/correlationIdService';
 import {clearUser, setLoading, setUser} from '../store/authSlice';
 import {RootState} from '../store';
 import {logger} from '../utils/logger';
+import {
+    LOCATION_MANAGER,
+    OPERATOR,
+    PICKER,
+    RECONCILIATION_CLERK,
+    RECONCILIATION_MANAGER,
+    RETURNS_CLERK,
+    RETURNS_MANAGER,
+    STOCK_CLERK,
+    STOCK_MANAGER,
+    SYSTEM_ADMIN,
+    TENANT_ADMIN,
+    USER,
+    VIEWER,
+    WAREHOUSE_MANAGER,
+} from '../constants/roles';
 
 /**
  * Global initialization flag to prevent multiple initializations across all component instances.
@@ -231,9 +247,11 @@ export const useAuth = () => {
 
       return response;
     } catch (error) {
-      logger.error('Login failed in useAuth hook', {
-        error: error instanceof Error ? error.message : String(error),
+      // Use logger.error with error as second parameter for proper error handling
+      logger.error('Login failed in useAuth hook', error instanceof Error ? error : undefined, {
+        errorMessage: error instanceof Error ? error.message : String(error),
         errorStack: error instanceof Error ? error.stack : undefined,
+        errorName: error instanceof Error ? error.name : undefined,
       });
       throw error;
     }
@@ -260,16 +278,86 @@ export const useAuth = () => {
     return user?.roles?.includes(role) ?? false;
   };
 
+  const hasAnyRole = (roles: string[]): boolean => {
+    return roles.some(role => hasRole(role));
+  };
+
+  // System-Level Roles
   const isSystemAdmin = (): boolean => {
-    return hasRole('SYSTEM_ADMIN');
+    return hasRole(SYSTEM_ADMIN);
+  };
+
+  // Tenant-Level Roles
+  const isTenantAdmin = (): boolean => {
+    return hasRole(TENANT_ADMIN);
+  };
+
+  const isWarehouseManager = (): boolean => {
+    return hasRole(WAREHOUSE_MANAGER);
+  };
+
+  const isStockManager = (): boolean => {
+    return hasRole(STOCK_MANAGER);
+  };
+
+  const isLocationManager = (): boolean => {
+    return hasRole(LOCATION_MANAGER);
+  };
+
+  const isReconciliationManager = (): boolean => {
+    return hasRole(RECONCILIATION_MANAGER);
+  };
+
+  const isReturnsManager = (): boolean => {
+    return hasRole(RETURNS_MANAGER);
+  };
+
+  // Operational Roles
+  const isOperator = (): boolean => {
+    return hasRole(OPERATOR);
+  };
+
+  const isPicker = (): boolean => {
+    return hasRole(PICKER);
+  };
+
+  const isStockClerk = (): boolean => {
+    return hasRole(STOCK_CLERK);
+  };
+
+  const isReconciliationClerk = (): boolean => {
+    return hasRole(RECONCILIATION_CLERK);
+  };
+
+  const isReturnsClerk = (): boolean => {
+    return hasRole(RETURNS_CLERK);
+  };
+
+  const isViewer = (): boolean => {
+    return hasRole(VIEWER);
   };
 
   const isUser = (): boolean => {
-    return hasRole('USER');
+    return hasRole(USER);
   };
 
-  const isTenantAdmin = (): boolean => {
-    return hasRole('TENANT_ADMIN');
+  // Convenience methods for role groups
+  const isAdmin = (): boolean => {
+    return isSystemAdmin() || isTenantAdmin();
+  };
+
+  const isManager = (): boolean => {
+    return (
+      isWarehouseManager() ||
+      isStockManager() ||
+      isLocationManager() ||
+      isReconciliationManager() ||
+      isReturnsManager()
+    );
+  };
+
+  const isClerk = (): boolean => {
+    return isStockClerk() || isReconciliationClerk() || isReturnsClerk();
   };
 
   return {
@@ -279,8 +367,27 @@ export const useAuth = () => {
     login,
     logout,
     hasRole,
+    hasAnyRole,
+    // System-Level
     isSystemAdmin,
-    isUser,
+    // Tenant-Level
     isTenantAdmin,
+    isWarehouseManager,
+    isStockManager,
+    isLocationManager,
+    isReconciliationManager,
+    isReturnsManager,
+    // Operational
+    isOperator,
+    isPicker,
+    isStockClerk,
+    isReconciliationClerk,
+    isReturnsClerk,
+    isViewer,
+    isUser,
+    // Convenience
+    isAdmin,
+    isManager,
+    isClerk,
   };
 };

@@ -39,7 +39,7 @@ import jakarta.validation.Valid;
  * Responsibilities: - Create product endpoints - Update product endpoints - CSV upload endpoints - Validate request DTOs - Map DTOs to commands - Return standardized API responses
  */
 @RestController
-@RequestMapping("/api/v1/product-service/products")
+@RequestMapping("/products")
 @Tag(name = "Product Commands",
         description = "Product command operations")
 public class ProductCommandController {

@@ -18,6 +18,10 @@ public final class CreateLocationResult {
     private final LocationCoordinates coordinates;
     private final LocationStatus status;
     private final LocalDateTime createdAt;
+    private final String code; // Original location code
+    private final String name; // Location name
+    private final String type; // Location type
+    private final String path; // Hierarchical path
 
     private CreateLocationResult(Builder builder) {
         this.locationId = builder.locationId;
@@ -25,6 +29,10 @@ public final class CreateLocationResult {
         this.coordinates = builder.coordinates;
         this.status = builder.status;
         this.createdAt = builder.createdAt;
+        this.code = builder.code;
+        this.name = builder.name;
+        this.type = builder.type;
+        this.path = builder.path;
     }
 
     public static Builder builder() {
@@ -51,12 +59,32 @@ public final class CreateLocationResult {
         return createdAt;
     }
 
+    public String getCode() {
+        return code;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
     public static class Builder {
         private LocationId locationId;
         private LocationBarcode barcode;
         private LocationCoordinates coordinates;
         private LocationStatus status;
         private LocalDateTime createdAt;
+        private String code;
+        private String name;
+        private String type;
+        private String path;
 
         public Builder locationId(LocationId locationId) {
             this.locationId = locationId;
@@ -80,6 +108,26 @@ public final class CreateLocationResult {
 
         public Builder createdAt(LocalDateTime createdAt) {
             this.createdAt = createdAt;
+            return this;
+        }
+
+        public Builder code(String code) {
+            this.code = code;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder type(String type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder path(String path) {
+            this.path = path;
             return this;
         }
 

@@ -128,7 +128,7 @@ See [CSV Format Specification](../../../02-api/CSV_Format_Specification.md#stock
 
 ### StockConsignment Aggregate Root
 
-**Package:** `com.ccbsa.wms.stockmanagement.domain.core.entity`
+**Package:** `com.ccbsa.wms.stock.domain.core.entity`
 
 ```java
 public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {

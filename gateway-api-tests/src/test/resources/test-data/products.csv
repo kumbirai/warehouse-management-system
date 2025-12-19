@@ -1,0 +1,6 @@
+sku,name,description,primaryBarcode,secondaryBarcodes,category,unitOfMeasure,weight
+SKU-001,Coca-Cola 500ml,Carbonated soft drink,7894900011517,,BEVERAGES,EA,0.5
+SKU-002,Sprite 500ml,Lemon-lime soda,7891234567890,,BEVERAGES,EA,0.5
+SKU-003,Fanta Orange 500ml,Orange soda,7891234567906,7891234567913|7891234567920,BEVERAGES,EA,0.5
+SKU-004,Water 1L,Mineral water,7891234567937,,BEVERAGES,EA,1.0
+

@@ -218,9 +218,11 @@ export const authService = {
       // Access token is in response body (stored in memory)
       return loginData;
     } catch (error) {
-      logger.error('Login failed', {
-        error: error instanceof Error ? error.message : String(error),
+      // Use logger.error with error as second parameter for proper error handling
+      logger.error('Login failed', error instanceof Error ? error : undefined, {
+        errorMessage: error instanceof Error ? error.message : String(error),
         errorStack: error instanceof Error ? error.stack : undefined,
+        errorName: error instanceof Error ? error.name : undefined,
       });
       throw error;
     }
@@ -237,8 +239,19 @@ export const authService = {
   async refreshToken(request?: RefreshTokenRequest): Promise<LoginResponse> {
     // Use direct axios call to avoid token injection for refresh endpoint
     // Include credentials to send httpOnly cookies
+    // Get base URL using the same logic as apiClient (handles HTTP/HTTPS conversion for localhost)
+    const baseURL = (() => {
+      const envUrl = import.meta.env.VITE_API_BASE_URL;
+      if (!envUrl) return '/api/v1';
+      if (envUrl.startsWith('/')) return envUrl;
+      // In development, force HTTP for localhost connections
+      if (import.meta.env.DEV && envUrl.includes('localhost')) {
+        return envUrl.replace(/^https:\/\//i, 'http://');
+      }
+      return envUrl;
+    })();
     const response = await axios.post<ApiResponse<LoginResponse>>(
-      `${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/bff/auth/refresh`,
+      `${baseURL}/bff/auth/refresh`,
       request || {}, // Empty body if not provided (backend will use cookie)
       {
         headers: {

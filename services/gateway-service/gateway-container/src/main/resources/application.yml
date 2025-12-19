@@ -1,210 +1,213 @@
 server:
   port: 8080
   ssl:
-    enabled: true
+    # SSL is disabled by default for local development/testing
+    # Enable SSL in production by setting GATEWAY_SSL_ENABLED=true
+    enabled: ${GATEWAY_SSL_ENABLED:false}
     key-store: classpath:ssl/gateway-keystore.p12
-    key-store-password: changeit
+    key-store-password: ${GATEWAY_SSL_KEYSTORE_PASSWORD:changeit}
     key-store-type: PKCS12
-    key-alias: gateway
+    key-alias: ${GATEWAY_SSL_KEY_ALIAS:gateway}
 
 spring:
   application:
     name: gateway-service
+  # Force WebFlux (reactive) application type - prevents Spring MVC auto-configuration
+  main:
+    web-application-type: reactive
   
   cloud:
     gateway:
       # HTTP client configuration for load-balanced routes
-      server:
-        webflux:
-          httpclient:
-            connect-timeout: 5000  # 5 seconds connection timeout
-            response-timeout: 30s  # 30 seconds response timeout (matches frontend timeout)
-            pool:
-              type: ELASTIC
-              max-connections: 500
-              max-idle-time: 30s
-          discovery:
-            locator:
-              enabled: true
-              lower-case-service-id: true
-          routes:
-            # User Service (BFF)
-            - id: user-service-bff
-              uri: lb://user-service
-              predicates:
-                - Path=/api/v1/bff/**
-              filters:
-                - StripPrefix=2
-                # BFF endpoints are public (login/refresh/logout) or authenticated (me)
-                # Higher rate limits for BFF endpoints to handle frontend polling/retries
-                # Note: These limits are high because BFF endpoints are critical for user experience
-                # and the frontend may make multiple requests during initialization
-                - name: RequestRateLimiter
-                  args:
-                    redis-rate-limiter.replenishRate: 500
-                    redis-rate-limiter.burstCapacity: 1000
-                    key-resolver: "#{@keyResolver}"
-                # BFF endpoints don't need tenant validation (login/refresh/logout are public, me is user-specific)
-            
-            # User Service (User Management)
-            - id: user-service
-              uri: lb://user-service
-              predicates:
-                - Path=/api/v1/users/**
-              filters:
-                - StripPrefix=2
-                - name: TenantValidationFilter
-                - name: TenantContextFilter
-                - name: RequestRateLimiter
-                  args:
-                    redis-rate-limiter.replenishRate: 100
-                    redis-rate-limiter.burstCapacity: 200
-                    key-resolver: "#{@keyResolver}"
-            
-            # Tenant Service
-            - id: tenant-service
-              uri: lb://tenant-service
-              predicates:
-                - Path=/api/v1/tenants/**
-              filters:
-                - name: TenantValidationFilter
-                - name: TenantContextFilter
-                - name: RequestRateLimiter
-                  args:
-                    redis-rate-limiter.replenishRate: 50
-                    redis-rate-limiter.burstCapacity: 100
-                    key-resolver: "#{@keyResolver}"
-            
-            # Stock Management Service
-            - id: stock-management-service
-              uri: lb://stock-management-service
-              predicates:
-                - Path=/api/v1/stock-management/**
-              filters:
-                - StripPrefix=2
-                - name: TenantValidationFilter
-                - name: TenantContextFilter
-                - name: RequestRateLimiter
-                  args:
-                    redis-rate-limiter.replenishRate: 100
-                    redis-rate-limiter.burstCapacity: 200
-                    redis-rate-limiter.requestedTokens: 1
-                    key-resolver: "#{@keyResolver}"
-            
-            # Location Management Service
-            - id: location-management-service
-              uri: lb://location-management-service
-              predicates:
-                - Path=/api/v1/location-management/**
-              filters:
-                - StripPrefix=2
-                - name: TenantValidationFilter
-                - name: TenantContextFilter
-                - name: RequestRateLimiter
-                  args:
-                    redis-rate-limiter.replenishRate: 100
-                    redis-rate-limiter.burstCapacity: 200
-                    key-resolver: "#{@keyResolver}"
-            
-            # Product Service
-            - id: product-service
-              uri: lb://product-service
-              predicates:
-                - Path=/api/v1/products/**
-              filters:
-                - StripPrefix=2
-                - name: TenantValidationFilter
-                - name: TenantContextFilter
-                - name: RequestRateLimiter
-                  args:
-                    redis-rate-limiter.replenishRate: 100
-                    redis-rate-limiter.burstCapacity: 200
-                    key-resolver: "#{@keyResolver}"
-            
-            # Picking Service
-            - id: picking-service
-              uri: lb://picking-service
-              predicates:
-                - Path=/api/v1/picking/**
-              filters:
-                - StripPrefix=2
-                - name: TenantValidationFilter
-                - name: TenantContextFilter
-                - name: RequestRateLimiter
-                  args:
-                    redis-rate-limiter.replenishRate: 100
-                    redis-rate-limiter.burstCapacity: 200
-                    key-resolver: "#{@keyResolver}"
-            
-            # Returns Service
-            - id: returns-service
-              uri: lb://returns-service
-              predicates:
-                - Path=/api/v1/returns/**
-              filters:
-                - StripPrefix=2
-                - name: TenantValidationFilter
-                - name: TenantContextFilter
-                - name: RequestRateLimiter
-                  args:
-                    redis-rate-limiter.replenishRate: 100
-                    redis-rate-limiter.burstCapacity: 200
-                    key-resolver: "#{@keyResolver}"
-            
-            # Reconciliation Service
-            - id: reconciliation-service
-              uri: lb://reconciliation-service
-              predicates:
-                - Path=/api/v1/reconciliation/**
-              filters:
-                - StripPrefix=2
-                - name: TenantValidationFilter
-                - name: TenantContextFilter
-                - name: RequestRateLimiter
-                  args:
-                    redis-rate-limiter.replenishRate: 100
-                    redis-rate-limiter.burstCapacity: 200
-                    key-resolver: "#{@keyResolver}"
-            
-            # Integration Service (internal only)
-            - id: integration-service
-              uri: lb://integration-service
-              predicates:
-                - Path=/api/v1/integration/**
-              filters:
-                - StripPrefix=2
-                - name: TenantValidationFilter
-                - name: TenantContextFilter
-          
-          default-filters:
+      httpclient:
+        connect-timeout: 5000  # 5 seconds connection timeout
+        response-timeout: 30s  # 30 seconds response timeout (matches frontend timeout)
+        pool:
+          type: ELASTIC
+          max-connections: 500
+          max-idle-time: 30s
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # User Service (BFF)
+        - id: user-service-bff
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/bff/**
+          filters:
+            - StripPrefix=2
+            # BFF endpoints are public (login/refresh/logout) or authenticated (me)
+            # Higher rate limits for BFF endpoints to handle frontend polling/retries
+            # Note: These limits are high because BFF endpoints are critical for user experience
+            # and the frontend may make multiple requests during initialization
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 500
+                redis-rate-limiter.burstCapacity: 1000
+                key-resolver: "#{@keyResolver}"
+            # BFF endpoints don't need tenant validation (login/refresh/logout are public, me is user-specific)
+        
+        # User Service (User Management)
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/users/**
+          filters:
+            - StripPrefix=2
+            - name: TenantValidationFilter
+            - name: TenantContextFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                key-resolver: "#{@keyResolver}"
+        
+        # Tenant Service
+        - id: tenant-service
+          uri: lb://tenant-service
+          predicates:
+            - Path=/api/v1/tenants/**
+          filters:
+            - name: TenantValidationFilter
+            - name: TenantContextFilter
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 50
                 redis-rate-limiter.burstCapacity: 100
                 key-resolver: "#{@keyResolver}"
+        
+        # Stock Management Service
+        - id: stock-management-service
+          uri: lb://stock-management-service
+          predicates:
+            - Path=/api/v1/stock-management/**
+          filters:
+            - StripPrefix=0
+            - name: TenantValidationFilter
+            - name: TenantContextFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@keyResolver}"
+        
+        # Location Management Service
+        - id: location-management-service
+          uri: lb://location-management-service
+          predicates:
+            - Path=/api/v1/location-management/**
+          filters:
+            - StripPrefix=3
+            - name: TenantValidationFilter
+            - name: TenantContextFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                key-resolver: "#{@keyResolver}"
+        
+        # Product Service
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/v1/products/**
+          filters:
+            - StripPrefix=2
+            - name: TenantValidationFilter
+            - name: TenantContextFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                key-resolver: "#{@keyResolver}"
+        
+        # Picking Service
+        - id: picking-service
+          uri: lb://picking-service
+          predicates:
+            - Path=/api/v1/picking/**
+          filters:
+            - StripPrefix=2
+            - name: TenantValidationFilter
+            - name: TenantContextFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                key-resolver: "#{@keyResolver}"
+        
+        # Returns Service
+        - id: returns-service
+          uri: lb://returns-service
+          predicates:
+            - Path=/api/v1/returns/**
+          filters:
+            - StripPrefix=2
+            - name: TenantValidationFilter
+            - name: TenantContextFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                key-resolver: "#{@keyResolver}"
+        
+        # Reconciliation Service
+        - id: reconciliation-service
+          uri: lb://reconciliation-service
+          predicates:
+            - Path=/api/v1/reconciliation/**
+          filters:
+            - StripPrefix=2
+            - name: TenantValidationFilter
+            - name: TenantContextFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                key-resolver: "#{@keyResolver}"
+        
+        # Integration Service (internal only)
+        - id: integration-service
+          uri: lb://integration-service
+          predicates:
+            - Path=/api/v1/integration/**
+          filters:
+            - StripPrefix=2
+            - name: TenantValidationFilter
+            - name: TenantContextFilter
+      
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 50
+            redis-rate-limiter.burstCapacity: 100
+            key-resolver: "#{@keyResolver}"
 
-          # Global CORS configuration for Spring Cloud Gateway
-          globalcors:
-            cors-configurations:
-              '[/**]':
-                allowed-origins:
-                  - "http://localhost:3000"
-                  - "https://localhost:3000"
-                  - "http://localhost:5173"
-                  - "https://localhost:5173"
-                  - "http://192.168.50.30:3000"
-                  - "https://192.168.50.30:3000"
-                allowed-methods:
-                  - GET
-                  - POST
-                  - PUT
-                  - PATCH
-                  - DELETE
-                  - OPTIONS
-                allowed-headers:
-                  - "*"
-                allow-credentials: true
-                max-age: 3600
+      # Global CORS configuration for Spring Cloud Gateway
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins:
+              - "http://localhost:3000"
+              - "https://localhost:3000"
+              - "http://localhost:5173"
+              - "https://localhost:5173"
+              - "http://192.168.50.30:3000"
+              - "https://192.168.50.30:3000"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowed-headers:
+              - "*"
+            allow-credentials: true
+            max-age: 3600
   
   # Keycloak Configuration
   security:

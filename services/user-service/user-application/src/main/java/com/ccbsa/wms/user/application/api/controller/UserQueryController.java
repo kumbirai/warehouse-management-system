@@ -97,8 +97,8 @@ public class UserQueryController {
 
         // Log result for debugging
         org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserQueryController.class);
-        logger.info("ListUsers query result: tenantId={}, totalCount={}, itemsCount={}, page={}, size={}", 
-            resolvedTenantId, result.getTotalCount(), responses.size(), page, size);
+        logger.info("ListUsers query result: tenantId={}, totalCount={}, itemsCount={}, page={}, size={}",
+                resolvedTenantId, result.getTotalCount(), responses.size(), page, size);
 
         // Build pagination metadata (using 1-indexed page for response)
         ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page != null && page > 0 ? page : 1, size != null && size > 0 ? size : 20, result.getTotalCount());

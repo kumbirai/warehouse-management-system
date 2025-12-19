@@ -907,8 +907,8 @@ com.ccbsa.wms.{service}.container
 
 ```java
 @SpringBootApplication
-@EnableJpaRepositories(basePackages = "com.ccbsa.wms.stockmanagement.dataaccess")
-@EntityScan(basePackages = "com.ccbsa.wms.stockmanagement.dataaccess.entity")
+@EnableJpaRepositories(basePackages = "com.ccbsa.wms.stocks")
+@EntityScan(basePackages = "com.ccbsa.wms.stocks.entity")
 public class StockManagementApplication {
     
     public static void main(String[] args) {

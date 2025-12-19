@@ -195,7 +195,7 @@ bounded contexts, aggregates, entities, value objects, and domain events.
 **Java Implementation:**
 
 ```java
-package com.ccbsa.wms.stockmanagement.domain.stockmanagement.domaincore;
+package com.ccbsa.wms.stock.domain.stockmanagement.domaincore;
 
 import com.ccbsa.common.domain.DomainEvent;
 import com.ccbsa.common.domain.AggregateRoot;
@@ -203,7 +203,6 @@ import com.ccbsa.common.domain.AggregateRoot;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Aggregate Root: StockConsignment
@@ -290,22 +289,22 @@ public class StockConsignment extends AggregateRoot<ConsignmentId> {
         }
         this.status = ConsignmentStatus.CONFIRMED;
         this.confirmedAt = LocalDateTime.now();
-        
+
         addDomainEvent(new StockConsignmentConfirmedEvent(
-            this.id,
-            this.consignmentReference,
-            this.tenantId,
-            this.warehouseId,
-            this.lineItems
+                this.id,
+                this.consignmentReference,
+                this.tenantId,
+                this.warehouseId,
+                this.lineItems
         ));
     }
 
     public void handlePartialReceipt(List<ConsignmentLineItem> receivedItems) {
         // Business logic for partial receipt
         addDomainEvent(new PartialConsignmentReceivedEvent(
-            this.id,
-            this.consignmentReference,
-            receivedItems
+                this.id,
+                this.consignmentReference,
+                receivedItems
         ));
     }
 
@@ -364,7 +363,7 @@ public class StockConsignment extends AggregateRoot<ConsignmentId> {
 **Java Implementation:**
 
 ```java
-package com.ccbsa.wms.stockmanagement.domain.stockmanagement.domaincore;
+package com.ccbsa.wms.stock.domain.stockmanagement.domaincore;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -449,7 +448,7 @@ public class StockItem extends AggregateRoot<StockItemId> {
             LocalDate today = LocalDate.now();
             LocalDate expiryDate = expirationDate.getValue();
             long daysUntilExpiry = java.time.temporal.ChronoUnit.DAYS.between(today, expiryDate);
-            
+
             if (daysUntilExpiry < 0) {
                 return StockClassification.EXPIRED;
             } else if (daysUntilExpiry <= 7) {
@@ -469,32 +468,32 @@ public class StockItem extends AggregateRoot<StockItemId> {
 
         LocalDate today = LocalDate.now();
         LocalDate expiryDate = expirationDate.getValue();
-        
+
         if (expiryDate.isBefore(today)) {
             this.classification = StockClassification.EXPIRED;
             addDomainEvent(new StockExpiredEvent(this.id, this.productId, expiryDate));
         } else {
             long daysUntilExpiry = java.time.temporal.ChronoUnit.DAYS.between(today, expiryDate);
-            
+
             if (daysUntilExpiry <= 7 && classification != StockClassification.CRITICAL) {
                 this.classification = StockClassification.CRITICAL;
                 addDomainEvent(new StockExpiringAlertEvent(
-                    this.id,
-                    this.productId,
-                    expiryDate,
-                    7
+                        this.id,
+                        this.productId,
+                        expiryDate,
+                        7
                 ));
             } else if (daysUntilExpiry <= 30 && classification == StockClassification.NORMAL) {
                 this.classification = StockClassification.NEAR_EXPIRY;
                 addDomainEvent(new StockExpiringAlertEvent(
-                    this.id,
-                    this.productId,
-                    expiryDate,
-                    30
+                        this.id,
+                        this.productId,
+                        expiryDate,
+                        30
                 ));
             }
         }
-        
+
         this.lastModifiedAt = LocalDateTime.now();
     }
 
@@ -563,7 +562,7 @@ public class StockItem extends AggregateRoot<StockItemId> {
 **Java Implementation:**
 
 ```java
-package com.ccbsa.wms.stockmanagement.domain.stockmanagement.domaincore;
+package com.ccbsa.wms.stock.domain.stockmanagement.domaincore;
 
 import java.time.LocalDateTime;
 
@@ -658,28 +657,28 @@ public class StockLevel extends AggregateRoot<StockLevelId> {
 
     public void updateQuantity(Quantity newQuantity) {
         CurrentQuantity updatedQuantity = CurrentQuantity.of(newQuantity.getValue());
-        
+
         // Check maximum threshold
         if (updatedQuantity.getValue() > maximumQuantity.getValue()) {
             addDomainEvent(new StockLevelAboveMaximumEvent(
-                this.id,
-                this.productId,
-                updatedQuantity.getValue(),
-                maximumQuantity.getValue()
+                    this.id,
+                    this.productId,
+                    updatedQuantity.getValue(),
+                    maximumQuantity.getValue()
             ));
             throw new IllegalArgumentException("Stock level exceeds maximum threshold");
         }
-        
+
         this.currentQuantity = updatedQuantity;
         this.lastUpdatedAt = LocalDateTime.now();
-        
+
         addDomainEvent(new StockLevelUpdatedEvent(
-            this.id,
-            this.productId,
-            this.locationId,
-            updatedQuantity.getValue()
+                this.id,
+                this.productId,
+                this.locationId,
+                updatedQuantity.getValue()
         ));
-        
+
         // Check minimum threshold
         checkMinimumThreshold();
     }
@@ -688,16 +687,16 @@ public class StockLevel extends AggregateRoot<StockLevelId> {
         if (amount.getValue() > currentQuantity.getValue()) {
             throw new IllegalArgumentException("Cannot decrease quantity below zero");
         }
-        
+
         CurrentQuantity newQuantity = CurrentQuantity.of(
-            currentQuantity.getValue() - amount.getValue()
+                currentQuantity.getValue() - amount.getValue()
         );
         updateQuantity(Quantity.of(newQuantity.getValue()));
     }
 
     public void increaseQuantity(Quantity amount) {
         CurrentQuantity newQuantity = CurrentQuantity.of(
-            currentQuantity.getValue() + amount.getValue()
+                currentQuantity.getValue() + amount.getValue()
         );
         updateQuantity(Quantity.of(newQuantity.getValue()));
     }
@@ -705,28 +704,28 @@ public class StockLevel extends AggregateRoot<StockLevelId> {
     private void checkMinimumThreshold() {
         if (currentQuantity.getValue() < minimumQuantity.getValue() && !restockRequestPending) {
             this.restockRequestPending = true;
-            
+
             Quantity requestedQuantity = Quantity.of(
-                maximumQuantity.getValue() - currentQuantity.getValue()
+                    maximumQuantity.getValue() - currentQuantity.getValue()
             );
-            
+
             addDomainEvent(new StockLevelBelowMinimumEvent(
-                this.id,
-                this.productId,
-                this.locationId,
-                currentQuantity.getValue(),
-                minimumQuantity.getValue()
+                    this.id,
+                    this.productId,
+                    this.locationId,
+                    currentQuantity.getValue(),
+                    minimumQuantity.getValue()
             ));
-            
+
             addDomainEvent(new RestockRequestGeneratedEvent(
-                RestockRequestId.generate(),
-                this.productId,
-                this.warehouseId,
-                this.locationId,
-                currentQuantity.getValue(),
-                minimumQuantity.getValue(),
-                requestedQuantity.getValue(),
-                RestockPriority.NORMAL
+                    RestockRequestId.generate(),
+                    this.productId,
+                    this.warehouseId,
+                    this.locationId,
+                    currentQuantity.getValue(),
+                    minimumQuantity.getValue(),
+                    requestedQuantity.getValue(),
+                    RestockPriority.NORMAL
             ));
         }
     }
@@ -751,7 +750,7 @@ public class StockLevel extends AggregateRoot<StockLevelId> {
 #### ConsignmentId
 
 ```java
-package com.ccbsa.wms.stockmanagement.domain.stockmanagement.domaincore;
+package com.ccbsa.wms.stock.domain.stockmanagement.domaincore;
 
 import java.util.UUID;
 
@@ -779,8 +778,10 @@ public final class ConsignmentId {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getValue()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getValue())
+            return false;
         ConsignmentId that = (ConsignmentId) o;
         return value.equals(that.value);
     }
@@ -800,7 +801,7 @@ public final class ConsignmentId {
 #### ConsignmentReference
 
 ```java
-package com.ccbsa.wms.stockmanagement.domain.stockmanagement.domaincore;
+package com.ccbsa.wms.stock.domain.stockmanagement.domaincore;
 
 public final class ConsignmentReference {
     private final String value;
@@ -825,8 +826,10 @@ public final class ConsignmentReference {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getValue()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getValue())
+            return false;
         ConsignmentReference that = (ConsignmentReference) o;
         return value.equals(that.value);
     }
@@ -846,7 +849,7 @@ public final class ConsignmentReference {
 #### Quantity
 
 ```java
-package com.ccbsa.wms.stockmanagement.domain.stockmanagement.domaincore;
+package com.ccbsa.wms.stock.domain.stockmanagement.domaincore;
 
 public final class Quantity {
     private final int value;
@@ -887,8 +890,10 @@ public final class Quantity {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getValue()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getValue())
+            return false;
         Quantity quantity = (Quantity) o;
         return value == quantity.value;
     }
@@ -908,7 +913,7 @@ public final class Quantity {
 #### ExpirationDate
 
 ```java
-package com.ccbsa.wms.stockmanagement.domain.stockmanagement.domaincore;
+package com.ccbsa.wms.stock.domain.stockmanagement.domaincore;
 
 import java.time.LocalDate;
 
@@ -945,8 +950,10 @@ public final class ExpirationDate {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getValue()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getValue())
+            return false;
         ExpirationDate that = (ExpirationDate) o;
         return value.equals(that.value);
     }
@@ -966,7 +973,7 @@ public final class ExpirationDate {
 #### StockClassification
 
 ```java
-package com.ccbsa.wms.stockmanagement.domain.stockmanagement.domaincore;
+package com.ccbsa.wms.stock.domain.stockmanagement.domaincore;
 
 public enum StockClassification {
     EXPIRED("Expired"),

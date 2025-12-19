@@ -30,11 +30,16 @@ export const useProducts = (filters: ProductListFilters): UseProductsResult => {
         throw new Error('Invalid response from server');
       }
 
-      setProducts(response.data);
+      // Extract products array from the nested response structure
+      // Backend returns ApiResponse<ProductListQueryResult> where ProductListQueryResult has a 'products' property
+      const productsArray = Array.isArray(response.data.products) ? response.data.products : [];
+
+      setProducts(productsArray);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to fetch products');
       logger.error('Error fetching products:', error);
       setError(error);
+      setProducts([]); // Reset products on error
     } finally {
       setIsLoading(false);
     }

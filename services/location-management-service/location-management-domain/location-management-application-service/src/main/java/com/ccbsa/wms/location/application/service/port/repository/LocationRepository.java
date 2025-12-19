@@ -45,6 +45,15 @@ public interface LocationRepository {
     boolean existsByBarcodeAndTenantId(LocationBarcode barcode, TenantId tenantId);
 
     /**
+     * Checks if a location with the given code exists for the tenant.
+     *
+     * @param code     Location code
+     * @param tenantId Tenant identifier
+     * @return true if location exists with the code
+     */
+    boolean existsByCodeAndTenantId(String code, TenantId tenantId);
+
+    /**
      * Finds all locations for a tenant.
      *
      * @param tenantId Tenant identifier

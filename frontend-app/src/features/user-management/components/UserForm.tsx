@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { TenantSelector } from './TenantSelector';
 import { useAuth } from '../../../hooks/useAuth';
+import { ALL_ROLES, USER } from '../../../constants/roles';
 
 const userSchema = z
   .object({
@@ -56,8 +57,6 @@ interface UserFormProps {
   isSubmitting?: boolean;
 }
 
-const availableRoles = ['USER', 'PICKER', 'WAREHOUSE_MANAGER', 'TENANT_ADMIN', 'SYSTEM_ADMIN'];
-
 export const UserForm = ({
   defaultValues,
   onSubmit,
@@ -81,7 +80,7 @@ export const UserForm = ({
       lastName: '',
       password: '',
       confirmPassword: '',
-      roles: defaultValues?.roles || ['USER'],
+      roles: defaultValues?.roles || [USER],
       ...defaultValues,
     },
   });
@@ -201,7 +200,7 @@ export const UserForm = ({
             Select roles to assign to this user
           </Typography>
           <Grid container spacing={1}>
-            {availableRoles.map(role => (
+            {ALL_ROLES.map(role => (
               <Grid item xs={12} sm={6} md={4} key={role}>
                 <FormControlLabel
                   control={

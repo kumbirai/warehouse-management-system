@@ -334,7 +334,9 @@ public class NotificationCreatedEventListener {
                 TenantId tenantIdOnError = TenantContext.getTenantId();
                 if (attempt == maxRetries) {
                     // Last attempt failed - rethrow to trigger Kafka retry or dead letter queue
-                    logger.warn("Notification not found after {} retries: notificationId={}, tenantId={}. This may indicate the notification was never created, was deleted, or there is a persistent consistency issue. Event will be retried by Kafka.", 
+                    logger.warn(
+                            "Notification not found after {} retries: notificationId={}, tenantId={}. This may indicate the notification was never created, was deleted, or there"
+                                    + " is a persistent consistency issue. Event will be retried by Kafka.",
                             maxRetries, notificationId, tenantIdOnError != null ? tenantIdOnError.getValue() : "null");
                     throw e;
                 }

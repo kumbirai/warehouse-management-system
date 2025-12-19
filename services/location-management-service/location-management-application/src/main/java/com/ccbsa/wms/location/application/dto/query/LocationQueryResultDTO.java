@@ -2,6 +2,9 @@ package com.ccbsa.wms.location.application.dto.query;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Query Result DTO: LocationQueryResultDTO
  * <p>
@@ -9,10 +12,15 @@ import java.time.LocalDateTime;
  */
 public final class LocationQueryResultDTO {
     private String locationId;
+    private String code;
+    private String name;
+    private String type;
+    private String path;
     private String barcode;
     private LocationCoordinatesDTO coordinates;
     private String status;
-    private LocationCapacityDTO capacity;
+    @JsonIgnore // Hide from JSON serialization - use getCapacity()/setCapacity() for Integer instead
+    private LocationCapacityDTO capacityDTO;
     private String description;
     private LocalDateTime createdAt;
     private LocalDateTime lastModifiedAt;
@@ -26,7 +34,7 @@ public final class LocationQueryResultDTO {
         this.barcode = barcode;
         this.coordinates = coordinates;
         this.status = status;
-        this.capacity = capacity;
+        this.capacityDTO = capacity;
         this.description = description;
         this.createdAt = createdAt;
         this.lastModifiedAt = lastModifiedAt;
@@ -64,12 +72,35 @@ public final class LocationQueryResultDTO {
         this.status = status;
     }
 
-    public LocationCapacityDTO getCapacity() {
-        return capacity;
+    @JsonIgnore // Internal use only - not serialized to JSON
+    public LocationCapacityDTO getCapacityDTO() {
+        return capacityDTO;
     }
 
-    public void setCapacity(LocationCapacityDTO capacity) {
-        this.capacity = capacity;
+    @JsonIgnore // Internal use only - not deserialized from JSON
+    public void setCapacityDTO(LocationCapacityDTO capacity) {
+        this.capacityDTO = capacity;
+    }
+
+    // JSON getter for capacity as Integer (maps to "capacity" field)
+    @JsonProperty("capacity")
+    public Integer getCapacity() {
+        if (capacityDTO != null && capacityDTO.getMaximumQuantity() != null) {
+            return capacityDTO.getMaximumQuantity().intValue();
+        }
+        return null;
+    }
+
+    // JSON setter for capacity as Integer (maps from "capacity" field)
+    @JsonProperty("capacity")
+    public void setCapacity(Integer capacity) {
+        // When deserializing, create a LocationCapacityDTO with the Integer as maximumQuantity
+        if (capacity != null) {
+            this.capacityDTO = new LocationCapacityDTO(
+                    java.math.BigDecimal.ZERO, // currentQuantity defaults to 0
+                    java.math.BigDecimal.valueOf(capacity) // maximumQuantity from Integer
+            );
+        }
     }
 
     public String getDescription() {
@@ -94,6 +125,38 @@ public final class LocationQueryResultDTO {
 
     public void setLastModifiedAt(LocalDateTime lastModifiedAt) {
         this.lastModifiedAt = lastModifiedAt;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
     }
 }
 

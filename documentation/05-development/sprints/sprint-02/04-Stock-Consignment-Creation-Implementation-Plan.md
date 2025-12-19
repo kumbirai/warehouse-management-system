@@ -52,7 +52,7 @@
 
 ### StockConsignment Aggregate Root
 
-**Package:** `com.ccbsa.wms.stockmanagement.domain.core.entity`
+**Package:** `com.ccbsa.wms.stock.domain.core.entity`
 
 ```java
 public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {

@@ -18,7 +18,7 @@ export const LocationCreatePage = () => {
   };
 
   const handleCancel = () => {
-    navigate('/locations');
+    navigate('/dashboard');
   };
 
   return (

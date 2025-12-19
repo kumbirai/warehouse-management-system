@@ -18,7 +18,7 @@ export const ProductCreatePage = () => {
   };
 
   const handleCancel = () => {
-    navigate('/products');
+    navigate('/dashboard');
   };
 
   return (

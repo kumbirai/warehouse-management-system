@@ -13,7 +13,10 @@ import com.ccbsa.common.application.api.ApiResponseBuilder;
 import com.ccbsa.common.application.api.RequestContext;
 import com.ccbsa.common.application.api.exception.BaseGlobalExceptionHandler;
 import com.ccbsa.wms.user.application.service.exception.AuthenticationException;
+import com.ccbsa.wms.user.application.service.exception.InsufficientPrivilegesException;
 import com.ccbsa.wms.user.application.service.exception.KeycloakServiceException;
+import com.ccbsa.wms.user.application.service.exception.RoleAssignmentException;
+import com.ccbsa.wms.user.application.service.exception.TenantMismatchException;
 import com.ccbsa.wms.user.application.service.exception.TenantNotActiveException;
 import com.ccbsa.wms.user.application.service.exception.TenantNotFoundException;
 import com.ccbsa.wms.user.application.service.exception.TenantServiceException;
@@ -175,6 +178,69 @@ public class BffExceptionHandler
         logger.error("User creation failed: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path, ex);
 
         ApiError error = ApiError.builder("USER_CREATION_FAILED", ex.getMessage())
+                .path(path)
+                .requestId(requestId)
+                .build();
+        return ApiResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, error);
+    }
+
+    /**
+     * Handles InsufficientPrivilegesException - indicates user does not have sufficient privileges.
+     *
+     * @param ex      The exception
+     * @param request The HTTP request
+     * @return Error response with 403 Forbidden
+     */
+    @ExceptionHandler(InsufficientPrivilegesException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInsufficientPrivilegesException(InsufficientPrivilegesException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        logger.warn("Insufficient privileges: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+
+        ApiError error = ApiError.builder("INSUFFICIENT_PRIVILEGES", ex.getMessage())
+                .path(path)
+                .requestId(requestId)
+                .build();
+        return ApiResponseBuilder.error(HttpStatus.FORBIDDEN, error);
+    }
+
+    /**
+     * Handles TenantMismatchException - indicates tenant mismatch in operation.
+     *
+     * @param ex      The exception
+     * @param request The HTTP request
+     * @return Error response with 403 Forbidden
+     */
+    @ExceptionHandler(TenantMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTenantMismatchException(TenantMismatchException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        logger.warn("Tenant mismatch: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+
+        ApiError error = ApiError.builder("TENANT_MISMATCH", ex.getMessage())
+                .path(path)
+                .requestId(requestId)
+                .build();
+        return ApiResponseBuilder.error(HttpStatus.FORBIDDEN, error);
+    }
+
+    /**
+     * Handles RoleAssignmentException - indicates role assignment/removal failed.
+     *
+     * @param ex      The exception
+     * @param request The HTTP request
+     * @return Error response with 500 Internal Server Error
+     */
+    @ExceptionHandler(RoleAssignmentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRoleAssignmentException(RoleAssignmentException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        logger.error("Role assignment failed: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path, ex);
+
+        ApiError error = ApiError.builder("ROLE_ASSIGNMENT_FAILED", ex.getMessage())
                 .path(path)
                 .requestId(requestId)
                 .build();

@@ -48,9 +48,9 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: process.env.VITE_API_TARGET || 'https://localhost:8080',
+        target: process.env.VITE_API_TARGET || 'http://localhost:8080',
         changeOrigin: true,
-        secure: false, // Allow self-signed certificates
+        secure: false, // Allow self-signed certificates (for HTTPS if enabled)
         timeout: 35000, // 35 seconds to match frontend timeout (30s) + buffer
         ws: false, // Disable WebSocket proxying
         configure: (proxy, _options) => {

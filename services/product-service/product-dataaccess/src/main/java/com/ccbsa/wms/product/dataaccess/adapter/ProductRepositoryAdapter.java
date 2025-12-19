@@ -50,7 +50,7 @@ public class ProductRepositoryAdapter
     private EntityManager entityManager;
 
     public ProductRepositoryAdapter(ProductJpaRepository jpaRepository, ProductBarcodeJpaRepository barcodeJpaRepository, ProductEntityMapper mapper,
-                                     TenantSchemaResolver schemaResolver, TenantSchemaProvisioner schemaProvisioner) {
+                                    TenantSchemaResolver schemaResolver, TenantSchemaProvisioner schemaProvisioner) {
         this.jpaRepository = jpaRepository;
         this.barcodeJpaRepository = barcodeJpaRepository;
         this.mapper = mapper;
@@ -115,6 +115,49 @@ public class ProductRepositoryAdapter
     }
 
     /**
+     * Validates that a schema name matches expected patterns to prevent SQL injection.
+     * <p>
+     * Schema names must match one of these patterns:
+     * - 'public' (for legacy data)
+     * - 'tenant_*_schema' (for tenant-specific schemas)
+     *
+     * @param schemaName The schema name to validate
+     * @throws IllegalArgumentException if schema name does not match expected patterns
+     */
+    private void validateSchemaName(String schemaName) {
+        if (schemaName == null || schemaName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Schema name cannot be null or empty");
+        }
+
+        // Allow 'public' schema
+        if ("public".equals(schemaName)) {
+            return;
+        }
+
+        // Allow tenant schemas matching pattern: tenant_*_schema
+        if (schemaName.matches("^tenant_[a-zA-Z0-9_]+_schema$")) {
+            return;
+        }
+
+        throw new IllegalArgumentException(
+                String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName)
+        );
+    }
+
+    /**
+     * Sets the PostgreSQL search_path for the current database connection.
+     * <p>
+     * This method sets the search_path to the specified schema name.
+     * The schema name must be validated before calling this method.
+     *
+     * @param session    Hibernate session
+     * @param schemaName Validated schema name
+     */
+    private void setSearchPath(Session session, String schemaName) {
+        session.doWork(connection -> executeSetSearchPath(connection, schemaName));
+    }
+
+    /**
      * Updates an existing entity with values from the domain model. Preserves JPA managed state and version for optimistic locking.
      *
      * @param entity  Existing JPA entity
@@ -147,6 +190,43 @@ public class ProductRepositoryAdapter
         }
 
         // Version is managed by JPA - don't update it manually
+    }
+
+    /**
+     * Executes the SET search_path SQL command.
+     * <p>
+     * This method is separated to allow proper SpotBugs annotation placement.
+     *
+     * @param connection Database connection
+     * @param schemaName Validated and escaped schema name
+     */
+    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
+            justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " +
+                    "and properly escaped using escapeIdentifier() method. " +
+                    "PostgreSQL SET search_path command does not support parameterized queries.")
+    private void executeSetSearchPath(java.sql.Connection connection, String schemaName) {
+        try (java.sql.Statement stmt = connection.createStatement()) {
+            String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
+            logger.debug("Setting search_path to: {}", schemaName);
+            stmt.execute(setSchemaSql);
+        } catch (SQLException e) {
+            logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
+            throw new RuntimeException("Failed to set database schema", e);
+        }
+    }
+
+    /**
+     * Escapes a PostgreSQL identifier to prevent SQL injection.
+     * <p>
+     * PostgreSQL identifiers are case-sensitive when quoted. This method wraps
+     * the identifier in double quotes and escapes any internal quotes.
+     *
+     * @param identifier The identifier to escape
+     * @return Escaped identifier safe for use in SQL
+     */
+    private String escapeIdentifier(String identifier) {
+        // PostgreSQL identifiers: wrap in double quotes and escape internal quotes
+        return String.format("\"%s\"", identifier.replace("\"", "\"\""));
     }
 
     @Override
@@ -403,86 +483,6 @@ public class ProductRepositoryAdapter
                 .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * Validates that a schema name matches expected patterns to prevent SQL injection.
-     * <p>
-     * Schema names must match one of these patterns:
-     * - 'public' (for legacy data)
-     * - 'tenant_*_schema' (for tenant-specific schemas)
-     *
-     * @param schemaName The schema name to validate
-     * @throws IllegalArgumentException if schema name does not match expected patterns
-     */
-    private void validateSchemaName(String schemaName) {
-        if (schemaName == null || schemaName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Schema name cannot be null or empty");
-        }
-
-        // Allow 'public' schema
-        if ("public".equals(schemaName)) {
-            return;
-        }
-
-        // Allow tenant schemas matching pattern: tenant_*_schema
-        if (schemaName.matches("^tenant_[a-zA-Z0-9_]+_schema$")) {
-            return;
-        }
-
-        throw new IllegalArgumentException(
-            String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName)
-        );
-    }
-
-    /**
-     * Sets the PostgreSQL search_path for the current database connection.
-     * <p>
-     * This method sets the search_path to the specified schema name.
-     * The schema name must be validated before calling this method.
-     *
-     * @param session    Hibernate session
-     * @param schemaName Validated schema name
-     */
-    private void setSearchPath(Session session, String schemaName) {
-        session.doWork(connection -> executeSetSearchPath(connection, schemaName));
-    }
-
-    /**
-     * Executes the SET search_path SQL command.
-     * <p>
-     * This method is separated to allow proper SpotBugs annotation placement.
-     *
-     * @param connection Database connection
-     * @param schemaName Validated and escaped schema name
-     */
-    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
-            justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " +
-                    "and properly escaped using escapeIdentifier() method. " +
-                    "PostgreSQL SET search_path command does not support parameterized queries.")
-    private void executeSetSearchPath(java.sql.Connection connection, String schemaName) {
-        try (java.sql.Statement stmt = connection.createStatement()) {
-            String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
-            logger.debug("Setting search_path to: {}", schemaName);
-            stmt.execute(setSchemaSql);
-        } catch (SQLException e) {
-            logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
-            throw new RuntimeException("Failed to set database schema", e);
-        }
-    }
-
-    /**
-     * Escapes a PostgreSQL identifier to prevent SQL injection.
-     * <p>
-     * PostgreSQL identifiers are case-sensitive when quoted. This method wraps
-     * the identifier in double quotes and escapes any internal quotes.
-     *
-     * @param identifier The identifier to escape
-     * @return Escaped identifier safe for use in SQL
-     */
-    private String escapeIdentifier(String identifier) {
-        // PostgreSQL identifiers: wrap in double quotes and escape internal quotes
-        return String.format("\"%s\"", identifier.replace("\"", "\"\""));
     }
 }
 

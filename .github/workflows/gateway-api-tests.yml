@@ -1,0 +1,155 @@
+name: Gateway API Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 2 * * *'  # Run nightly at 2 AM
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: wms_user
+          POSTGRES_PASSWORD: wms_password
+          POSTGRES_DB: wms_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      keycloak:
+        image: quay.io/keycloak/keycloak:23.0
+        env:
+          KEYCLOAK_ADMIN: admin
+          KEYCLOAK_ADMIN_PASSWORD: admin
+          KC_DB: postgres
+          KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+          KC_DB_USERNAME: wms_user
+          KC_DB_PASSWORD: wms_password
+        ports:
+          - 8180:8080
+        options: >-
+          --health-cmd "curl -f http://localhost:8080/health/ready || exit 1"
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 5
+
+      kafka:
+        image: confluentinc/cp-kafka:7.5.0
+        env:
+          KAFKA_BROKER_ID: 1
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+        ports:
+          - 9092:9092
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Start Eureka Server
+        run: |
+          cd services/eureka-server
+          mvn clean install -DskipTests
+          nohup mvn spring-boot:run &
+          sleep 30
+
+      - name: Start Gateway Service
+        run: |
+          cd services/gateway-service
+          mvn clean install -DskipTests
+          nohup mvn spring-boot:run &
+          sleep 30
+
+      - name: Start Microservices
+        run: |
+          # Start all microservices in background
+          cd services/tenant-service && nohup mvn spring-boot:run &
+          cd services/user-service && nohup mvn spring-boot:run &
+          cd services/product-service && nohup mvn spring-boot:run &
+          cd services/location-management-service && nohup mvn spring-boot:run &
+          cd services/stock-management-service && nohup mvn spring-boot:run &
+          cd services/picking-service && nohup mvn spring-boot:run &
+          cd services/returns-service && nohup mvn spring-boot:run &
+          cd services/reconciliation-service && nohup mvn spring-boot:run &
+          sleep 60
+
+      - name: Wait for services to be ready
+        run: |
+          timeout 300 bash -c 'until curl -f http://localhost:8080/actuator/health; do sleep 5; done'
+
+      - name: Run Integration Tests
+        run: |
+          cd gateway-api-tests
+          mvn clean verify -Pci \
+            -Dgateway.base.url=http://localhost:8080 \
+            -Dtest.system.admin.username=${{ secrets.TEST_SYSTEM_ADMIN_USERNAME }} \
+            -Dtest.system.admin.password=${{ secrets.TEST_SYSTEM_ADMIN_PASSWORD }}
+
+      - name: Generate Test Report
+        if: always()
+        run: |
+          cd gateway-api-tests
+          mvn surefire-report:report
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: gateway-api-tests/target/surefire-reports/
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports
+          path: gateway-api-tests/target/site/
+
+      - name: Publish Test Results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: gateway-api-tests/target/surefire-reports/TEST-*.xml
+
+      - name: Collect Service Logs
+        if: failure()
+        run: |
+          mkdir -p logs
+          # Collect logs from services if available
+          echo "Service logs collection"
+
+      - name: Upload Service Logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: service-logs
+          path: logs/
+

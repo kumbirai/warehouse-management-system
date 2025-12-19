@@ -56,6 +56,9 @@ public class LocationEntityMapper {
             entity.setMaximumQuantity(capacity.getMaximumQuantity());
         }
 
+        entity.setCode(location.getCode());
+        entity.setName(location.getName());
+        entity.setType(location.getType());
         entity.setDescription(location.getDescription());
         entity.setCreatedAt(location.getCreatedAt());
         entity.setLastModifiedAt(location.getLastModifiedAt());
@@ -99,6 +102,17 @@ public class LocationEntityMapper {
             LocationCapacity capacity =
                     LocationCapacity.of(entity.getCurrentQuantity() != null ? entity.getCurrentQuantity() : java.math.BigDecimal.ZERO, entity.getMaximumQuantity());
             builder.capacity(capacity);
+        }
+
+        // Set code, name, type if available
+        if (entity.getCode() != null) {
+            builder.code(entity.getCode());
+        }
+        if (entity.getName() != null) {
+            builder.name(entity.getName());
+        }
+        if (entity.getType() != null) {
+            builder.type(entity.getType());
         }
 
         // Set description if available

@@ -33,6 +33,18 @@ CREATE TABLE IF NOT EXISTS locations
 (
     255
 ) NOT NULL,
+    code VARCHAR
+(
+    100
+),
+    name VARCHAR
+(
+    255
+),
+    type VARCHAR
+(
+    50
+),
     zone VARCHAR
 (
     100
@@ -87,6 +99,9 @@ CREATE TABLE IF NOT EXISTS locations
 )
     );
 
+-- Add unique constraint for tenant_id and code combination (code must be unique per tenant when provided)
+CREATE UNIQUE INDEX IF NOT EXISTS uk_locations_tenant_code ON locations (tenant_id, code) WHERE code IS NOT NULL;
+
 -- Add table comment
 COMMENT
 ON TABLE locations IS 'Validation table for Hibernate schema validation. NOT used at runtime - all operations use tenant-specific schemas.';
@@ -98,6 +113,12 @@ COMMENT
 ON COLUMN locations.tenant_id IS 'Tenant identifier (LDP identifier). Validated at application layer.';
 COMMENT
 ON COLUMN locations.barcode IS 'Location barcode identifier (unique per tenant)';
+COMMENT
+ON COLUMN locations.code IS 'Original location code (e.g., "WH-53") - unique per tenant when provided';
+COMMENT
+ON COLUMN locations.name IS 'Location name/display name';
+COMMENT
+ON COLUMN locations.type IS 'Location type: WAREHOUSE, ZONE, AISLE, RACK, BIN';
 COMMENT
 ON COLUMN locations.zone IS 'Warehouse zone identifier';
 COMMENT

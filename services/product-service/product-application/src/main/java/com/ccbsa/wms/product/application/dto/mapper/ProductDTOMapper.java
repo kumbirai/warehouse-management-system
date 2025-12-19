@@ -16,6 +16,7 @@ import com.ccbsa.wms.product.application.dto.command.ProductCsvErrorDTO;
 import com.ccbsa.wms.product.application.dto.command.UpdateProductCommandDTO;
 import com.ccbsa.wms.product.application.dto.command.UpdateProductResultDTO;
 import com.ccbsa.wms.product.application.dto.command.UploadProductCsvResultDTO;
+import com.ccbsa.wms.product.application.dto.query.ListProductsQueryResultDTO;
 import com.ccbsa.wms.product.application.dto.query.ProductCodeUniquenessResultDTO;
 import com.ccbsa.wms.product.application.dto.query.ProductQueryResultDTO;
 import com.ccbsa.wms.product.application.dto.query.ValidateProductBarcodeResultDTO;
@@ -28,6 +29,8 @@ import com.ccbsa.wms.product.application.service.command.dto.UploadProductCsvCom
 import com.ccbsa.wms.product.application.service.command.dto.UploadProductCsvResult;
 import com.ccbsa.wms.product.application.service.query.dto.CheckProductCodeUniquenessQuery;
 import com.ccbsa.wms.product.application.service.query.dto.GetProductQuery;
+import com.ccbsa.wms.product.application.service.query.dto.ListProductsQuery;
+import com.ccbsa.wms.product.application.service.query.dto.ListProductsQueryResult;
 import com.ccbsa.wms.product.application.service.query.dto.ProductCodeUniquenessResult;
 import com.ccbsa.wms.product.application.service.query.dto.ProductInfo;
 import com.ccbsa.wms.product.application.service.query.dto.ProductQueryResult;
@@ -251,43 +254,6 @@ public class ProductDTOMapper {
     }
 
     /**
-     * Converts ProductQueryResult to ProductQueryResultDTO.
-     *
-     * @param result Query result
-     * @return ProductQueryResultDTO
-     */
-    public ProductQueryResultDTO toQueryResultDTO(ProductQueryResult result) {
-        ProductQueryResultDTO dto = new ProductQueryResultDTO();
-        dto.setProductId(result.getProductId()
-                .getValueAsString());
-        dto.setProductCode(result.getProductCode()
-                .getValue());
-        dto.setDescription(result.getDescription());
-        dto.setPrimaryBarcode(result.getPrimaryBarcode()
-                .getValue());
-        dto.setUnitOfMeasure(result.getUnitOfMeasure()
-                .name());
-
-        // Map secondary barcodes
-        if (result.getSecondaryBarcodes() != null && !result.getSecondaryBarcodes()
-                .isEmpty()) {
-            List<String> secondaryBarcodes = result.getSecondaryBarcodes()
-                    .stream()
-                    .map(ProductBarcode::getValue)
-                    .collect(Collectors.toList());
-            dto.setSecondaryBarcodes(secondaryBarcodes);
-        } else {
-            dto.setSecondaryBarcodes(new ArrayList<>());
-        }
-
-        dto.setCategory(result.getCategory());
-        dto.setBrand(result.getBrand());
-        dto.setCreatedAt(result.getCreatedAt());
-        dto.setLastModifiedAt(result.getLastModifiedAt());
-        return dto;
-    }
-
-    /**
      * Converts product code and tenant ID to CheckProductCodeUniquenessQuery.
      *
      * @param productCode Product code string
@@ -356,6 +322,100 @@ public class ProductDTOMapper {
             dto.setProductInfo(productInfoDTO);
         }
 
+        return dto;
+    }
+
+    /**
+     * Converts request parameters to ListProductsQuery.
+     *
+     * @param tenantId Tenant ID string
+     * @param page     Page number (optional)
+     * @param size     Page size (optional)
+     * @param category Category filter (optional)
+     * @param brand    Brand filter (optional)
+     * @param search   Search term (optional)
+     * @return ListProductsQuery
+     */
+    public ListProductsQuery toListProductsQuery(String tenantId, Integer page, Integer size,
+                                                 String category, String brand, String search) {
+        ListProductsQuery.Builder builder = ListProductsQuery.builder()
+                .tenantId(TenantId.of(tenantId));
+
+        if (page != null) {
+            builder.page(page);
+        }
+        if (size != null) {
+            builder.size(size);
+        }
+        if (category != null && !category.trim().isEmpty()) {
+            builder.category(category.trim());
+        }
+        if (brand != null && !brand.trim().isEmpty()) {
+            builder.brand(brand.trim());
+        }
+        if (search != null && !search.trim().isEmpty()) {
+            builder.search(search.trim());
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * Converts ListProductsQueryResult to ListProductsQueryResultDTO.
+     *
+     * @param result Query result
+     * @return ListProductsQueryResultDTO
+     */
+    public ListProductsQueryResultDTO toListProductsQueryResultDTO(ListProductsQueryResult result) {
+        ListProductsQueryResultDTO dto = new ListProductsQueryResultDTO();
+
+        // Map products
+        List<ProductQueryResultDTO> productDTOs = result.getProducts().stream()
+                .map(this::toQueryResultDTO)
+                .collect(Collectors.toList());
+        dto.setProducts(productDTOs);
+
+        dto.setTotalCount(result.getTotalCount());
+        dto.setPage(result.getPage());
+        dto.setSize(result.getSize());
+
+        return dto;
+    }
+
+    /**
+     * Converts ProductQueryResult to ProductQueryResultDTO.
+     *
+     * @param result Query result
+     * @return ProductQueryResultDTO
+     */
+    public ProductQueryResultDTO toQueryResultDTO(ProductQueryResult result) {
+        ProductQueryResultDTO dto = new ProductQueryResultDTO();
+        dto.setProductId(result.getProductId()
+                .getValueAsString());
+        dto.setProductCode(result.getProductCode()
+                .getValue());
+        dto.setDescription(result.getDescription());
+        dto.setPrimaryBarcode(result.getPrimaryBarcode()
+                .getValue());
+        dto.setUnitOfMeasure(result.getUnitOfMeasure()
+                .name());
+
+        // Map secondary barcodes
+        if (result.getSecondaryBarcodes() != null && !result.getSecondaryBarcodes()
+                .isEmpty()) {
+            List<String> secondaryBarcodes = result.getSecondaryBarcodes()
+                    .stream()
+                    .map(ProductBarcode::getValue)
+                    .collect(Collectors.toList());
+            dto.setSecondaryBarcodes(secondaryBarcodes);
+        } else {
+            dto.setSecondaryBarcodes(new ArrayList<>());
+        }
+
+        dto.setCategory(result.getCategory());
+        dto.setBrand(result.getBrand());
+        dto.setCreatedAt(result.getCreatedAt());
+        dto.setLastModifiedAt(result.getLastModifiedAt());
         return dto;
     }
 }

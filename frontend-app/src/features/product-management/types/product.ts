@@ -79,3 +79,10 @@ export interface ProductCodeUniquenessResponse {
   productCode: string;
   isUnique: boolean;
 }
+
+export interface ProductListQueryResult {
+  products: Product[];
+  totalCount: number;
+  page: number;
+  size: number;
+}

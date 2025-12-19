@@ -31,6 +31,9 @@ public class Location
     private LocationCapacity capacity;
 
     // Primitives
+    private String code; // Original location code (e.g., "WH-53")
+    private String name; // Location name
+    private String type; // Location type (WAREHOUSE, ZONE, AISLE, RACK, BIN)
     private String description;
     private LocalDateTime createdAt;
     private LocalDateTime lastModifiedAt;
@@ -209,6 +212,18 @@ public class Location
         return capacity;
     }
 
+    public String getCode() {
+        return code;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -254,6 +269,21 @@ public class Location
 
         public Builder capacity(LocationCapacity capacity) {
             location.capacity = capacity;
+            return this;
+        }
+
+        public Builder code(String code) {
+            location.code = code;
+            return this;
+        }
+
+        public Builder name(String name) {
+            location.name = name;
+            return this;
+        }
+
+        public Builder type(String type) {
+            location.type = type;
             return this;
         }
 
@@ -325,8 +355,9 @@ public class Location
             }
 
             // Generate barcode from coordinates if not provided
+            // Include location ID to ensure uniqueness (prevents collisions from sanitized codes)
             if (location.barcode == null && location.coordinates != null) {
-                location.barcode = LocationBarcode.generate(location.coordinates);
+                location.barcode = LocationBarcode.generate(location.coordinates, location.getId().getValue());
             }
 
             // Publish creation event only if this is a new location (no version set)
@@ -397,8 +428,9 @@ public class Location
             }
 
             // Generate barcode from coordinates if not provided
+            // Include location ID to ensure uniqueness (prevents collisions from sanitized codes)
             if (location.barcode == null && location.coordinates != null) {
-                location.barcode = LocationBarcode.generate(location.coordinates);
+                location.barcode = LocationBarcode.generate(location.coordinates, location.getId().getValue());
             }
 
             // Do not publish events when loading from database

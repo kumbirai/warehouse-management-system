@@ -1,120 +1,44 @@
 package com.ccbsa.wms.gateway.api.fixture;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.ccbsa.wms.gateway.api.dto.CreateProductRequest;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
 
 /**
- * Test data builder for Product entities.
- * Provides fluent API for creating product test data.
+ * Builder for creating product test data.
  */
-@Slf4j
-public final class ProductTestDataBuilder {
-    private String productCode;
-    private String description;
-    private String primaryBarcode;
-    private String unitOfMeasure;
-    private List<String> secondaryBarcodes;
-    private String category;
-    private String brand;
+public class ProductTestDataBuilder {
 
-    private ProductTestDataBuilder() {
-        this.secondaryBarcodes = new ArrayList<>();
-    }
-
-    /**
-     * Creates a default product with all required fields.
-     *
-     * @return Map with default product data
-     */
-    public static Map<String, Object> createDefault() {
-        String timestamp = String.valueOf(System.currentTimeMillis());
-        return builder()
-                .productCode("PROD-TEST-" + timestamp)
-                .description("Test product created by ProductTestDataBuilder")
-                .primaryBarcode("600106710" + timestamp.substring(Math.max(0, timestamp.length() - 3)))
-                .unitOfMeasure("EA")
-                .category("Test Category")
-                .brand("Test Brand")
+    public static CreateProductRequest buildCreateProductRequest() {
+        return CreateProductRequest.builder()
+                .productCode(TestData.productSKU())  // Use SKU as productCode
+                .description(TestData.productDescription())
+                .primaryBarcode(TestData.barcode())
+                .unitOfMeasure(TestData.unitOfMeasure())
+                .secondaryBarcodes(List.of())
+                .category(TestData.productCategory())
                 .build();
     }
 
-    /**
-     * Builds a map representing the product creation request.
-     *
-     * @return Map with product data
-     */
-    public Map<String, Object> build() {
-        Map<String, Object> request = new HashMap<>();
-        if (productCode != null) {
-            request.put("productCode", productCode);
-        }
-        if (description != null) {
-            request.put("description", description);
-        }
-        if (primaryBarcode != null) {
-            request.put("primaryBarcode", primaryBarcode);
-        }
-        if (unitOfMeasure != null) {
-            request.put("unitOfMeasure", unitOfMeasure);
-        }
-        if (!secondaryBarcodes.isEmpty()) {
-            request.put("secondaryBarcodes", secondaryBarcodes);
-        }
-        if (category != null) {
-            request.put("category", category);
-        }
-        if (brand != null) {
-            request.put("brand", brand);
-        }
-        return request;
+    public static CreateProductRequest buildCreateProductRequestWithBarcode(String barcode) {
+        return CreateProductRequest.builder()
+                .productCode(TestData.productSKU())
+                .description(TestData.productDescription())
+                .primaryBarcode(barcode)
+                .unitOfMeasure(TestData.unitOfMeasure())
+                .category(TestData.productCategory())
+                .build();
     }
 
-    public ProductTestDataBuilder brand(String brand) {
-        this.brand = brand;
-        return this;
-    }
-
-    public ProductTestDataBuilder category(String category) {
-        this.category = category;
-        return this;
-    }
-
-    public ProductTestDataBuilder unitOfMeasure(String unitOfMeasure) {
-        this.unitOfMeasure = unitOfMeasure;
-        return this;
-    }
-
-    public ProductTestDataBuilder primaryBarcode(String primaryBarcode) {
-        this.primaryBarcode = primaryBarcode;
-        return this;
-    }
-
-    public ProductTestDataBuilder description(String description) {
-        this.description = description;
-        return this;
-    }
-
-    public ProductTestDataBuilder productCode(String productCode) {
-        this.productCode = productCode;
-        return this;
-    }
-
-    public static ProductTestDataBuilder builder() {
-        return new ProductTestDataBuilder();
-    }
-
-    public ProductTestDataBuilder secondaryBarcode(String secondaryBarcode) {
-        this.secondaryBarcodes.add(secondaryBarcode);
-        return this;
-    }
-
-    public ProductTestDataBuilder secondaryBarcodes(List<String> secondaryBarcodes) {
-        this.secondaryBarcodes = secondaryBarcodes != null ? new ArrayList<>(secondaryBarcodes) : new ArrayList<>();
-        return this;
+    public static CreateProductRequest buildCreateProductRequestWithSecondaryBarcodes(int count) {
+        return CreateProductRequest.builder()
+                .productCode(TestData.productSKU())
+                .description(TestData.productDescription())
+                .primaryBarcode(TestData.barcode())
+                .unitOfMeasure(TestData.unitOfMeasure())
+                .secondaryBarcodes(TestData.secondaryBarcodes(count))
+                .category(TestData.productCategory())
+                .build();
     }
 }
 

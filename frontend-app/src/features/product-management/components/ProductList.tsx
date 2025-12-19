@@ -38,6 +38,15 @@ export const ProductList = ({ products, isLoading, error }: ProductListProps) =>
     );
   }
 
+  // Defensive check: ensure products is an array
+  if (!Array.isArray(products)) {
+    return (
+      <Paper sx={{ p: 3 }}>
+        <Typography color="error">Invalid data format: products is not an array</Typography>
+      </Paper>
+    );
+  }
+
   if (products.length === 0) {
     return (
       <Paper sx={{ p: 3 }}>

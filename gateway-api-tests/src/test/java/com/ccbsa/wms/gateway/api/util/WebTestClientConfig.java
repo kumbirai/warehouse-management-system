@@ -1,61 +1,111 @@
 package com.ccbsa.wms.gateway.api.util;
 
-import java.time.Duration;
-
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
-
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.netty.http.client.HttpClient;
 
+import javax.net.ssl.SSLException;
+import java.time.Duration;
+
 /**
- * Configuration utility for WebTestClient with SSL support for testing against HTTPS gateway.
+ * Configuration for WebTestClient instances.
  */
-public final class WebTestClientConfig {
+public class WebTestClientConfig {
 
-    private static final int MAX_IN_MEMORY_SIZE = 10 * 1024 * 1024; // 10MB
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
+    private static final int DEFAULT_BUFFER_SIZE = 16 * 1024 * 1024; // 16MB
 
-    private WebTestClientConfig() {
-        // Utility class
+    /**
+     * Create WebTestClient with default configuration.
+     * Supports both HTTP and HTTPS, with SSL certificate validation disabled for self-signed certificates.
+     *
+     * @param baseUrl the gateway base URL
+     * @return configured WebTestClient
+     */
+    public static WebTestClient createWebTestClient(String baseUrl) {
+        boolean isHttps = baseUrl != null && baseUrl.startsWith("https://");
+        
+        if (isHttps) {
+            try {
+                // Configure SSL context to trust all certificates (for self-signed certs in dev/test)
+                SslContext sslContext = SslContextBuilder
+                        .forClient()
+                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                        .build();
+
+                // Create HTTP client with SSL support for HTTPS URLs
+                HttpClient httpClient = HttpClient.create()
+                        .secure(sslContextSpec -> sslContextSpec.sslContext(sslContext));
+
+                return WebTestClient.bindToServer(new ReactorClientHttpConnector(httpClient))
+                        .baseUrl(baseUrl)
+                        .responseTimeout(DEFAULT_TIMEOUT)
+                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
+                        .build();
+            } catch (SSLException e) {
+                // Fallback to default configuration if SSL setup fails
+                return WebTestClient.bindToServer()
+                        .baseUrl(baseUrl)
+                        .responseTimeout(DEFAULT_TIMEOUT)
+                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
+                        .build();
+            }
+        } else {
+            // For HTTP URLs, use plain HTTP client without SSL
+            return WebTestClient.bindToServer()
+                    .baseUrl(baseUrl)
+                    .responseTimeout(DEFAULT_TIMEOUT)
+                    .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
+                    .build();
+        }
     }
 
     /**
-     * Creates a WebTestClient configured for HTTPS with relaxed SSL validation.
+     * Create WebTestClient with custom timeout.
+     * Supports both HTTP and HTTPS, with SSL certificate validation disabled for self-signed certificates.
      *
-     * @param baseUrl The base URL of the gateway (e.g., https://localhost:8080/api/v1)
-     * @return Configured WebTestClient instance
+     * @param baseUrl the gateway base URL
+     * @param timeout the timeout duration
+     * @return configured WebTestClient
      */
-    public static WebTestClient createWebTestClient(String baseUrl) {
-        try {
-            // Create SSL context with relaxed validation for self-signed certificates
-            SslContext sslContext = SslContextBuilder
-                    .forClient()
-                    .trustManager(InsecureTrustManagerFactory.INSTANCE)
-                    .build();
+    public static WebTestClient createWebTestClient(String baseUrl, Duration timeout) {
+        boolean isHttps = baseUrl != null && baseUrl.startsWith("https://");
+        
+        if (isHttps) {
+            try {
+                // Configure SSL context to trust all certificates (for self-signed certs in dev/test)
+                SslContext sslContext = SslContextBuilder
+                        .forClient()
+                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                        .build();
 
-            // Create HTTP client with SSL support
-            HttpClient httpClient = HttpClient.create()
-                    .secure(sslContextSpec -> sslContextSpec.sslContext(sslContext))
-                    .responseTimeout(DEFAULT_TIMEOUT);
+                // Create HTTP client with SSL support for HTTPS URLs
+                HttpClient httpClient = HttpClient.create()
+                        .secure(sslContextSpec -> sslContextSpec.sslContext(sslContext));
 
-            // Configure exchange strategies for large responses
-            ExchangeStrategies strategies = ExchangeStrategies.builder()
-                    .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(MAX_IN_MEMORY_SIZE))
-                    .build();
-
-            return WebTestClient
-                    .bindToServer()
+                return WebTestClient.bindToServer(new ReactorClientHttpConnector(httpClient))
+                        .baseUrl(baseUrl)
+                        .responseTimeout(timeout)
+                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
+                        .build();
+            } catch (SSLException e) {
+                // Fallback to default configuration if SSL setup fails
+                return WebTestClient.bindToServer()
+                        .baseUrl(baseUrl)
+                        .responseTimeout(timeout)
+                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
+                        .build();
+            }
+        } else {
+            // For HTTP URLs, use plain HTTP client without SSL
+            return WebTestClient.bindToServer()
                     .baseUrl(baseUrl)
-                    .clientConnector(new ReactorClientHttpConnector(httpClient))
-                    .exchangeStrategies(strategies)
-                    .responseTimeout(DEFAULT_TIMEOUT)
+                    .responseTimeout(timeout)
+                    .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
                     .build();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create WebTestClient with SSL support", e);
         }
     }
 }

@@ -12,13 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -69,15 +69,15 @@ public class GatewayRoleHeaderAuthenticationFilter extends OncePerRequestFilter 
                 logger.debug("X-Role header not present for path {}, falling back to JWT token roles", request.getRequestURI());
                 authorities = extractAuthoritiesFromJwt(jwt);
                 if (!authorities.isEmpty()) {
-                    logger.debug("Extracted {} authorities from JWT token (fallback): {}", 
-                        authorities.size(), 
-                        authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
+                    logger.debug("Extracted {} authorities from JWT token (fallback): {}",
+                            authorities.size(),
+                            authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
                 }
             } else {
-                logger.info("Extracted {} authorities from X-Role header for path {}: {}", 
-                    authorities.size(),
-                    request.getRequestURI(),
-                    authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
+                logger.info("Extracted {} authorities from X-Role header for path {}: {}",
+                        authorities.size(),
+                        request.getRequestURI(),
+                        authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
             }
 
             // Create new authentication with authorities from header

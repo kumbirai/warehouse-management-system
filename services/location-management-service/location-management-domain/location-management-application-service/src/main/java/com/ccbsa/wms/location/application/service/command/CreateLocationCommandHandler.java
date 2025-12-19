@@ -2,6 +2,7 @@ package com.ccbsa.wms.location.application.service.command;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import com.ccbsa.wms.location.application.service.port.messaging.LocationEventPu
 import com.ccbsa.wms.location.application.service.port.repository.LocationRepository;
 import com.ccbsa.wms.location.domain.core.entity.Location;
 import com.ccbsa.wms.location.domain.core.exception.BarcodeAlreadyExistsException;
+import com.ccbsa.wms.location.domain.core.exception.CodeAlreadyExistsException;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationBarcode;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
@@ -50,7 +52,12 @@ public class CreateLocationCommandHandler {
             validateBarcodeUniqueness(command.getBarcode(), command.getTenantId());
         }
 
-        // 3. Create aggregate using builder
+        // 3. Validate code uniqueness if code is provided
+        if (command.getCode() != null && !command.getCode().trim().isEmpty()) {
+            validateCodeUniqueness(command.getCode(), command.getTenantId());
+        }
+
+        // 4. Create aggregate using builder
         Location.Builder builder = Location.builder()
                 .locationId(LocationId.generate())
                 .tenantId(command.getTenantId())
@@ -60,6 +67,17 @@ public class CreateLocationCommandHandler {
         // Set barcode if provided, otherwise it will be auto-generated in build()
         if (command.getBarcode() != null) {
             builder.barcode(command.getBarcode());
+        }
+
+        // Set code, name, type if provided
+        if (command.getCode() != null && !command.getCode().trim().isEmpty()) {
+            builder.code(command.getCode());
+        }
+        if (command.getName() != null && !command.getName().trim().isEmpty()) {
+            builder.name(command.getName());
+        }
+        if (command.getType() != null && !command.getType().trim().isEmpty()) {
+            builder.type(command.getType());
         }
 
         // Set description if provided
@@ -93,6 +111,10 @@ public class CreateLocationCommandHandler {
                 .coordinates(savedLocation.getCoordinates())
                 .status(savedLocation.getStatus())
                 .createdAt(savedLocation.getCreatedAt())
+                .code(savedLocation.getCode())
+                .name(savedLocation.getName())
+                .type(savedLocation.getType())
+                .path(generatePath(savedLocation, command))
                 .build();
     }
 
@@ -128,6 +150,19 @@ public class CreateLocationCommandHandler {
     }
 
     /**
+     * Validates that the code is unique for the tenant.
+     *
+     * @param code     Code to validate
+     * @param tenantId Tenant identifier
+     * @throws CodeAlreadyExistsException if code already exists
+     */
+    private void validateCodeUniqueness(String code, com.ccbsa.common.domain.valueobject.TenantId tenantId) {
+        if (repository.existsByCodeAndTenantId(code, tenantId)) {
+            throw new CodeAlreadyExistsException(String.format("Location code already exists: %s", code));
+        }
+    }
+
+    /**
      * Publishes domain events after transaction commit to avoid race conditions.
      * <p>
      * Events are published using TransactionSynchronizationManager to ensure they are only published after the database transaction has successfully committed. This prevents race
@@ -158,6 +193,56 @@ public class CreateLocationCommandHandler {
                 }
             }
         });
+    }
+
+    /**
+     * Generates a hierarchical path for the location.
+     * For warehouses, returns "/{code}".
+     * For child locations, returns "/{parentPath}/{code}" by loading the parent location.
+     *
+     * @param location Location aggregate
+     * @param command  Create location command (contains parentLocationId)
+     * @return Path string
+     */
+    private String generatePath(Location location, CreateLocationCommand command) {
+        String locationCode = location.getCode();
+        if (locationCode == null || locationCode.trim().isEmpty()) {
+            locationCode = location.getBarcode().getValue();
+        }
+
+        // If this is a warehouse (no parent), return "/{code}"
+        if (command.getParentLocationId() == null || command.getParentLocationId().trim().isEmpty()) {
+            return "/" + locationCode;
+        }
+
+        // For child locations, load parent and build hierarchical path
+        try {
+            LocationId parentId = LocationId.of(UUID.fromString(command.getParentLocationId()));
+            Location parentLocation = repository.findByIdAndTenantId(parentId, command.getTenantId())
+                    .orElse(null);
+
+            if (parentLocation != null) {
+                String parentCode = parentLocation.getCode();
+                if (parentCode == null || parentCode.trim().isEmpty()) {
+                    parentCode = parentLocation.getBarcode().getValue();
+                }
+                // Build hierarchical path: /{parentCode}/{childCode}
+                String hierarchicalPath = "/" + parentCode + "/" + locationCode;
+                logger.debug("Generated hierarchical path: {} for location with parent: {}", hierarchicalPath, command.getParentLocationId());
+                return hierarchicalPath;
+            } else {
+                logger.warn("Parent location not found for path generation: parentLocationId={}, tenantId={}",
+                        command.getParentLocationId(), command.getTenantId().getValue());
+            }
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid parent location ID format for path generation: {}", command.getParentLocationId(), e);
+        } catch (Exception e) {
+            logger.warn("Failed to load parent location for path generation: parentLocationId={}, error={}",
+                    command.getParentLocationId(), e.getMessage(), e);
+        }
+
+        // Fallback: return "/{code}" if parent cannot be loaded
+        return "/" + locationCode;
     }
 }
 

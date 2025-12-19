@@ -11,4 +11,4 @@ CREATE INDEX IF NOT EXISTS idx_locations_tenant_id ON locations (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_locations_barcode ON locations (barcode);
 CREATE INDEX IF NOT EXISTS idx_locations_coordinates ON locations (zone, aisle, rack, level);
 CREATE INDEX IF NOT EXISTS idx_locations_status ON locations (tenant_id, status);
-
+CREATE INDEX IF NOT EXISTS idx_locations_type ON locations (tenant_id, type) WHERE type IS NOT NULL;

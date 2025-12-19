@@ -1,9 +1,10 @@
-import { Box, Button, Container, Tab, Tabs } from '@mui/material';
+import { Box, Breadcrumbs, Button, Container, Link, Tab, Tabs, Typography } from '@mui/material';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { ProductList } from '../components/ProductList';
 import { useProducts } from '../hooks/useProducts';
 import { useAuth } from '../../../hooks/useAuth';
+import { Header } from '../../../components/layout/Header';
 import AddIcon from '@mui/icons-material/Add';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { ProductCsvUploadForm } from '../components/ProductCsvUploadForm';
@@ -28,31 +29,48 @@ export const ProductListPage = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <h1>Products</h1>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={() => setActiveTab(1)}>
-            Upload CSV
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/products/create')}
-          >
-            Create Product
-          </Button>
+    <>
+      <Header />
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Breadcrumbs sx={{ mb: 2 }}>
+          <Link component={RouterLink} to="/dashboard" color="inherit">
+            Dashboard
+          </Link>
+          <Typography color="text.primary">Products</Typography>
+        </Breadcrumbs>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" component="h1">
+            Products
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="outlined"
+              startIcon={<UploadFileIcon />}
+              onClick={() => setActiveTab(1)}
+            >
+              Upload CSV
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/products/create')}
+            >
+              Create Product
+            </Button>
+          </Box>
         </Box>
-      </Box>
 
-      <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)} sx={{ mb: 3 }}>
-        <Tab label="Product List" />
-        <Tab label="CSV Upload" />
-      </Tabs>
+        <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)} sx={{ mb: 3 }}>
+          <Tab label="Product List" />
+          <Tab label="CSV Upload" />
+        </Tabs>
 
-      {activeTab === 0 && <ProductList products={products} isLoading={isLoading} error={error} />}
+        {activeTab === 0 && <ProductList products={products} isLoading={isLoading} error={error} />}
 
-      {activeTab === 1 && <ProductCsvUploadForm onUpload={handleUpload} isLoading={isUploading} />}
-    </Container>
+        {activeTab === 1 && (
+          <ProductCsvUploadForm onUpload={handleUpload} isLoading={isUploading} />
+        )}
+      </Container>
+    </>
   );
 };

@@ -56,6 +56,56 @@ export const UserDashboard = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
+                  Location Management
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Create and manage warehouse locations with barcode support.
+                </Typography>
+                <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    component={RouterLink}
+                    to="/locations/create"
+                  >
+                    Create Location
+                  </Button>
+                  <Button size="small" variant="outlined" component={RouterLink} to="/locations">
+                    View Locations
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Product Management
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Create products manually or upload product master data via CSV file.
+                </Typography>
+                <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    component={RouterLink}
+                    to="/products/create"
+                  >
+                    Create Product
+                  </Button>
+                  <Button size="small" variant="outlined" component={RouterLink} to="/products">
+                    View Products
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
                   Consignments
                 </Typography>
                 <Typography variant="body2" color="text.secondary">

@@ -30,11 +30,16 @@ export const useLocations = (filters: LocationListFilters): UseLocationsResult =
         throw new Error('Invalid response from server');
       }
 
-      setLocations(response.data);
+      // Extract locations array from the nested response structure
+      // Backend returns ApiResponse<LocationListQueryResult> where LocationListQueryResult has a 'locations' property
+      const locationsArray = Array.isArray(response.data.locations) ? response.data.locations : [];
+
+      setLocations(locationsArray);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to fetch locations');
       logger.error('Error fetching locations:', error);
       setError(error);
+      setLocations([]); // Reset locations on error
     } finally {
       setIsLoading(false);
     }

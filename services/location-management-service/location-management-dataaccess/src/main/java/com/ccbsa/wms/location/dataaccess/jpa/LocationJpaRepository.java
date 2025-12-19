@@ -34,6 +34,15 @@ public interface LocationJpaRepository
     boolean existsByTenantIdAndBarcode(String tenantId, String barcode);
 
     /**
+     * Checks if a location exists with the given code for the tenant.
+     *
+     * @param tenantId Tenant identifier
+     * @param code     Location code
+     * @return true if location exists
+     */
+    boolean existsByTenantIdAndCode(String tenantId, String code);
+
+    /**
      * Finds all locations for a tenant.
      *
      * @param tenantId Tenant identifier

@@ -6,15 +6,16 @@ import {
   Product,
   ProductCodeUniquenessResponse,
   ProductListFilters,
+  ProductListQueryResult,
   UpdateProductRequest,
   UpdateProductResponse,
   UploadProductCsvResponse,
 } from '../types/product';
 import { logger } from '../../../utils/logger';
 
-const PRODUCT_BASE_PATH = '/product-service/products';
+const PRODUCT_BASE_PATH = '/products';
 
-export interface ProductListApiResponse extends ApiResponse<Product[]> {}
+export interface ProductListApiResponse extends ApiResponse<ProductListQueryResult> {}
 
 export const productService = {
   async createProduct(
@@ -83,7 +84,10 @@ export const productService = {
       logger.debug('Product list response:', {
         status: response.status,
         hasData: !!response.data,
-        dataLength: Array.isArray(response.data?.data) ? response.data.data.length : 'N/A',
+        productsLength: Array.isArray(response.data?.products)
+          ? response.data.products.length
+          : 'N/A',
+        totalCount: response.data?.totalCount ?? 'N/A',
       });
     }
 

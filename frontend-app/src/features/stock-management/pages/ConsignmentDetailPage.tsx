@@ -4,6 +4,14 @@ import { ConsignmentDetail } from '../components/ConsignmentDetail';
 import { useConsignment } from '../hooks/useConsignment';
 import { useValidateConsignment } from '../hooks/useValidateConsignment';
 import { useAuth } from '../../../hooks/useAuth';
+import {
+  OPERATOR,
+  STOCK_CLERK,
+  STOCK_MANAGER,
+  SYSTEM_ADMIN,
+  TENANT_ADMIN,
+  WAREHOUSE_MANAGER,
+} from '../../../constants/roles';
 
 export const ConsignmentDetailPage = () => {
   const { consignmentId } = useParams<{ consignmentId: string }>();
@@ -27,7 +35,16 @@ export const ConsignmentDetailPage = () => {
   };
 
   const canValidate =
-    user?.roles?.some(role => ['ADMIN', 'MANAGER', 'OPERATOR'].includes(role)) ?? false;
+    user?.roles?.some(role =>
+      [
+        SYSTEM_ADMIN,
+        TENANT_ADMIN,
+        WAREHOUSE_MANAGER,
+        STOCK_MANAGER,
+        OPERATOR,
+        STOCK_CLERK,
+      ].includes(role)
+    ) ?? false;
 
   if (isLoading) {
     return (

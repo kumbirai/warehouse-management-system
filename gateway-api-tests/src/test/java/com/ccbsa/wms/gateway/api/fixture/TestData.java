@@ -1,192 +1,163 @@
 package com.ccbsa.wms.gateway.api.fixture;
 
+import com.ccbsa.wms.gateway.api.util.BarcodeGenerator;
+import net.datafaker.Faker;
+
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Locale;
-
-import com.github.javafaker.Faker;
-
-import lombok.extern.slf4j.Slf4j;
+import java.util.stream.IntStream;
 
 /**
- * Test data management singleton for gateway API integration tests.
- *
- * <p>This class provides:
- * <ul>
- *   <li>Single test tenant ID per test suite run</li>
- *   <li>Faker instance for realistic data generation</li>
- *   <li>Factory methods for generating user data</li>
- *   <li>Default password constant for test users</li>
- * </ul>
- *
- * <p>Usage:
- * <pre>
- * TestData testData = TestData.getInstance();
- * String email = testData.generateEmail();
- * String firstName = testData.generateFirstName();
- * </pre>
+ * Central test data factory providing realistic test data for all tests.
+ * Uses Faker for data generation with consistent locale settings.
  */
-@Slf4j
-public final class TestData {
+public class TestData {
 
-    // Constants
-    public static final String DEFAULT_PASSWORD = "Password123@";
-    // Singleton instance
-    private static final TestData INSTANCE = new TestData();
-    private static final String EMAIL_DOMAIN = "wmstest.com";
+    private static final Faker faker = new Faker(new Locale("en", "US"));
 
-    // Test tenant ID - generated once per test suite run
-    private final String testTenantId;
+    // ==================== TENANT DATA ====================
 
-    // Faker instance for data generation
-    private final Faker faker;
-
-    /**
-     * Private constructor for singleton pattern.
-     * Initializes test tenant ID and Faker instance.
-     */
-    private TestData() {
-        this.faker = new Faker(Locale.US);
-        this.testTenantId = generateKebabCasePassphrase();
-        log.info("TestData initialized with tenant ID: {}", testTenantId);
+    public static String tenantId() {
+        return "TENANT-" + faker.number().digits(6);
     }
 
-    /**
-     * Generates a three-word kebab-case passphrase.
-     * Format: word1-word2-word3
-     *
-     * @return Three-word kebab-case passphrase
-     */
-    private String generateKebabCasePassphrase() {
-        String word1 = faker.lorem().word().toLowerCase().replaceAll("[^a-z]", "");
-        String word2 = faker.lorem().word().toLowerCase().replaceAll("[^a-z]", "");
-        String word3 = faker.lorem().word().toLowerCase().replaceAll("[^a-z]", "");
-        return String.format("%s-%s-%s", word1, word2, word3);
-    }
-
-    /**
-     * Gets the singleton instance.
-     *
-     * @return TestData singleton instance
-     */
-    public static TestData getInstance() {
-        return INSTANCE;
-    }
-
-    /**
-     * Gets the test tenant ID for this test suite run.
-     * This ID is generated once when TestData is first accessed.
-     *
-     * @return Test tenant ID (three-word kebab-case passphrase)
-     */
-    public String getTestTenantId() {
-        return testTenantId;
-    }
-
-    /**
-     * Gets the Faker instance for custom data generation.
-     *
-     * @return Faker instance
-     */
-    public Faker getFaker() {
-        return faker;
-    }
-
-    /**
-     * Generates a unique email address.
-     * Format: firstname.lastname.timestamp@wmstest.com
-     *
-     * @return Unique email address
-     */
-    public String generateEmail() {
-        String firstName = faker.name().firstName().toLowerCase().replaceAll("[^a-z]", "");
-        String lastName = faker.name().lastName().toLowerCase().replaceAll("[^a-z]", "");
-        long timestamp = System.currentTimeMillis();
-        return String.format("%s.%s.%d@%s", firstName, lastName, timestamp, EMAIL_DOMAIN);
-    }
-
-    /**
-     * Generates a unique username.
-     * Format: firstname_lastname_timestamp
-     *
-     * @return Unique username
-     */
-    public String generateUsername() {
-        String firstName = faker.name().firstName().toLowerCase().replaceAll("[^a-z]", "");
-        String lastName = faker.name().lastName().toLowerCase().replaceAll("[^a-z]", "");
-        long timestamp = System.currentTimeMillis();
-        return String.format("%s_%s_%d", firstName, lastName, timestamp);
-    }
-
-    /**
-     * Generates a realistic first name.
-     *
-     * @return First name
-     */
-    public String generateFirstName() {
-        return faker.name().firstName();
-    }
-
-    /**
-     * Generates a realistic last name.
-     *
-     * @return Last name
-     */
-    public String generateLastName() {
-        return faker.name().lastName();
-    }
-
-    /**
-     * Generates a realistic phone number in E.164 format.
-     *
-     * @return Phone number (e.g., "+1-555-123-4567")
-     */
-    public String generatePhoneNumber() {
-        return faker.phoneNumber().phoneNumber();
-    }
-
-    /**
-     * Generates a realistic company name.
-     *
-     * @return Company name
-     */
-    public String generateCompanyName() {
+    public static String tenantName() {
         return faker.company().name();
     }
 
-    /**
-     * Generates a realistic street address.
-     *
-     * @return Street address
-     */
-    public String generateStreetAddress() {
-        return faker.address().streetAddress();
+    public static String tenantEmail() {
+        return faker.internet().emailAddress();
     }
 
-    /**
-     * Generates a realistic city name.
-     *
-     * @return City name
-     */
-    public String generateCity() {
-        return faker.address().city();
+    // ==================== USER DATA ====================
+
+    public static String username() {
+        return faker.name().username();
     }
 
-    /**
-     * Gets the default password for test users.
-     *
-     * @return Default password
-     */
-    public String getDefaultPassword() {
-        return DEFAULT_PASSWORD;
+    public static String email() {
+        return faker.internet().emailAddress();
     }
 
-    /**
-     * Generates a unique tenant ID.
-     * Format: word1-word2-word3-timestamp
-     * Follows the same kebab-case pattern as the test tenant ID but with uniqueness.
-     *
-     * @return Unique tenant ID (kebab-case passphrase with timestamp)
-     */
-    public String generateUniqueTenantId() {
-        return generateKebabCasePassphrase();
+    public static String firstName() {
+        return faker.name().firstName();
+    }
+
+    public static String lastName() {
+        return faker.name().lastName();
+    }
+
+    public static String password() {
+        return "Password123@";
+    }
+
+    // ==================== PRODUCT DATA ====================
+
+    public static String productSKU() {
+        return "SKU-" + faker.number().digits(6);
+    }
+
+    public static String productName() {
+        return faker.commerce().productName();
+    }
+
+    public static String productDescription() {
+        return faker.lorem().sentence();
+    }
+
+    public static String barcode() {
+        return BarcodeGenerator.generateEAN13();
+    }
+
+    public static List<String> secondaryBarcodes(int count) {
+        return IntStream.range(0, count)
+                .mapToObj(i -> BarcodeGenerator.generateEAN13())
+                .toList();
+    }
+
+    public static String productCategory() {
+        return faker.options().option("BEVERAGES", "SNACKS", "DAIRY", "FROZEN", "FRESH_PRODUCE");
+    }
+
+    public static String unitOfMeasure() {
+        // Valid UnitOfMeasure enum values: EA, CS, PK, BOX, PAL
+        return faker.options().option("EA", "CS", "PK", "BOX", "PAL");
+    }
+
+    public static double productWeight() {
+        return faker.number().randomDouble(2, 0, 50);
+    }
+
+    // ==================== LOCATION DATA ====================
+
+    public static String warehouseCode() {
+        return "WH-" + faker.number().digits(2);
+    }
+
+    public static String zoneCode() {
+        return "ZONE-" + faker.bothify("?").toUpperCase();
+    }
+
+    public static String aisleCode() {
+        return "AISLE-" + faker.number().digits(2);
+    }
+
+    public static String rackCode() {
+        return "RACK-" + faker.bothify("?#").toUpperCase();
+    }
+
+    public static String binCode() {
+        return "BIN-" + faker.number().digits(2);
+    }
+
+    public static int locationCapacity(String type) {
+        return switch (type) {
+            case "WAREHOUSE" -> faker.number().numberBetween(5000, 20000);
+            case "ZONE" -> faker.number().numberBetween(1000, 5000);
+            case "AISLE" -> faker.number().numberBetween(200, 1000);
+            case "RACK" -> faker.number().numberBetween(50, 200);
+            case "BIN" -> faker.number().numberBetween(10, 50);
+            default -> 100;
+        };
+    }
+
+    // ==================== STOCK DATA ====================
+
+    public static int stockQuantity() {
+        return faker.number().numberBetween(10, 500);
+    }
+
+    public static String batchNumber() {
+        return "BATCH-" + faker.number().digits(6);
+    }
+
+    public static LocalDate manufactureDate() {
+        return LocalDate.now().minusDays(faker.number().numberBetween(15, 90));
+    }
+
+    public static LocalDate expirationDate() {
+        return LocalDate.now().plusMonths(faker.number().numberBetween(3, 12));
+    }
+
+    public static String supplierReference() {
+        return "PO-" + faker.number().digits(5);
+    }
+
+    // ==================== ORDER DATA ====================
+
+    public static String orderId() {
+        return "ORDER-" + faker.number().digits(5);
+    }
+
+    public static String customerId() {
+        return "CUST-" + faker.number().digits(4);
+    }
+
+    // ==================== COMMON ====================
+
+    public static Faker faker() {
+        return faker;
     }
 }
+

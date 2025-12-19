@@ -28,7 +28,7 @@ import jakarta.validation.Valid;
  * Responsibilities: - Create location endpoints - Validate request DTOs - Map DTOs to commands - Return standardized API responses
  */
 @RestController
-@RequestMapping("/api/v1/location-management/locations")
+@RequestMapping("/locations")
 @Tag(name = "Location Commands",
         description = "Location command operations")
 public class LocationCommandController {
