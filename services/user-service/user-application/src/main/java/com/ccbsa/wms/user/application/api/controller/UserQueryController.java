@@ -54,9 +54,59 @@ public class UserQueryController {
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
     public ResponseEntity<ApiResponse<UserResponse>> getUser(
             @PathVariable String id) {
-        GetUserQueryResult result = getUserQueryHandler.handle(mapper.toGetUserQuery(id));
+        // Check if current user is SYSTEM_ADMIN for cross-tenant query support
+        boolean isSystemAdmin = isSystemAdmin();
+        GetUserQueryResult result = getUserQueryHandler.handle(mapper.toGetUserQuery(id, isSystemAdmin));
         UserResponse response = mapper.toUserResponse(result);
         return ApiResponseBuilder.ok(response);
+    }
+
+    /**
+     * Checks if the current user has SYSTEM_ADMIN role.
+     * <p>
+     * Uses Spring Security authorities (set by GatewayRoleHeaderAuthenticationFilter from X-Role header)
+     * rather than reading directly from JWT token, following the gateway-trust architectural pattern.
+     *
+     * @return true if user has SYSTEM_ADMIN role, false otherwise
+     */
+    private boolean isSystemAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext()
+                .getAuthentication();
+        if (authentication == null) {
+            return false;
+        }
+
+        // Check Spring Security authorities (set by GatewayRoleHeaderAuthenticationFilter)
+        // Authorities have ROLE_ prefix, so check for ROLE_SYSTEM_ADMIN
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_SYSTEM_ADMIN"));
+    }
+
+    @GetMapping("/{id}/profile")
+    @Operation(summary = "Get User Profile",
+            description = "Retrieves a user profile by ID (same as GET /users/{id})")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserProfile(
+            @PathVariable String id) {
+        // Delegate to getUser - same functionality, different endpoint for RESTful clarity
+        // Check if current user is SYSTEM_ADMIN for cross-tenant query support
+        boolean isSystemAdmin = isSystemAdmin();
+        GetUserQueryResult result = getUserQueryHandler.handle(mapper.toGetUserQuery(id, isSystemAdmin));
+        UserResponse response = mapper.toUserResponse(result);
+        return ApiResponseBuilder.ok(response);
+    }
+
+    @GetMapping("/{id}/roles")
+    @Operation(summary = "Get User Roles",
+            description = "Retrieves roles for a user")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
+    public ResponseEntity<ApiResponse<List<String>>> getUserRoles(
+            @PathVariable String id) {
+        // Check if current user is SYSTEM_ADMIN for cross-tenant query support
+        boolean isSystemAdmin = isSystemAdmin();
+        GetUserQueryResult result = getUserQueryHandler.handle(mapper.toGetUserQuery(id, isSystemAdmin));
+        List<String> roles = result.getRoles() != null ? result.getRoles() : List.of();
+        return ApiResponseBuilder.ok(roles);
     }
 
     @GetMapping
@@ -70,9 +120,11 @@ public class UserQueryController {
             @RequestParam(required = false,
                     defaultValue = "1") Integer page,
             @RequestParam(required = false,
-                    defaultValue = "20") Integer size) {
+                    defaultValue = "20") Integer size,
+            @RequestParam(required = false) String search) {
         // Extract user roles from SecurityContext
         boolean isTenantAdmin = isTenantAdmin();
+        boolean isSystemAdmin = isSystemAdmin();
 
         // Enforce tenant isolation based on role
         String resolvedTenantId = tenantId;
@@ -92,21 +144,46 @@ public class UserQueryController {
         // Frontend uses 1-indexed pages (page 1 = first page), backend uses 0-indexed for array slicing
         int zeroIndexedPage = page != null && page > 0 ? page - 1 : 0;
 
-        ListUsersQueryResult result = listUsersQueryHandler.handle(mapper.toListUsersQuery(resolvedTenantId, status, zeroIndexedPage, size));
-        List<UserResponse> responses = mapper.toUserResponseList(result);
+        // For SYSTEM_ADMIN querying a specific tenant, we need to set TenantContext
+        // because findByTenantId requires TenantContext to resolve the schema
+        TenantId previousTenantId = null;
+        if (isSystemAdmin && resolvedTenantId != null) {
+            // SYSTEM_ADMIN querying a specific tenant - set TenantContext temporarily
+            previousTenantId = TenantContext.getTenantId();
+            TenantId tenantIdToSet = TenantId.of(resolvedTenantId);
+            TenantContext.setTenantId(tenantIdToSet);
 
-        // Log result for debugging
-        org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserQueryController.class);
-        logger.info("ListUsers query result: tenantId={}, totalCount={}, itemsCount={}, page={}, size={}",
-                resolvedTenantId, result.getTotalCount(), responses.size(), page, size);
+            org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserQueryController.class);
+            logger.debug("Set TenantContext to '{}' for SYSTEM_ADMIN query (previous: {})",
+                    tenantIdToSet.getValue(), previousTenantId != null ? previousTenantId.getValue() : "null");
+        }
 
-        // Build pagination metadata (using 1-indexed page for response)
-        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page != null && page > 0 ? page : 1, size != null && size > 0 ? size : 20, result.getTotalCount());
-        ApiMeta meta = ApiMeta.builder()
-                .pagination(pagination)
-                .build();
+        try {
+            ListUsersQueryResult result = listUsersQueryHandler.handle(mapper.toListUsersQuery(resolvedTenantId, status, zeroIndexedPage, size, search));
+            List<UserResponse> responses = mapper.toUserResponseList(result);
 
-        return ApiResponseBuilder.ok(responses, null, meta);
+            // Log result for debugging
+            org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserQueryController.class);
+            logger.info("ListUsers query result: tenantId={}, totalCount={}, itemsCount={}, page={}, size={}",
+                    resolvedTenantId, result.getTotalCount(), responses.size(), page, size);
+
+            // Build pagination metadata (using 1-indexed page for response)
+            ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page != null && page > 0 ? page : 1, size != null && size > 0 ? size : 20, result.getTotalCount());
+            ApiMeta meta = ApiMeta.builder()
+                    .pagination(pagination)
+                    .build();
+
+            return ApiResponseBuilder.ok(responses, null, meta);
+        } finally {
+            // Restore previous tenant context for SYSTEM_ADMIN
+            if (isSystemAdmin && resolvedTenantId != null) {
+                if (previousTenantId != null) {
+                    TenantContext.setTenantId(previousTenantId);
+                } else {
+                    TenantContext.clear();
+                }
+            }
+        }
     }
 
     /**

@@ -7,6 +7,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -146,7 +147,7 @@ public class KafkaConfig {
      */
     @Bean
     public ProducerFactory<String, Object> producerFactory(
-            @org.springframework.beans.factory.annotation.Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -183,7 +184,7 @@ public class KafkaConfig {
      */
     @Bean
     public JsonSerializer<Object> jsonSerializer(
-            @org.springframework.beans.factory.annotation.Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         JsonSerializer<Object> serializer = new JsonSerializer<>(kafkaObjectMapper);
         // Type information is handled by ObjectMapper configuration, not headers
         serializer.setAddTypeInfo(false);
@@ -205,7 +206,7 @@ public class KafkaConfig {
      */
     @Bean
     public ConsumerFactory<String, Object> consumerFactory(
-            @org.springframework.beans.factory.annotation.Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);

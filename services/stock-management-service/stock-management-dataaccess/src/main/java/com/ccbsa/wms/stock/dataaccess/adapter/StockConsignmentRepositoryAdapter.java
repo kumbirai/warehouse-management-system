@@ -1,6 +1,8 @@
 package com.ccbsa.wms.stock.dataaccess.adapter;
 
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Optional;
 
 import org.hibernate.Session;
@@ -187,8 +189,8 @@ public class StockConsignmentRepositoryAdapter
             justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " +
                     "and properly escaped using escapeIdentifier() method. " +
                     "PostgreSQL SET search_path command does not support parameterized queries.")
-    private void executeSetSearchPath(java.sql.Connection connection, String schemaName) {
-        try (java.sql.Statement stmt = connection.createStatement()) {
+    private void executeSetSearchPath(Connection connection, String schemaName) {
+        try (Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
             logger.debug("Setting search_path to: {}", schemaName);
             stmt.execute(setSchemaSql);

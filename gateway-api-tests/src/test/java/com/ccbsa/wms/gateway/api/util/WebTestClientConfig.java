@@ -1,14 +1,16 @@
 package com.ccbsa.wms.gateway.api.util;
 
+import java.time.Duration;
+
+import javax.net.ssl.SSLException;
+
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.netty.http.client.HttpClient;
-
-import javax.net.ssl.SSLException;
-import java.time.Duration;
 
 /**
  * Configuration for WebTestClient instances.
@@ -27,7 +29,7 @@ public class WebTestClientConfig {
      */
     public static WebTestClient createWebTestClient(String baseUrl) {
         boolean isHttps = baseUrl != null && baseUrl.startsWith("https://");
-        
+
         if (isHttps) {
             try {
                 // Configure SSL context to trust all certificates (for self-signed certs in dev/test)
@@ -73,7 +75,7 @@ public class WebTestClientConfig {
      */
     public static WebTestClient createWebTestClient(String baseUrl, Duration timeout) {
         boolean isHttps = baseUrl != null && baseUrl.startsWith("https://");
-        
+
         if (isHttps) {
             try {
                 // Configure SSL context to trust all certificates (for self-signed certs in dev/test)

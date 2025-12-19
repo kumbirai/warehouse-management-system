@@ -1,6 +1,6 @@
 /**
  * Role definitions aligned with Roles_and_Permissions_Definition.md
- * 
+ *
  * All roles are defined as realm roles in Keycloak and included in JWT tokens.
  * Roles are organized into three categories:
  * 1. System-Level Roles - Cross-tenant administrative access
@@ -107,11 +107,7 @@ export const MANAGER_ROLES = [
 /**
  * Clerk roles (specialized operational roles)
  */
-export const CLERK_ROLES = [
-  STOCK_CLERK,
-  RECONCILIATION_CLERK,
-  RETURNS_CLERK,
-] as const;
+export const CLERK_ROLES = [STOCK_CLERK, RECONCILIATION_CLERK, RETURNS_CLERK] as const;
 
 /**
  * Admin roles (system and tenant administrators)
@@ -148,7 +144,7 @@ export const EXECUTE_OPERATION_ROLES = [
 /**
  * Type for role values
  */
-export type Role = typeof ALL_ROLES[number];
+export type Role = (typeof ALL_ROLES)[number];
 
 /**
  * Type guard to check if a string is a valid role
@@ -156,4 +152,3 @@ export type Role = typeof ALL_ROLES[number];
 export function isRole(value: string): value is Role {
   return ALL_ROLES.includes(value as Role);
 }
-

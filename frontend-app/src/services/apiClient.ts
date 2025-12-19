@@ -1,8 +1,8 @@
-import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import { LoginResponse } from './authService';
-import { logger } from '../utils/logger';
-import { tokenStorage } from './tokenStorage';
-import { correlationIdService } from './correlationIdService';
+import axios, {AxiosError, AxiosInstance, InternalAxiosRequestConfig} from 'axios';
+import {LoginResponse} from './authService';
+import {logger} from '../utils/logger';
+import {tokenStorage} from './tokenStorage';
+import {correlationIdService} from './correlationIdService';
 
 /**
  * Extended AxiosInstance with internal refresh promise tracking.
@@ -127,21 +127,23 @@ apiClient.interceptors.response.use(
         try {
           // Try to serialize response data, handling circular references
           if (typeof error.response.data === 'object' && error.response.data !== null) {
-            errorResponseData = JSON.parse(JSON.stringify(error.response.data, (key, value) => {
-              // Handle circular references
-              if (key === 'config' && typeof value === 'object') {
-                return '[Circular]';
-              }
-              // Handle Error objects
-              if (value instanceof Error) {
-                return {
-                  name: value.name,
-                  message: value.message,
-                  stack: value.stack,
-                };
-              }
-              return value;
-            }));
+            errorResponseData = JSON.parse(
+              JSON.stringify(error.response.data, (key, value) => {
+                // Handle circular references
+                if (key === 'config' && typeof value === 'object') {
+                  return '[Circular]';
+                }
+                // Handle Error objects
+                if (value instanceof Error) {
+                  return {
+                    name: value.name,
+                    message: value.message,
+                    stack: value.stack,
+                  };
+                }
+                return value;
+              })
+            );
           } else {
             errorResponseData = error.response.data;
           }

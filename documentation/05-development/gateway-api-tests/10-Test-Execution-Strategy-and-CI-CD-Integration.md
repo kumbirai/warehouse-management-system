@@ -1,6 +1,7 @@
 # Test Execution Strategy and CI/CD Integration Plan
 
 ## Overview
+
 This document provides comprehensive strategies for test execution, CI/CD integration, test reporting, and continuous quality assurance for the gateway API integration tests.
 
 ---
@@ -592,11 +593,13 @@ mvn allure:serve
 ### Test Data Cleanup Strategy
 
 #### Option 1: No Cleanup (Manual Inspection)
+
 - Leave test data in database
 - Useful for debugging failed tests
 - Requires manual cleanup
 
 #### Option 2: Cleanup After Each Test
+
 ```java
 @AfterEach
 public void cleanupTestData() {
@@ -608,6 +611,7 @@ public void cleanupTestData() {
 ```
 
 #### Option 3: Cleanup After All Tests
+
 ```java
 @AfterAll
 public static void cleanupAllTestData() {
@@ -618,6 +622,7 @@ public static void cleanupAllTestData() {
 ```
 
 #### Option 4: Database Reset (Test Containers)
+
 ```java
 @Container
 static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")

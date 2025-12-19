@@ -33,7 +33,8 @@
 
 ### Purpose
 
-This document defines all roles and permissions required for the Warehouse Management System. Roles are designed to support multi-tenant operations while ensuring proper access control across all system capabilities.
+This document defines all roles and permissions required for the Warehouse Management System. Roles are designed to support multi-tenant operations while ensuring proper access
+control across all system capabilities.
 
 ### Role Categories
 
@@ -87,6 +88,7 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Cross-tenant (can access all tenants)
 
 **Key Responsibilities:**
+
 - Manage all tenants (create, activate, deactivate, suspend)
 - Manage users across all tenants
 - Configure system-wide settings
@@ -95,6 +97,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - Override tenant-level restrictions when necessary
 
 **Permissions:**
+
 - `tenant:*` - Full tenant management
 - `user:*` - Full user management across all tenants
 - `system:*` - System configuration and monitoring
@@ -102,17 +105,20 @@ SYSTEM_ADMIN (Cross-tenant)
 - `audit:*` - Access to audit logs across all tenants
 
 **Service Access:**
+
 - **Tenant Service:** Full access (all tenants)
 - **User Service:** Full access (all tenants)
 - **Integration Service:** Full access
 - **All Other Services:** Read-only access (for monitoring)
 
 **Keycloak Configuration:**
+
 - Realm role: `SYSTEM_ADMIN`
 - Can bypass tenant context validation
 - Special handling in `TenantContextInterceptor`
 
 **Assignment Rules:**
+
 - Only assigned by existing SYSTEM_ADMIN users
 - Requires explicit approval workflow
 - Limited to IT/Operations staff
@@ -128,6 +134,7 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Single tenant (own tenant only)
 
 **Key Responsibilities:**
+
 - Manage users within own tenant
 - Configure tenant-specific settings
 - Assign roles to users within tenant
@@ -136,6 +143,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - Approve critical operations (if required)
 
 **Permissions:**
+
 - `tenant:read` - View tenant information
 - `tenant:write` - Update tenant configuration (limited)
 - `user:*` - Full user management within tenant
@@ -144,15 +152,18 @@ SYSTEM_ADMIN (Cross-tenant)
 - `*:write` - Write access to all tenant operations (delegated to managers)
 
 **Service Access:**
+
 - **User Service:** Full access (own tenant only)
 - **Tenant Service:** Read access (own tenant only)
 - **All Other Services:** Full access (own tenant only)
 
 **Keycloak Configuration:**
+
 - Realm role: `TENANT_ADMIN`
 - Tenant ID must match user's tenant_id attribute
 
 **Assignment Rules:**
+
 - Assigned by SYSTEM_ADMIN or existing TENANT_ADMIN
 - One TENANT_ADMIN per tenant recommended (but not enforced)
 
@@ -165,6 +176,7 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Single tenant (own tenant only)
 
 **Key Responsibilities:**
+
 - Oversee warehouse operations
 - Manage picking operations
 - Monitor stock levels and restock requests
@@ -175,6 +187,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - Assign tasks to operational staff
 
 **Permissions:**
+
 - `stock:*` - Full stock management
 - `location:*` - Full location management
 - `picking:*` - Full picking operations management
@@ -184,6 +197,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - `user:read` - View users within tenant (for task assignment)
 
 **Service Access:**
+
 - **Stock Management Service:** Full access
 - **Location Management Service:** Full access
 - **Picking Service:** Full access
@@ -193,10 +207,12 @@ SYSTEM_ADMIN (Cross-tenant)
 - **User Service:** Read access (own tenant only)
 
 **Keycloak Configuration:**
+
 - Realm role: `WAREHOUSE_MANAGER`
 - Tenant ID must match user's tenant_id attribute
 
 **Assignment Rules:**
+
 - Assigned by TENANT_ADMIN or SYSTEM_ADMIN
 - Multiple WAREHOUSE_MANAGER users per tenant allowed
 
@@ -209,6 +225,7 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Single tenant (own tenant only)
 
 **Key Responsibilities:**
+
 - Manage stock consignment receipt and confirmation
 - Classify stock by expiration dates
 - Monitor stock levels and thresholds
@@ -218,6 +235,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - Coordinate with integration service for D365 sync
 
 **Permissions:**
+
 - `stock:consignment:*` - Full consignment management
 - `stock:classification:*` - Stock classification management
 - `stock:level:*` - Stock level management
@@ -227,16 +245,19 @@ SYSTEM_ADMIN (Cross-tenant)
 - `location:read` - Read location information
 
 **Service Access:**
+
 - **Stock Management Service:** Full access
 - **Product Service:** Read access
 - **Location Management Service:** Read access
 - **Integration Service:** Read access (for D365 sync status)
 
 **Keycloak Configuration:**
+
 - Realm role: `STOCK_MANAGER`
 - Tenant ID must match user's tenant_id attribute
 
 **Assignment Rules:**
+
 - Assigned by TENANT_ADMIN, WAREHOUSE_MANAGER, or SYSTEM_ADMIN
 
 ---
@@ -248,6 +269,7 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Single tenant (own tenant only)
 
 **Key Responsibilities:**
+
 - Manage warehouse location master data
 - Assign locations to stock based on FEFO principles
 - Track and manage stock movements
@@ -257,6 +279,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - Optimize location assignments
 
 **Permissions:**
+
 - `location:*` - Full location management
 - `location:movement:*` - Stock movement management
 - `location:capacity:*` - Location capacity management
@@ -265,15 +288,18 @@ SYSTEM_ADMIN (Cross-tenant)
 - `product:read` - Read product information
 
 **Service Access:**
+
 - **Location Management Service:** Full access
 - **Stock Management Service:** Read access
 - **Product Service:** Read access
 
 **Keycloak Configuration:**
+
 - Realm role: `LOCATION_MANAGER`
 - Tenant ID must match user's tenant_id attribute
 
 **Assignment Rules:**
+
 - Assigned by TENANT_ADMIN, WAREHOUSE_MANAGER, or SYSTEM_ADMIN
 
 ---
@@ -285,6 +311,7 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Single tenant (own tenant only)
 
 **Key Responsibilities:**
+
 - Generate electronic stock count worksheets
 - Manage stock count execution
 - Review and approve stock count variances
@@ -294,6 +321,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - Approve variance adjustments
 
 **Permissions:**
+
 - `reconciliation:*` - Full reconciliation management
 - `reconciliation:count:*` - Stock count management
 - `reconciliation:variance:*` - Variance approval
@@ -303,16 +331,19 @@ SYSTEM_ADMIN (Cross-tenant)
 - `report:reconciliation:*` - Reconciliation reports
 
 **Service Access:**
+
 - **Reconciliation Service:** Full access
 - **Stock Management Service:** Read access
 - **Location Management Service:** Read access
 - **Integration Service:** Read access (for D365 sync)
 
 **Keycloak Configuration:**
+
 - Realm role: `RECONCILIATION_MANAGER`
 - Tenant ID must match user's tenant_id attribute
 
 **Assignment Rules:**
+
 - Assigned by TENANT_ADMIN, WAREHOUSE_MANAGER, or SYSTEM_ADMIN
 
 ---
@@ -324,6 +355,7 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Single tenant (own tenant only)
 
 **Key Responsibilities:**
+
 - Process partial order acceptances
 - Process full order returns
 - Handle damage-in-transit returns
@@ -333,6 +365,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - Manage return workflows
 
 **Permissions:**
+
 - `returns:*` - Full returns management
 - `returns:partial:*` - Partial order acceptance
 - `returns:full:*` - Full order returns
@@ -343,6 +376,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - `picking:read` - Read picking information
 
 **Service Access:**
+
 - **Returns Service:** Full access
 - **Stock Management Service:** Read access
 - **Location Management Service:** Read access
@@ -350,10 +384,12 @@ SYSTEM_ADMIN (Cross-tenant)
 - **Integration Service:** Read access (for D365 sync)
 
 **Keycloak Configuration:**
+
 - Realm role: `RETURNS_MANAGER`
 - Tenant ID must match user's tenant_id attribute
 
 **Assignment Rules:**
+
 - Assigned by TENANT_ADMIN, WAREHOUSE_MANAGER, or SYSTEM_ADMIN
 
 ---
@@ -367,6 +403,7 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Single tenant (own tenant only)
 
 **Key Responsibilities:**
+
 - Execute picking operations
 - Perform stock movements
 - Execute stock counts
@@ -376,6 +413,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - View operational data
 
 **Permissions:**
+
 - `picking:execute` - Execute picking tasks
 - `stock:movement:execute` - Execute stock movements
 - `reconciliation:count:execute` - Execute stock counts
@@ -384,6 +422,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - `barcode:scan` - Barcode scanning
 
 **Service Access:**
+
 - **Picking Service:** Execute operations
 - **Stock Management Service:** Read and limited write
 - **Location Management Service:** Read and limited write
@@ -392,10 +431,12 @@ SYSTEM_ADMIN (Cross-tenant)
 - **Product Service:** Read access
 
 **Keycloak Configuration:**
+
 - Realm role: `OPERATOR`
 - Tenant ID must match user's tenant_id attribute
 
 **Assignment Rules:**
+
 - Assigned by TENANT_ADMIN, WAREHOUSE_MANAGER, or SYSTEM_ADMIN
 - Most common role for warehouse staff
 
@@ -408,6 +449,7 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Single tenant (own tenant only)
 
 **Key Responsibilities:**
+
 - Execute picking tasks from picking lists
 - Scan product and location barcodes
 - Update picking status
@@ -416,6 +458,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - Report picking issues
 
 **Permissions:**
+
 - `picking:read` - Read picking lists and tasks
 - `picking:execute` - Execute picking operations
 - `picking:update` - Update picking status
@@ -424,16 +467,19 @@ SYSTEM_ADMIN (Cross-tenant)
 - `barcode:scan` - Barcode scanning
 
 **Service Access:**
+
 - **Picking Service:** Execute operations
 - **Location Management Service:** Read access
 - **Product Service:** Read access
 - **Stock Management Service:** Read access (for stock availability)
 
 **Keycloak Configuration:**
+
 - Realm role: `PICKER`
 - Tenant ID must match user's tenant_id attribute
 
 **Assignment Rules:**
+
 - Assigned by TENANT_ADMIN, WAREHOUSE_MANAGER, or SYSTEM_ADMIN
 - Can be combined with other operational roles
 
@@ -446,6 +492,7 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Single tenant (own tenant only)
 
 **Key Responsibilities:**
+
 - Receive stock consignments
 - Confirm stock receipt
 - Classify stock by expiration dates
@@ -454,6 +501,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - Scan product and location barcodes
 
 **Permissions:**
+
 - `stock:consignment:receive` - Receive stock consignments
 - `stock:consignment:confirm` - Confirm stock receipt
 - `stock:classification:assign` - Assign stock classification
@@ -464,15 +512,18 @@ SYSTEM_ADMIN (Cross-tenant)
 - `barcode:scan` - Barcode scanning
 
 **Service Access:**
+
 - **Stock Management Service:** Limited write access
 - **Location Management Service:** Read access
 - **Product Service:** Read access
 
 **Keycloak Configuration:**
+
 - Realm role: `STOCK_CLERK`
 - Tenant ID must match user's tenant_id attribute
 
 **Assignment Rules:**
+
 - Assigned by TENANT_ADMIN, WAREHOUSE_MANAGER, STOCK_MANAGER, or SYSTEM_ADMIN
 
 ---
@@ -484,6 +535,7 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Single tenant (own tenant only)
 
 **Key Responsibilities:**
+
 - Execute stock counts using electronic worksheets
 - Scan location and product barcodes
 - Enter count quantities
@@ -491,6 +543,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - Report count discrepancies
 
 **Permissions:**
+
 - `reconciliation:count:execute` - Execute stock counts
 - `reconciliation:count:enter` - Enter count quantities
 - `reconciliation:count:complete` - Complete count worksheets
@@ -499,16 +552,19 @@ SYSTEM_ADMIN (Cross-tenant)
 - `barcode:scan` - Barcode scanning
 
 **Service Access:**
+
 - **Reconciliation Service:** Execute counts
 - **Location Management Service:** Read access
 - **Product Service:** Read access
 - **Stock Management Service:** Read access
 
 **Keycloak Configuration:**
+
 - Realm role: `RECONCILIATION_CLERK`
 - Tenant ID must match user's tenant_id attribute
 
 **Assignment Rules:**
+
 - Assigned by TENANT_ADMIN, WAREHOUSE_MANAGER, RECONCILIATION_MANAGER, or SYSTEM_ADMIN
 
 ---
@@ -520,6 +576,7 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Single tenant (own tenant only)
 
 **Key Responsibilities:**
+
 - Process returned orders
 - Scan returned products
 - Record return reasons
@@ -528,6 +585,7 @@ SYSTEM_ADMIN (Cross-tenant)
 - Scan barcodes
 
 **Permissions:**
+
 - `returns:process` - Process returns
 - `returns:record` - Record return information
 - `returns:location:assign` - Assign return locations
@@ -537,16 +595,19 @@ SYSTEM_ADMIN (Cross-tenant)
 - `barcode:scan` - Barcode scanning
 
 **Service Access:**
+
 - **Returns Service:** Process returns
 - **Location Management Service:** Read access
 - **Product Service:** Read access
 - **Stock Management Service:** Read access
 
 **Keycloak Configuration:**
+
 - Realm role: `RETURNS_CLERK`
 - Tenant ID must match user's tenant_id attribute
 
 **Assignment Rules:**
+
 - Assigned by TENANT_ADMIN, WAREHOUSE_MANAGER, RETURNS_MANAGER, or SYSTEM_ADMIN
 
 ---
@@ -558,6 +619,7 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Single tenant (own tenant only)
 
 **Key Responsibilities:**
+
 - View stock levels and information
 - View location information
 - View picking lists and status
@@ -567,18 +629,22 @@ SYSTEM_ADMIN (Cross-tenant)
 - View product master data
 
 **Permissions:**
+
 - `*:read` - Read access to all tenant data
 - `report:view` - View reports
 - No write or execute permissions
 
 **Service Access:**
+
 - **All Services:** Read-only access
 
 **Keycloak Configuration:**
+
 - Realm role: `VIEWER`
 - Tenant ID must match user's tenant_id attribute
 
 **Assignment Rules:**
+
 - Assigned by TENANT_ADMIN, WAREHOUSE_MANAGER, or SYSTEM_ADMIN
 - Suitable for auditors, analysts, or read-only users
 
@@ -591,25 +657,30 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** Single tenant (own tenant only)
 
 **Key Responsibilities:**
+
 - View own profile
 - Update own profile
 - View basic system information
 - Access system (with limited functionality)
 
 **Permissions:**
+
 - `user:profile:read` - Read own profile
 - `user:profile:update` - Update own profile
 - `system:read` - Read basic system information
 
 **Service Access:**
+
 - **User Service:** Own profile only
 - **All Other Services:** No access (or very limited read access)
 
 **Keycloak Configuration:**
+
 - Realm role: `USER`
 - Tenant ID must match user's tenant_id attribute
 
 **Assignment Rules:**
+
 - Default role for all users
 - Can be combined with other roles
 - Assigned automatically on user creation
@@ -623,27 +694,32 @@ SYSTEM_ADMIN (Cross-tenant)
 **Scope:** System-wide (no tenant restriction)
 
 **Key Responsibilities:**
+
 - Service-to-service API calls
 - System integration operations
 - Internal service communication
 - Automated system operations
 
 **Permissions:**
+
 - `tenant:read` - Read tenant information (for service operations)
 - `integration:*` - Integration service operations
 - Service-specific permissions as needed
 
 **Service Access:**
+
 - **All Services:** Limited access for service-to-service communication
 - **Tenant Service:** Read access (for realm lookup)
 - **Integration Service:** Full access
 
 **Keycloak Configuration:**
+
 - Realm role: `SERVICE`
 - No tenant ID required (system-level role)
 - Used by service accounts and integration clients
 
 **Assignment Rules:**
+
 - Assigned by SYSTEM_ADMIN only
 - Used for service accounts, not human users
 - Required for inter-service communication
@@ -657,6 +733,7 @@ SYSTEM_ADMIN (Cross-tenant)
 Permissions follow the format: `{resource}:{action}` or `{resource}:{sub-resource}:{action}`
 
 **Examples:**
+
 - `stock:read` - Read stock information
 - `stock:write` - Write stock information
 - `stock:consignment:receive` - Receive stock consignments
@@ -713,25 +790,26 @@ Permissions are enforced at multiple layers:
 
 ### Service Access Matrix
 
-| Role | Tenant Service | User Service | Stock Management | Location Management | Product Service | Picking Service | Returns Service | Reconciliation Service | Integration Service | Notification Service |
-|------|---------------|--------------|------------------|---------------------|-----------------|-----------------|----------------|------------------------|---------------------|---------------------|
-| SYSTEM_ADMIN | Full (all) | Full (all) | Read (all) | Read (all) | Read (all) | Read (all) | Read (all) | Read (all) | Full | Read |
-| TENANT_ADMIN | Read (own) | Full (own) | Full (own) | Full (own) | Read (own) | Full (own) | Full (own) | Full (own) | Read | Read |
-| WAREHOUSE_MANAGER | - | Read (own) | Full (own) | Full (own) | Read (own) | Full (own) | Full (own) | Full (own) | Read | Read |
-| STOCK_MANAGER | - | - | Full (own) | Read (own) | Read (own) | - | - | - | Read | Read |
-| LOCATION_MANAGER | - | - | Read (own) | Full (own) | Read (own) | - | - | - | - | - |
-| RECONCILIATION_MANAGER | - | - | Read (own) | Read (own) | Read (own) | - | - | Full (own) | Read | Read |
-| RETURNS_MANAGER | - | - | Read (own) | Read (own) | Read (own) | Read (own) | Full (own) | - | Read | Read |
-| OPERATOR | - | - | Limited (own) | Limited (own) | Read (own) | Execute (own) | Process (own) | Execute (own) | - | - |
-| PICKER | - | - | Read (own) | Read (own) | Read (own) | Execute (own) | - | - | - | - |
-| STOCK_CLERK | - | - | Limited (own) | Read (own) | Read (own) | - | - | - | - | - |
-| RECONCILIATION_CLERK | - | - | Read (own) | Read (own) | Read (own) | - | - | Execute (own) | - | - |
-| RETURNS_CLERK | - | - | Read (own) | Read (own) | Read (own) | - | Process (own) | - | - | - |
-| VIEWER | - | - | Read (own) | Read (own) | Read (own) | Read (own) | Read (own) | Read (own) | - | - |
-| USER | - | Own profile | - | - | - | - | - | - | - | - |
-| SERVICE | Read (all) | - | - | - | - | - | - | - | Full | - |
+| Role                   | Tenant Service | User Service | Stock Management | Location Management | Product Service | Picking Service | Returns Service | Reconciliation Service | Integration Service | Notification Service |
+|------------------------|----------------|--------------|------------------|---------------------|-----------------|-----------------|-----------------|------------------------|---------------------|----------------------|
+| SYSTEM_ADMIN           | Full (all)     | Full (all)   | Read (all)       | Read (all)          | Read (all)      | Read (all)      | Read (all)      | Read (all)             | Full                | Read                 |
+| TENANT_ADMIN           | Read (own)     | Full (own)   | Full (own)       | Full (own)          | Read (own)      | Full (own)      | Full (own)      | Full (own)             | Read                | Read                 |
+| WAREHOUSE_MANAGER      | -              | Read (own)   | Full (own)       | Full (own)          | Read (own)      | Full (own)      | Full (own)      | Full (own)             | Read                | Read                 |
+| STOCK_MANAGER          | -              | -            | Full (own)       | Read (own)          | Read (own)      | -               | -               | -                      | Read                | Read                 |
+| LOCATION_MANAGER       | -              | -            | Read (own)       | Full (own)          | Read (own)      | -               | -               | -                      | -                   | -                    |
+| RECONCILIATION_MANAGER | -              | -            | Read (own)       | Read (own)          | Read (own)      | -               | -               | Full (own)             | Read                | Read                 |
+| RETURNS_MANAGER        | -              | -            | Read (own)       | Read (own)          | Read (own)      | Read (own)      | Full (own)      | -                      | Read                | Read                 |
+| OPERATOR               | -              | -            | Limited (own)    | Limited (own)       | Read (own)      | Execute (own)   | Process (own)   | Execute (own)          | -                   | -                    |
+| PICKER                 | -              | -            | Read (own)       | Read (own)          | Read (own)      | Execute (own)   | -               | -                      | -                   | -                    |
+| STOCK_CLERK            | -              | -            | Limited (own)    | Read (own)          | Read (own)      | -               | -               | -                      | -                   | -                    |
+| RECONCILIATION_CLERK   | -              | -            | Read (own)       | Read (own)          | Read (own)      | -               | -               | Execute (own)          | -                   | -                    |
+| RETURNS_CLERK          | -              | -            | Read (own)       | Read (own)          | Read (own)      | -               | Process (own)   | -                      | -                   | -                    |
+| VIEWER                 | -              | -            | Read (own)       | Read (own)          | Read (own)      | Read (own)      | Read (own)      | Read (own)             | -                   | -                    |
+| USER                   | -              | Own profile  | -                | -                   | -               | -               | -               | -                      | -                   | -                    |
+| SERVICE                | Read (all)     | -            | -                | -                   | -               | -               | -               | -                      | Full                | -                    |
 
 **Legend:**
+
 - **Full** - Full read/write/execute access
 - **Read** - Read-only access
 - **Limited** - Limited write access (specific operations only)
@@ -770,6 +848,7 @@ Users can have multiple roles assigned:
 - SYSTEM_ADMIN and TENANT_ADMIN are typically exclusive
 
 **Example Combinations:**
+
 - PICKER + STOCK_CLERK (warehouse worker who picks and receives stock)
 - OPERATOR + VIEWER (operator who also needs read access to reports)
 - USER + VIEWER (read-only user with profile access)
@@ -813,6 +892,7 @@ All roles must be created as **realm roles** in Keycloak:
 **Role Type:** Realm Role
 
 **Role Attributes:**
+
 - Role name must match exactly (case-sensitive)
 - Roles are included in JWT token `realm_access.roles` claim
 - Roles are validated by gateway and services
@@ -947,23 +1027,23 @@ public void handleUserRoleAssigned(UserRoleAssignedEvent event) {
 
 ### Quick Reference
 
-| Role | Level | Scope | Primary Function |
-|------|-------|-------|------------------|
-| SYSTEM_ADMIN | System | Cross-tenant | System administration |
-| TENANT_ADMIN | Tenant | Single tenant | Tenant administration |
-| WAREHOUSE_MANAGER | Tenant | Single tenant | Warehouse operations management |
-| STOCK_MANAGER | Tenant | Single tenant | Stock management |
-| LOCATION_MANAGER | Tenant | Single tenant | Location management |
-| RECONCILIATION_MANAGER | Tenant | Single tenant | Reconciliation management |
-| RETURNS_MANAGER | Tenant | Single tenant | Returns management |
-| OPERATOR | Tenant | Single tenant | General operations |
-| PICKER | Tenant | Single tenant | Picking operations |
-| STOCK_CLERK | Tenant | Single tenant | Stock receipt operations |
-| RECONCILIATION_CLERK | Tenant | Single tenant | Stock counting operations |
-| RETURNS_CLERK | Tenant | Single tenant | Returns processing |
-| VIEWER | Tenant | Single tenant | Read-only access |
-| USER | Tenant | Single tenant | Basic user access |
-| SERVICE | System | System-wide | Service-to-service communication |
+| Role                   | Level  | Scope         | Primary Function                 |
+|------------------------|--------|---------------|----------------------------------|
+| SYSTEM_ADMIN           | System | Cross-tenant  | System administration            |
+| TENANT_ADMIN           | Tenant | Single tenant | Tenant administration            |
+| WAREHOUSE_MANAGER      | Tenant | Single tenant | Warehouse operations management  |
+| STOCK_MANAGER          | Tenant | Single tenant | Stock management                 |
+| LOCATION_MANAGER       | Tenant | Single tenant | Location management              |
+| RECONCILIATION_MANAGER | Tenant | Single tenant | Reconciliation management        |
+| RETURNS_MANAGER        | Tenant | Single tenant | Returns management               |
+| OPERATOR               | Tenant | Single tenant | General operations               |
+| PICKER                 | Tenant | Single tenant | Picking operations               |
+| STOCK_CLERK            | Tenant | Single tenant | Stock receipt operations         |
+| RECONCILIATION_CLERK   | Tenant | Single tenant | Stock counting operations        |
+| RETURNS_CLERK          | Tenant | Single tenant | Returns processing               |
+| VIEWER                 | Tenant | Single tenant | Read-only access                 |
+| USER                   | Tenant | Single tenant | Basic user access                |
+| SERVICE                | System | System-wide   | Service-to-service communication |
 
 ---
 

@@ -8,17 +8,6 @@ import com.ccbsa.wms.gateway.api.dto.CreateUserRequest;
  */
 public class UserTestDataBuilder {
 
-    public static CreateUserRequest buildCreateUserRequest(String tenantId) {
-        return CreateUserRequest.builder()
-                .tenantId(tenantId)
-                .username(TestData.username())
-                .emailAddress(TestData.email())
-                .password(TestData.password())
-                .firstName(TestData.firstName())
-                .lastName(TestData.lastName())
-                .build();
-    }
-
     public static CreateUserRequest buildCreateUserRequestWithUsername(String username, String tenantId) {
         return CreateUserRequest.builder()
                 .tenantId(tenantId)
@@ -33,6 +22,17 @@ public class UserTestDataBuilder {
     public static CreateUserRequest buildCreateUserRequestWithRole(String tenantId, String role) {
         // Note: Role assignment happens after user creation
         return buildCreateUserRequest(tenantId);
+    }
+
+    public static CreateUserRequest buildCreateUserRequest(String tenantId) {
+        return CreateUserRequest.builder()
+                .tenantId(tenantId)
+                .username(TestData.username())
+                .emailAddress(TestData.email())
+                .password(TestData.password())
+                .firstName(TestData.firstName())
+                .lastName(TestData.lastName())
+                .build();
     }
 
     public static AssignRoleRequest buildAssignRoleRequest(String roleName) {

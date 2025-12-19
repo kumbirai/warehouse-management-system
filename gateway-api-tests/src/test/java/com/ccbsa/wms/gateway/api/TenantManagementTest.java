@@ -1,5 +1,14 @@
 package com.ccbsa.wms.gateway.api;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
 import com.ccbsa.wms.gateway.api.dto.CreateTenantRequest;
@@ -7,10 +16,6 @@ import com.ccbsa.wms.gateway.api.dto.CreateTenantResponse;
 import com.ccbsa.wms.gateway.api.dto.TenantResponse;
 import com.ccbsa.wms.gateway.api.fixture.TenantTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.TestData;
-import org.junit.jupiter.api.*;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.test.web.reactive.server.EntityExchangeResult;
-import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,13 +48,14 @@ public class TenantManagementTest extends BaseIntegrationTest {
         // Assert
         EntityExchangeResult<ApiResponse<CreateTenantResponse>> exchangeResult = response
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateTenantResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         CreateTenantResponse tenant = apiResponse.getData();
         assertThat(tenant).isNotNull();
         assertThat(tenant.getTenantId()).isNotBlank();
@@ -79,14 +85,15 @@ public class TenantManagementTest extends BaseIntegrationTest {
                 .name("Different Name") // Different name
                 .emailAddress(TestData.tenantEmail())
                 .build();
-        
+
         EntityExchangeResult<ApiResponse<CreateTenantResponse>> exchangeResult = authenticatedPost(
                 "/api/v1/tenants",
                 systemAdminAuth.getAccessToken(),
                 duplicateRequest
         ).exchange()
                 .expectStatus().isCreated() // Service returns 201 even for duplicates
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {
+                })
                 .returnResult();
 
         // Assert - Check that the response indicates failure
@@ -163,13 +170,14 @@ public class TenantManagementTest extends BaseIntegrationTest {
                 request
         ).exchange()
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateTenantResponse> createApiResponse = createExchangeResult.getResponseBody();
         assertThat(createApiResponse).isNotNull();
         assertThat(createApiResponse.isSuccess()).isTrue();
-        
+
         CreateTenantResponse createdTenant = createApiResponse.getData();
         assertThat(createdTenant).isNotNull();
 
@@ -182,13 +190,14 @@ public class TenantManagementTest extends BaseIntegrationTest {
         // Assert
         EntityExchangeResult<ApiResponse<TenantResponse>> getExchangeResult = response
                 .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<TenantResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<TenantResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<TenantResponse> getApiResponse = getExchangeResult.getResponseBody();
         assertThat(getApiResponse).isNotNull();
         assertThat(getApiResponse.isSuccess()).isTrue();
-        
+
         TenantResponse tenant = getApiResponse.getData();
         assertThat(tenant).isNotNull();
         assertThat(tenant.getTenantId()).isEqualTo(createdTenant.getTenantId());
@@ -220,13 +229,14 @@ public class TenantManagementTest extends BaseIntegrationTest {
                 request
         ).exchange()
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateTenantResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         CreateTenantResponse tenant = apiResponse.getData();
         assertThat(tenant).isNotNull();
 
@@ -252,13 +262,14 @@ public class TenantManagementTest extends BaseIntegrationTest {
                 request
         ).exchange()
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateTenantResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         CreateTenantResponse tenant = apiResponse.getData();
         assertThat(tenant).isNotNull();
 
@@ -289,13 +300,14 @@ public class TenantManagementTest extends BaseIntegrationTest {
                 request
         ).exchange()
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateTenantResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         CreateTenantResponse tenant = apiResponse.getData();
         assertThat(tenant).isNotNull();
 

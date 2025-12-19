@@ -1,9 +1,18 @@
 package com.ccbsa.wms.gateway.api;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
 import com.ccbsa.wms.gateway.api.dto.CreateConsignmentRequest;
-import com.ccbsa.wms.gateway.api.dto.CreateConsignmentResponse;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationResponse;
 import com.ccbsa.wms.gateway.api.dto.CreatePickingTaskRequest;
@@ -14,10 +23,6 @@ import com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.PickingTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.ProductTestDataBuilder;
-import org.junit.jupiter.api.*;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.test.web.reactive.server.EntityExchangeResult;
-import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,9 +55,10 @@ public class PickingServiceTest extends BaseIntegrationTest {
                     productRequest
             ).exchange()
                     .expectStatus().isCreated()
-                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {})
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                    })
                     .returnResult();
-            
+
             ApiResponse<CreateProductResponse> productApiResponse = productExchangeResult.getResponseBody();
             assertThat(productApiResponse).isNotNull();
             assertThat(productApiResponse.isSuccess()).isTrue();
@@ -68,9 +74,10 @@ public class PickingServiceTest extends BaseIntegrationTest {
                     locationRequest
             ).exchange()
                     .expectStatus().isCreated()
-                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {})
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
                     .returnResult();
-            
+
             ApiResponse<CreateLocationResponse> locationApiResponse = locationExchangeResult.getResponseBody();
             assertThat(locationApiResponse).isNotNull();
             assertThat(locationApiResponse.isSuccess()).isTrue();
@@ -113,13 +120,14 @@ public class PickingServiceTest extends BaseIntegrationTest {
         // Assert
         EntityExchangeResult<ApiResponse<CreatePickingTaskResponse>> exchangeResult = response
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreatePickingTaskResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreatePickingTaskResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreatePickingTaskResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         CreatePickingTaskResponse task = apiResponse.getData();
         assertThat(task).isNotNull();
         assertThat(task.getTaskId()).isNotBlank();

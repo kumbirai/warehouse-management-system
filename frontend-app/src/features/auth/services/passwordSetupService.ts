@@ -47,7 +47,7 @@ export const validatePasswordStrength = (
     return { isValid: false, error: 'Password must contain at least one number' };
   }
 
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
     return { isValid: false, error: 'Password must contain at least one special character' };
   }
 
@@ -103,8 +103,9 @@ export const setupPassword = async (
       success: true,
       message: 'Password set successfully',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Password setup failed', error);
-    throw new Error(error.response?.data?.message || error.message || 'Password setup failed');
+    const errorMessage = error instanceof Error ? error.message : 'Password setup failed';
+    throw new Error(errorMessage);
   }
 };

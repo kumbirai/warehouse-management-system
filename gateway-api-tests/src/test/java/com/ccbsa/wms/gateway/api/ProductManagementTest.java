@@ -1,5 +1,15 @@
 package com.ccbsa.wms.gateway.api;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
 import com.ccbsa.wms.gateway.api.dto.CreateProductRequest;
@@ -7,10 +17,6 @@ import com.ccbsa.wms.gateway.api.dto.CreateProductResponse;
 import com.ccbsa.wms.gateway.api.dto.ProductResponse;
 import com.ccbsa.wms.gateway.api.fixture.ProductTestDataBuilder;
 import com.ccbsa.wms.gateway.api.util.BarcodeGenerator;
-import org.junit.jupiter.api.*;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.test.web.reactive.server.EntityExchangeResult;
-import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,13 +59,14 @@ public class ProductManagementTest extends BaseIntegrationTest {
         // Assert
         EntityExchangeResult<ApiResponse<CreateProductResponse>> exchangeResult = response
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateProductResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         CreateProductResponse product = apiResponse.getData();
         assertThat(product).isNotNull();
         assertThat(product.getProductId()).isNotBlank();
@@ -84,13 +91,14 @@ public class ProductManagementTest extends BaseIntegrationTest {
         // Assert
         EntityExchangeResult<ApiResponse<CreateProductResponse>> exchangeResult = response
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateProductResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         CreateProductResponse product = apiResponse.getData();
         assertThat(product).isNotNull();
         assertThat(product.getPrimaryBarcode()).isEqualTo(request.getPrimaryBarcode());
@@ -175,13 +183,14 @@ public class ProductManagementTest extends BaseIntegrationTest {
                 request
         ).exchange()
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateProductResponse> createApiResponse = createExchangeResult.getResponseBody();
         assertThat(createApiResponse).isNotNull();
         assertThat(createApiResponse.isSuccess()).isTrue();
-        
+
         CreateProductResponse createdProduct = createApiResponse.getData();
         assertThat(createdProduct).isNotNull();
 
@@ -195,13 +204,14 @@ public class ProductManagementTest extends BaseIntegrationTest {
         // Assert
         EntityExchangeResult<ApiResponse<ProductResponse>> getExchangeResult = response
                 .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<ProductResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<ProductResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<ProductResponse> getApiResponse = getExchangeResult.getResponseBody();
         assertThat(getApiResponse).isNotNull();
         assertThat(getApiResponse.isSuccess()).isTrue();
-        
+
         ProductResponse product = getApiResponse.getData();
         assertThat(product).isNotNull();
         assertThat(product.getProductId()).isEqualTo(createdProduct.getProductId());

@@ -26,14 +26,11 @@ import jakarta.servlet.http.HttpServletResponse;
  * Validates that tenant ID is present for all requests.
  */
 @Component
-public class TenantContextInterceptor
-        implements HandlerInterceptor {
+public class TenantContextInterceptor implements HandlerInterceptor {
     private static final String X_TENANT_ID_HEADER = "X-Tenant-Id";
     private static final String X_USER_ID_HEADER = "X-User-Id";
     private static final String X_ROLE_HEADER = "X-Role";
     private static final String SYSTEM_ADMIN_ROLE = "SYSTEM_ADMIN";
-    private static final String ADMIN_ROLE = "ADMIN";
-    private static final String TENANTS_LIST_PATH = "/api/v1/tenants";
 
     @Override
     public boolean preHandle(
@@ -41,13 +38,8 @@ public class TenantContextInterceptor
             @NonNull HttpServletResponse response,
             @NonNull Object handler) {
 
-        String path = request.getRequestURI();
-        String method = request.getMethod();
-
-        // Check if user has SYSTEM_ADMIN or ADMIN role
+        // Check if user has SYSTEM_ADMIN role
         boolean isSystemAdmin = isSystemAdmin(request);
-        boolean isAdmin = isAdmin(request);
-        boolean isListEndpoint = isTenantsListEndpoint(path, method);
 
         // SYSTEM_ADMIN users don't need tenant_id for any endpoint
         if (isSystemAdmin) {
@@ -61,18 +53,7 @@ public class TenantContextInterceptor
             return true;
         }
 
-        // Allow ADMIN users to access list endpoint without tenant_id requirement
-        if (isListEndpoint && isAdmin) {
-            String userIdValue = request.getHeader(X_USER_ID_HEADER);
-            if (userIdValue != null && !userIdValue.trim()
-                    .isEmpty()) {
-                TenantContext.setUserId(UserId.of(userIdValue));
-            }
-            // Don't set tenant context for list endpoint
-            return true;
-        }
-
-        // For non-SYSTEM_ADMIN and non-ADMIN users, or non-list endpoints, tenant_id is required
+        // For non-SYSTEM_ADMIN users, tenant_id is required
         String tenantIdValue = request.getHeader(X_TENANT_ID_HEADER);
         if (tenantIdValue == null || tenantIdValue.trim()
                 .isEmpty()) {
@@ -111,27 +92,6 @@ public class TenantContextInterceptor
     }
 
     /**
-     * Checks if the request is from an ADMIN user. Checks both the X-Role header and the JWT token in SecurityContext.
-     *
-     * @param request The HTTP request
-     * @return true if the user has ADMIN role, false otherwise
-     */
-    private boolean isAdmin(HttpServletRequest request) {
-        return hasRole(request, ADMIN_ROLE);
-    }
-
-    /**
-     * Checks if the request is for the tenants list endpoint. The list endpoint is GET /api/v1/tenants (without an ID path parameter).
-     *
-     * @param path   The request path
-     * @param method The HTTP method
-     * @return true if this is the list endpoint, false otherwise
-     */
-    private boolean isTenantsListEndpoint(String path, String method) {
-        return "GET".equals(method) && TENANTS_LIST_PATH.equals(path);
-    }
-
-    /**
      * Checks if the request is from a user with a specific role. Checks both the X-Role header and the JWT token in SecurityContext.
      *
      * @param request The HTTP request
@@ -141,8 +101,14 @@ public class TenantContextInterceptor
     private boolean hasRole(HttpServletRequest request, String role) {
         // Check X-Role header first (set by gateway)
         String rolesHeader = request.getHeader(X_ROLE_HEADER);
-        if (rolesHeader != null && rolesHeader.contains(role)) {
-            return true;
+        if (rolesHeader != null && !rolesHeader.trim().isEmpty()) {
+            // Split comma-separated roles and check for exact match
+            String[] roles = rolesHeader.split(",");
+            for (String r : roles) {
+                if (r.trim().equals(role)) {
+                    return true;
+                }
+            }
         }
 
         // Check JWT token in SecurityContext as fallback

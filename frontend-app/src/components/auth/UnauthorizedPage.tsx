@@ -1,6 +1,6 @@
-import { Box, Button, Container, Paper, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import {Box, Button, Container, Paper, Typography} from '@mui/material';
+import {useNavigate} from 'react-router-dom';
+import {useAuth} from '../../hooks/useAuth';
 
 /**
  * Unauthorized page component.

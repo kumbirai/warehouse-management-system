@@ -84,10 +84,10 @@ export const productService = {
       logger.debug('Product list response:', {
         status: response.status,
         hasData: !!response.data,
-        productsLength: Array.isArray(response.data?.products)
-          ? response.data.products.length
+        productsLength: Array.isArray(response.data?.data?.products)
+          ? response.data.data.products.length
           : 'N/A',
-        totalCount: response.data?.totalCount ?? 'N/A',
+        totalCount: response.data?.data?.totalCount ?? 'N/A',
       });
     }
 

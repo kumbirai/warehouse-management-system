@@ -15,6 +15,8 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.user.application.service.command.dto.CreateUserCommand;
 import com.ccbsa.wms.user.application.service.command.dto.CreateUserResult;
+import com.ccbsa.wms.user.application.service.exception.DuplicateUserException;
+import com.ccbsa.wms.user.application.service.exception.KeycloakServiceException;
 import com.ccbsa.wms.user.application.service.exception.TenantNotActiveException;
 import com.ccbsa.wms.user.application.service.exception.UserCreationException;
 import com.ccbsa.wms.user.application.service.port.auth.AuthenticationServicePort;
@@ -25,6 +27,7 @@ import com.ccbsa.wms.user.domain.core.entity.User;
 import com.ccbsa.wms.user.domain.core.valueobject.FirstName;
 import com.ccbsa.wms.user.domain.core.valueobject.KeycloakUserId;
 import com.ccbsa.wms.user.domain.core.valueobject.LastName;
+import com.ccbsa.wms.user.domain.core.valueobject.RoleConstants;
 import com.ccbsa.wms.user.domain.core.valueobject.UserStatus;
 import com.ccbsa.wms.user.domain.core.valueobject.Username;
 
@@ -127,15 +130,22 @@ public class CreateUserCommandHandler {
             user.linkKeycloakUser(keycloakUserId);
             userRepository.save(user);
 
-            // 7. Assign roles
+            // 7. Assign base USER role to all new users
+            authenticationService.assignRole(keycloakUserId, RoleConstants.BASE_ROLE);
+            logger.debug("Base USER role assigned to new user: userId={}", keycloakUserId.getValue());
+
+            // 8. Assign additional roles if provided
             if (!command.getRoles()
                     .isEmpty()) {
                 for (String role : command.getRoles()) {
-                    authenticationService.assignRole(keycloakUserId, role);
+                    // Skip USER role if already in the list to avoid duplicate assignment
+                    if (!RoleConstants.BASE_ROLE.equals(role)) {
+                        authenticationService.assignRole(keycloakUserId, role);
+                    }
                 }
             }
 
-            // 8. Send email verification and password reset email
+            // 9. Send email verification and password reset email
             // This sends a Keycloak email with links for both VERIFY_EMAIL and UPDATE_PASSWORD actions
             try {
                 String redirectUri = frontendBaseUrl + "/verify-email";
@@ -146,6 +156,26 @@ public class CreateUserCommandHandler {
                 logger.warn("Failed to send email verification and password reset email: userId={}, error={}", keycloakUserId.getValue(), emailException.getMessage(),
                         emailException);
             }
+        } catch (KeycloakServiceException e) {
+            // Check if it's a duplicate user error (HTTP 409)
+            if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+                // Rollback: delete user from database
+                logger.warn("Duplicate user detected, rolling back user creation: {}", e.getMessage());
+                try {
+                    userRepository.deleteById(userId);
+                } catch (Exception deleteException) {
+                    logger.error("Failed to delete user during rollback", deleteException);
+                }
+                throw new DuplicateUserException(e.getMessage(), e);
+            }
+            // Other Keycloak errors
+            logger.error("Failed to create user in Keycloak, rolling back user creation", e);
+            try {
+                userRepository.deleteById(userId);
+            } catch (Exception deleteException) {
+                logger.error("Failed to delete user during rollback", deleteException);
+            }
+            throw new UserCreationException(String.format("Failed to create user in Keycloak: %s", e.getMessage()), e);
         } catch (Exception e) {
             // Rollback: delete user from database
             logger.error("Failed to create user in Keycloak, rolling back user creation", e);
@@ -157,7 +187,7 @@ public class CreateUserCommandHandler {
             throw new UserCreationException(String.format("Failed to create user in Keycloak: %s", e.getMessage()), e);
         }
 
-        // 9. Publish events
+        // 10. Publish events
         List<DomainEvent<?>> domainEvents = user.getDomainEvents();
         if (!domainEvents.isEmpty()) {
             eventPublisher.publish(domainEvents);
@@ -166,7 +196,7 @@ public class CreateUserCommandHandler {
 
         logger.info("User created successfully: userId={}, username={}", userId.getValue(), command.getUsername());
 
-        // 10. Return result
+        // 11. Return result
         return new CreateUserResult(userId.getValue(), true, "User created successfully");
     }
 }

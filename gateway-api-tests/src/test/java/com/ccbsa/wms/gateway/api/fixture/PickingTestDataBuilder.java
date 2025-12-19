@@ -1,10 +1,10 @@
 package com.ccbsa.wms.gateway.api.fixture;
 
-import com.ccbsa.wms.gateway.api.dto.CreatePickingTaskRequest;
-import com.ccbsa.wms.gateway.api.dto.PickingItem;
-
 import java.time.LocalDate;
 import java.util.List;
+
+import com.ccbsa.wms.gateway.api.dto.CreatePickingTaskRequest;
+import com.ccbsa.wms.gateway.api.dto.PickingItem;
 
 /**
  * Builder for creating picking task test data.
@@ -15,11 +15,11 @@ public class PickingTestDataBuilder {
         return CreatePickingTaskRequest.builder()
                 .orderId(TestData.orderId())
                 .items(List.of(
-                    PickingItem.builder()
-                        .productId(productId)
-                        .quantity(TestData.faker().number().numberBetween(10, 100))
-                        .locationId(locationId)
-                        .build()
+                        PickingItem.builder()
+                                .productId(productId)
+                                .quantity(TestData.faker().number().numberBetween(10, 100))
+                                .locationId(locationId)
+                                .build()
                 ))
                 .priority("HIGH")
                 .dueDate(LocalDate.now().plusDays(7))
@@ -31,11 +31,11 @@ public class PickingTestDataBuilder {
         return CreatePickingTaskRequest.builder()
                 .orderId(TestData.orderId())
                 .items(List.of(
-                    PickingItem.builder()
-                        .productId(productId)
-                        .quantity(quantity)
-                        .locationId(locationId)
-                        .build()
+                        PickingItem.builder()
+                                .productId(productId)
+                                .quantity(quantity)
+                                .locationId(locationId)
+                                .build()
                 ))
                 .priority("HIGH")
                 .dueDate(LocalDate.now().plusDays(7))

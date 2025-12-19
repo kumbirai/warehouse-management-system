@@ -36,6 +36,21 @@ public class BarcodeGenerator {
     }
 
     /**
+     * Calculate EAN-13 checksum digit.
+     *
+     * @param code 12-digit base code
+     * @return checksum digit (0-9)
+     */
+    public static int calculateEAN13Checksum(String code) {
+        int sum = 0;
+        for (int i = 0; i < 12; i++) {
+            int digit = Character.getNumericValue(code.charAt(i));
+            sum += (i % 2 == 0) ? digit : digit * 3;
+        }
+        return (10 - (sum % 10)) % 10;
+    }
+
+    /**
      * Generate valid UPC-A barcode with checksum.
      *
      * @return 12-digit UPC-A barcode
@@ -59,21 +74,6 @@ public class BarcodeGenerator {
         int checksum = calculateUPCAChecksum(base);
 
         return base + checksum;
-    }
-
-    /**
-     * Calculate EAN-13 checksum digit.
-     *
-     * @param code 12-digit base code
-     * @return checksum digit (0-9)
-     */
-    public static int calculateEAN13Checksum(String code) {
-        int sum = 0;
-        for (int i = 0; i < 12; i++) {
-            int digit = Character.getNumericValue(code.charAt(i));
-            sum += (i % 2 == 0) ? digit : digit * 3;
-        }
-        return (10 - (sum % 10)) % 10;
     }
 
     /**

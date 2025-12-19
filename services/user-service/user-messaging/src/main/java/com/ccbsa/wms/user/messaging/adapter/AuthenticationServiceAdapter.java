@@ -446,8 +446,15 @@ public class AuthenticationServiceAdapter
             // Create user
             UsersResource usersResource = realm.users();
             try (Response response = usersResource.create(user)) {
-                if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
-                    String errorMsg = String.format("Failed to create user in Keycloak: HTTP %d", response.getStatus());
+                int statusCode = response.getStatus();
+                if (statusCode == Response.Status.CONFLICT.getStatusCode()) {
+                    // HTTP 409 Conflict - duplicate username or email
+                    String errorMsg = String.format("User already exists with username '%s' or email '%s'", username, email);
+                    logger.warn(errorMsg);
+                    throw new KeycloakServiceException(errorMsg);
+                }
+                if (statusCode != Response.Status.CREATED.getStatusCode()) {
+                    String errorMsg = String.format("Failed to create user in Keycloak: HTTP %d", statusCode);
                     logger.error(errorMsg);
                     throw new KeycloakServiceException(errorMsg);
                 }

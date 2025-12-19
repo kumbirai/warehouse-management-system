@@ -45,9 +45,10 @@ export const verifyEmail = async (token: string, key?: string): Promise<VerifyEm
       success: true,
       message: 'Email verified successfully',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Email verification failed', error);
-    throw new Error(error.response?.data?.message || 'Email verification failed');
+    const errorMessage = error instanceof Error ? error.message : 'Email verification failed';
+    throw new Error(errorMessage);
   }
 };
 
@@ -62,8 +63,10 @@ export const resendVerificationEmail = async (userId: string): Promise<void> => 
     logger.debug('Resending verification email', { userId });
     await apiClient.post(`/users/${userId}/resend-verification`);
     logger.info('Verification email resent successfully', { userId });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Failed to resend verification email', error);
-    throw new Error(error.response?.data?.message || 'Failed to resend verification email');
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to resend verification email';
+    throw new Error(errorMessage);
   }
 };

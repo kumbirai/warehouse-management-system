@@ -1,15 +1,16 @@
 package com.ccbsa.wms.gateway.api.helper;
 
-import com.ccbsa.common.application.api.ApiResponse;
-import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
-import com.ccbsa.wms.gateway.api.dto.AssignRoleRequest;
-import com.ccbsa.wms.gateway.api.dto.CreateUserRequest;
-import com.ccbsa.wms.gateway.api.dto.CreateUserResponse;
-import com.ccbsa.wms.gateway.api.fixture.UserTestDataBuilder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
+
+import com.ccbsa.common.application.api.ApiResponse;
+import com.ccbsa.wms.gateway.api.dto.AssignRoleRequest;
+import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
+import com.ccbsa.wms.gateway.api.dto.CreateUserRequest;
+import com.ccbsa.wms.gateway.api.dto.CreateUserResponse;
+import com.ccbsa.wms.gateway.api.fixture.UserTestDataBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,6 +23,15 @@ public class UserHelper {
 
     public UserHelper(WebTestClient webTestClient) {
         this.webTestClient = webTestClient;
+    }
+
+    /**
+     * Create user with specific role.
+     */
+    public String createUserWithRole(AuthenticationResult auth, String tenantId, String role) {
+        String userId = createUser(auth, tenantId);
+        assignRole(auth, tenantId, userId, role);
+        return userId;
     }
 
     /**
@@ -40,7 +50,8 @@ public class UserHelper {
                 .bodyValue(request)
                 .exchange()
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                })
                 .returnResult();
 
         ApiResponse<CreateUserResponse> apiResponse = exchangeResult.getResponseBody();
@@ -57,15 +68,6 @@ public class UserHelper {
                 .isNotNull();
 
         return response.getUserId();
-    }
-
-    /**
-     * Create user with specific role.
-     */
-    public String createUserWithRole(AuthenticationResult auth, String tenantId, String role) {
-        String userId = createUser(auth, tenantId);
-        assignRole(auth, tenantId, userId, role);
-        return userId;
     }
 
     /**

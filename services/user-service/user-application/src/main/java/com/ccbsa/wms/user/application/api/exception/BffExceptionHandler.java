@@ -13,6 +13,7 @@ import com.ccbsa.common.application.api.ApiResponseBuilder;
 import com.ccbsa.common.application.api.RequestContext;
 import com.ccbsa.common.application.api.exception.BaseGlobalExceptionHandler;
 import com.ccbsa.wms.user.application.service.exception.AuthenticationException;
+import com.ccbsa.wms.user.application.service.exception.DuplicateUserException;
 import com.ccbsa.wms.user.application.service.exception.InsufficientPrivilegesException;
 import com.ccbsa.wms.user.application.service.exception.KeycloakServiceException;
 import com.ccbsa.wms.user.application.service.exception.RoleAssignmentException;
@@ -161,6 +162,27 @@ public class BffExceptionHandler
                 .requestId(requestId)
                 .build();
         return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
+    }
+
+    /**
+     * Handles DuplicateUserException - indicates user with same username/email already exists.
+     *
+     * @param ex      The exception
+     * @param request The HTTP request
+     * @return Error response with 400 Bad Request
+     */
+    @ExceptionHandler(DuplicateUserException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDuplicateUserException(DuplicateUserException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        logger.warn("Duplicate user: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+
+        ApiError error = ApiError.builder("DUPLICATE_USER", ex.getMessage())
+                .path(path)
+                .requestId(requestId)
+                .build();
+        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
     /**

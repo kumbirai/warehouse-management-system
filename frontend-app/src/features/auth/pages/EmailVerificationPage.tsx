@@ -52,13 +52,14 @@ export const EmailVerificationPage = () => {
         await verifyEmail(token, key || undefined);
         setStatus('success');
         setMessage('Your email has been verified successfully! You can now log in.');
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Email verification error:', error);
         setStatus('error');
-        setMessage(
-          error.message ||
-            'Email verification failed. The link may have expired. Please request a new verification email.'
-        );
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : 'Email verification failed. The link may have expired. Please request a new verification email.';
+        setMessage(errorMessage);
       }
     };
 

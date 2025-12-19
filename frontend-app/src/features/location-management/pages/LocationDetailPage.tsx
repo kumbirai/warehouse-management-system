@@ -9,6 +9,9 @@ export const LocationDetailPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // Call hooks unconditionally before any early returns
+  const { location, isLoading, error } = useLocation(locationId || '', user?.tenantId || '');
+
   if (!locationId) {
     navigate('/locations');
     return null;
@@ -17,8 +20,6 @@ export const LocationDetailPage = () => {
   if (!user?.tenantId) {
     return <div>Tenant ID is required</div>;
   }
-
-  const { location, isLoading, error } = useLocation(locationId, user.tenantId);
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>

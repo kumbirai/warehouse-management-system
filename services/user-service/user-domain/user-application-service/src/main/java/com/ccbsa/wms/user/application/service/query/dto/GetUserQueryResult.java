@@ -14,6 +14,7 @@ import com.ccbsa.wms.user.domain.core.valueobject.UserStatus;
 public class GetUserQueryResult {
     private final UserId userId;
     private final TenantId tenantId;
+    private final String tenantName;
     private final String username;
     private final String email;
     private final String firstName;
@@ -24,11 +25,13 @@ public class GetUserQueryResult {
     private final LocalDateTime createdAt;
     private final LocalDateTime lastModifiedAt;
 
-    public GetUserQueryResult(UserId userId, TenantId tenantId, String username, String email, String firstName, String lastName, UserStatus status, String keycloakUserId,
+    public GetUserQueryResult(UserId userId, TenantId tenantId, String tenantName, String username, String email, String firstName, String lastName, UserStatus status,
+                              String keycloakUserId,
                               List<String> roles, LocalDateTime createdAt,
                               LocalDateTime lastModifiedAt) {
         this.userId = Objects.requireNonNull(userId, "UserId is required");
         this.tenantId = Objects.requireNonNull(tenantId, "TenantId is required");
+        this.tenantName = tenantName;
         this.username = Objects.requireNonNull(username, "Username is required");
         this.email = Objects.requireNonNull(email, "EmailAddress is required");
         this.firstName = firstName;
@@ -46,6 +49,10 @@ public class GetUserQueryResult {
 
     public TenantId getTenantId() {
         return tenantId;
+    }
+
+    public String getTenantName() {
+        return tenantName;
     }
 
     public String getUsername() {

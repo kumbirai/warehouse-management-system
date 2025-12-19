@@ -1,17 +1,21 @@
 package com.ccbsa.wms.gateway.api;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationResponse;
 import com.ccbsa.wms.gateway.api.dto.LocationResponse;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
-import org.junit.jupiter.api.*;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.test.web.reactive.server.EntityExchangeResult;
-import org.springframework.test.web.reactive.server.WebTestClient;
-
-import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,7 +37,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
             tenantAdminAuth = loginAsTenantAdmin();
             testTenantId = tenantAdminAuth.getTenantId();
         }
-        
+
         // Note: Service availability check removed - tests will run and show actual errors
         // if service is not properly configured
     }
@@ -57,13 +61,14 @@ public class LocationManagementTest extends BaseIntegrationTest {
         // Assert
         EntityExchangeResult<ApiResponse<CreateLocationResponse>> exchangeResult = response
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateLocationResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         CreateLocationResponse location = apiResponse.getData();
         assertThat(location).isNotNull();
         assertThat(location.getLocationId()).isNotBlank();
@@ -83,13 +88,14 @@ public class LocationManagementTest extends BaseIntegrationTest {
                 warehouseRequest
         ).exchange()
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateLocationResponse> warehouseApiResponse = warehouseExchangeResult.getResponseBody();
         assertThat(warehouseApiResponse).isNotNull();
         assertThat(warehouseApiResponse.isSuccess()).isTrue();
-        
+
         CreateLocationResponse warehouse = warehouseApiResponse.getData();
         assertThat(warehouse).isNotNull();
 
@@ -106,13 +112,14 @@ public class LocationManagementTest extends BaseIntegrationTest {
         // Assert
         EntityExchangeResult<ApiResponse<CreateLocationResponse>> zoneExchangeResult = response
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateLocationResponse> zoneApiResponse = zoneExchangeResult.getResponseBody();
         assertThat(zoneApiResponse).isNotNull();
         assertThat(zoneApiResponse.isSuccess()).isTrue();
-        
+
         CreateLocationResponse zone = zoneApiResponse.getData();
         assertThat(zone).isNotNull();
         assertThat(zone.getPath()).contains(warehouse.getCode());
@@ -169,13 +176,14 @@ public class LocationManagementTest extends BaseIntegrationTest {
                 request
         ).exchange()
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateLocationResponse> createApiResponse = createExchangeResult.getResponseBody();
         assertThat(createApiResponse).isNotNull();
         assertThat(createApiResponse.isSuccess()).isTrue();
-        
+
         CreateLocationResponse createdLocation = createApiResponse.getData();
         assertThat(createdLocation).isNotNull();
 
@@ -189,13 +197,14 @@ public class LocationManagementTest extends BaseIntegrationTest {
         // Assert
         EntityExchangeResult<ApiResponse<LocationResponse>> getExchangeResult = response
                 .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<LocationResponse> getApiResponse = getExchangeResult.getResponseBody();
         assertThat(getApiResponse).isNotNull();
         assertThat(getApiResponse.isSuccess()).isTrue();
-        
+
         LocationResponse location = getApiResponse.getData();
         assertThat(location).isNotNull();
         assertThat(location.getLocationId()).isEqualTo(createdLocation.getLocationId());

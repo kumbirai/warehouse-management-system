@@ -1,18 +1,22 @@
 # Other Microservices Test Implementation Plans
 
 ## Overview
-This document provides implementation plans for testing the remaining microservices: Picking Service, Returns Service, and Reconciliation Service. All tests authenticate as TENANT_ADMIN and verify CRUD operations, lifecycle management, and tenant-scoped access control.
+
+This document provides implementation plans for testing the remaining microservices: Picking Service, Returns Service, and Reconciliation Service. All tests authenticate as
+TENANT_ADMIN and verify CRUD operations, lifecycle management, and tenant-scoped access control.
 
 ---
 
 ## 1. Picking Service Tests
 
 ### Overview
+
 Validates picking task creation, allocation, execution, and completion workflows.
 
 ### Test Scenarios
 
 #### Test: Create Picking Task
+
 - **Setup**: Login as TENANT_ADMIN, create product with stock
 - **Action**: POST `/api/v1/picking/tasks`
 - **Request Body**:
@@ -31,11 +35,12 @@ Validates picking task creation, allocation, execution, and completion workflows
   }
   ```
 - **Assertions**:
-  - Status: 201 CREATED
-  - Response contains `taskId`, `status=PENDING`
-  - PickingTaskCreatedEvent published
+    - Status: 201 CREATED
+    - Response contains `taskId`, `status=PENDING`
+    - PickingTaskCreatedEvent published
 
 #### Test: Assign Picking Task to User
+
 - **Setup**: Create picking task, create user with PICKER role
 - **Action**: PUT `/api/v1/picking/tasks/{taskId}/assign`
 - **Request Body**:
@@ -45,19 +50,21 @@ Validates picking task creation, allocation, execution, and completion workflows
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Task status changed to ASSIGNED
-  - PickingTaskAssignedEvent published
+    - Status: 200 OK
+    - Task status changed to ASSIGNED
+    - PickingTaskAssignedEvent published
 
 #### Test: Start Picking Task
+
 - **Setup**: Assign task to picker, login as picker
 - **Action**: PUT `/api/v1/picking/tasks/{taskId}/start`
 - **Assertions**:
-  - Status: 200 OK
-  - Task status changed to IN_PROGRESS
-  - PickingTaskStartedEvent published
+    - Status: 200 OK
+    - Task status changed to IN_PROGRESS
+    - PickingTaskStartedEvent published
 
 #### Test: Complete Picking Task
+
 - **Setup**: Start picking task
 - **Action**: PUT `/api/v1/picking/tasks/{taskId}/complete`
 - **Request Body**:
@@ -74,12 +81,13 @@ Validates picking task creation, allocation, execution, and completion workflows
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Task status changed to COMPLETED
-  - Stock allocated/deducted
-  - PickingTaskCompletedEvent published
+    - Status: 200 OK
+    - Task status changed to COMPLETED
+    - Stock allocated/deducted
+    - PickingTaskCompletedEvent published
 
 #### Test: Cancel Picking Task
+
 - **Setup**: Create picking task
 - **Action**: PUT `/api/v1/picking/tasks/{taskId}/cancel`
 - **Request Body**:
@@ -89,31 +97,34 @@ Validates picking task creation, allocation, execution, and completion workflows
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Task status changed to CANCELLED
-  - PickingTaskCancelledEvent published
+    - Status: 200 OK
+    - Task status changed to CANCELLED
+    - PickingTaskCancelledEvent published
 
 #### Test: List Picking Tasks with Status Filter
+
 - **Setup**: Create 3 PENDING, 2 COMPLETED picking tasks
 - **Action**: GET `/api/v1/picking/tasks?status=PENDING`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains only PENDING tasks (3 results)
+    - Status: 200 OK
+    - Response contains only PENDING tasks (3 results)
 
 #### Test: Get Picking Task by ID
+
 - **Setup**: Create picking task
 - **Action**: GET `/api/v1/picking/tasks/{taskId}`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains task details
+    - Status: 200 OK
+    - Response contains task details
 
 #### Test: Partial Pick (Short Pick)
+
 - **Setup**: Create task for 100 units, only 80 available
 - **Action**: Complete task with partial quantity
 - **Assertions**:
-  - Status: 200 OK
-  - Task marked as PARTIALLY_COMPLETED
-  - Shortfall recorded
+    - Status: 200 OK
+    - Task marked as PARTIALLY_COMPLETED
+    - Shortfall recorded
 
 ### Authorization Tests
 
@@ -156,11 +167,13 @@ public class CreatePickingTaskResponse {
 ## 2. Returns Service Tests
 
 ### Overview
+
 Validates return order creation, authorization, processing, and restocking workflows.
 
 ### Test Scenarios
 
 #### Test: Create Return Order
+
 - **Setup**: Login as TENANT_ADMIN, create product with stock
 - **Action**: POST `/api/v1/returns/orders`
 - **Request Body**:
@@ -180,11 +193,12 @@ Validates return order creation, authorization, processing, and restocking workf
   }
   ```
 - **Assertions**:
-  - Status: 201 CREATED
-  - Response contains `returnOrderId`, `status=PENDING_AUTHORIZATION`
-  - ReturnOrderCreatedEvent published
+    - Status: 201 CREATED
+    - Response contains `returnOrderId`, `status=PENDING_AUTHORIZATION`
+    - ReturnOrderCreatedEvent published
 
 #### Test: Authorize Return Order
+
 - **Setup**: Create return order
 - **Action**: PUT `/api/v1/returns/orders/{returnOrderId}/authorize`
 - **Request Body**:
@@ -195,11 +209,12 @@ Validates return order creation, authorization, processing, and restocking workf
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Return status changed to AUTHORIZED
-  - ReturnOrderAuthorizedEvent published
+    - Status: 200 OK
+    - Return status changed to AUTHORIZED
+    - ReturnOrderAuthorizedEvent published
 
 #### Test: Reject Return Order
+
 - **Setup**: Create return order
 - **Action**: PUT `/api/v1/returns/orders/{returnOrderId}/reject`
 - **Request Body**:
@@ -210,11 +225,12 @@ Validates return order creation, authorization, processing, and restocking workf
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Return status changed to REJECTED
-  - ReturnOrderRejectedEvent published
+    - Status: 200 OK
+    - Return status changed to REJECTED
+    - ReturnOrderRejectedEvent published
 
 #### Test: Process Return (Receive Items)
+
 - **Setup**: Authorize return order
 - **Action**: PUT `/api/v1/returns/orders/{returnOrderId}/process`
 - **Request Body**:
@@ -232,40 +248,44 @@ Validates return order creation, authorization, processing, and restocking workf
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Return status changed to PROCESSED
-  - Stock updated based on condition
-  - ReturnOrderProcessedEvent published
+    - Status: 200 OK
+    - Return status changed to PROCESSED
+    - Stock updated based on condition
+    - ReturnOrderProcessedEvent published
 
 #### Test: Restock Returned Item (Good Condition)
+
 - **Setup**: Process return with condition "GOOD"
 - **Action**: PUT `/api/v1/returns/orders/{returnOrderId}/restock`
 - **Assertions**:
-  - Status: 200 OK
-  - Item restocked to available inventory
-  - Stock level increased
+    - Status: 200 OK
+    - Item restocked to available inventory
+    - Stock level increased
 
 #### Test: Dispose Returned Item (Damaged)
+
 - **Setup**: Process return with condition "DAMAGED"
 - **Action**: PUT `/api/v1/returns/orders/{returnOrderId}/dispose`
 - **Assertions**:
-  - Status: 200 OK
-  - Item marked for disposal
-  - No stock level increase
+    - Status: 200 OK
+    - Item marked for disposal
+    - No stock level increase
 
 #### Test: List Return Orders with Status Filter
+
 - **Setup**: Create 3 PENDING, 2 AUTHORIZED return orders
 - **Action**: GET `/api/v1/returns/orders?status=PENDING_AUTHORIZATION`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains only PENDING return orders
+    - Status: 200 OK
+    - Response contains only PENDING return orders
 
 #### Test: Get Return Order by ID
+
 - **Setup**: Create return order
 - **Action**: GET `/api/v1/returns/orders/{returnOrderId}`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains return order details
+    - Status: 200 OK
+    - Response contains return order details
 
 ### Return Reasons and Conditions
 
@@ -314,11 +334,13 @@ public class CreateReturnOrderResponse {
 ## 3. Reconciliation Service Tests
 
 ### Overview
+
 Validates stock reconciliation (cycle counts), variance detection, and adjustment workflows.
 
 ### Test Scenarios
 
 #### Test: Create Reconciliation Count
+
 - **Setup**: Login as TENANT_ADMIN, create location with stock
 - **Action**: POST `/api/v1/reconciliation/counts`
 - **Request Body**:
@@ -331,19 +353,21 @@ Validates stock reconciliation (cycle counts), variance detection, and adjustmen
   }
   ```
 - **Assertions**:
-  - Status: 201 CREATED
-  - Response contains `countId`, `status=SCHEDULED`
-  - ReconciliationCountCreatedEvent published
+    - Status: 201 CREATED
+    - Response contains `countId`, `status=SCHEDULED`
+    - ReconciliationCountCreatedEvent published
 
 #### Test: Start Reconciliation Count
+
 - **Setup**: Create reconciliation count
 - **Action**: PUT `/api/v1/reconciliation/counts/{countId}/start`
 - **Assertions**:
-  - Status: 200 OK
-  - Count status changed to IN_PROGRESS
-  - ReconciliationCountStartedEvent published
+    - Status: 200 OK
+    - Count status changed to IN_PROGRESS
+    - ReconciliationCountStartedEvent published
 
 #### Test: Submit Count Results
+
 - **Setup**: Start reconciliation count
 - **Action**: PUT `/api/v1/reconciliation/counts/{countId}/submit`
 - **Request Body**:
@@ -362,12 +386,13 @@ Validates stock reconciliation (cycle counts), variance detection, and adjustmen
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Count status changed to COMPLETED
-  - Variance calculated (95 vs 100 = -5)
-  - ReconciliationCountCompletedEvent published
+    - Status: 200 OK
+    - Count status changed to COMPLETED
+    - Variance calculated (95 vs 100 = -5)
+    - ReconciliationCountCompletedEvent published
 
 #### Test: Approve Reconciliation Adjustment
+
 - **Setup**: Submit count with variance
 - **Action**: PUT `/api/v1/reconciliation/counts/{countId}/approve`
 - **Request Body**:
@@ -378,11 +403,12 @@ Validates stock reconciliation (cycle counts), variance detection, and adjustmen
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Stock adjusted to match physical count (100 → 95)
-  - ReconciliationAdjustmentApprovedEvent published
+    - Status: 200 OK
+    - Stock adjusted to match physical count (100 → 95)
+    - ReconciliationAdjustmentApprovedEvent published
 
 #### Test: Reject Reconciliation (Recount Required)
+
 - **Setup**: Submit count with large variance
 - **Action**: PUT `/api/v1/reconciliation/counts/{countId}/reject`
 - **Request Body**:
@@ -393,39 +419,43 @@ Validates stock reconciliation (cycle counts), variance detection, and adjustmen
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Count status changed to REJECTED
-  - No stock adjustment
-  - ReconciliationCountRejectedEvent published
+    - Status: 200 OK
+    - Count status changed to REJECTED
+    - No stock adjustment
+    - ReconciliationCountRejectedEvent published
 
 #### Test: Detect Variance Exceeding Threshold
+
 - **Setup**: Submit count with variance > 10%
 - **Action**: System detects variance
 - **Assertions**:
-  - Status: 200 OK
-  - Variance flagged for review
-  - Automatic recount scheduled (optional)
+    - Status: 200 OK
+    - Variance flagged for review
+    - Automatic recount scheduled (optional)
 
 #### Test: List Reconciliation Counts with Status Filter
+
 - **Setup**: Create 3 SCHEDULED, 2 COMPLETED counts
 - **Action**: GET `/api/v1/reconciliation/counts?status=SCHEDULED`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains only SCHEDULED counts
+    - Status: 200 OK
+    - Response contains only SCHEDULED counts
 
 #### Test: Get Reconciliation Count by ID
+
 - **Setup**: Create reconciliation count
 - **Action**: GET `/api/v1/reconciliation/counts/{countId}`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains count details and variance
+    - Status: 200 OK
+    - Response contains count details and variance
 
 #### Test: Get Reconciliation History by Location
+
 - **Setup**: Create multiple counts for same location
 - **Action**: GET `/api/v1/reconciliation/counts?locationId={locationId}`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains all counts for location
+    - Status: 200 OK
+    - Response contains all counts for location
 
 ### Count Types
 
@@ -495,11 +525,13 @@ public static void setupTestData() {
 ### Tenant Isolation Tests (All Services)
 
 #### Test: TENANT_ADMIN Lists Only Own Tenant Data
+
 - **Setup**: Create data in Tenant A and Tenant B
 - **Action**: GET endpoint as TENANT_ADMIN (Tenant A)
 - **Assertions**: Only Tenant A data visible
 
 #### Test: TENANT_ADMIN Cannot Access Other Tenant Data
+
 - **Setup**: Create data in Tenant B
 - **Action**: GET endpoint as TENANT_ADMIN (Tenant A)
 - **Assertions**: 403 FORBIDDEN or 404 NOT FOUND
@@ -578,6 +610,7 @@ public class ReconciliationTestDataBuilder {
 ## Rate Limiting
 
 All microservices have rate limits (100 req/min, 200 burst). Tests should:
+
 - Avoid exceeding rate limits in concurrent tests
 - Add delays if necessary: `Thread.sleep(100)`
 - Test rate limit behavior: Send 150 requests, expect 429 after 100
@@ -587,11 +620,13 @@ All microservices have rate limits (100 req/min, 200 burst). Tests should:
 ## Event Publishing
 
 All operations publish domain events:
+
 - **Picking**: PickingTaskCreatedEvent, PickingTaskCompletedEvent
 - **Returns**: ReturnOrderCreatedEvent, ReturnOrderProcessedEvent
 - **Reconciliation**: ReconciliationCountCompletedEvent, ReconciliationAdjustmentApprovedEvent
 
 Consider using:
+
 - Embedded Kafka for event validation
 - Mock Kafka consumer to verify events
 - Event store query to validate published events
@@ -601,6 +636,7 @@ Consider using:
 ## Testing Checklist
 
 ### Picking Service
+
 - [ ] Create picking task successfully
 - [ ] Assign task to picker
 - [ ] Start task changes status to IN_PROGRESS
@@ -612,6 +648,7 @@ Consider using:
 - [ ] Tenant isolation verified
 
 ### Returns Service
+
 - [ ] Create return order successfully
 - [ ] Authorize return changes status
 - [ ] Reject return changes status
@@ -623,6 +660,7 @@ Consider using:
 - [ ] Tenant isolation verified
 
 ### Reconciliation Service
+
 - [ ] Create reconciliation count successfully
 - [ ] Start count changes status
 - [ ] Submit count calculates variance

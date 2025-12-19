@@ -1,10 +1,11 @@
 package com.ccbsa.wms.gateway.api.dto;
 
+import org.springframework.http.ResponseCookie;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.http.ResponseCookie;
 
 @Data
 @Builder
@@ -33,8 +34,8 @@ public class AuthenticationResult {
      */
     public boolean hasRole(String role) {
         return userContext != null &&
-               userContext.getRoles() != null &&
-               userContext.getRoles().contains(role);
+                userContext.getRoles() != null &&
+                userContext.getRoles().contains(role);
     }
 }
 

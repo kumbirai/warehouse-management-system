@@ -1,7 +1,9 @@
 # BaseIntegrationTest Implementation Plan
 
 ## Overview
-`BaseIntegrationTest` serves as the foundational abstract base class for all gateway API integration tests. It handles common framework concerns, authentication patterns, WebTestClient configuration, and reusable test utilities to avoid code duplication (DRY principle).
+
+`BaseIntegrationTest` serves as the foundational abstract base class for all gateway API integration tests. It handles common framework concerns, authentication patterns,
+WebTestClient configuration, and reusable test utilities to avoid code duplication (DRY principle).
 
 ---
 

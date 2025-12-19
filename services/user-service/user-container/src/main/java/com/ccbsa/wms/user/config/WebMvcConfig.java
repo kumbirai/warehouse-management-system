@@ -9,6 +9,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
@@ -43,7 +44,7 @@ public class WebMvcConfig
      */
     @Bean
     public Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder() {
-        return new Jackson2ObjectMapperBuilder().modules(new JavaTimeModule())
+        return new Jackson2ObjectMapperBuilder().modules(new JavaTimeModule(), new Jdk8Module())
                 .featuresToDisable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 // Configure ObjectMapper to NOT include type information in REST API responses
                 // This is done by customizing the ObjectMapper after it's built

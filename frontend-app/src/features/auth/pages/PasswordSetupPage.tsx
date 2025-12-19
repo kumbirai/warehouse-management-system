@@ -55,12 +55,13 @@ export const PasswordSetupPage = () => {
 
       await setupPassword(token, password, confirmPassword, key || undefined);
       setIsSuccess(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Password setup error:', err);
-      setError(
-        err.message ||
-          'Password setup failed. The link may have expired. Please request a new password reset email.'
-      );
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Password setup failed. The link may have expired. Please request a new password reset email.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

@@ -1,15 +1,7 @@
 package com.ccbsa.wms.gateway.api;
 
-import com.ccbsa.common.application.api.ApiResponse;
-import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
-import com.ccbsa.wms.gateway.api.dto.LoginRequest;
-import com.ccbsa.wms.gateway.api.dto.LoginResponse;
-import com.ccbsa.wms.gateway.api.helper.AuthenticationHelper;
-import com.ccbsa.wms.gateway.api.util.CookieExtractor;
-import com.ccbsa.wms.gateway.api.util.RequestHeaderHelper;
-import com.ccbsa.wms.gateway.api.util.WebTestClientConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import net.datafaker.Faker;
+import java.util.UUID;
+
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.core.ParameterizedTypeReference;
@@ -19,8 +11,15 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-import java.time.Duration;
-import java.util.UUID;
+import com.ccbsa.common.application.api.ApiResponse;
+import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
+import com.ccbsa.wms.gateway.api.helper.AuthenticationHelper;
+import com.ccbsa.wms.gateway.api.util.CookieExtractor;
+import com.ccbsa.wms.gateway.api.util.RequestHeaderHelper;
+import com.ccbsa.wms.gateway.api.util.WebTestClientConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import net.datafaker.Faker;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -60,14 +59,14 @@ public abstract class BaseIntegrationTest {
         // Load properties from environment or use defaults
         // Default to HTTP since SSL is disabled by default for local development
         // Set GATEWAY_SSL_ENABLED=true and use https://localhost:8080 for SSL-enabled gateway
-        this.gatewayBaseUrl = System.getProperty("gateway.base.url", 
+        this.gatewayBaseUrl = System.getProperty("gateway.base.url",
                 System.getenv().getOrDefault("GATEWAY_BASE_URL", "http://localhost:8080"));
         this.systemAdminUsername = System.getProperty("test.system.admin.username",
                 System.getenv().getOrDefault("TEST_SYSTEM_ADMIN_USERNAME", "sysadmin"));
         this.systemAdminPassword = System.getProperty("test.system.admin.password",
                 System.getenv().getOrDefault("TEST_SYSTEM_ADMIN_PASSWORD", "Password123@"));
         this.tenantAdminUsername = System.getProperty("test.tenant.admin.username",
-                System.getenv().getOrDefault("TEST_TENANT_ADMIN_USERNAME", "michel.nitzsche"));
+                System.getenv().getOrDefault("TEST_TENANT_ADMIN_USERNAME", "lacresha.haag@yahoo.com"));
         this.tenantAdminPassword = System.getProperty("test.tenant.admin.password",
                 System.getenv().getOrDefault("TEST_TENANT_ADMIN_PASSWORD", "Password123@"));
 
@@ -75,11 +74,11 @@ public abstract class BaseIntegrationTest {
         this.objectMapper = new ObjectMapper();
         this.faker = new Faker();
         this.authHelper = new AuthenticationHelper(webTestClient, objectMapper);
-        
+
         // Check if gateway service is available, skip tests if not
         checkGatewayAvailability();
     }
-    
+
     /**
      * Check if gateway service is available.
      * Skips tests if gateway is not reachable.
@@ -107,12 +106,12 @@ public abstract class BaseIntegrationTest {
             System.err.println("Gateway health check failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
             gatewayAvailable = false;
         }
-        
+
         // Skip all tests if gateway is not available
-        Assumptions.assumeTrue(gatewayAvailable, 
-                "Gateway service is not available at " + gatewayBaseUrl + 
-                ". Please start the services before running integration tests. " +
-                "You can skip integration tests with: mvn verify -DskipITs=true");
+        Assumptions.assumeTrue(gatewayAvailable,
+                "Gateway service is not available at " + gatewayBaseUrl +
+                        ". Please start the services before running integration tests. " +
+                        "You can skip integration tests with: mvn verify -DskipITs=true");
     }
 
     // ==================== AUTHENTICATION HELPERS ====================
@@ -128,7 +127,7 @@ public abstract class BaseIntegrationTest {
 
     /**
      * Login as TENANT_ADMIN and return authentication result with tokens.
-     * 
+     *
      * <p>Note: This will skip tests if tenant admin credentials are not configured.
      * Set TEST_TENANT_ADMIN_USERNAME and TEST_TENANT_ADMIN_PASSWORD environment variables
      * to enable tenant admin tests.</p>
@@ -139,22 +138,22 @@ public abstract class BaseIntegrationTest {
     protected AuthenticationResult loginAsTenantAdmin() {
         // Check if tenant admin credentials are configured
         if (tenantAdminUsername == null || tenantAdminUsername.isEmpty() ||
-            tenantAdminPassword == null || tenantAdminPassword.isEmpty() ||
-            "tenantadmin".equals(tenantAdminUsername)) {
+                tenantAdminPassword == null || tenantAdminPassword.isEmpty() ||
+                "tenantadmin".equals(tenantAdminUsername)) {
             org.junit.jupiter.api.Assumptions.assumeTrue(false,
-                "Tenant admin credentials not configured. " +
-                "Set TEST_TENANT_ADMIN_USERNAME and TEST_TENANT_ADMIN_PASSWORD environment variables " +
-                "to enable tenant admin tests.");
+                    "Tenant admin credentials not configured. " +
+                            "Set TEST_TENANT_ADMIN_USERNAME and TEST_TENANT_ADMIN_PASSWORD environment variables " +
+                            "to enable tenant admin tests.");
         }
-        
+
         try {
             return authHelper.login(tenantAdminUsername, tenantAdminPassword);
         } catch (AssertionError e) {
             // If login fails, skip the test with a helpful message
             org.junit.jupiter.api.Assumptions.assumeTrue(false,
-                "Tenant admin login failed. " +
-                "Please ensure tenant admin user exists and credentials are correct. " +
-                "Error: " + e.getMessage());
+                    "Tenant admin login failed. " +
+                            "Please ensure tenant admin user exists and credentials are correct. " +
+                            "Error: " + e.getMessage());
             return null; // Never reached, but needed for compilation
         }
     }
@@ -194,7 +193,7 @@ public abstract class BaseIntegrationTest {
     /**
      * Create authenticated GET request with Bearer token.
      *
-     * @param uri the request URI
+     * @param uri         the request URI
      * @param accessToken the JWT access token
      * @return WebTestClient.RequestHeadersSpec for further configuration
      */
@@ -207,9 +206,9 @@ public abstract class BaseIntegrationTest {
     /**
      * Create authenticated GET request with Bearer token and tenant context.
      *
-     * @param uri the request URI
+     * @param uri         the request URI
      * @param accessToken the JWT access token
-     * @param tenantId the tenant ID for X-Tenant-Id header
+     * @param tenantId    the tenant ID for X-Tenant-Id header
      * @return WebTestClient.RequestHeadersSpec for further configuration
      */
     protected WebTestClient.RequestHeadersSpec<?> authenticatedGet(String uri, String accessToken, String tenantId) {
@@ -224,7 +223,7 @@ public abstract class BaseIntegrationTest {
     /**
      * Create authenticated POST request with Bearer token.
      *
-     * @param uri the request URI
+     * @param uri         the request URI
      * @param accessToken the JWT access token
      * @param requestBody the request body
      * @return WebTestClient.RequestHeadersSpec for further configuration
@@ -240,9 +239,9 @@ public abstract class BaseIntegrationTest {
     /**
      * Create authenticated POST request with Bearer token and tenant context.
      *
-     * @param uri the request URI
+     * @param uri         the request URI
      * @param accessToken the JWT access token
-     * @param tenantId the tenant ID for X-Tenant-Id header
+     * @param tenantId    the tenant ID for X-Tenant-Id header
      * @param requestBody the request body
      * @return WebTestClient.RequestHeadersSpec for further configuration
      */
@@ -260,7 +259,7 @@ public abstract class BaseIntegrationTest {
     /**
      * Create authenticated PUT request with Bearer token.
      *
-     * @param uri the request URI
+     * @param uri         the request URI
      * @param accessToken the JWT access token
      * @param requestBody the request body (optional)
      * @return WebTestClient.RequestHeadersSpec for further configuration
@@ -280,7 +279,7 @@ public abstract class BaseIntegrationTest {
     /**
      * Create authenticated DELETE request with Bearer token.
      *
-     * @param uri the request URI
+     * @param uri         the request URI
      * @param accessToken the JWT access token
      * @return WebTestClient.RequestHeadersSpec for further configuration
      */
@@ -293,11 +292,35 @@ public abstract class BaseIntegrationTest {
     // ==================== API RESPONSE HELPERS ====================
 
     /**
+     * Extract data from ApiResponse wrapper.
+     * Convenience method that extracts and validates the data payload.
+     *
+     * @param <T>             the type of data
+     * @param response        the WebTestClient.ResponseSpec
+     * @param apiResponseType the ParameterizedTypeReference for ApiResponse&lt;T&gt;
+     * @return the unwrapped data from ApiResponse
+     */
+    protected <T> T extractApiResponseData(
+            WebTestClient.ResponseSpec response,
+            ParameterizedTypeReference<ApiResponse<T>> apiResponseType) {
+
+        EntityExchangeResult<ApiResponse<T>> exchangeResult = extractApiResponse(response, apiResponseType);
+        ApiResponse<T> apiResponse = exchangeResult.getResponseBody();
+
+        T data = apiResponse.getData();
+        assertThat(data)
+                .as("API response data should not be null")
+                .isNotNull();
+
+        return data;
+    }
+
+    /**
      * Extract ApiResponse from WebTestClient.ResponseSpec.
      * This is a production-grade utility method that properly handles ApiResponse wrapper deserialization.
      *
-     * @param <T> the type of data in the ApiResponse
-     * @param response the WebTestClient.ResponseSpec
+     * @param <T>             the type of data in the ApiResponse
+     * @param response        the WebTestClient.ResponseSpec
      * @param apiResponseType the ParameterizedTypeReference for ApiResponse&lt;T&gt;
      * @return EntityExchangeResult containing both ApiResponse and headers
      * @throws AssertionError if the response is null or deserialization fails
@@ -305,50 +328,26 @@ public abstract class BaseIntegrationTest {
     protected <T> EntityExchangeResult<ApiResponse<T>> extractApiResponse(
             WebTestClient.ResponseSpec response,
             ParameterizedTypeReference<ApiResponse<T>> apiResponseType) {
-        
+
         EntityExchangeResult<ApiResponse<T>> exchangeResult = response
                 .expectBody(apiResponseType)
                 .returnResult();
-        
+
         ApiResponse<T> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse)
                 .as("API response should not be null. Status: %d, Response: %s",
-                    exchangeResult.getStatus().value(),
-                    exchangeResult.getResponseBodyContent() != null 
-                        ? new String(exchangeResult.getResponseBodyContent()) 
-                        : "null")
+                        exchangeResult.getStatus().value(),
+                        exchangeResult.getResponseBodyContent() != null
+                                ? new String(exchangeResult.getResponseBodyContent())
+                                : "null")
                 .isNotNull();
-        
-        assertThat(apiResponse.isSuccess())
-                .as("API response should be successful. Error: %s", 
-                    apiResponse.getError() != null ? apiResponse.getError().getMessage() : "none")
-                .isTrue();
-        
-        return exchangeResult;
-    }
 
-    /**
-     * Extract data from ApiResponse wrapper.
-     * Convenience method that extracts and validates the data payload.
-     *
-     * @param <T> the type of data
-     * @param response the WebTestClient.ResponseSpec
-     * @param apiResponseType the ParameterizedTypeReference for ApiResponse&lt;T&gt;
-     * @return the unwrapped data from ApiResponse
-     */
-    protected <T> T extractApiResponseData(
-            WebTestClient.ResponseSpec response,
-            ParameterizedTypeReference<ApiResponse<T>> apiResponseType) {
-        
-        EntityExchangeResult<ApiResponse<T>> exchangeResult = extractApiResponse(response, apiResponseType);
-        ApiResponse<T> apiResponse = exchangeResult.getResponseBody();
-        
-        T data = apiResponse.getData();
-        assertThat(data)
-                .as("API response data should not be null")
-                .isNotNull();
-        
-        return data;
+        assertThat(apiResponse.isSuccess())
+                .as("API response should be successful. Error: %s",
+                        apiResponse.getError() != null ? apiResponse.getError().getMessage() : "none")
+                .isTrue();
+
+        return exchangeResult;
     }
 
     // ==================== COOKIE HELPERS ====================
@@ -496,7 +495,7 @@ public abstract class BaseIntegrationTest {
     /**
      * Validate correlation ID is present in response headers.
      *
-     * @param headers response headers
+     * @param headers               response headers
      * @param expectedCorrelationId expected correlation ID
      */
     protected void assertCorrelationIdPresent(HttpHeaders headers, String expectedCorrelationId) {

@@ -45,6 +45,7 @@ import com.ccbsa.wms.user.application.service.command.dto.DeactivateUserCommand;
 import com.ccbsa.wms.user.application.service.command.dto.RemoveUserRoleCommand;
 import com.ccbsa.wms.user.application.service.command.dto.SuspendUserCommand;
 import com.ccbsa.wms.user.application.service.command.dto.UpdateUserProfileCommand;
+import com.ccbsa.wms.user.application.service.exception.UserNotFoundException;
 import com.ccbsa.wms.user.application.service.port.repository.UserRepository;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -248,7 +249,7 @@ public class UserCommandController {
                 if (userId != null) {
                     logger.debug("TenantId not provided for SYSTEM_ADMIN, finding user across schemas: userId={}", userId.getValue());
                     var user = userRepository.findByIdAcrossTenants(userId)
-                            .orElseThrow(() -> new IllegalArgumentException(String.format("User not found: %s", userId.getValue())));
+                            .orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", userId.getValue())));
                     resolvedTenantId = user.getTenantId()
                             .getValue();
                     logger.debug("Found user tenantId: {}", resolvedTenantId);

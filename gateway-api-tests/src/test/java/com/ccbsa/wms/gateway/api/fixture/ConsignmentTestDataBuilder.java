@@ -1,8 +1,8 @@
 package com.ccbsa.wms.gateway.api.fixture;
 
-import com.ccbsa.wms.gateway.api.dto.CreateConsignmentRequest;
-
 import java.time.LocalDate;
+
+import com.ccbsa.wms.gateway.api.dto.CreateConsignmentRequest;
 
 /**
  * Builder for creating stock consignment test data.

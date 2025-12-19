@@ -240,6 +240,31 @@ public class UserRepositoryAdapter
 
     @Override
     public Optional<User> findById(UserId userId) {
+        // Verify TenantContext is set (critical for schema resolution)
+        com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when querying user by ID! Cannot resolve schema. UserId: {}", userId != null ? userId.getValue() : "null");
+            throw new IllegalStateException("TenantContext must be set before querying user by ID");
+        }
+
+        logger.debug("Querying user by ID with TenantContext set to: {}", contextTenantId.getValue());
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        // This ensures Hibernate uses the correct schema even if naming strategy caching occurs
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Now query using JPA repository (will use the schema set in search_path)
         return jpaRepository.findById(userId.getValue())
                 .map(mapper::toDomain);
     }
@@ -421,6 +446,107 @@ public class UserRepositoryAdapter
     }
 
     @Override
+    public List<User> findAllAcrossTenantsWithSearch(UserStatus status, String searchTerm) {
+        logger.info("Finding all users across all tenant schemas with status={} and searchTerm={}", status, searchTerm);
+
+        try {
+            // 1. Get all tenant schemas from information_schema using JdbcTemplate (bypasses Hibernate)
+            List<String> tenantSchemas = getTenantSchemas();
+            logger.info("Found {} tenant schemas: {}", tenantSchemas.size(), tenantSchemas);
+
+            if (tenantSchemas.isEmpty()) {
+                logger.warn("No tenant schemas found - returning empty list");
+                return List.of();
+            }
+
+            // 2. Build UNION query dynamically with search
+            String sql = buildCrossSchemaQueryWithSearch(tenantSchemas, status);
+            logger.info("Generated cross-schema SQL query with search (length={})", sql.length());
+            logger.debug("SQL query: {}", sql);
+
+            // 3. Execute query using JdbcTemplate (bypasses Hibernate naming strategy)
+            // We need to pass parameters for each UNION part: status (if provided) and searchTerm (twice for username and email)
+            String searchPattern = "%" + searchTerm.toLowerCase() + "%";
+            List<UserEntity> entities;
+            if (status != null) {
+                // For UNION queries: status, username search, email search for each UNION part
+                Object[] params = new Object[tenantSchemas.size() * 3];
+                for (int i = 0; i < tenantSchemas.size(); i++) {
+                    params[i * 3] = status.name();
+                    params[i * 3 + 1] = searchPattern;
+                    params[i * 3 + 2] = searchPattern;
+                }
+                entities = jdbcTemplate.query(sql, new UserEntityRowMapper(), params);
+            } else {
+                // Only searchTerm parameters (username and email) for each UNION part
+                Object[] params = new Object[tenantSchemas.size() * 2];
+                for (int i = 0; i < tenantSchemas.size(); i++) {
+                    params[i * 2] = searchPattern;
+                    params[i * 2 + 1] = searchPattern;
+                }
+                entities = jdbcTemplate.query(sql, new UserEntityRowMapper(), params);
+            }
+
+            logger.info("Retrieved {} users from all tenant schemas with search term '{}'", entities.size(), searchTerm);
+
+            // 4. Map to domain objects
+            return entities.stream()
+                    .map(mapper::toDomain)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Error executing cross-schema query with search: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to query users across tenant schemas with search", e);
+        }
+    }
+
+    /**
+     * Builds a cross-schema SQL query with search filter.
+     * <p>
+     * Creates a UNION ALL query that searches across all tenant schemas for users matching the search term
+     * in username or email (case-insensitive).
+     *
+     * @param schemas List of tenant schema names
+     * @param status  Optional user status filter
+     * @return SQL query string with placeholders for status and searchTerm
+     */
+    private String buildCrossSchemaQueryWithSearch(List<String> schemas, UserStatus status) {
+        if (schemas.isEmpty()) {
+            throw new IllegalArgumentException("At least one schema is required");
+        }
+
+        // Explicitly list all columns to ensure proper JPA entity mapping
+        String columns = String.format("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s",
+                "user_id", "tenant_id", "username", "email_address", "first_name", "last_name",
+                "keycloak_user_id", "status", "created_at", "last_modified_at", "version");
+
+        StringBuilder sql = new StringBuilder();
+        List<String> unionParts = new ArrayList<>();
+
+        // Build UNION ALL parts for each schema
+        for (String schema : schemas) {
+            // Escape schema name to prevent SQL injection
+            String escapedSchema = escapeIdentifier(schema);
+            if (status != null) {
+                // Apply status and search filters to each SELECT statement
+                // Using ILIKE for case-insensitive search in PostgreSQL
+                unionParts.add(String.format(
+                        "SELECT %s FROM %s.users WHERE status = ? AND (LOWER(username) LIKE ? OR LOWER(email_address) LIKE ?)",
+                        columns, escapedSchema));
+            } else {
+                // Only search filter
+                unionParts.add(String.format(
+                        "SELECT %s FROM %s.users WHERE LOWER(username) LIKE ? OR LOWER(email_address) LIKE ?",
+                        columns, escapedSchema));
+            }
+        }
+
+        // Combine with UNION ALL
+        sql.append(String.join(" UNION ALL ", unionParts));
+
+        return sql.toString();
+    }
+
+    @Override
     public Optional<User> findByIdAcrossTenants(com.ccbsa.common.domain.valueobject.UserId userId) {
         logger.debug("Finding user by ID across all tenant schemas: userId={}", userId.getValue());
 
@@ -507,6 +633,87 @@ public class UserRepositoryAdapter
         // Now query using JPA repository (will use the schema set in search_path)
         UserEntity.UserStatus entityStatus = UserEntity.UserStatus.valueOf(status.name());
         return jpaRepository.findByTenantIdAndStatus(tenantId.getValue(), entityStatus)
+                .stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<User> findByTenantIdAndSearchTerm(TenantId tenantId, String searchTerm) {
+        // Verify TenantContext is set (critical for schema resolution)
+        com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
+            throw new IllegalStateException(String.format("TenantContext must be set before querying users. Expected tenantId: %s",
+                    tenantId != null ? tenantId.getValue() : "null"));
+        }
+
+        // Verify tenantId matches TenantContext
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
+        }
+
+        logger.debug("Querying users with search term - TenantContext: {}, SearchTerm: {}", contextTenantId.getValue(), searchTerm);
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        // This ensures Hibernate uses the correct schema even if naming strategy caching occurs
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Now query using JPA repository (will use the schema set in search_path)
+        return jpaRepository.findByTenantIdAndSearchTerm(tenantId.getValue(), searchTerm)
+                .stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<User> findByTenantIdAndStatusAndSearchTerm(TenantId tenantId, UserStatus status, String searchTerm) {
+        // Verify TenantContext is set (critical for schema resolution)
+        com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
+            throw new IllegalStateException(String.format("TenantContext must be set before querying users. Expected tenantId: %s",
+                    tenantId != null ? tenantId.getValue() : "null"));
+        }
+
+        // Verify tenantId matches TenantContext
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
+        }
+
+        logger.debug("Querying users with status and search term - TenantContext: {}, Status: {}, SearchTerm: {}", contextTenantId.getValue(), status, searchTerm);
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        // This ensures Hibernate uses the correct schema even if naming strategy caching occurs
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Now query using JPA repository (will use the schema set in search_path)
+        UserEntity.UserStatus entityStatus = UserEntity.UserStatus.valueOf(status.name());
+        return jpaRepository.findByTenantIdAndStatusAndSearchTerm(tenantId.getValue(), entityStatus, searchTerm)
                 .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());

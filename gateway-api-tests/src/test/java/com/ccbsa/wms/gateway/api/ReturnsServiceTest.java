@@ -1,5 +1,15 @@
 package com.ccbsa.wms.gateway.api;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
 import com.ccbsa.wms.gateway.api.dto.CreateProductRequest;
@@ -8,10 +18,6 @@ import com.ccbsa.wms.gateway.api.dto.CreateReturnOrderRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateReturnOrderResponse;
 import com.ccbsa.wms.gateway.api.fixture.ProductTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.ReturnsTestDataBuilder;
-import org.junit.jupiter.api.*;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.test.web.reactive.server.EntityExchangeResult;
-import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,9 +49,10 @@ public class ReturnsServiceTest extends BaseIntegrationTest {
                     productRequest
             ).exchange()
                     .expectStatus().isCreated()
-                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {})
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                    })
                     .returnResult();
-            
+
             ApiResponse<CreateProductResponse> productApiResponse = productExchangeResult.getResponseBody();
             assertThat(productApiResponse).isNotNull();
             assertThat(productApiResponse.isSuccess()).isTrue();
@@ -74,13 +81,14 @@ public class ReturnsServiceTest extends BaseIntegrationTest {
         // Assert
         EntityExchangeResult<ApiResponse<CreateReturnOrderResponse>> exchangeResult = response
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateReturnOrderResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateReturnOrderResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateReturnOrderResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         CreateReturnOrderResponse returnOrder = apiResponse.getData();
         assertThat(returnOrder).isNotNull();
         assertThat(returnOrder.getReturnOrderId()).isNotBlank();

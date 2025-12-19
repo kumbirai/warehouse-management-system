@@ -2,6 +2,7 @@ package com.ccbsa.common.cache.config;
 
 import java.time.Duration;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;
@@ -21,6 +22,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import com.ccbsa.common.cache.key.TenantAwareCacheKeyGenerator;
 import com.ccbsa.common.cache.manager.TenantAwareCacheManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -115,6 +117,7 @@ public class CacheConfiguration {
     public ObjectMapper redisCacheObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.registerModule(new Jdk8Module());
         objectMapper.activateDefaultTyping(objectMapper.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL);
         objectMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return objectMapper;
@@ -157,7 +160,7 @@ public class CacheConfiguration {
      */
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory,
-                                                       @org.springframework.beans.factory.annotation.Qualifier("redisCacheObjectMapper") ObjectMapper redisCacheObjectMapper) {
+                                                       @Qualifier("redisCacheObjectMapper") ObjectMapper redisCacheObjectMapper) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 

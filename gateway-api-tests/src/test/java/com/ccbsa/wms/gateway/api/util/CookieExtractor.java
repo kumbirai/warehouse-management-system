@@ -1,9 +1,9 @@
 package com.ccbsa.wms.gateway.api.util;
 
+import java.util.List;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
-
-import java.util.List;
 
 /**
  * Utility for extracting cookies from HTTP response headers.
@@ -43,16 +43,16 @@ public class CookieExtractor {
         String[] parts = cookieHeader.split(";");
         String nameValue = parts[0].trim();
         String[] nameValuePair = nameValue.split("=", 2);
-        
+
         if (nameValuePair.length != 2) {
             return null;
         }
-        
+
         String name = nameValuePair[0].trim();
         String value = nameValuePair[1].trim();
-        
+
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value);
-        
+
         // Parse attributes
         for (int i = 1; i < parts.length; i++) {
             String attr = parts[i].trim().toLowerCase();
@@ -72,14 +72,14 @@ public class CookieExtractor {
                 }
             }
         }
-        
+
         return builder.build();
     }
 
     /**
      * Extract cookie by name from response headers.
      *
-     * @param headers the response headers
+     * @param headers    the response headers
      * @param cookieName the cookie name
      * @return ResponseCookie or null if not found
      */

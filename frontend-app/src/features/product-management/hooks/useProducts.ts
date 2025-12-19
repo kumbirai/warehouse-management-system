@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { productService } from '../services/productService';
 import { Product, ProductListFilters } from '../types/product';
 import { logger } from '../../../utils/logger';
@@ -15,7 +15,11 @@ export const useProducts = (filters: ProductListFilters): UseProductsResult => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
+    if (!filters.tenantId) {
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -43,20 +47,11 @@ export const useProducts = (filters: ProductListFilters): UseProductsResult => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
-    if (filters.tenantId) {
-      fetchProducts();
-    }
-  }, [
-    filters.tenantId,
-    filters.page,
-    filters.size,
-    filters.category,
-    filters.brand,
-    filters.search,
-  ]);
+    fetchProducts();
+  }, [fetchProducts]);
 
   return { products, isLoading, error, refetch: fetchProducts };
 };

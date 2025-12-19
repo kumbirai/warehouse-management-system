@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class UserResponse {
     private String userId;
     private String tenantId;
+    private String tenantName;
     private String username;
     @JsonProperty("emailAddress")
     private String emailAddress;
@@ -42,6 +43,14 @@ public class UserResponse {
 
     public void setTenantId(String tenantId) {
         this.tenantId = tenantId;
+    }
+
+    public String getTenantName() {
+        return tenantName;
+    }
+
+    public void setTenantName(String tenantName) {
+        this.tenantName = tenantName;
     }
 
     public String getUsername() {

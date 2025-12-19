@@ -1,5 +1,15 @@
 package com.ccbsa.wms.gateway.api;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationRequest;
@@ -11,10 +21,6 @@ import com.ccbsa.wms.gateway.api.dto.CreateUserResponse;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.ReconciliationTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.UserTestDataBuilder;
-import org.junit.jupiter.api.*;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.test.web.reactive.server.EntityExchangeResult;
-import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,9 +53,10 @@ public class ReconciliationServiceTest extends BaseIntegrationTest {
                     locationRequest
             ).exchange()
                     .expectStatus().isCreated()
-                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {})
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
                     .returnResult();
-            
+
             ApiResponse<CreateLocationResponse> locationApiResponse = locationExchangeResult.getResponseBody();
             assertThat(locationApiResponse).isNotNull();
             assertThat(locationApiResponse.isSuccess()).isTrue();
@@ -65,9 +72,10 @@ public class ReconciliationServiceTest extends BaseIntegrationTest {
                     userRequest
             ).exchange()
                     .expectStatus().isCreated()
-                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {})
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                    })
                     .returnResult();
-            
+
             ApiResponse<CreateUserResponse> userApiResponse = userExchangeResult.getResponseBody();
             assertThat(userApiResponse).isNotNull();
             assertThat(userApiResponse.isSuccess()).isTrue();
@@ -97,13 +105,14 @@ public class ReconciliationServiceTest extends BaseIntegrationTest {
         // Assert
         EntityExchangeResult<ApiResponse<CreateReconciliationCountResponse>> exchangeResult = response
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateReconciliationCountResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateReconciliationCountResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateReconciliationCountResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         CreateReconciliationCountResponse count = apiResponse.getData();
         assertThat(count).isNotNull();
         assertThat(count.getCountId()).isNotBlank();

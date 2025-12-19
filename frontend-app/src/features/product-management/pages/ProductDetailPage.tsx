@@ -9,6 +9,9 @@ export const ProductDetailPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // Call hooks unconditionally before any early returns
+  const { product, isLoading, error } = useProduct(productId || '', user?.tenantId || '');
+
   if (!productId) {
     navigate('/products');
     return null;
@@ -17,8 +20,6 @@ export const ProductDetailPage = () => {
   if (!user?.tenantId) {
     return <div>Tenant ID is required</div>;
   }
-
-  const { product, isLoading, error } = useProduct(productId, user.tenantId);
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>

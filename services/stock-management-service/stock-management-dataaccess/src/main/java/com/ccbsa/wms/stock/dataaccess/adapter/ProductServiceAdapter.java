@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,9 +55,9 @@ public class ProductServiceAdapter
             String url = String.format("%s/products/validate-barcode?barcode=%s", productServiceUrl, barcode);
             logger.debug("Calling product service: {}", url);
 
-            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            HttpHeaders headers = new HttpHeaders();
             headers.set("X-Tenant-Id", tenantId.getValue());
-            org.springframework.http.HttpEntity<?> entity = new org.springframework.http.HttpEntity<>(headers);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
 
             ResponseEntity<ApiResponse<ValidateBarcodeResponse>> response = restTemplate.exchange(url, HttpMethod.GET, entity, BARCODE_RESPONSE_TYPE);
 
@@ -89,21 +91,39 @@ public class ProductServiceAdapter
         logger.debug("Getting product by code from product-service: productCode={}, tenantId={}", productCode.getValue(), tenantId.getValue());
 
         try {
-            // Use the check-uniqueness endpoint to verify product exists, then we'd need to get full details
-            // For now, we'll use a workaround: validate that product code exists via uniqueness check
-            // Then we'd need to get the product details - this is a limitation that should be addressed
-            // by adding a get-by-code endpoint to product service
-            // TODO: Add get-by-code endpoint to product service or implement product search
-            // For MVP, we'll validate existence and return basic info
-            // This is a temporary solution - proper implementation requires product service enhancement
-            logger.warn("getProductByCode uses workaround - proper implementation requires product service get-by-code endpoint");
+            String url = String.format("%s/products/by-code/%s", productServiceUrl, productCode.getValue());
+            logger.debug("Calling product service: {}", url);
 
-            // For now, return empty - the validation will fail which is acceptable for MVP
-            // The command handler will catch this and provide appropriate error message
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Tenant-Id", tenantId.getValue());
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<ApiResponse<ProductResponse>> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, PRODUCT_RESPONSE_TYPE);
+
+            ApiResponse<ProductResponse> responseBody = response.getBody();
+            if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
+                ProductResponse productResponse = responseBody.getData();
+                ProductInfo productInfo = new ProductInfo(
+                        productResponse.getProductId(),
+                        productResponse.getProductCode(),
+                        productResponse.getDescription(),
+                        productResponse.getPrimaryBarcode());
+                logger.debug("Product retrieved by code: productId={}, productCode={}",
+                        productResponse.getProductId(), productResponse.getProductCode());
+                return Optional.of(productInfo);
+            }
+
             return Optional.empty();
+        } catch (HttpClientErrorException.NotFound e) {
+            logger.warn("Product not found by code: {}", productCode.getValue());
+            return Optional.empty();
+        } catch (RestClientException e) {
+            logger.error("Failed to get product by code from product-service: productCode={}", productCode.getValue(), e);
+            throw new RuntimeException(String.format("Failed to get product by code: %s", e.getMessage()), e);
         } catch (Exception e) {
             logger.error("Unexpected error getting product by code: productCode={}", productCode.getValue(), e);
-            return Optional.empty();
+            throw new RuntimeException(String.format("Failed to get product by code: %s", e.getMessage()), e);
         }
     }
 

@@ -29,7 +29,7 @@ public class SecurityConfig
                 .excludePathPatterns("/actuator/**", "/error", "/swagger-ui/**", "/v3/api-docs/**",
                         // BFF authentication endpoints are public and don't have tenant context yet
                         // Note: Gateway strips /api/v1 prefix, so these paths are what the service receives
-                        "/bff/auth/login", "/bff/auth/refresh");
+                        "/bff/auth/login", "/bff/auth/refresh", "/bff/auth/logout");
     }
 }
 

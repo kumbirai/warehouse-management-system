@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { userService } from '../services/userService';
 
 export const useUserRoles = (userId?: string) => {
@@ -6,7 +6,7 @@ export const useUserRoles = (userId?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     if (!userId) {
       return;
     }
@@ -24,13 +24,11 @@ export const useUserRoles = (userId?: string) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
-    if (userId) {
-      fetchRoles();
-    }
-  }, [userId]);
+    fetchRoles();
+  }, [fetchRoles]);
 
   const assignRole = async (roleId: string) => {
     if (!userId) {

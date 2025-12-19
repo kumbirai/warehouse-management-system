@@ -42,24 +42,50 @@ public class ListUsersQueryHandler {
      */
     @Transactional(readOnly = true)
     public ListUsersQueryResult handle(ListUsersQuery query) {
-        logger.debug("Listing users: tenantId={}, status={}, page={}, size={}", query.getTenantId(), query.getStatus(), query.getPage(), query.getSize());
+        logger.debug("Listing users: tenantId={}, status={}, page={}, size={}, search={}",
+                query.getTenantId(), query.getStatus(), query.getPage(), query.getSize(), query.getSearch());
 
         // 1. Load users from repository
         List<User> users;
         if (query.getTenantId() != null) {
             // Filter by tenant ID (single tenant query)
-            if (query.getStatus() != null) {
-                users = userRepository.findByTenantIdAndStatus(query.getTenantId(), query.getStatus());
+            String searchTerm = query.getSearch();
+            boolean hasSearch = searchTerm != null && !searchTerm.trim().isEmpty();
+
+            if (hasSearch && searchTerm != null) {
+                // Apply search filter
+                String trimmedSearchTerm = searchTerm.trim();
+                if (query.getStatus() != null) {
+                    users = userRepository.findByTenantIdAndStatusAndSearchTerm(query.getTenantId(), query.getStatus(), trimmedSearchTerm);
+                } else {
+                    users = userRepository.findByTenantIdAndSearchTerm(query.getTenantId(), trimmedSearchTerm);
+                }
+                logger.debug("Found {} users for tenantId={} with search term '{}'", users.size(), query.getTenantId(), trimmedSearchTerm);
             } else {
-                users = userRepository.findByTenantId(query.getTenantId());
+                // No search filter
+                if (query.getStatus() != null) {
+                    users = userRepository.findByTenantIdAndStatus(query.getTenantId(), query.getStatus());
+                } else {
+                    users = userRepository.findByTenantId(query.getTenantId());
+                }
+                logger.debug("Found {} users for tenantId={}", users.size(), query.getTenantId());
             }
-            logger.debug("Found {} users for tenantId={}", users.size(), query.getTenantId());
         } else {
             // SYSTEM_ADMIN can query all users across all tenant schemas (tenantId is null)
             // Note: This is only reached if user has SYSTEM_ADMIN role (enforced by @PreAuthorize)
-            // Use findAllAcrossTenants to query across all tenant schemas
-            users = userRepository.findAllAcrossTenants(query.getStatus());
-            logger.debug("Found {} users across all tenants (SYSTEM_ADMIN query)", users.size());
+            String searchTerm = query.getSearch();
+            boolean hasSearch = searchTerm != null && !searchTerm.trim().isEmpty();
+
+            if (hasSearch && searchTerm != null) {
+                // Apply search filter across all tenants
+                String trimmedSearchTerm = searchTerm.trim();
+                users = userRepository.findAllAcrossTenantsWithSearch(query.getStatus(), trimmedSearchTerm);
+                logger.debug("Found {} users across all tenants with search term '{}' (SYSTEM_ADMIN query)", users.size(), trimmedSearchTerm);
+            } else {
+                // No search filter - query all users across all tenants
+                users = userRepository.findAllAcrossTenants(query.getStatus());
+                logger.debug("Found {} users across all tenants (SYSTEM_ADMIN query)", users.size());
+            }
         }
 
         // 2. Apply pagination
@@ -78,8 +104,9 @@ public class ListUsersQueryHandler {
     }
 
     private GetUserQueryResult toQueryResult(User user) {
-        return new GetUserQueryResult(user.getId(), user.getTenantId(), user.getUsername()
-                .getValue(), user.getEmail()
+        return new GetUserQueryResult(user.getId(), user.getTenantId(), null, // tenantName not fetched in list query for performance
+                user.getUsername()
+                        .getValue(), user.getEmail()
                 .getValue(), user.getFirstName()
                 .map(fn -> fn.getValue())
                 .orElse(null), user.getLastName()

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { locationService } from '../services/locationService';
 import { Location, LocationListFilters } from '../types/location';
 import { logger } from '../../../utils/logger';
@@ -15,7 +15,11 @@ export const useLocations = (filters: LocationListFilters): UseLocationsResult =
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchLocations = async () => {
+  const fetchLocations = useCallback(async () => {
+    if (!filters.tenantId) {
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -43,13 +47,11 @@ export const useLocations = (filters: LocationListFilters): UseLocationsResult =
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
-    if (filters.tenantId) {
-      fetchLocations();
-    }
-  }, [filters.tenantId, filters.page, filters.size, filters.zone, filters.status, filters.search]);
+    fetchLocations();
+  }, [fetchLocations]);
 
   return { locations, isLoading, error, refetch: fetchLocations };
 };

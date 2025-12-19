@@ -1,13 +1,14 @@
 package com.ccbsa.wms.gateway.api;
 
-import com.ccbsa.common.application.api.ApiResponse;
-import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
-import com.ccbsa.wms.gateway.api.dto.LoginRequest;
-import com.ccbsa.wms.gateway.api.dto.LoginResponse;
-import com.ccbsa.wms.gateway.api.util.RequestHeaderHelper;
-import com.nimbusds.jwt.JWT;
-import com.nimbusds.jwt.JWTParser;
-import org.junit.jupiter.api.*;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -15,10 +16,13 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import com.ccbsa.common.application.api.ApiResponse;
+import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
+import com.ccbsa.wms.gateway.api.dto.LoginRequest;
+import com.ccbsa.wms.gateway.api.dto.LoginResponse;
+import com.ccbsa.wms.gateway.api.util.RequestHeaderHelper;
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTParser;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,13 +51,14 @@ public class AuthenticationTest extends BaseIntegrationTest {
         // Extract ApiResponse wrapper using ParameterizedTypeReference
         EntityExchangeResult<ApiResponse<LoginResponse>> exchangeResult = response
                 .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<LoginResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         LoginResponse loginResponse = apiResponse.getData();
         assertThat(loginResponse).isNotNull();
         assertThat(loginResponse.getAccessToken()).isNotBlank();
@@ -162,13 +167,14 @@ public class AuthenticationTest extends BaseIntegrationTest {
         // Extract ApiResponse wrapper
         EntityExchangeResult<ApiResponse<LoginResponse>> exchangeResult = response
                 .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<LoginResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         LoginResponse refreshResponse = apiResponse.getData();
         assertThat(refreshResponse).isNotNull();
         assertThat(refreshResponse.getAccessToken()).isNotBlank();
@@ -228,6 +234,15 @@ public class AuthenticationTest extends BaseIntegrationTest {
 
     // ==================== JWT TOKEN VALIDATION TESTS ====================
 
+    private WebTestClient.ResponseSpec refreshTokenRequest(ResponseCookie refreshTokenCookie) {
+        return webTestClient.post()
+                .uri("/api/v1/bff/auth/refresh")
+                .cookie(refreshTokenCookie.getName(), refreshTokenCookie.getValue())
+                .exchange();
+    }
+
+    // ==================== LOGOUT TESTS ====================
+
     @Test
     @Order(30)
     public void testJwtToken_ValidClaims() throws Exception {
@@ -241,11 +256,11 @@ public class AuthenticationTest extends BaseIntegrationTest {
         assertThat(jwt.getJWTClaimsSet().getSubject()).isNotBlank();
         assertThat(jwt.getJWTClaimsSet().getIssueTime()).isNotNull();
         assertThat(jwt.getJWTClaimsSet().getExpirationTime()).isNotNull();
-        
+
         // Verify realm_access claim exists (contains roles)
         Object realmAccess = jwt.getJWTClaimsSet().getClaim("realm_access");
         assertThat(realmAccess).isNotNull();
-        
+
         // tenant_id claim may be null for SYSTEM_ADMIN users (they don't have tenant context)
         // For regular users, tenant_id should be present, but for SYSTEM_ADMIN it's acceptable to be null
         Object tenantIdClaim = jwt.getJWTClaimsSet().getClaim("tenant_id");
@@ -253,7 +268,7 @@ public class AuthenticationTest extends BaseIntegrationTest {
         // The important thing is that the JWT is valid and parseable
     }
 
-    // ==================== LOGOUT TESTS ====================
+    // ==================== HELPER METHODS ====================
 
     @Test
     @Order(40)
@@ -261,13 +276,13 @@ public class AuthenticationTest extends BaseIntegrationTest {
         // Arrange
         AuthenticationResult auth = loginAsSystemAdmin();
         String tenantId = auth.getTenantId();
-        
+
         // Extract roles from user context to set X-Role header
         // This helps the TenantContextInterceptor recognize SYSTEM_ADMIN and bypass tenant validation
         String rolesHeader = auth.getUserContext() != null && auth.getUserContext().getRoles() != null
                 ? String.join(",", auth.getUserContext().getRoles())
                 : "SYSTEM_ADMIN"; // Fallback for SYSTEM_ADMIN
-        
+
         // For SYSTEM_ADMIN, tenant ID might be null, but interceptor may require it
         // Use a placeholder tenant ID if not available (interceptor should bypass for SYSTEM_ADMIN)
         String effectiveTenantId = tenantId != null ? tenantId : "SYSTEM";
@@ -299,15 +314,6 @@ public class AuthenticationTest extends BaseIntegrationTest {
         if (clearedCookie != null) {
             assertThat(clearedCookie.getMaxAge().getSeconds()).isEqualTo(0);
         }
-    }
-
-    // ==================== HELPER METHODS ====================
-
-    private WebTestClient.ResponseSpec refreshTokenRequest(ResponseCookie refreshTokenCookie) {
-        return webTestClient.post()
-                .uri("/api/v1/bff/auth/refresh")
-                .cookie(refreshTokenCookie.getName(), refreshTokenCookie.getValue())
-                .exchange();
     }
 }
 

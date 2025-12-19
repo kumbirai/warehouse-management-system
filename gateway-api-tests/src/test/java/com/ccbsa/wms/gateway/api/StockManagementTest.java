@@ -1,5 +1,15 @@
 package com.ccbsa.wms.gateway.api;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
 import com.ccbsa.wms.gateway.api.dto.CreateConsignmentRequest;
@@ -11,10 +21,6 @@ import com.ccbsa.wms.gateway.api.dto.CreateProductResponse;
 import com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.ProductTestDataBuilder;
-import org.junit.jupiter.api.*;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.test.web.reactive.server.EntityExchangeResult;
-import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,9 +53,10 @@ public class StockManagementTest extends BaseIntegrationTest {
                     productRequest
             ).exchange()
                     .expectStatus().isCreated()
-                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {})
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                    })
                     .returnResult();
-            
+
             ApiResponse<CreateProductResponse> productApiResponse = productExchangeResult.getResponseBody();
             assertThat(productApiResponse).isNotNull();
             assertThat(productApiResponse.isSuccess()).isTrue();
@@ -65,9 +72,10 @@ public class StockManagementTest extends BaseIntegrationTest {
                     locationRequest
             ).exchange()
                     .expectStatus().isCreated()
-                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {})
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
                     .returnResult();
-            
+
             ApiResponse<CreateLocationResponse> locationApiResponse = locationExchangeResult.getResponseBody();
             assertThat(locationApiResponse).isNotNull();
             assertThat(locationApiResponse.isSuccess()).isTrue();
@@ -97,13 +105,14 @@ public class StockManagementTest extends BaseIntegrationTest {
         // Assert
         EntityExchangeResult<ApiResponse<CreateConsignmentResponse>> exchangeResult = response
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateConsignmentResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateConsignmentResponse>>() {
+                })
                 .returnResult();
-        
+
         ApiResponse<CreateConsignmentResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         CreateConsignmentResponse consignment = apiResponse.getData();
         assertThat(consignment).isNotNull();
         assertThat(consignment.getConsignmentId()).isNotBlank();

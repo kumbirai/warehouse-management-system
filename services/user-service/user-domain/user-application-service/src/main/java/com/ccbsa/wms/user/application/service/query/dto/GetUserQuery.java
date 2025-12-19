@@ -9,13 +9,19 @@ import com.ccbsa.common.domain.valueobject.UserId;
  */
 public class GetUserQuery {
     private final UserId userId;
+    private final boolean isSystemAdmin;
 
-    public GetUserQuery(UserId userId) {
+    public GetUserQuery(UserId userId, boolean isSystemAdmin) {
         this.userId = Objects.requireNonNull(userId, "UserId is required");
+        this.isSystemAdmin = isSystemAdmin;
     }
 
     public UserId getUserId() {
         return userId;
+    }
+
+    public boolean isSystemAdmin() {
+        return isSystemAdmin;
     }
 }
 

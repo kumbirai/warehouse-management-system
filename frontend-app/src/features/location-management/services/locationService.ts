@@ -63,8 +63,10 @@ export const locationService = {
       logger.debug('Location list response:', {
         status: response.status,
         hasData: !!response.data,
-        locationsLength: Array.isArray(response.data?.locations) ? response.data.locations.length : 'N/A',
-        totalCount: response.data?.totalCount ?? 'N/A',
+        locationsLength: Array.isArray(response.data?.data?.locations)
+          ? response.data.data.locations.length
+          : 'N/A',
+        totalCount: response.data?.data?.totalCount ?? 'N/A',
       });
     }
 

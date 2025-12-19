@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
@@ -71,7 +72,7 @@ public class GatewaySecurityConfig {
      * CORS.
      */
     @Bean
-    @org.springframework.core.annotation.Order(1)
+    @Order(1)
     public SecurityWebFilterChain publicSecurityWebFilterChain(ServerHttpSecurity http) {
         http.securityMatcher(exchange -> {
                     String path = exchange.getRequest()
@@ -164,7 +165,7 @@ public class GatewaySecurityConfig {
      * It uses a securityMatcher that excludes public endpoints to ensure they are handled by the public chain (Order 1).
      */
     @Bean
-    @org.springframework.core.annotation.Order(2)
+    @Order(2)
     public SecurityWebFilterChain protectedSecurityWebFilterChain(ServerHttpSecurity http) {
         http.securityMatcher(exchange -> {
                     String path = exchange.getRequest()

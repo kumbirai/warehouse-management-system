@@ -51,12 +51,12 @@ public class UserMapper {
     }
 
     // Query mappers
-    public GetUserQuery toGetUserQuery(String userId) {
-        return new GetUserQuery(UserId.of(userId));
+    public GetUserQuery toGetUserQuery(String userId, boolean isSystemAdmin) {
+        return new GetUserQuery(UserId.of(userId), isSystemAdmin);
     }
 
-    public ListUsersQuery toListUsersQuery(String tenantId, String status, Integer page, Integer size) {
-        return new ListUsersQuery(tenantId != null ? TenantId.of(tenantId) : null, status != null ? UserStatus.valueOf(status) : null, page, size);
+    public ListUsersQuery toListUsersQuery(String tenantId, String status, Integer page, Integer size, String search) {
+        return new ListUsersQuery(tenantId != null ? TenantId.of(tenantId) : null, status != null ? UserStatus.valueOf(status) : null, page, size, search);
     }
 
     public List<UserResponse> toUserResponseList(ListUsersQueryResult result) {
@@ -72,6 +72,7 @@ public class UserMapper {
                 .getValue());
         response.setTenantId(result.getTenantId()
                 .getValue());
+        response.setTenantName(result.getTenantName());
         response.setUsername(result.getUsername());
         response.setEmailAddress(result.getEmail());
         response.setFirstName(result.getFirstName());

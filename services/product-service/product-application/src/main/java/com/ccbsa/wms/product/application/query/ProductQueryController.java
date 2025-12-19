@@ -17,9 +17,11 @@ import com.ccbsa.wms.product.application.dto.query.ProductCodeUniquenessResultDT
 import com.ccbsa.wms.product.application.dto.query.ProductQueryResultDTO;
 import com.ccbsa.wms.product.application.dto.query.ValidateProductBarcodeResultDTO;
 import com.ccbsa.wms.product.application.service.query.CheckProductCodeUniquenessQueryHandler;
+import com.ccbsa.wms.product.application.service.query.GetProductByCodeQueryHandler;
 import com.ccbsa.wms.product.application.service.query.GetProductQueryHandler;
 import com.ccbsa.wms.product.application.service.query.ListProductsQueryHandler;
 import com.ccbsa.wms.product.application.service.query.ValidateProductBarcodeQueryHandler;
+import com.ccbsa.wms.product.application.service.query.dto.GetProductByCodeQuery;
 import com.ccbsa.wms.product.application.service.query.dto.GetProductQuery;
 import com.ccbsa.wms.product.application.service.query.dto.ListProductsQuery;
 import com.ccbsa.wms.product.application.service.query.dto.ListProductsQueryResult;
@@ -43,17 +45,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
         description = "Product query operations")
 public class ProductQueryController {
     private final GetProductQueryHandler getProductQueryHandler;
+    private final GetProductByCodeQueryHandler getProductByCodeQueryHandler;
     private final ListProductsQueryHandler listProductsQueryHandler;
     private final CheckProductCodeUniquenessQueryHandler checkProductCodeUniquenessQueryHandler;
     private final ValidateProductBarcodeQueryHandler validateProductBarcodeQueryHandler;
     private final ProductDTOMapper mapper;
 
     public ProductQueryController(GetProductQueryHandler getProductQueryHandler,
+                                  GetProductByCodeQueryHandler getProductByCodeQueryHandler,
                                   ListProductsQueryHandler listProductsQueryHandler,
                                   CheckProductCodeUniquenessQueryHandler checkProductCodeUniquenessQueryHandler,
                                   ValidateProductBarcodeQueryHandler validateProductBarcodeQueryHandler,
                                   ProductDTOMapper mapper) {
         this.getProductQueryHandler = getProductQueryHandler;
+        this.getProductByCodeQueryHandler = getProductByCodeQueryHandler;
         this.listProductsQueryHandler = listProductsQueryHandler;
         this.checkProductCodeUniquenessQueryHandler = checkProductCodeUniquenessQueryHandler;
         this.validateProductBarcodeQueryHandler = validateProductBarcodeQueryHandler;
@@ -95,6 +100,25 @@ public class ProductQueryController {
 
         // Execute query
         ProductQueryResult result = getProductQueryHandler.handle(query);
+
+        // Map result to DTO
+        ProductQueryResultDTO resultDTO = mapper.toQueryResultDTO(result);
+
+        return ApiResponseBuilder.ok(resultDTO);
+    }
+
+    @GetMapping("/by-code/{productCode}")
+    @Operation(summary = "Get Product by Code",
+            description = "Retrieves a product by product code")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
+    public ResponseEntity<ApiResponse<ProductQueryResultDTO>> getProductByCode(
+            @RequestHeader("X-Tenant-Id") String tenantId,
+            @PathVariable String productCode) {
+        // Map to query
+        GetProductByCodeQuery query = mapper.toGetProductByCodeQuery(productCode, tenantId);
+
+        // Execute query
+        ProductQueryResult result = getProductByCodeQueryHandler.handle(query);
 
         // Map result to DTO
         ProductQueryResultDTO resultDTO = mapper.toQueryResultDTO(result);

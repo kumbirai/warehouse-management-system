@@ -1,8 +1,8 @@
 package com.ccbsa.wms.gateway.api.fixture;
 
-import com.ccbsa.wms.gateway.api.dto.CreateProductRequest;
-
 import java.util.List;
+
+import com.ccbsa.wms.gateway.api.dto.CreateProductRequest;
 
 /**
  * Builder for creating product test data.

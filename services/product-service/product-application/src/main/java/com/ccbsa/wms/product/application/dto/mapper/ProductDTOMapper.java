@@ -28,6 +28,7 @@ import com.ccbsa.wms.product.application.service.command.dto.UpdateProductResult
 import com.ccbsa.wms.product.application.service.command.dto.UploadProductCsvCommand;
 import com.ccbsa.wms.product.application.service.command.dto.UploadProductCsvResult;
 import com.ccbsa.wms.product.application.service.query.dto.CheckProductCodeUniquenessQuery;
+import com.ccbsa.wms.product.application.service.query.dto.GetProductByCodeQuery;
 import com.ccbsa.wms.product.application.service.query.dto.GetProductQuery;
 import com.ccbsa.wms.product.application.service.query.dto.ListProductsQuery;
 import com.ccbsa.wms.product.application.service.query.dto.ListProductsQueryResult;
@@ -249,6 +250,20 @@ public class ProductDTOMapper {
     public GetProductQuery toGetProductQuery(String productId, String tenantId) {
         return GetProductQuery.builder()
                 .productId(ProductId.of(UUID.fromString(productId)))
+                .tenantId(TenantId.of(tenantId))
+                .build();
+    }
+
+    /**
+     * Converts product code and tenant ID to GetProductByCodeQuery.
+     *
+     * @param productCode Product code string
+     * @param tenantId    Tenant ID string
+     * @return GetProductByCodeQuery
+     */
+    public GetProductByCodeQuery toGetProductByCodeQuery(String productCode, String tenantId) {
+        return GetProductByCodeQuery.builder()
+                .productCode(ProductCode.of(productCode))
                 .tenantId(TenantId.of(tenantId))
                 .build();
     }

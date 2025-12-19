@@ -1,8 +1,8 @@
 package com.ccbsa.wms.gateway.api.fixture;
 
-import com.ccbsa.wms.gateway.api.dto.CreateReconciliationCountRequest;
-
 import java.time.LocalDate;
+
+import com.ccbsa.wms.gateway.api.dto.CreateReconciliationCountRequest;
 
 /**
  * Builder for creating reconciliation count test data.

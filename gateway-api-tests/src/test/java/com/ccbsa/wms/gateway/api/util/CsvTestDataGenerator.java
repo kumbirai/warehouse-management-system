@@ -1,12 +1,11 @@
 package com.ccbsa.wms.gateway.api.util;
 
-import com.ccbsa.wms.gateway.api.fixture.TestData;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.LocalDate;
+
+import com.ccbsa.wms.gateway.api.fixture.TestData;
 
 /**
  * Utility for generating CSV test files.

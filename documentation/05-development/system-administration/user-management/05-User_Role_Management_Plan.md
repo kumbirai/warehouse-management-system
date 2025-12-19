@@ -18,14 +18,17 @@
 
 ### Purpose
 
-Detailed implementation plan for managing user roles and permissions. Ensures proper role assignment and synchronization with Keycloak. **This plan MUST align with the authoritative [Roles and Permissions Definition](../../../03-security/Roles_and_Permissions_Definition.md) document.**
+Detailed implementation plan for managing user roles and permissions. Ensures proper role assignment and synchronization with Keycloak. **This plan MUST align with the
+authoritative [Roles and Permissions Definition](../../../03-security/Roles_and_Permissions_Definition.md) document.**
 
 ### Authoritative Reference
 
 **⚠️ CRITICAL:** All role definitions, permissions, assignment rules, and validation logic MUST reference and comply with:
+
 - **[Roles and Permissions Definition](../../../03-security/Roles_and_Permissions_Definition.md)**
 
 This document defines:
+
 - Complete role hierarchy
 - All 15 system roles
 - Role assignment rules and constraints
@@ -38,9 +41,11 @@ This document defines:
 **All roles defined in [Roles and Permissions Definition](../../../03-security/Roles_and_Permissions_Definition.md):**
 
 #### System-Level Roles
+
 - **SYSTEM_ADMIN** - Full system access across all tenants
 
 #### Tenant-Level Roles
+
 - **TENANT_ADMIN** - Full administrative access within a tenant
 - **WAREHOUSE_MANAGER** - Warehouse operations management
 - **STOCK_MANAGER** - Stock management operations
@@ -49,6 +54,7 @@ This document defines:
 - **RETURNS_MANAGER** - Returns management operations
 
 #### Operational Roles
+
 - **OPERATOR** - General operational access for warehouse staff
 - **PICKER** - Specialized picking operations
 - **STOCK_CLERK** - Stock receipt and management operations
@@ -58,6 +64,7 @@ This document defines:
 - **USER** - Basic user access (default role)
 
 #### Service Roles
+
 - **SERVICE** - Service-to-service communication (system role)
 
 **Total: 15 roles** (see [Roles and Permissions Definition](../../../03-security/Roles_and_Permissions_Definition.md) for complete details)
@@ -474,16 +481,16 @@ public class UserRoleAssignedEvent extends UserEvent<UserId> {
 
 3. **WAREHOUSE_MANAGER**
     - Can assign operational roles to users within own tenant:
-      - OPERATOR, PICKER, STOCK_CLERK, RECONCILIATION_CLERK, RETURNS_CLERK, VIEWER, USER
+        - OPERATOR, PICKER, STOCK_CLERK, RECONCILIATION_CLERK, RETURNS_CLERK, VIEWER, USER
     - Cannot assign manager roles or SYSTEM_ADMIN/TENANT_ADMIN
     - Can remove operational roles from users within own tenant
 
 4. **Specialized Managers** (STOCK_MANAGER, LOCATION_MANAGER, RECONCILIATION_MANAGER, RETURNS_MANAGER)
     - Can assign corresponding clerk roles within own tenant:
-      - STOCK_MANAGER → STOCK_CLERK, VIEWER, USER
-      - LOCATION_MANAGER → VIEWER, USER
-      - RECONCILIATION_MANAGER → RECONCILIATION_CLERK, VIEWER, USER
-      - RETURNS_MANAGER → RETURNS_CLERK, VIEWER, USER
+        - STOCK_MANAGER → STOCK_CLERK, VIEWER, USER
+        - LOCATION_MANAGER → VIEWER, USER
+        - RECONCILIATION_MANAGER → RECONCILIATION_CLERK, VIEWER, USER
+        - RETURNS_MANAGER → RETURNS_CLERK, VIEWER, USER
     - Cannot assign manager roles or SYSTEM_ADMIN/TENANT_ADMIN
 
 5. **Other Roles** (OPERATOR, PICKER, CLERK roles, VIEWER, USER)
@@ -537,63 +544,63 @@ public class UserRoleAssignedEvent extends UserEvent<UserId> {
 ### Current Implementation Issues
 
 1. **❌ Incomplete Role List**
-   - Current: Only 5 roles (SYSTEM_ADMIN, TENANT_ADMIN, WAREHOUSE_MANAGER, PICKER, USER)
-   - Required: All 15 roles from Roles_and_Permissions_Definition.md
+    - Current: Only 5 roles (SYSTEM_ADMIN, TENANT_ADMIN, WAREHOUSE_MANAGER, PICKER, USER)
+    - Required: All 15 roles from Roles_and_Permissions_Definition.md
 
 2. **❌ Missing Role Assignment Validation**
-   - No validation of who can assign which roles
-   - No tenant-scoped role assignment enforcement
-   - No SYSTEM_ADMIN assignment restriction
+    - No validation of who can assign which roles
+    - No tenant-scoped role assignment enforcement
+    - No SYSTEM_ADMIN assignment restriction
 
 3. **❌ Missing Permission Checks**
-   - No validation that current user has permission to assign/remove specific role
-   - No role hierarchy enforcement
+    - No validation that current user has permission to assign/remove specific role
+    - No role hierarchy enforcement
 
 4. **❌ Missing Tenant Context Validation**
-   - TENANT_ADMIN can potentially assign roles to users outside own tenant
-   - No tenant matching validation
+    - TENANT_ADMIN can potentially assign roles to users outside own tenant
+    - No tenant matching validation
 
 5. **❌ Missing Role Removal Constraints**
-   - No protection against removing USER role
-   - No validation of role removal permissions
+    - No protection against removing USER role
+    - No validation of role removal permissions
 
 6. **❌ Missing Audit Trail**
-   - Role assignments not logged with assigner information
-   - No audit events for role changes
+    - Role assignments not logged with assigner information
+    - No audit events for role changes
 
 ### Required Implementation Tasks
 
 1. **Update Role Validation**
-   - [ ] Expand VALID_ROLES set to include all 15 roles
-   - [ ] Create role constants class referencing Roles_and_Permissions_Definition.md
+    - [ ] Expand VALID_ROLES set to include all 15 roles
+    - [ ] Create role constants class referencing Roles_and_Permissions_Definition.md
 
 2. **Implement Role Assignment Validator**
-   - [ ] Create RoleAssignmentValidator component
-   - [ ] Implement assignment hierarchy rules
-   - [ ] Implement tenant-scoped validation
-   - [ ] Implement SYSTEM_ADMIN assignment restriction
+    - [ ] Create RoleAssignmentValidator component
+    - [ ] Implement assignment hierarchy rules
+    - [ ] Implement tenant-scoped validation
+    - [ ] Implement SYSTEM_ADMIN assignment restriction
 
 3. **Update Command Handlers**
-   - [ ] Update AssignUserRoleCommandHandler with validation
-   - [ ] Update RemoveUserRoleCommandHandler with validation
-   - [ ] Add permission checks
-   - [ ] Add tenant context validation
+    - [ ] Update AssignUserRoleCommandHandler with validation
+    - [ ] Update RemoveUserRoleCommandHandler with validation
+    - [ ] Add permission checks
+    - [ ] Add tenant context validation
 
 4. **Add Security Context Service**
-   - [ ] Create SecurityContextService to extract current user info
-   - [ ] Extract current user roles from JWT
-   - [ ] Extract current user tenant ID
+    - [ ] Create SecurityContextService to extract current user info
+    - [ ] Extract current user roles from JWT
+    - [ ] Extract current user tenant ID
 
 5. **Enhance Domain Events**
-   - [ ] Add assignedBy field to UserRoleAssignedEvent
-   - [ ] Add assignedBy field to UserRoleRemovedEvent
-   - [ ] Add audit logging
+    - [ ] Add assignedBy field to UserRoleAssignedEvent
+    - [ ] Add assignedBy field to UserRoleRemovedEvent
+    - [ ] Add audit logging
 
 6. **Update Tests**
-   - [ ] Test all 15 roles
-   - [ ] Test assignment rules
-   - [ ] Test tenant isolation
-   - [ ] Test permission enforcement
+    - [ ] Test all 15 roles
+    - [ ] Test assignment rules
+    - [ ] Test tenant isolation
+    - [ ] Test permission enforcement
 
 ---
 

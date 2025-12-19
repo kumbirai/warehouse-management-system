@@ -43,9 +43,7 @@ export const LocationList = ({ locations, isLoading, error }: LocationListProps)
   if (!Array.isArray(locations)) {
     return (
       <Paper sx={{ p: 3 }}>
-        <Typography color="error">
-          Invalid data format: locations is not an array
-        </Typography>
+        <Typography color="error">Invalid data format: locations is not an array</Typography>
       </Paper>
     );
   }

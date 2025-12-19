@@ -102,6 +102,16 @@ public class CachedUserRepositoryAdapter
     }
 
     /**
+     * Finds all users across all tenant schemas with search filter (for SYSTEM_ADMIN only).
+     * <p>
+     * Not cached - cross-tenant operation with dynamic search.
+     */
+    @Override
+    public List<User> findAllAcrossTenantsWithSearch(UserStatus status, String searchTerm) {
+        return baseRepository.findAllAcrossTenantsWithSearch(status, searchTerm);
+    }
+
+    /**
      * Finds a user by ID across all tenant schemas (for SYSTEM_ADMIN only).
      * <p>
      * Not cached - cross-tenant operation.
@@ -139,6 +149,26 @@ public class CachedUserRepositoryAdapter
     @Override
     public List<User> findByTenantIdAndStatus(TenantId tenantId, UserStatus status) {
         return baseRepository.findByTenantIdAndStatus(tenantId, status);
+    }
+
+    /**
+     * Finds users by tenant ID where username or email contains the search term.
+     * <p>
+     * Not cached - search queries are dynamic and less cacheable.
+     */
+    @Override
+    public List<User> findByTenantIdAndSearchTerm(TenantId tenantId, String searchTerm) {
+        return baseRepository.findByTenantIdAndSearchTerm(tenantId, searchTerm);
+    }
+
+    /**
+     * Finds users by tenant ID and status where username or email contains the search term.
+     * <p>
+     * Not cached - search queries are dynamic and less cacheable.
+     */
+    @Override
+    public List<User> findByTenantIdAndStatusAndSearchTerm(TenantId tenantId, UserStatus status, String searchTerm) {
+        return baseRepository.findByTenantIdAndStatusAndSearchTerm(tenantId, status, searchTerm);
     }
 
     /**

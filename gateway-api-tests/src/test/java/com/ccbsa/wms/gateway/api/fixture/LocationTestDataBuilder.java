@@ -19,6 +19,15 @@ public class LocationTestDataBuilder {
                 .build();
     }
 
+    private static LocationDimensions warehouseDimensions() {
+        return LocationDimensions.builder()
+                .length(100.0)
+                .width(80.0)
+                .height(10.0)
+                .unit("M")
+                .build();
+    }
+
     public static CreateLocationRequest buildZoneRequest(String parentLocationId) {
         return CreateLocationRequest.builder()
                 .code(TestData.zoneCode())
@@ -56,15 +65,6 @@ public class LocationTestDataBuilder {
                 .type("BIN")
                 .parentLocationId(parentLocationId)
                 .capacity(TestData.locationCapacity("BIN"))
-                .build();
-    }
-
-    private static LocationDimensions warehouseDimensions() {
-        return LocationDimensions.builder()
-                .length(100.0)
-                .width(80.0)
-                .height(10.0)
-                .unit("M")
                 .build();
     }
 }

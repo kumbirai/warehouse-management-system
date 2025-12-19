@@ -64,6 +64,17 @@ public interface UserRepository {
     List<User> findAllAcrossTenants(com.ccbsa.wms.user.domain.core.valueobject.UserStatus status);
 
     /**
+     * Finds all users across all tenant schemas with search filter (for SYSTEM_ADMIN only).
+     * <p>
+     * This method queries users from all tenant schemas matching the search term in username or email.
+     *
+     * @param status     Optional user status filter. If null, returns all users regardless of status.
+     * @param searchTerm Search term to match against username or email (case-insensitive).
+     * @return List of all users across all tenant schemas matching the search criteria
+     */
+    List<User> findAllAcrossTenantsWithSearch(com.ccbsa.wms.user.domain.core.valueobject.UserStatus status, String searchTerm);
+
+    /**
      * Finds a user by ID across all tenant schemas (for SYSTEM_ADMIN only).
      * <p>
      * This method queries all tenant schemas to find a user by ID. It is used when SYSTEM_ADMIN needs to find a user without knowing which tenant they belong to.
@@ -98,6 +109,25 @@ public interface UserRepository {
      * @return List of users with the specified status
      */
     List<User> findByTenantIdAndStatus(TenantId tenantId, com.ccbsa.wms.user.domain.core.valueobject.UserStatus status);
+
+    /**
+     * Finds users by tenant ID where username or email contains the search term (case-insensitive).
+     *
+     * @param tenantId   Tenant identifier
+     * @param searchTerm Search term to match against username or email
+     * @return List of users matching the search term
+     */
+    List<User> findByTenantIdAndSearchTerm(TenantId tenantId, String searchTerm);
+
+    /**
+     * Finds users by tenant ID and status where username or email contains the search term (case-insensitive).
+     *
+     * @param tenantId   Tenant identifier
+     * @param status     User status
+     * @param searchTerm Search term to match against username or email
+     * @return List of users matching the search term and status
+     */
+    List<User> findByTenantIdAndStatusAndSearchTerm(TenantId tenantId, com.ccbsa.wms.user.domain.core.valueobject.UserStatus status, String searchTerm);
 
     /**
      * Checks if a user exists by ID.

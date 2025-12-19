@@ -113,7 +113,7 @@ public class TenantQueryController {
     @GetMapping("/{id}")
     @Operation(summary = "Get tenant",
             description = "Gets a tenant by ID")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or (hasRole('USER') and @tenantSecurityService.isUserTenant(#id))")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SERVICE') or (hasRole('USER') and @tenantSecurityService.isUserTenant(#id))")
     public ResponseEntity<ApiResponse<TenantResponse>> getTenant(
             @PathVariable String id) {
         TenantId tenantId = TenantId.of(id);
@@ -144,8 +144,8 @@ public class TenantQueryController {
 
     @GetMapping("/{id}/status")
     @Operation(summary = "Get tenant status",
-            description = "Gets the status of a tenant")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN') or (hasRole('USER') and @tenantSecurityService.isUserTenant(#id))")
+            description = "Gets the status of a tenant. Used by user-service for tenant validation.")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN') or hasRole('SERVICE') or (hasRole('USER') and @tenantSecurityService.isUserTenant(#id))")
     public ResponseEntity<ApiResponse<String>> getTenantStatus(
             @PathVariable String id) {
         TenantId tenantId = TenantId.of(id);

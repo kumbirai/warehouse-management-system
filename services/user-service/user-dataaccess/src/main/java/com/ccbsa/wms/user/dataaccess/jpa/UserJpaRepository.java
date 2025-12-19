@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ccbsa.wms.user.dataaccess.entity.UserEntity;
@@ -83,5 +85,32 @@ public interface UserJpaRepository
      * @return User if found, empty otherwise
      */
     Optional<UserEntity> findByKeycloakUserId(String keycloakUserId);
+
+    /**
+     * Finds users by tenant ID where username or email contains the search term (case-insensitive).
+     *
+     * @param tenantId   Tenant identifier
+     * @param searchTerm Search term to match against username or email
+     * @return List of users matching the search term
+     */
+    @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId AND " +
+            "(LOWER(u.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(u.emailAddress) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+    List<UserEntity> findByTenantIdAndSearchTerm(@Param("tenantId") String tenantId, @Param("searchTerm") String searchTerm);
+
+    /**
+     * Finds users by tenant ID and status where username or email contains the search term (case-insensitive).
+     *
+     * @param tenantId   Tenant identifier
+     * @param status     User status
+     * @param searchTerm Search term to match against username or email
+     * @return List of users matching the search term and status
+     */
+    @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId AND u.status = :status AND " +
+            "(LOWER(u.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(u.emailAddress) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+    List<UserEntity> findByTenantIdAndStatusAndSearchTerm(@Param("tenantId") String tenantId,
+                                                          @Param("status") UserEntity.UserStatus status,
+                                                          @Param("searchTerm") String searchTerm);
 }
 

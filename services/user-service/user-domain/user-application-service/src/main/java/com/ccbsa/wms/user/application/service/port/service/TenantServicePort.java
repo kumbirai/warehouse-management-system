@@ -1,5 +1,7 @@
 package com.ccbsa.wms.user.application.service.port.service;
 
+import java.util.Optional;
+
 import com.ccbsa.common.domain.valueobject.TenantId;
 
 /**
@@ -27,5 +29,26 @@ public interface TenantServicePort {
      * @throws com.ccbsa.wms.user.application.service.exception.TenantServiceException  if service call fails
      */
     String getTenantStatus(TenantId tenantId);
+
+    /**
+     * Gets tenant information including name.
+     *
+     * @param tenantId Tenant identifier
+     * @return Tenant information or empty if tenant does not exist
+     * @throws com.ccbsa.wms.user.application.service.exception.TenantServiceException if service call fails
+     */
+    Optional<TenantInfo> getTenantInfo(TenantId tenantId);
+
+    /**
+     * Tenant information DTO.
+     */
+    record TenantInfo(TenantId tenantId, String name, TenantStatus status) {
+        public enum TenantStatus {
+            PENDING,
+            ACTIVE,
+            INACTIVE,
+            SUSPENDED
+        }
+    }
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { locationService } from '../services/locationService';
 import { Location } from '../types/location';
 import { logger } from '../../../utils/logger';
@@ -15,7 +15,11 @@ export const useLocation = (locationId: string, tenantId: string): UseLocationRe
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchLocation = async () => {
+  const fetchLocation = useCallback(async () => {
+    if (!locationId || !tenantId) {
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -38,13 +42,11 @@ export const useLocation = (locationId: string, tenantId: string): UseLocationRe
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [locationId, tenantId]);
 
   useEffect(() => {
-    if (locationId && tenantId) {
-      fetchLocation();
-    }
-  }, [locationId, tenantId]);
+    fetchLocation();
+  }, [fetchLocation]);
 
   return { location, isLoading, error, refetch: fetchLocation };
 };

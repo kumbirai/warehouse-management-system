@@ -1,14 +1,15 @@
 package com.ccbsa.wms.gateway.api.helper;
 
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
 import com.ccbsa.wms.gateway.api.dto.CreateTenantRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateTenantResponse;
 import com.ccbsa.wms.gateway.api.fixture.TenantTestDataBuilder;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.reactive.server.EntityExchangeResult;
-import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,6 +22,22 @@ public class TenantHelper {
 
     public TenantHelper(WebTestClient webTestClient) {
         this.webTestClient = webTestClient;
+    }
+
+    /**
+     * Find first active tenant or create and activate one.
+     *
+     * <p>This method creates a tenant and immediately activates it so it can be used for testing.
+     * Tenants are created with status PENDING and must be activated before they can be used.</p>
+     */
+    public String findOrCreateActiveTenant(AuthenticationResult auth) {
+        // Create tenant (status will be PENDING)
+        String tenantId = createTenant(auth);
+
+        // Activate tenant so it can be used for testing
+        activateTenant(auth, tenantId);
+
+        return tenantId;
     }
 
     /**
@@ -38,7 +55,8 @@ public class TenantHelper {
                 .bodyValue(request)
                 .exchange()
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {
+                })
                 .returnResult();
 
         ApiResponse<CreateTenantResponse> apiResponse = exchangeResult.getResponseBody();
@@ -58,25 +76,9 @@ public class TenantHelper {
     }
 
     /**
-     * Find first active tenant or create and activate one.
-     * 
-     * <p>This method creates a tenant and immediately activates it so it can be used for testing.
-     * Tenants are created with status PENDING and must be activated before they can be used.</p>
-     */
-    public String findOrCreateActiveTenant(AuthenticationResult auth) {
-        // Create tenant (status will be PENDING)
-        String tenantId = createTenant(auth);
-        
-        // Activate tenant so it can be used for testing
-        activateTenant(auth, tenantId);
-        
-        return tenantId;
-    }
-    
-    /**
      * Activate a tenant.
-     * 
-     * @param auth the authentication result with SYSTEM_ADMIN credentials
+     *
+     * @param auth     the authentication result with SYSTEM_ADMIN credentials
      * @param tenantId the tenant ID to activate
      */
     public void activateTenant(AuthenticationResult auth, String tenantId) {

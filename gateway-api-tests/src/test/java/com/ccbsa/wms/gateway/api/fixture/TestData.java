@@ -1,12 +1,13 @@
 package com.ccbsa.wms.gateway.api.fixture;
 
-import com.ccbsa.wms.gateway.api.util.BarcodeGenerator;
-import net.datafaker.Faker;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.IntStream;
+
+import com.ccbsa.wms.gateway.api.util.BarcodeGenerator;
+
+import net.datafaker.Faker;
 
 /**
  * Central test data factory providing realistic test data for all tests.

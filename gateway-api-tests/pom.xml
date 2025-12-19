@@ -22,11 +22,11 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        
+
         <!-- Test execution properties -->
         <skipTests>false</skipTests>
         <skipITs>false</skipITs>
-        
+
         <!-- Test environment -->
         <gateway.base.url>http://localhost:8080</gateway.base.url>
         <test.system.admin.username>sysadmin</test.system.admin.username>
@@ -124,7 +124,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
             </plugin>
-            
+
             <!-- Surefire Plugin for Unit Tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

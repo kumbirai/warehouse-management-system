@@ -1,7 +1,9 @@
 # LocationManagementTest Implementation Plan
 
 ## Overview
-`LocationManagementTest` validates location management functionality through the gateway service. Tests authenticate as TENANT_ADMIN and verify location CRUD operations, location hierarchy, capacity management, status transitions, and tenant-scoped access control.
+
+`LocationManagementTest` validates location management functionality through the gateway service. Tests authenticate as TENANT_ADMIN and verify location CRUD operations, location
+hierarchy, capacity management, status transitions, and tenant-scoped access control.
 
 ---
 
@@ -25,6 +27,7 @@
 ### 1. Location Creation Tests
 
 #### Test: Create Warehouse Location (Root Level)
+
 - **Setup**: Login as TENANT_ADMIN
 - **Action**: POST `/api/v1/location-management/locations`
 - **Request Body**:
@@ -44,13 +47,14 @@
   }
   ```
 - **Assertions**:
-  - Status: 201 CREATED
-  - Response contains `locationId`, `code`, `name`, `type`, `path`
-  - Location path: `/WH-01`
-  - LocationCreatedEvent published
-  - Location created in correct tenant schema
+    - Status: 201 CREATED
+    - Response contains `locationId`, `code`, `name`, `type`, `path`
+    - Location path: `/WH-01`
+    - LocationCreatedEvent published
+    - Location created in correct tenant schema
 
 #### Test: Create Zone Location (Second Level)
+
 - **Setup**: Login as TENANT_ADMIN, create warehouse "WH-01"
 - **Action**: POST `/api/v1/location-management/locations`
 - **Request Body**:
@@ -64,11 +68,12 @@
   }
   ```
 - **Assertions**:
-  - Status: 201 CREATED
-  - Location path: `/WH-01/ZONE-A`
-  - Parent relationship established
+    - Status: 201 CREATED
+    - Location path: `/WH-01/ZONE-A`
+    - Parent relationship established
 
 #### Test: Create Aisle Location (Third Level)
+
 - **Setup**: Login as TENANT_ADMIN, create warehouse and zone
 - **Action**: POST `/api/v1/location-management/locations`
 - **Request Body**:
@@ -82,10 +87,11 @@
   }
   ```
 - **Assertions**:
-  - Status: 201 CREATED
-  - Location path: `/WH-01/ZONE-A/AISLE-01`
+    - Status: 201 CREATED
+    - Location path: `/WH-01/ZONE-A/AISLE-01`
 
 #### Test: Create Rack Location (Fourth Level)
+
 - **Setup**: Login as TENANT_ADMIN, create warehouse, zone, aisle
 - **Action**: POST `/api/v1/location-management/locations`
 - **Request Body**:
@@ -99,10 +105,11 @@
   }
   ```
 - **Assertions**:
-  - Status: 201 CREATED
-  - Location path: `/WH-01/ZONE-A/AISLE-01/RACK-A1`
+    - Status: 201 CREATED
+    - Location path: `/WH-01/ZONE-A/AISLE-01/RACK-A1`
 
 #### Test: Create Bin Location (Fifth Level)
+
 - **Setup**: Login as TENANT_ADMIN, create full hierarchy
 - **Action**: POST `/api/v1/location-management/locations`
 - **Request Body**:
@@ -116,87 +123,98 @@
   }
   ```
 - **Assertions**:
-  - Status: 201 CREATED
-  - Location path: `/WH-01/ZONE-A/AISLE-01/RACK-A1/BIN-01`
+    - Status: 201 CREATED
+    - Location path: `/WH-01/ZONE-A/AISLE-01/RACK-A1/BIN-01`
 
 #### Test: Create Location with Duplicate Code
+
 - **Setup**: Login as TENANT_ADMIN, create location with code "WH-01"
 - **Action**: POST `/api/v1/location-management/locations` with same code
 - **Assertions**:
-  - Status: 400 BAD REQUEST or 409 CONFLICT
-  - Error message indicates duplicate location code
+    - Status: 400 BAD REQUEST or 409 CONFLICT
+    - Error message indicates duplicate location code
 
 #### Test: Create Location with Invalid Parent
+
 - **Setup**: Login as TENANT_ADMIN
 - **Action**: POST `/api/v1/location-management/locations` with non-existent parentLocationId
 - **Assertions**:
-  - Status: 404 NOT FOUND or 400 BAD REQUEST
-  - Error message indicates parent location not found
+    - Status: 404 NOT FOUND or 400 BAD REQUEST
+    - Error message indicates parent location not found
 
 #### Test: Create Location with Negative Capacity
+
 - **Setup**: Login as TENANT_ADMIN
 - **Action**: POST `/api/v1/location-management/locations` with capacity `-10`
 - **Assertions**:
-  - Status: 400 BAD REQUEST
-  - Validation error for negative capacity
+    - Status: 400 BAD REQUEST
+    - Validation error for negative capacity
 
 #### Test: Create Location with Missing Required Fields
+
 - **Setup**: Login as TENANT_ADMIN
 - **Action**: POST `/api/v1/location-management/locations` with missing `code` or `type`
 - **Assertions**:
-  - Status: 400 BAD REQUEST
-  - Validation errors for missing fields
+    - Status: 400 BAD REQUEST
+    - Validation errors for missing fields
 
 #### Test: Create Location Without Authentication
+
 - **Setup**: No authentication
 - **Action**: POST `/api/v1/location-management/locations` without Bearer token
 - **Assertions**:
-  - Status: 401 UNAUTHORIZED
+    - Status: 401 UNAUTHORIZED
 
 ---
 
 ### 2. Location Hierarchy Tests
 
 #### Test: Verify Location Path Generation
+
 - **Setup**: Login as TENANT_ADMIN, create nested locations
 - **Action**: GET `/api/v1/location-management/locations/{binId}`
 - **Assertions**:
-  - Location path: `/WH-01/ZONE-A/AISLE-01/RACK-A1/BIN-01`
-  - Path automatically generated from hierarchy
+    - Location path: `/WH-01/ZONE-A/AISLE-01/RACK-A1/BIN-01`
+    - Path automatically generated from hierarchy
 
 #### Test: List Child Locations
+
 - **Setup**: Login as TENANT_ADMIN, create warehouse with 3 zones
 - **Action**: GET `/api/v1/location-management/locations/{warehouseId}/children`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains 3 child zones
+    - Status: 200 OK
+    - Response contains 3 child zones
 
 #### Test: Get Location Ancestors
+
 - **Setup**: Login as TENANT_ADMIN, create full hierarchy
 - **Action**: GET `/api/v1/location-management/locations/{binId}/ancestors`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains ancestors: [Warehouse, Zone, Aisle, Rack]
+    - Status: 200 OK
+    - Response contains ancestors: [Warehouse, Zone, Aisle, Rack]
 
 #### Test: Invalid Hierarchy (Bin as Parent of Rack)
+
 - **Setup**: Login as TENANT_ADMIN, create bin location
 - **Action**: Create rack with bin as parent
 - **Assertions**:
-  - Status: 400 BAD REQUEST
-  - Error message indicates invalid hierarchy
+    - Status: 400 BAD REQUEST
+    - Error message indicates invalid hierarchy
 
 ---
 
 ### 3. Location Capacity Tests
 
 #### Test: Verify Location Capacity Enforcement
+
 - **Setup**: Login as TENANT_ADMIN, create bin with capacity 10
 - **Action**: Attempt to assign 15 units to location
 - **Assertions**:
-  - Status: 400 BAD REQUEST (if capacity check enforced)
-  - Error message indicates capacity exceeded
+    - Status: 400 BAD REQUEST (if capacity check enforced)
+    - Error message indicates capacity exceeded
 
 #### Test: Update Location Capacity
+
 - **Setup**: Login as TENANT_ADMIN, create location with capacity 100
 - **Action**: PUT `/api/v1/location-management/locations/{locationId}`
 - **Request Body**:
@@ -206,14 +224,15 @@
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Capacity updated to 200
+    - Status: 200 OK
+    - Capacity updated to 200
 
 ---
 
 ### 4. Location Status Tests
 
 #### Test: Activate Location
+
 - **Setup**: Login as TENANT_ADMIN, create location (default status ACTIVE)
 - **Action**: PUT `/api/v1/location-management/locations/{locationId}/status`
 - **Request Body**:
@@ -223,10 +242,11 @@
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Location status set to ACTIVE
+    - Status: 200 OK
+    - Location status set to ACTIVE
 
 #### Test: Deactivate Location
+
 - **Setup**: Login as TENANT_ADMIN, create location
 - **Action**: PUT `/api/v1/location-management/locations/{locationId}/status`
 - **Request Body**:
@@ -236,11 +256,12 @@
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Location status set to INACTIVE
-  - Location cannot accept new stock
+    - Status: 200 OK
+    - Location status set to INACTIVE
+    - Location cannot accept new stock
 
 #### Test: Set Location to Maintenance
+
 - **Setup**: Login as TENANT_ADMIN, create location
 - **Action**: PUT `/api/v1/location-management/locations/{locationId}/status`
 - **Request Body**:
@@ -250,62 +271,69 @@
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Location status set to MAINTENANCE
-  - Location flagged for maintenance operations
+    - Status: 200 OK
+    - Location status set to MAINTENANCE
+    - Location flagged for maintenance operations
 
 ---
 
 ### 5. Location Query Tests
 
 #### Test: List All Locations with Pagination
+
 - **Setup**: Login as TENANT_ADMIN, create 15 locations
 - **Action**: GET `/api/v1/location-management/locations?page=0&size=10`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains:
-    - `locations: [...]` (10 items)
-    - Pagination metadata (page, size, totalElements, totalPages)
+    - Status: 200 OK
+    - Response contains:
+        - `locations: [...]` (10 items)
+        - Pagination metadata (page, size, totalElements, totalPages)
 
 #### Test: List Locations with Type Filter
+
 - **Setup**: Login as TENANT_ADMIN, create locations of different types
 - **Action**: GET `/api/v1/location-management/locations?type=BIN`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains only BIN type locations
+    - Status: 200 OK
+    - Response contains only BIN type locations
 
 #### Test: List Locations with Status Filter
+
 - **Setup**: Login as TENANT_ADMIN, create 3 ACTIVE and 2 INACTIVE locations
 - **Action**: GET `/api/v1/location-management/locations?status=ACTIVE`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains only ACTIVE locations
+    - Status: 200 OK
+    - Response contains only ACTIVE locations
 
 #### Test: Search Locations by Code
+
 - **Setup**: Login as TENANT_ADMIN, create locations
 - **Action**: GET `/api/v1/location-management/locations?search=ZONE-A`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains locations matching "ZONE-A"
+    - Status: 200 OK
+    - Response contains locations matching "ZONE-A"
 
 #### Test: Get Location by ID
+
 - **Setup**: Login as TENANT_ADMIN, create location
 - **Action**: GET `/api/v1/location-management/locations/{locationId}`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains location details (id, code, name, type, path, capacity)
+    - Status: 200 OK
+    - Response contains location details (id, code, name, type, path, capacity)
 
 #### Test: Get Non-Existent Location
+
 - **Setup**: Login as TENANT_ADMIN
 - **Action**: GET `/api/v1/location-management/locations/{randomUUID}`
 - **Assertions**:
-  - Status: 404 NOT FOUND
+    - Status: 404 NOT FOUND
 
 ---
 
 ### 6. Location Update Tests
 
 #### Test: Update Location Name and Description
+
 - **Setup**: Login as TENANT_ADMIN, create location
 - **Action**: PUT `/api/v1/location-management/locations/{locationId}`
 - **Request Body**:
@@ -316,10 +344,11 @@
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Location name and description updated
+    - Status: 200 OK
+    - Location name and description updated
 
 #### Test: Update Location Parent (Move Location)
+
 - **Setup**: Login as TENANT_ADMIN, create warehouse with 2 zones
 - **Action**: PUT `/api/v1/location-management/locations/{aisleId}`
 - **Request Body**:
@@ -329,137 +358,153 @@
   }
   ```
 - **Assertions**:
-  - Status: 200 OK
-  - Location moved to new parent
-  - Location path updated: `/WH-01/ZONE-B/AISLE-01`
+    - Status: 200 OK
+    - Location moved to new parent
+    - Location path updated: `/WH-01/ZONE-B/AISLE-01`
 
 #### Test: Update Location with Invalid Parent
+
 - **Setup**: Login as TENANT_ADMIN, create location
 - **Action**: Update location with non-existent parentLocationId
 - **Assertions**:
-  - Status: 404 NOT FOUND or 400 BAD REQUEST
+    - Status: 404 NOT FOUND or 400 BAD REQUEST
 
 ---
 
 ### 7. Location Deletion Tests
 
 #### Test: Delete Empty Location
+
 - **Setup**: Login as TENANT_ADMIN, create location with no stock
 - **Action**: DELETE `/api/v1/location-management/locations/{locationId}`
 - **Assertions**:
-  - Status: 200 OK or 204 NO CONTENT
-  - Location marked as deleted (soft delete) or removed
+    - Status: 200 OK or 204 NO CONTENT
+    - Location marked as deleted (soft delete) or removed
 
 #### Test: Delete Location with Stock (Prevented)
+
 - **Setup**: Login as TENANT_ADMIN, create location, assign stock
 - **Action**: DELETE `/api/v1/location-management/locations/{locationId}`
 - **Assertions**:
-  - Status: 400 BAD REQUEST or 409 CONFLICT
-  - Error message indicates location has stock
+    - Status: 400 BAD REQUEST or 409 CONFLICT
+    - Error message indicates location has stock
 
 #### Test: Delete Location with Children (Cascade or Prevent)
+
 - **Setup**: Login as TENANT_ADMIN, create warehouse with child zones
 - **Action**: DELETE `/api/v1/location-management/locations/{warehouseId}`
 - **Assertions**:
-  - Status: 400 BAD REQUEST (if cascade not allowed)
-  - Or 200 OK with cascade delete of all children
+    - Status: 400 BAD REQUEST (if cascade not allowed)
+    - Or 200 OK with cascade delete of all children
 
 #### Test: Delete Non-Existent Location
+
 - **Setup**: Login as TENANT_ADMIN
 - **Action**: DELETE `/api/v1/location-management/locations/{randomUUID}`
 - **Assertions**:
-  - Status: 404 NOT FOUND
+    - Status: 404 NOT FOUND
 
 ---
 
 ### 8. Tenant Isolation Tests
 
 #### Test: TENANT_ADMIN Lists Only Own Tenant Locations
+
 - **Setup**:
-  - Login as SYSTEM_ADMIN, create Tenant A and Tenant B
-  - Create 3 locations in Tenant A
-  - Create 2 locations in Tenant B
-  - Login as TENANT_ADMIN (Tenant A)
+    - Login as SYSTEM_ADMIN, create Tenant A and Tenant B
+    - Create 3 locations in Tenant A
+    - Create 2 locations in Tenant B
+    - Login as TENANT_ADMIN (Tenant A)
 - **Action**: GET `/api/v1/location-management/locations`
 - **Assertions**:
-  - Status: 200 OK
-  - Response contains only Tenant A locations (3 locations)
-  - Tenant B locations not visible
+    - Status: 200 OK
+    - Response contains only Tenant A locations (3 locations)
+    - Tenant B locations not visible
 
 #### Test: TENANT_ADMIN Cannot Access Location from Different Tenant
+
 - **Setup**:
-  - Login as SYSTEM_ADMIN, create Tenant A and Tenant B
-  - Create location in Tenant B
-  - Login as TENANT_ADMIN (Tenant A)
+    - Login as SYSTEM_ADMIN, create Tenant A and Tenant B
+    - Create location in Tenant B
+    - Login as TENANT_ADMIN (Tenant A)
 - **Action**: GET `/api/v1/location-management/locations/{tenantBLocationId}`
 - **Assertions**:
-  - Status: 403 FORBIDDEN or 404 NOT FOUND
+    - Status: 403 FORBIDDEN or 404 NOT FOUND
 
 ---
 
 ### 9. Authorization Tests
 
 #### Test: WAREHOUSE_MANAGER Can Manage Locations
+
 - **Setup**: Create user with WAREHOUSE_MANAGER role, login
 - **Action**: POST `/api/v1/location-management/locations` with valid data
 - **Assertions**:
-  - Status: 201 CREATED
-  - WAREHOUSE_MANAGER has full access
+    - Status: 201 CREATED
+    - WAREHOUSE_MANAGER has full access
 
 #### Test: LOCATION_MANAGER Can Manage Locations
+
 - **Setup**: Create user with LOCATION_MANAGER role, login
 - **Action**: POST `/api/v1/location-management/locations` with valid data
 - **Assertions**:
-  - Status: 201 CREATED
+    - Status: 201 CREATED
 
 #### Test: STOCK_MANAGER Can Read Locations
+
 - **Setup**: Create user with STOCK_MANAGER role, login
 - **Action**: GET `/api/v1/location-management/locations`
 - **Assertions**:
-  - Status: 200 OK (read-only access)
+    - Status: 200 OK (read-only access)
 
 #### Test: STOCK_MANAGER Cannot Create Locations
+
 - **Setup**: Login as STOCK_MANAGER
 - **Action**: POST `/api/v1/location-management/locations` with valid data
 - **Assertions**:
-  - Status: 403 FORBIDDEN
+    - Status: 403 FORBIDDEN
 
 #### Test: VIEWER Can Read Locations
+
 - **Setup**: Create user with VIEWER role, login
 - **Action**: GET `/api/v1/location-management/locations`
 - **Assertions**:
-  - Status: 200 OK
+    - Status: 200 OK
 
 #### Test: VIEWER Cannot Modify Locations
+
 - **Setup**: Login as VIEWER
 - **Action**: POST `/api/v1/location-management/locations` with valid data
 - **Assertions**:
-  - Status: 403 FORBIDDEN
+    - Status: 403 FORBIDDEN
 
 ---
 
 ### 10. Edge Case Tests
 
 #### Test: Create Location with Very Long Code
+
 - **Setup**: Login as TENANT_ADMIN
 - **Action**: POST `/api/v1/location-management/locations` with 500-character code
 - **Assertions**:
-  - Status: 400 BAD REQUEST
-  - Validation error for code length
+    - Status: 400 BAD REQUEST
+    - Validation error for code length
 
 #### Test: Create Deep Nested Hierarchy (7+ Levels)
+
 - **Setup**: Login as TENANT_ADMIN
 - **Action**: Create nested locations beyond 5 levels
 - **Assertions**:
-  - Status: 400 BAD REQUEST (if depth limit enforced)
-  - Or 201 CREATED (if no depth limit)
+    - Status: 400 BAD REQUEST (if depth limit enforced)
+    - Or 201 CREATED (if no depth limit)
 
 #### Test: Concurrent Location Creation
+
 - **Setup**: Login as TENANT_ADMIN
 - **Action**: Send 5 concurrent POST requests to create locations
 - **Assertions**:
-  - All requests succeed (201 CREATED)
-  - Each location has unique ID and code
+    - All requests succeed (201 CREATED)
+    - Each location has unique ID and code
 
 ---
 

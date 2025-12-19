@@ -34,7 +34,7 @@ export interface RefreshTokenRequest {
 export interface ApiError {
   code: string;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   timestamp?: string;
   path?: string;
   requestId?: string;
@@ -110,21 +110,34 @@ export const authService = {
         throw new Error(response.data.error?.message || 'Authentication failed');
       }
 
-      // Handle both normal format and array format (with type information)
-      let loginData: any;
+      // Type guard: check if response has data property
+      if (!('data' in response.data) || !response.data.data) {
+        logger.error('Login response missing data field', {
+          response: response,
+          responseString: JSON.stringify(response, null, 2),
+        });
+        console.error('Login response missing data field - Full response:', response);
+        throw new Error('Invalid response format from authentication service: missing data field');
+      }
 
-      if (Array.isArray(response.data.data)) {
+      // Extract data value for type narrowing
+      const responseData = response.data.data;
+
+      // Handle both normal format and array format (with type information)
+      let loginData: LoginResponse;
+
+      if (Array.isArray(responseData)) {
         // Handle WRAPPER_ARRAY format: ["ClassName", { actualData }]
         // This happens when Jackson includes type information
         logger.warn(
           'Login response is in array format (type information included), extracting data',
           {
-            arrayLength: response.data.data.length,
-            firstElement: response.data.data[0],
+            arrayLength: responseData.length,
+            firstElement: responseData[0],
           }
         );
-        if (response.data.data.length >= 2 && typeof response.data.data[1] === 'object') {
-          loginData = response.data.data[1];
+        if (responseData.length >= 2 && typeof responseData[1] === 'object') {
+          loginData = responseData[1] as LoginResponse;
         } else {
           logger.error('Login response array format is invalid', {
             responseData: response.data,
@@ -138,24 +151,23 @@ export const authService = {
             'Invalid response format from authentication service: invalid array format'
           );
         }
-      } else if (response.data.data && typeof response.data.data === 'object') {
+      } else if (responseData && typeof responseData === 'object') {
         // Normal format: { actualData }
-        loginData = response.data.data;
+        loginData = responseData as LoginResponse;
       } else {
-        const dataValue = (response.data as any).data;
-        logger.error('Login response missing nested data field', {
+        logger.error('Login response data is not in expected format', {
           responseData: response.data,
           responseDataKeys: Object.keys(response.data),
           responseDataString: JSON.stringify(response.data, null, 2),
-          dataType: typeof dataValue,
-          isArray: Array.isArray(dataValue),
+          dataType: typeof responseData,
+          isArray: Array.isArray(responseData),
         });
         console.error(
-          'Login response missing nested data field - Full response.data:',
+          'Login response data is not in expected format - Full response.data:',
           response.data
         );
         throw new Error(
-          'Invalid response format from authentication service: missing nested data field'
+          'Invalid response format from authentication service: data is not in expected format'
         );
       }
 
@@ -169,7 +181,8 @@ export const authService = {
       });
 
       // Validate required fields - check for both camelCase and potential snake_case
-      const accessToken = loginData.accessToken || (loginData as any).access_token;
+      const loginDataWithSnakeCase = loginData as LoginResponse & { access_token?: string };
+      const accessToken = loginData.accessToken || loginDataWithSnakeCase.access_token;
       if (!accessToken) {
         // Log the full response structure for debugging
         const errorDetails = {
@@ -192,8 +205,8 @@ export const authService = {
       }
 
       // If accessToken was in snake_case, normalize it
-      if (!loginData.accessToken && (loginData as any).access_token) {
-        loginData.accessToken = (loginData as any).access_token;
+      if (!loginData.accessToken && loginDataWithSnakeCase.access_token) {
+        loginData.accessToken = loginDataWithSnakeCase.access_token;
       }
 
       // Ensure we're using the normalized accessToken

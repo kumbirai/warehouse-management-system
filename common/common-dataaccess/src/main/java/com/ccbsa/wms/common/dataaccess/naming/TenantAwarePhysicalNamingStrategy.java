@@ -3,6 +3,8 @@ package com.ccbsa.wms.common.dataaccess.naming;
 import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -34,6 +36,7 @@ import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
 public class TenantAwarePhysicalNamingStrategy
         implements PhysicalNamingStrategy, ApplicationContextAware {
 
+    private static final Logger logger = LoggerFactory.getLogger(TenantAwarePhysicalNamingStrategy.class);
     private static final String PLACEHOLDER_SCHEMA = "tenant_schema";
 
     private ApplicationContext applicationContext;
@@ -70,19 +73,17 @@ public class TenantAwarePhysicalNamingStrategy
                 if (resolver != null) {
                     String resolvedSchema = resolver.resolveSchema();
                     // Log schema resolution for debugging
-                    org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TenantAwarePhysicalNamingStrategy.class);
                     logger.info("Resolved schema '{}' to '{}'", PLACEHOLDER_SCHEMA, resolvedSchema);
                     return Identifier.toIdentifier(resolvedSchema, identifier.isQuoted());
                 } else {
-                    org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TenantAwarePhysicalNamingStrategy.class);
                     logger.warn("TenantSchemaResolver not available - using default schema");
                 }
             } catch (IllegalStateException e) {
-                // Tenant context not set - this can happen during schema validation at startup
+                // Tenant context not set - this is expected during Hibernate initialization at startup
                 // Return null to use default schema (public) where Flyway creates tables
                 // The actual tenant schema will be resolved at runtime when tenant context is available
-                org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TenantAwarePhysicalNamingStrategy.class);
-                logger.warn("Tenant context not set when resolving schema '{}': {}. Using default schema (public).", PLACEHOLDER_SCHEMA, e.getMessage());
+                logger.debug("Tenant context not set when resolving schema '{}' during initialization: {}. Using default schema (public). This is expected during startup.",
+                        PLACEHOLDER_SCHEMA, e.getMessage());
                 return null;
             }
         }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { stockManagementService } from '../services/stockManagementService';
 import { Consignment } from '../types/stockManagement';
 import { useAuth } from '../../../hooks/useAuth';
@@ -17,7 +17,7 @@ export const useConsignment = (consignmentId: string | undefined): UseConsignmen
   const [error, setError] = useState<Error | null>(null);
   const { user } = useAuth();
 
-  const fetchConsignment = async () => {
+  const fetchConsignment = useCallback(async () => {
     if (!consignmentId || !user?.tenantId) {
       return;
     }
@@ -44,11 +44,11 @@ export const useConsignment = (consignmentId: string | undefined): UseConsignmen
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [consignmentId, user?.tenantId]);
 
   useEffect(() => {
     fetchConsignment();
-  }, [consignmentId, user?.tenantId]);
+  }, [fetchConsignment]);
 
   return { consignment, isLoading, error, refetch: fetchConsignment };
 };

@@ -87,7 +87,7 @@ export function canAssignRole(
     if (targetUserTenantId && currentUserTenantId && targetUserTenantId !== currentUserTenantId) {
       return false;
     }
-    return WAREHOUSE_MANAGER_ASSIGNABLE_ROLES.includes(roleToAssign as any);
+    return (WAREHOUSE_MANAGER_ASSIGNABLE_ROLES as readonly string[]).includes(roleToAssign);
   }
 
   // Rule 4: Specialized managers can assign corresponding clerk roles

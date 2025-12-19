@@ -125,11 +125,13 @@ com.ccbsa.wms.{service}.dataaccess/
 All repository adapters **MUST** set the PostgreSQL `search_path` before querying tenant-specific data. This is **mandatory** for the schema-per-tenant pattern to work correctly.
 
 **Required Dependencies:**
+
 - `TenantSchemaResolver` - resolves schema name from TenantContext
 - `TenantSchemaProvisioner` - ensures schema exists and migrations are applied
 - `EntityManager` - for setting search_path on database connection
 
 **Pattern:** All methods that query by `tenantId` MUST:
+
 1. Verify `TenantContext` is set
 2. Resolve schema name using `TenantSchemaResolver`
 3. Set PostgreSQL `search_path` to resolved schema

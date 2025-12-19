@@ -177,11 +177,13 @@ public class User
 
     /**
      * Query method: Checks if user can be activated.
+     * <p>
+     * Business Rules: Users can be activated from INACTIVE or SUSPENDED status.
      *
      * @return true if user can be activated
      */
     public boolean canActivate() {
-        return this.status == UserStatus.INACTIVE;
+        return this.status == UserStatus.INACTIVE || this.status == UserStatus.SUSPENDED;
     }
 
     /**

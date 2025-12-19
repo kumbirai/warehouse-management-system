@@ -1,14 +1,15 @@
 package com.ccbsa.wms.gateway.api.helper;
 
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
 import com.ccbsa.wms.gateway.api.dto.CreateConsignmentRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateConsignmentResponse;
 import com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.reactive.server.EntityExchangeResult;
-import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +40,8 @@ public class StockHelper {
                 .bodyValue(request)
                 .exchange()
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateConsignmentResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateConsignmentResponse>>() {
+                })
                 .returnResult();
 
         ApiResponse<CreateConsignmentResponse> apiResponse = exchangeResult.getResponseBody();
@@ -76,7 +78,8 @@ public class StockHelper {
                 .bodyValue(request)
                 .exchange()
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateConsignmentResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateConsignmentResponse>>() {
+                })
                 .returnResult();
 
         ApiResponse<CreateConsignmentResponse> apiResponse = exchangeResult.getResponseBody();

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -54,7 +55,7 @@ public class UserServiceSecurityConfig
      */
 
     @Bean
-    @org.springframework.core.annotation.Order(1)
+    @Order(1)
     public SecurityFilterChain publicEndpointsSecurityFilterChain(HttpSecurity http) throws Exception {
         logger.info("Configuring public endpoints security filter chain (Order 1) - no OAuth2 Resource Server");
         logger.info("Public endpoints: /bff/auth/login, /bff/auth/refresh, /bff/auth/logout, /actuator/**, /error, /swagger-ui/**, /v3/api-docs/**");
@@ -125,7 +126,7 @@ public class UserServiceSecurityConfig
     }
 
     @Bean
-    @org.springframework.core.annotation.Order(2)
+    @Order(2)
     @Override
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,

@@ -1,17 +1,18 @@
 package com.ccbsa.wms.gateway.api.helper;
 
-import com.ccbsa.common.application.api.ApiResponse;
-import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
-import com.ccbsa.wms.gateway.api.dto.LoginRequest;
-import com.ccbsa.wms.gateway.api.dto.LoginResponse;
-import com.ccbsa.wms.gateway.api.util.CookieExtractor;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
+
+import com.ccbsa.common.application.api.ApiResponse;
+import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
+import com.ccbsa.wms.gateway.api.dto.LoginRequest;
+import com.ccbsa.wms.gateway.api.dto.LoginResponse;
+import com.ccbsa.wms.gateway.api.util.CookieExtractor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,12 +21,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class AuthenticationHelper {
 
-    private final WebTestClient webTestClient;
-    private final ObjectMapper objectMapper;
-
     private static final String LOGIN_ENDPOINT = "/api/v1/bff/auth/login";
     private static final String REFRESH_ENDPOINT = "/api/v1/bff/auth/refresh";
     private static final String LOGOUT_ENDPOINT = "/api/v1/bff/auth/logout";
+    private final WebTestClient webTestClient;
+    private final ObjectMapper objectMapper;
 
     public AuthenticationHelper(WebTestClient webTestClient, ObjectMapper objectMapper) {
         this.webTestClient = webTestClient;
@@ -55,24 +55,25 @@ public class AuthenticationHelper {
         // This ensures correct deserialization of ApiResponse<LoginResponse>
         EntityExchangeResult<ApiResponse<LoginResponse>> exchangeResult = response
                 .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {
+                })
                 .returnResult();
-        
+
         // Extract ApiResponse from the exchange result
         ApiResponse<LoginResponse> apiResponse = exchangeResult.getResponseBody();
-        
+
         assertThat(apiResponse)
                 .as("API response should not be null. Status: %d, Response body: %s",
-                    exchangeResult.getStatus().value(),
-                    exchangeResult.getResponseBodyContent() != null 
-                        ? new String(exchangeResult.getResponseBodyContent()) 
-                        : "null")
+                        exchangeResult.getStatus().value(),
+                        exchangeResult.getResponseBodyContent() != null
+                                ? new String(exchangeResult.getResponseBodyContent())
+                                : "null")
                 .isNotNull();
         assertThat(apiResponse.isSuccess())
                 .as("API response should be successful. Error: %s",
-                    apiResponse.getError() != null ? apiResponse.getError().getMessage() : "none")
+                        apiResponse.getError() != null ? apiResponse.getError().getMessage() : "none")
                 .isTrue();
-        
+
         LoginResponse loginResponse = apiResponse.getData();
         assertThat(loginResponse)
                 .as("Login response data should not be null")
@@ -114,24 +115,25 @@ public class AuthenticationHelper {
         // Extract ApiResponse using ParameterizedTypeReference for proper generic type handling
         EntityExchangeResult<ApiResponse<LoginResponse>> exchangeResult = response
                 .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {})
+                .expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {
+                })
                 .returnResult();
-        
+
         // Extract ApiResponse from the exchange result
         ApiResponse<LoginResponse> apiResponse = exchangeResult.getResponseBody();
-        
+
         assertThat(apiResponse)
                 .as("API response should not be null. Status: %d, Response body: %s",
-                    exchangeResult.getStatus().value(),
-                    exchangeResult.getResponseBodyContent() != null 
-                        ? new String(exchangeResult.getResponseBodyContent()) 
-                        : "null")
+                        exchangeResult.getStatus().value(),
+                        exchangeResult.getResponseBodyContent() != null
+                                ? new String(exchangeResult.getResponseBodyContent())
+                                : "null")
                 .isNotNull();
         assertThat(apiResponse.isSuccess())
                 .as("API response should be successful. Error: %s",
-                    apiResponse.getError() != null ? apiResponse.getError().getMessage() : "none")
+                        apiResponse.getError() != null ? apiResponse.getError().getMessage() : "none")
                 .isTrue();
-        
+
         LoginResponse loginResponse = apiResponse.getData();
         assertThat(loginResponse).isNotNull();
         assertThat(loginResponse.getAccessToken()).isNotBlank();

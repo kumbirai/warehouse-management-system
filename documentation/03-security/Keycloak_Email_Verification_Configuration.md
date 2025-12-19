@@ -3,6 +3,7 @@
 **Date:** 2025-01  
 **Status:** Configuration Guide  
 **Related Documents:**
+
 - [IAM Integration Guide](IAM_Integration_Guide.md)
 - [Authentication Implementation Complete](Authentication_Implementation_Complete.md)
 
@@ -67,15 +68,15 @@ Password: your-smtp-password
    ```
 
 2. **Access MailHog Web UI:**
-   - Open your browser and navigate to: `http://localhost:8025`
-   - All emails sent by Keycloak will appear in the MailHog inbox
-   - You can view email content, HTML rendering, and click links directly
+    - Open your browser and navigate to: `http://localhost:8025`
+    - All emails sent by Keycloak will appear in the MailHog inbox
+    - You can view email content, HTML rendering, and click links directly
 
 3. **MailHog SMTP Configuration:**
-   - **SMTP Host:** `localhost` (or `mailhog` if Keycloak is in Docker network)
-   - **SMTP Port:** `1025`
-   - **No authentication required**
-   - **No TLS/SSL required**
+    - **SMTP Host:** `localhost` (or `mailhog` if Keycloak is in Docker network)
+    - **SMTP Port:** `1025`
+    - **No authentication required**
+    - **No TLS/SSL required**
 
 **Keycloak Configuration for MailHog:**
 
@@ -100,10 +101,10 @@ Password: your-smtp-password
 
 **Important Notes:**
 
-- **Docker Network:** 
-  - If Keycloak is running **outside Docker** (standalone), use `localhost` as the hostname
-  - If Keycloak is running **inside Docker** (via docker-compose), use `mailhog` as the hostname (the Docker service name)
-  - To check if Keycloak is in Docker: `docker ps | grep keycloak`
+- **Docker Network:**
+    - If Keycloak is running **outside Docker** (standalone), use `localhost` as the hostname
+    - If Keycloak is running **inside Docker** (via docker-compose), use `mailhog` as the hostname (the Docker service name)
+    - To check if Keycloak is in Docker: `docker ps | grep keycloak`
 - **Email Links:** Links in MailHog emails are fully functional - you can click verification and password reset links directly
 - **Email Persistence:** MailHog stores emails in memory - restarting MailHog will clear the inbox
 - **Production:** Never use MailHog in production - use a real SMTP server
@@ -120,24 +121,24 @@ Password: your-smtp-password
 **Troubleshooting MailHog:**
 
 - **MailHog not receiving emails:**
-  - Verify MailHog is running: `docker ps | grep mailhog`
-  - Check Keycloak host setting:
-    - If Keycloak is **outside Docker**: use `localhost`
-    - If Keycloak is **inside Docker**: use `mailhog` (Docker service name)
-  - Check Keycloak logs for SMTP connection errors
-  - Verify port 1025 is not blocked by firewall
-  - Test SMTP connection in Keycloak Admin Console → Realm Settings → Email → Test connection
+    - Verify MailHog is running: `docker ps | grep mailhog`
+    - Check Keycloak host setting:
+        - If Keycloak is **outside Docker**: use `localhost`
+        - If Keycloak is **inside Docker**: use `mailhog` (Docker service name)
+    - Check Keycloak logs for SMTP connection errors
+    - Verify port 1025 is not blocked by firewall
+    - Test SMTP connection in Keycloak Admin Console → Realm Settings → Email → Test connection
 
 - **Cannot access MailHog UI:**
-  - Verify MailHog container is running: `docker ps | grep mailhog`
-  - Check port 8025 is not in use by another service: `lsof -i :8025` or `netstat -an | grep 8025`
-  - Try accessing via `http://127.0.0.1:8025`
-  - Restart MailHog: `docker restart wms-mailhog-dev`
+    - Verify MailHog container is running: `docker ps | grep mailhog`
+    - Check port 8025 is not in use by another service: `lsof -i :8025` or `netstat -an | grep 8025`
+    - Try accessing via `http://127.0.0.1:8025`
+    - Restart MailHog: `docker restart wms-mailhog-dev`
 
 - **Keycloak cannot connect to MailHog:**
-  - If Keycloak is in Docker, ensure both are on the same Docker network (`wms-dev-network`)
-  - Check Docker network: `docker network inspect wms-dev-network`
-  - Verify MailHog service name matches: `mailhog` (as defined in docker-compose.dev.yml)
+    - If Keycloak is in Docker, ensure both are on the same Docker network (`wms-dev-network`)
+    - Check Docker network: `docker network inspect wms-dev-network`
+    - Verify MailHog service name matches: `mailhog` (as defined in docker-compose.dev.yml)
 
 ### 2. Email Verification Settings
 
@@ -151,7 +152,7 @@ Password: your-smtp-password
 **Action Token Expiration:**
 
 - **Email Verification Token Lifespan:** `86400` seconds (24 hours)
-  - Location: Realm Settings → Tokens → Email Verification Token Lifespan
+    - Location: Realm Settings → Tokens → Email Verification Token Lifespan
 
 ### 3. Password Reset Settings
 
@@ -165,7 +166,7 @@ Password: your-smtp-password
 **Action Token Expiration:**
 
 - **Reset Password Token Lifespan:** `86400` seconds (24 hours)
-  - Location: Realm Settings → Tokens → Reset Password Token Lifespan
+    - Location: Realm Settings → Tokens → Reset Password Token Lifespan
 
 ### 4. Redirect URI Configuration
 
@@ -174,10 +175,10 @@ Password: your-smtp-password
 **Required Settings:**
 
 - **Valid Redirect URIs:** Add frontend verification and password setup URLs:
-  - `http://localhost:3000/verify-email*` (development)
-  - `https://your-domain.com/verify-email*` (production)
-  - `http://localhost:3000/setup-password*` (development)
-  - `https://your-domain.com/setup-password*` (production)
+    - `http://localhost:3000/verify-email*` (development)
+    - `https://your-domain.com/verify-email*` (production)
+    - `http://localhost:3000/setup-password*` (development)
+    - `https://your-domain.com/setup-password*` (production)
 
 **Note:** Use wildcard `*` to allow query parameters (tokens, keys, etc.)
 
@@ -186,18 +187,21 @@ Password: your-smtp-password
 **Location:** Keycloak Admin Console → Realm Settings → Email
 
 Keycloak provides default email templates for:
+
 - Email verification
 - Password reset
 
 **Customization (Optional):**
 
 To customize email templates:
+
 1. Navigate to Realm Settings → Email
 2. Select the template to customize (e.g., "Email Verification", "Password Reset")
 3. Edit the template using Freemarker syntax
 4. Save changes
 
 **Template Variables Available:**
+
 - `${link}` - Verification/reset link
 - `${linkExpiration}` - Link expiration time
 - `${user}` - User object with properties (username, email, firstName, lastName)
@@ -232,11 +236,11 @@ To customize email templates:
 3. Select your realm (e.g., `wms-realm`)
 4. Navigate to **Realm Settings** → **Email** tab
 5. Configure MailHog settings:
-   - Host: `localhost` (or `mailhog` if Keycloak is in Docker network)
-   - Port: `1025`
-   - From: `noreply@wms.local`
-   - Enable StartTLS: `OFF`
-   - Enable Authentication: `OFF`
+    - Host: `localhost` (or `mailhog` if Keycloak is in Docker network)
+    - Port: `1025`
+    - From: `noreply@wms.local`
+    - Enable StartTLS: `OFF`
+    - Enable Authentication: `OFF`
 6. Click **Test connection** to verify
 7. Click **Save**
 8. Access MailHog UI at `http://localhost:8025` to view emails
@@ -269,9 +273,9 @@ To customize email templates:
 1. Navigate to **Clients** → Select `wms-api` client
 2. Go to **Settings** tab
 3. Add redirect URIs:
-   - `http://localhost:3000/verify-email*`
-   - `http://localhost:3000/setup-password*`
-   - (Add production URLs as needed)
+    - `http://localhost:3000/verify-email*`
+    - `http://localhost:3000/setup-password*`
+    - (Add production URLs as needed)
 4. Click **Save**
 
 ### Step 5: Test Configuration
@@ -323,12 +327,14 @@ keycloak:
 ### Email Not Received
 
 **Possible Causes:**
+
 1. SMTP configuration incorrect
 2. Email in spam folder
 3. SMTP server blocking emails
 4. Keycloak email sending disabled
 
 **Solutions:**
+
 1. Test SMTP connection in Keycloak Admin Console
 2. Check spam folder
 3. Verify SMTP server allows Keycloak IP
@@ -337,20 +343,24 @@ keycloak:
 ### Verification Link Expired
 
 **Possible Causes:**
+
 1. Token expiration too short
 2. User waited too long before clicking link
 
 **Solutions:**
+
 1. Increase token expiration in Realm Settings → Tokens
 2. Resend verification email via admin endpoint: `POST /api/v1/users/{userId}/resend-verification`
 
 ### Redirect URI Mismatch
 
 **Possible Causes:**
+
 1. Redirect URI not configured in Keycloak client
 2. Frontend URL mismatch
 
 **Solutions:**
+
 1. Verify redirect URIs in Keycloak client settings
 2. Ensure `frontend.base-url` matches actual frontend URL
 3. Check that redirect URI includes wildcard `*` for query parameters
@@ -358,11 +368,13 @@ keycloak:
 ### Password Setup Not Working
 
 **Possible Causes:**
+
 1. Token expired
 2. Token already used
 3. Password doesn't meet requirements
 
 **Solutions:**
+
 1. Request new password reset email
 2. Ensure password meets strength requirements (8+ chars, uppercase, lowercase, number, special char)
 3. Check Keycloak password policies

@@ -11,12 +11,14 @@ public class ListUsersQuery {
     private final UserStatus status;
     private final Integer page;
     private final Integer size;
+    private final String search;
 
-    public ListUsersQuery(TenantId tenantId, UserStatus status, Integer page, Integer size) {
+    public ListUsersQuery(TenantId tenantId, UserStatus status, Integer page, Integer size, String search) {
         this.tenantId = tenantId; // Can be null for SYSTEM_ADMIN
         this.status = status;
         this.page = page != null && page >= 0 ? page : 0;
         this.size = size != null && size > 0 ? size : 20;
+        this.search = search;
     }
 
     public TenantId getTenantId() {
@@ -33,6 +35,10 @@ public class ListUsersQuery {
 
     public Integer getSize() {
         return size;
+    }
+
+    public String getSearch() {
+        return search;
     }
 }
 

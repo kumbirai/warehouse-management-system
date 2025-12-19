@@ -57,11 +57,11 @@ public class RemoveUserRoleCommandHandler {
      * Handles the RemoveUserRoleCommand.
      *
      * @param command Command to execute
-     * @throws UserNotFoundException              if user not found
-     * @throws java.lang.IllegalArgumentException if role is invalid
-     * @throws InsufficientPrivilegesException    if user cannot remove the role
-     * @throws TenantMismatchException            if tenant mismatch
-     * @throws RoleAssignmentException            if role removal fails
+     * @throws UserNotFoundException           if user not found
+     * @throws IllegalArgumentException        if role is invalid
+     * @throws InsufficientPrivilegesException if user cannot remove the role
+     * @throws TenantMismatchException         if tenant mismatch
+     * @throws RoleAssignmentException         if role removal fails
      */
     @Transactional
     public void handle(RemoveUserRoleCommand command) {
@@ -70,7 +70,7 @@ public class RemoveUserRoleCommandHandler {
 
         // 1. Validate role exists
         if (!RoleConstants.isValidRole(command.getRoleName())) {
-            throw new java.lang.IllegalArgumentException(
+            throw new IllegalArgumentException(
                     String.format("Invalid role: %s. Valid roles: %s", command.getRoleName(), RoleConstants.VALID_ROLES));
         }
 
@@ -116,7 +116,7 @@ public class RemoveUserRoleCommandHandler {
                 throw new RoleAssignmentException(String.format("Failed to remove role: %s", e.getMessage()), e);
             }
         } else {
-            throw new java.lang.IllegalStateException("Cannot remove role: user has no Keycloak ID");
+            throw new IllegalStateException("Cannot remove role: user has no Keycloak ID");
         }
 
         // 7. Update last modified timestamp

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { productService } from '../services/productService';
 import { Product } from '../types/product';
 import { logger } from '../../../utils/logger';
@@ -15,7 +15,11 @@ export const useProduct = (productId: string, tenantId: string): UseProductResul
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
+    if (!productId || !tenantId) {
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -38,13 +42,11 @@ export const useProduct = (productId: string, tenantId: string): UseProductResul
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [productId, tenantId]);
 
   useEffect(() => {
-    if (productId && tenantId) {
-      fetchProduct();
-    }
-  }, [productId, tenantId]);
+    fetchProduct();
+  }, [fetchProduct]);
 
   return { product, isLoading, error, refetch: fetchProduct };
 };
