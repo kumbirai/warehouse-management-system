@@ -13,26 +13,22 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * <p>
  * Published when a role is assigned to a user.
  */
-public class UserRoleAssignedEvent
-        extends UserEvent {
+public class UserRoleAssignedEvent extends UserEvent {
     private final String roleName;
 
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "User events must fail fast if required fields are null")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "User events must fail fast if required fields are null")
     public UserRoleAssignedEvent(UserId userId, TenantId tenantId, String roleName) {
         super(userId, tenantId);
         this.roleName = Objects.requireNonNull(roleName, "RoleName cannot be null");
     }
 
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "User events must fail fast if required fields are null")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "User events must fail fast if required fields are null")
     public UserRoleAssignedEvent(UserId userId, TenantId tenantId, String roleName, EventMetadata metadata) {
         super(userId, tenantId, metadata);
         this.roleName = Objects.requireNonNull(roleName, "RoleName cannot be null");
     }
 
-    @SuppressFBWarnings(value = "UUF_UNUSED_FIELD",
-            justification = "Field is accessed via getRoleName() getter method")
+    @SuppressFBWarnings(value = "UUF_UNUSED_FIELD", justification = "Field is accessed via getRoleName() getter method")
     public String getRoleName() {
         return roleName;
     }

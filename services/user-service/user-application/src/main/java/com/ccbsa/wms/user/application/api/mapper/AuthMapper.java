@@ -31,10 +31,9 @@ public class AuthMapper {
         AuthenticationResult.UserContext context = result.getUserContext();
         // Convert value objects to String for API DTO (anti-corruption layer)
         // TenantId may be null for SYSTEM_ADMIN users
-        LoginResponse.UserContext apiContext = new LoginResponse.UserContext(context.getUserId()
-                .getValue(), context.getUsername(), context.getTenantId() != null ? context.getTenantId()
-                .getValue() : null, context.getRoles(), context.getEmail(),
-                context.getFirstName(), context.getLastName());
+        LoginResponse.UserContext apiContext =
+                new LoginResponse.UserContext(context.getUserId().getValue(), context.getUsername(), context.getTenantId() != null ? context.getTenantId().getValue() : null,
+                        context.getRoles(), context.getEmail(), context.getFirstName(), context.getLastName());
 
         return new LoginResponse(result.getAccessToken(), result.getRefreshToken(), result.getTokenType(), result.getExpiresIn(), apiContext);
     }
@@ -42,9 +41,8 @@ public class AuthMapper {
     public UserContextResponse toUserContextResponse(UserContextView view) {
         // Convert value objects to String for API DTO (anti-corruption layer)
         // TenantId may be null for SYSTEM_ADMIN users
-        return new UserContextResponse(view.getUserId()
-                .getValue(), view.getUsername(), view.getTenantId() != null ? view.getTenantId()
-                .getValue() : null, view.getRoles(), view.getEmail(), view.getFirstName(), view.getLastName());
+        return new UserContextResponse(view.getUserId().getValue(), view.getUsername(), view.getTenantId() != null ? view.getTenantId().getValue() : null, view.getRoles(),
+                view.getEmail(), view.getFirstName(), view.getLastName());
     }
 
     public UserContextQuery toUserContextQuery(String accessToken) {

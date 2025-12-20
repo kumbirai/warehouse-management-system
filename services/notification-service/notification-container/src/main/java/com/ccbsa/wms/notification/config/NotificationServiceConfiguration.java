@@ -90,8 +90,7 @@ public class NotificationServiceConfiguration {
      * @return Consumer factory configured for typed deserialization
      */
     @Bean("externalEventConsumerFactory")
-    public ConsumerFactory<String, Object> externalEventConsumerFactory(
-            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ConsumerFactory<String, Object> externalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service");
@@ -139,8 +138,7 @@ public class NotificationServiceConfiguration {
         factory.setConsumerFactory(externalEventConsumerFactory);
 
         // Manual acknowledgment mode for reliable processing
-        factory.getContainerProperties()
-                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         // Concurrency for parallel processing
         factory.setConcurrency(concurrency);
@@ -188,8 +186,7 @@ public class NotificationServiceConfiguration {
      * @return Consumer factory configured for internal events with typed deserialization
      */
     @Bean("internalEventConsumerFactory")
-    public ConsumerFactory<String, Object> internalEventConsumerFactory(
-            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ConsumerFactory<String, Object> internalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service");
@@ -233,8 +230,7 @@ public class NotificationServiceConfiguration {
         factory.setConsumerFactory(internalEventConsumerFactory);
 
         // Manual acknowledgment mode for reliable processing
-        factory.getContainerProperties()
-                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         // Concurrency for parallel processing
         factory.setConcurrency(concurrency);

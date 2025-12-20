@@ -6,9 +6,7 @@ package com.ccbsa.wms.notification.domain.core.valueobject;
  * Represents the delivery channel for notifications. Immutable enum-like value object.
  */
 public enum NotificationChannel {
-    EMAIL("EmailAddress delivery channel"),
-    SMS("SMS delivery channel"),
-    WHATSAPP("WhatsApp delivery channel");
+    EMAIL("EmailAddress delivery channel"), SMS("SMS delivery channel"), WHATSAPP("WhatsApp delivery channel");
 
     private final String description;
 

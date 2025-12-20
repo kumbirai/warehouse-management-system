@@ -39,14 +39,9 @@ public class NotificationCreatedEventListener {
         this.sendHandler = sendHandler;
     }
 
-    @KafkaListener(topics = "notification-events",
-            groupId = "notification-service",
-            containerFactory = "internalEventKafkaListenerContainerFactory")
-    public void handle(
-            @Payload Map<String, Object> eventData,
-            @Header(value = "__TypeId__",
-                    required = false) String eventType,
-            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
+    @KafkaListener(topics = "notification-events", groupId = "notification-service", containerFactory = "internalEventKafkaListenerContainerFactory")
+    public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
+                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         try {
             // Extract and set correlation ID from event metadata for traceability
             extractAndSetCorrelationId(eventData);
@@ -79,10 +74,7 @@ public class NotificationCreatedEventListener {
             NotificationChannel channel = determineChannel(notificationType);
 
             // Create send command
-            SendNotificationCommand command = SendNotificationCommand.builder()
-                    .notificationId(notificationId)
-                    .channel(channel)
-                    .build();
+            SendNotificationCommand command = SendNotificationCommand.builder().notificationId(notificationId).channel(channel).build();
 
             // Send notification via appropriate channel with retry logic
             // Retry is needed because events may be consumed before the transaction that created
@@ -104,8 +96,7 @@ public class NotificationCreatedEventListener {
             // Log warning - Kafka retry mechanism will handle if notification appears later
             String aggregateId = extractAggregateId(eventData);
             logger.warn("Notification not found when processing NotificationCreatedEvent: notificationId={}, error={}. "
-                            + "This may be a race condition. Event will be retried by Kafka if notification appears.", aggregateId,
-                    e.getMessage());
+                    + "This may be a race condition. Event will be retried by Kafka if notification appears.", aggregateId, e.getMessage());
             // Don't acknowledge - let Kafka retry mechanism handle it
             throw new RuntimeException("Notification not found - will retry", e);
         } catch (Exception e) {
@@ -128,8 +119,7 @@ public class NotificationCreatedEventListener {
         try {
             Object metadataObj = eventData.get("metadata");
             if (metadataObj instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> metadata = (Map<String, Object>) metadataObj;
+                @SuppressWarnings("unchecked") Map<String, Object> metadata = (Map<String, Object>) metadataObj;
                 Object correlationIdObj = metadata.get("correlationId");
                 if (correlationIdObj != null) {
                     String correlationId = correlationIdObj.toString();
@@ -223,8 +213,7 @@ public class NotificationCreatedEventListener {
 
         // Handle value object serialization (Map with "value" field)
         if (tenantIdObj instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> tenantIdMap = (Map<String, Object>) tenantIdObj;
+            @SuppressWarnings("unchecked") Map<String, Object> tenantIdMap = (Map<String, Object>) tenantIdObj;
             Object valueObj = tenantIdMap.get("value");
             if (valueObj != null) {
                 return TenantId.of(valueObj.toString());
@@ -258,8 +247,7 @@ public class NotificationCreatedEventListener {
             }
         } else if (typeObj instanceof Map) {
             // Type might be serialized as a value object with a "value" field
-            @SuppressWarnings("unchecked")
-            Map<String, Object> typeMap = (Map<String, Object>) typeObj;
+            @SuppressWarnings("unchecked") Map<String, Object> typeMap = (Map<String, Object>) typeObj;
             Object valueObj = typeMap.get("value");
             if (valueObj instanceof String) {
                 try {
@@ -270,8 +258,7 @@ public class NotificationCreatedEventListener {
             }
         }
 
-        throw new IllegalArgumentException(String.format("Unsupported type format: %s", typeObj.getClass()
-                .getName()));
+        throw new IllegalArgumentException(String.format("Unsupported type format: %s", typeObj.getClass().getName()));
     }
 
     /**
@@ -321,8 +308,7 @@ public class NotificationCreatedEventListener {
                 TenantId currentTenantId = TenantContext.getTenantId();
                 if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
                     logger.warn("Tenant context missing or incorrect before attempt {}: notificationId={}, expected={}, actual={}. Re-setting.", attempt, notificationId,
-                            tenantId.getValue(),
-                            currentTenantId != null ? currentTenantId.getValue() : "null");
+                            tenantId.getValue(), currentTenantId != null ? currentTenantId.getValue() : "null");
                     TenantContext.setTenantId(tenantId);
                 }
                 logger.debug("Attempt {}: tenantId={}, notificationId={}", attempt, tenantId.getValue(), notificationId);
@@ -336,8 +322,8 @@ public class NotificationCreatedEventListener {
                     // Last attempt failed - rethrow to trigger Kafka retry or dead letter queue
                     logger.warn(
                             "Notification not found after {} retries: notificationId={}, tenantId={}. This may indicate the notification was never created, was deleted, or there"
-                                    + " is a persistent consistency issue. Event will be retried by Kafka.",
-                            maxRetries, notificationId, tenantIdOnError != null ? tenantIdOnError.getValue() : "null");
+                                    + " is a persistent consistency issue. Event will be retried by Kafka.", maxRetries, notificationId,
+                            tenantIdOnError != null ? tenantIdOnError.getValue() : "null");
                     throw e;
                 }
                 // Calculate delay with exponential backoff
@@ -348,8 +334,7 @@ public class NotificationCreatedEventListener {
                 try {
                     Thread.sleep(delayMs);
                 } catch (InterruptedException ie) {
-                    Thread.currentThread()
-                            .interrupt();
+                    Thread.currentThread().interrupt();
                     throw new RuntimeException("Interrupted while waiting to retry notification send", ie);
                 }
             }

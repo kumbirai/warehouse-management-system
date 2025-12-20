@@ -10,8 +10,7 @@ import com.ccbsa.wms.stock.domain.core.event.StockManagementEvent;
  * <p>
  * This port is defined in the application service layer and implemented by messaging adapters (Kafka publishers).
  */
-public interface StockManagementEventPublisher
-        extends EventPublisher {
+public interface StockManagementEventPublisher extends EventPublisher {
     /**
      * Publishes a Stock Management domain event.
      *

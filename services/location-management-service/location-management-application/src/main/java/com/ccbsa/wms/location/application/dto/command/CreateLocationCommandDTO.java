@@ -10,20 +10,16 @@ import jakarta.validation.constraints.Size;
  */
 public final class CreateLocationCommandDTO {
     // Hierarchical model fields
-    @Size(max = 100,
-            message = "Code must not exceed 100 characters")
+    @Size(max = 100, message = "Code must not exceed 100 characters")
     private String code;
 
-    @Size(max = 255,
-            message = "Name must not exceed 255 characters")
+    @Size(max = 255, message = "Name must not exceed 255 characters")
     private String name;
 
-    @Size(max = 50,
-            message = "Type must not exceed 50 characters")
+    @Size(max = 50, message = "Type must not exceed 50 characters")
     private String type;
 
-    @Size(max = 255,
-            message = "Parent location ID must not exceed 255 characters")
+    @Size(max = 255, message = "Parent location ID must not exceed 255 characters")
     private String parentLocationId;
 
     private Integer capacity;
@@ -31,28 +27,22 @@ public final class CreateLocationCommandDTO {
     private LocationDimensionsDTO dimensions;
 
     // Coordinate-based model fields (optional - used for direct coordinate specification)
-    @Size(max = 100,
-            message = "Zone must not exceed 100 characters")
+    @Size(max = 100, message = "Zone must not exceed 100 characters")
     private String zone;
 
-    @Size(max = 100,
-            message = "Aisle must not exceed 100 characters")
+    @Size(max = 100, message = "Aisle must not exceed 100 characters")
     private String aisle;
 
-    @Size(max = 100,
-            message = "Rack must not exceed 100 characters")
+    @Size(max = 100, message = "Rack must not exceed 100 characters")
     private String rack;
 
-    @Size(max = 100,
-            message = "Level must not exceed 100 characters")
+    @Size(max = 100, message = "Level must not exceed 100 characters")
     private String level;
 
-    @Size(max = 255,
-            message = "Barcode must not exceed 255 characters")
+    @Size(max = 255, message = "Barcode must not exceed 255 characters")
     private String barcode; // Optional - will be auto-generated if not provided
 
-    @Size(max = 500,
-            message = "Description must not exceed 500 characters")
+    @Size(max = 500, message = "Description must not exceed 500 characters")
     private String description;
 
     public CreateLocationCommandDTO() {

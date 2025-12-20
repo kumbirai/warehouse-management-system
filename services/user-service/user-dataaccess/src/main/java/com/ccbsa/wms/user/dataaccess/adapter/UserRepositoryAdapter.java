@@ -42,8 +42,7 @@ import jakarta.persistence.PersistenceContext;
  * Implements UserRepository port interface. Adapts between domain User aggregate and JPA UserEntity.
  */
 @Repository
-public class UserRepositoryAdapter
-        implements UserRepository {
+public class UserRepositoryAdapter implements UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepositoryAdapter.class);
 
     private final UserJpaRepository jpaRepository;
@@ -69,18 +68,15 @@ public class UserRepositoryAdapter
         // Verify TenantContext is set before saving (critical for schema resolution)
         com.ccbsa.common.domain.valueobject.TenantId tenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
         if (tenantId == null) {
-            logger.error("TenantContext is not set when saving user! User will be saved to wrong schema. User tenantId: {}", user.getTenantId() != null ? user.getTenantId()
-                    .getValue() : "null");
-            throw new IllegalStateException(String.format("TenantContext must be set before saving user. Expected tenantId: %s",
-                    user.getTenantId() != null ? user.getTenantId().getValue() : "null"));
+            logger.error("TenantContext is not set when saving user! User will be saved to wrong schema. User tenantId: {}",
+                    user.getTenantId() != null ? user.getTenantId().getValue() : "null");
+            throw new IllegalStateException(
+                    String.format("TenantContext must be set before saving user. Expected tenantId: %s", user.getTenantId() != null ? user.getTenantId().getValue() : "null"));
         }
 
         // Verify tenantId matches
-        if (!tenantId.getValue()
-                .equals(user.getTenantId()
-                        .getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, User: {}", tenantId.getValue(), user.getTenantId()
-                    .getValue());
+        if (!tenantId.getValue().equals(user.getTenantId().getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, User: {}", tenantId.getValue(), user.getTenantId().getValue());
             throw new IllegalStateException("TenantContext tenantId does not match user tenantId");
         }
 
@@ -103,8 +99,7 @@ public class UserRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Check if entity already exists to handle optimistic locking correctly
-        Optional<UserEntity> existingEntity = jpaRepository.findById(user.getId()
-                .getValue());
+        Optional<UserEntity> existingEntity = jpaRepository.findById(user.getId().getValue());
 
         if (existingEntity.isPresent()) {
             // Update existing entity to preserve JPA managed state and version
@@ -129,8 +124,7 @@ public class UserRepositoryAdapter
      * @throws IllegalArgumentException if schema name does not match expected patterns
      */
     private void validateSchemaName(String schemaName) {
-        if (schemaName == null || schemaName.trim()
-                .isEmpty()) {
+        if (schemaName == null || schemaName.trim().isEmpty()) {
             throw new IllegalArgumentException("Schema name cannot be null or empty");
         }
 
@@ -167,21 +161,12 @@ public class UserRepositoryAdapter
      * @param user   Domain user object
      */
     private void updateEntityFromDomain(UserEntity entity, User user) {
-        entity.setTenantId(user.getTenantId()
-                .getValue());
-        entity.setUsername(user.getUsername()
-                .getValue());
-        entity.setEmailAddress(user.getEmail()
-                .getValue());
-        entity.setFirstName(user.getFirstName()
-                .map(FirstName::getValue)
-                .orElse(null));
-        entity.setLastName(user.getLastName()
-                .map(LastName::getValue)
-                .orElse(null));
-        entity.setKeycloakUserId(user.getKeycloakUserId()
-                .map(KeycloakUserId::getValue)
-                .orElse(null));
+        entity.setTenantId(user.getTenantId().getValue());
+        entity.setUsername(user.getUsername().getValue());
+        entity.setEmailAddress(user.getEmail().getValue());
+        entity.setFirstName(user.getFirstName().map(FirstName::getValue).orElse(null));
+        entity.setLastName(user.getLastName().map(LastName::getValue).orElse(null));
+        entity.setKeycloakUserId(user.getKeycloakUserId().map(KeycloakUserId::getValue).orElse(null));
         entity.setStatus(mapToEntityStatus(user.getStatus()));
         entity.setCreatedAt(user.getCreatedAt());
         entity.setLastModifiedAt(user.getLastModifiedAt());
@@ -197,9 +182,8 @@ public class UserRepositoryAdapter
      * @param connection Database connection
      * @param schemaName Validated and escaped schema name
      */
-    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
-            justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " + "and properly escaped using escapeIdentifier() method. "
-                    + "PostgreSQL SET search_path command does not support parameterized queries.")
+    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE", justification = "Schema name is validated against expected patterns (tenant_*_schema or public) "
+            + "and properly escaped using escapeIdentifier() method. " + "PostgreSQL SET search_path command does not support parameterized queries.")
     private void executeSetSearchPath(Connection connection, String schemaName) {
         try (Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
@@ -265,14 +249,12 @@ public class UserRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findById(userId.getValue())
-                .map(mapper::toDomain);
+        return jpaRepository.findById(userId.getValue()).map(mapper::toDomain);
     }
 
     @Override
     public Optional<User> findByTenantIdAndId(TenantId tenantId, UserId userId) {
-        return jpaRepository.findByTenantIdAndUserId(tenantId.getValue(), userId.getValue())
-                .map(mapper::toDomain);
+        return jpaRepository.findByTenantIdAndUserId(tenantId.getValue(), userId.getValue()).map(mapper::toDomain);
     }
 
     @Override
@@ -281,8 +263,8 @@ public class UserRepositoryAdapter
         com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
         if (contextTenantId == null) {
             logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
-            throw new IllegalStateException(String.format("TenantContext must be set before querying users. Expected tenantId: %s",
-                    tenantId != null ? tenantId.getValue() : "null"));
+            throw new IllegalStateException(
+                    String.format("TenantContext must be set before querying users. Expected tenantId: %s", tenantId != null ? tenantId.getValue() : "null"));
         }
 
         // Verify tenantId matches TenantContext
@@ -309,30 +291,22 @@ public class UserRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantId(tenantId.getValue())
-                .stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
+        return jpaRepository.findByTenantId(tenantId.getValue()).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 
     @Override
     public Optional<User> findByUsername(Username username) {
-        return jpaRepository.findByUsername(username.getValue())
-                .map(mapper::toDomain);
+        return jpaRepository.findByUsername(username.getValue()).map(mapper::toDomain);
     }
 
     @Override
     public Optional<User> findByTenantIdAndUsername(TenantId tenantId, Username username) {
-        return jpaRepository.findByTenantIdAndUsername(tenantId.getValue(), username.getValue())
-                .map(mapper::toDomain);
+        return jpaRepository.findByTenantIdAndUsername(tenantId.getValue(), username.getValue()).map(mapper::toDomain);
     }
 
     @Override
     public List<User> findAll() {
-        return jpaRepository.findAll()
-                .stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
+        return jpaRepository.findAll().stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 
     @Override
@@ -372,9 +346,7 @@ public class UserRepositoryAdapter
             logger.info("Retrieved {} users from all tenant schemas", entities.size());
 
             // 4. Map to domain objects
-            return entities.stream()
-                    .map(mapper::toDomain)
-                    .collect(Collectors.toList());
+            return entities.stream().map(mapper::toDomain).collect(Collectors.toList());
         } catch (Exception e) {
             logger.error("Error executing cross-schema query: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to query users across tenant schemas", e);
@@ -420,9 +392,9 @@ public class UserRepositoryAdapter
         }
 
         // Explicitly list all columns to ensure proper JPA entity mapping
-        String columns = String.format("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s",
-                "user_id", "tenant_id", "username", "email_address", "first_name", "last_name",
-                "keycloak_user_id", "status", "created_at", "last_modified_at", "version");
+        String columns =
+                String.format("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s", "user_id", "tenant_id", "username", "email_address", "first_name", "last_name", "keycloak_user_id",
+                        "status", "created_at", "last_modified_at", "version");
 
         StringBuilder sql = new StringBuilder();
         List<String> unionParts = new ArrayList<>();
@@ -466,7 +438,7 @@ public class UserRepositoryAdapter
 
             // 3. Execute query using JdbcTemplate (bypasses Hibernate naming strategy)
             // We need to pass parameters for each UNION part: status (if provided) and searchTerm (twice for username and email)
-            String searchPattern = "%" + searchTerm.toLowerCase() + "%";
+            String searchPattern = String.format("%%%s%%", searchTerm.toLowerCase());
             List<UserEntity> entities;
             if (status != null) {
                 // For UNION queries: status, username search, email search for each UNION part
@@ -490,9 +462,7 @@ public class UserRepositoryAdapter
             logger.info("Retrieved {} users from all tenant schemas with search term '{}'", entities.size(), searchTerm);
 
             // 4. Map to domain objects
-            return entities.stream()
-                    .map(mapper::toDomain)
-                    .collect(Collectors.toList());
+            return entities.stream().map(mapper::toDomain).collect(Collectors.toList());
         } catch (Exception e) {
             logger.error("Error executing cross-schema query with search: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to query users across tenant schemas with search", e);
@@ -515,9 +485,9 @@ public class UserRepositoryAdapter
         }
 
         // Explicitly list all columns to ensure proper JPA entity mapping
-        String columns = String.format("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s",
-                "user_id", "tenant_id", "username", "email_address", "first_name", "last_name",
-                "keycloak_user_id", "status", "created_at", "last_modified_at", "version");
+        String columns =
+                String.format("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s", "user_id", "tenant_id", "username", "email_address", "first_name", "last_name", "keycloak_user_id",
+                        "status", "created_at", "last_modified_at", "version");
 
         StringBuilder sql = new StringBuilder();
         List<String> unionParts = new ArrayList<>();
@@ -529,14 +499,10 @@ public class UserRepositoryAdapter
             if (status != null) {
                 // Apply status and search filters to each SELECT statement
                 // Using ILIKE for case-insensitive search in PostgreSQL
-                unionParts.add(String.format(
-                        "SELECT %s FROM %s.users WHERE status = ? AND (LOWER(username) LIKE ? OR LOWER(email_address) LIKE ?)",
-                        columns, escapedSchema));
+                unionParts.add(String.format("SELECT %s FROM %s.users WHERE status = ? AND (LOWER(username) LIKE ? OR LOWER(email_address) LIKE ?)", columns, escapedSchema));
             } else {
                 // Only search filter
-                unionParts.add(String.format(
-                        "SELECT %s FROM %s.users WHERE LOWER(username) LIKE ? OR LOWER(email_address) LIKE ?",
-                        columns, escapedSchema));
+                unionParts.add(String.format("SELECT %s FROM %s.users WHERE LOWER(username) LIKE ? OR LOWER(email_address) LIKE ?", columns, escapedSchema));
             }
         }
 
@@ -559,9 +525,9 @@ public class UserRepositoryAdapter
             }
 
             // 2. Build UNION query with WHERE user_id = ?
-            String columns = String.format("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s",
-                    "user_id", "tenant_id", "username", "email_address", "first_name", "last_name",
-                    "keycloak_user_id", "status", "created_at", "last_modified_at", "version");
+            String columns =
+                    String.format("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s", "user_id", "tenant_id", "username", "email_address", "first_name", "last_name", "keycloak_user_id",
+                            "status", "created_at", "last_modified_at", "version");
 
             List<String> unionParts = new ArrayList<>();
             for (String schema : tenantSchemas) {
@@ -603,8 +569,8 @@ public class UserRepositoryAdapter
         com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
         if (contextTenantId == null) {
             logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
-            throw new IllegalStateException(String.format("TenantContext must be set before querying users. Expected tenantId: %s",
-                    tenantId != null ? tenantId.getValue() : "null"));
+            throw new IllegalStateException(
+                    String.format("TenantContext must be set before querying users. Expected tenantId: %s", tenantId != null ? tenantId.getValue() : "null"));
         }
 
         // Verify tenantId matches TenantContext
@@ -632,10 +598,7 @@ public class UserRepositoryAdapter
 
         // Now query using JPA repository (will use the schema set in search_path)
         UserEntity.UserStatus entityStatus = UserEntity.UserStatus.valueOf(status.name());
-        return jpaRepository.findByTenantIdAndStatus(tenantId.getValue(), entityStatus)
-                .stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
+        return jpaRepository.findByTenantIdAndStatus(tenantId.getValue(), entityStatus).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 
     @Override
@@ -644,8 +607,8 @@ public class UserRepositoryAdapter
         com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
         if (contextTenantId == null) {
             logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
-            throw new IllegalStateException(String.format("TenantContext must be set before querying users. Expected tenantId: %s",
-                    tenantId != null ? tenantId.getValue() : "null"));
+            throw new IllegalStateException(
+                    String.format("TenantContext must be set before querying users. Expected tenantId: %s", tenantId != null ? tenantId.getValue() : "null"));
         }
 
         // Verify tenantId matches TenantContext
@@ -672,10 +635,7 @@ public class UserRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantIdAndSearchTerm(tenantId.getValue(), searchTerm)
-                .stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
+        return jpaRepository.findByTenantIdAndSearchTerm(tenantId.getValue(), searchTerm).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 
     @Override
@@ -684,8 +644,8 @@ public class UserRepositoryAdapter
         com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
         if (contextTenantId == null) {
             logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
-            throw new IllegalStateException(String.format("TenantContext must be set before querying users. Expected tenantId: %s",
-                    tenantId != null ? tenantId.getValue() : "null"));
+            throw new IllegalStateException(
+                    String.format("TenantContext must be set before querying users. Expected tenantId: %s", tenantId != null ? tenantId.getValue() : "null"));
         }
 
         // Verify tenantId matches TenantContext
@@ -713,10 +673,7 @@ public class UserRepositoryAdapter
 
         // Now query using JPA repository (will use the schema set in search_path)
         UserEntity.UserStatus entityStatus = UserEntity.UserStatus.valueOf(status.name());
-        return jpaRepository.findByTenantIdAndStatusAndSearchTerm(tenantId.getValue(), entityStatus, searchTerm)
-                .stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
+        return jpaRepository.findByTenantIdAndStatusAndSearchTerm(tenantId.getValue(), entityStatus, searchTerm).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 
     @Override
@@ -736,18 +693,15 @@ public class UserRepositoryAdapter
 
     @Override
     public Optional<User> findByKeycloakUserId(String keycloakUserId) {
-        return jpaRepository.findByKeycloakUserId(keycloakUserId)
-                .map(mapper::toDomain);
+        return jpaRepository.findByKeycloakUserId(keycloakUserId).map(mapper::toDomain);
     }
 
     /**
      * RowMapper for UserEntity to map ResultSet rows to UserEntity objects.
      */
-    private static class UserEntityRowMapper
-            implements RowMapper<UserEntity> {
+    private static class UserEntityRowMapper implements RowMapper<UserEntity> {
         @Override
-        public UserEntity mapRow(
-                @NonNull ResultSet rs, int rowNum) throws SQLException {
+        public UserEntity mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
             UserEntity entity = new UserEntity();
             entity.setUserId(rs.getString("user_id"));
             entity.setTenantId(rs.getString("tenant_id"));
@@ -762,10 +716,8 @@ public class UserRepositoryAdapter
                 entity.setStatus(UserEntity.UserStatus.valueOf(statusStr));
             }
 
-            entity.setCreatedAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at")
-                    .toLocalDateTime() : null);
-            entity.setLastModifiedAt(rs.getTimestamp("last_modified_at") != null ? rs.getTimestamp("last_modified_at")
-                    .toLocalDateTime() : null);
+            entity.setCreatedAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null);
+            entity.setLastModifiedAt(rs.getTimestamp("last_modified_at") != null ? rs.getTimestamp("last_modified_at").toLocalDateTime() : null);
             entity.setVersion(rs.getLong("version"));
 
             return entity;

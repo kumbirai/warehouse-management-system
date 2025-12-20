@@ -17,8 +17,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Handles tenant configuration updates.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "Ports are managed singletons injected by Spring and kept immutable")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Ports are managed singletons injected by Spring and kept immutable")
 public class UpdateTenantConfigurationCommandHandler {
     private final TenantRepository tenantRepository;
     private final TenantEventPublisher eventPublisher;
@@ -31,8 +30,8 @@ public class UpdateTenantConfigurationCommandHandler {
     @Transactional
     public void handle(UpdateTenantConfigurationCommand command) {
         // Find tenant
-        Tenant tenant = tenantRepository.findById(command.getTenantId())
-                .orElseThrow(() -> new EntityNotFoundException(String.format("Tenant not found: %s", command.getTenantId())));
+        Tenant tenant =
+                tenantRepository.findById(command.getTenantId()).orElseThrow(() -> new EntityNotFoundException(String.format("Tenant not found: %s", command.getTenantId())));
 
         // Update configuration (domain logic)
         tenant.updateConfiguration(command.getConfiguration());
@@ -41,8 +40,7 @@ public class UpdateTenantConfigurationCommandHandler {
         tenantRepository.save(tenant);
 
         // Publish domain events
-        tenant.getDomainEvents()
-                .forEach(eventPublisher::publish);
+        tenant.getDomainEvents().forEach(eventPublisher::publish);
         tenant.clearDomainEvents();
     }
 }

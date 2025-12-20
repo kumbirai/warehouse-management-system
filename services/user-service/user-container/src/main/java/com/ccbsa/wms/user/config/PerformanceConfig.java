@@ -9,15 +9,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * Performance configuration. Configures performance-related settings for the application.
  */
 @Configuration
-public class PerformanceConfig
-        implements WebMvcConfigurer {
+public class PerformanceConfig implements WebMvcConfigurer {
     @Override
-    public void addResourceHandlers(
-            @NonNull ResourceHandlerRegistry registry) {
+    public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
         // Configure static resource caching
-        registry.addResourceHandler("/static/**")
-                .addResourceLocations("classpath:/static/")
-                .setCachePeriod(3600); // Cache for 1 hour
+        registry.addResourceHandler("/static/**").addResourceLocations("classpath:/static/").setCachePeriod(3600); // Cache for 1 hour
     }
 }
 

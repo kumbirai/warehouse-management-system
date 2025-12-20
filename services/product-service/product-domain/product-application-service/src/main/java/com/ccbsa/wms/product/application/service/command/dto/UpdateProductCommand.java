@@ -126,8 +126,7 @@ public final class UpdateProductCommand {
             if (tenantId == null) {
                 throw new IllegalArgumentException("TenantId is required");
             }
-            if (description == null || description.trim()
-                    .isEmpty()) {
+            if (description == null || description.trim().isEmpty()) {
                 throw new IllegalArgumentException("Description is required");
             }
             if (primaryBarcode == null) {

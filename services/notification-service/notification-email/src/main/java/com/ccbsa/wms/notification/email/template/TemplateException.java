@@ -5,8 +5,7 @@ package com.ccbsa.wms.notification.email.template;
  * <p>
  * Thrown when template rendering fails.
  */
-public class TemplateException
-        extends RuntimeException {
+public class TemplateException extends RuntimeException {
     public TemplateException(String message) {
         super(message);
     }

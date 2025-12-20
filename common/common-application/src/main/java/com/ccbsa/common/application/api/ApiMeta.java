@@ -1,6 +1,8 @@
 package com.ccbsa.common.application.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Metadata for API responses (pagination, etc.).
@@ -24,6 +26,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ApiMeta {
     private Pagination pagination;
+
+    // Jackson deserialization constructor
+    @JsonCreator
+    public ApiMeta(@JsonProperty("pagination") Pagination pagination) {
+        this.pagination = pagination;
+    }
 
     private ApiMeta(Builder builder) {
         this.pagination = builder.pagination;
@@ -68,7 +76,9 @@ public final class ApiMeta {
         private final boolean hasNext;
         private final boolean hasPrevious;
 
-        public Pagination(int page, int size, long totalElements, int totalPages, boolean hasNext, boolean hasPrevious) {
+        @JsonCreator
+        public Pagination(@JsonProperty("page") int page, @JsonProperty("size") int size, @JsonProperty("totalElements") long totalElements,
+                          @JsonProperty("totalPages") int totalPages, @JsonProperty("hasNext") boolean hasNext, @JsonProperty("hasPrevious") boolean hasPrevious) {
             this.page = page;
             this.size = size;
             this.totalElements = totalElements;

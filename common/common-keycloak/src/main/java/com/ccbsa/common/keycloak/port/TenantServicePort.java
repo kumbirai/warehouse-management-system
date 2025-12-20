@@ -47,10 +47,7 @@ public interface TenantServicePort {
      */
     record TenantInfo(TenantId tenantId, String name, TenantStatus status, String keycloakRealmName) {
         public enum TenantStatus {
-            PENDING,
-            ACTIVE,
-            INACTIVE,
-            SUSPENDED
+            PENDING, ACTIVE, INACTIVE, SUSPENDED
         }
     }
 }

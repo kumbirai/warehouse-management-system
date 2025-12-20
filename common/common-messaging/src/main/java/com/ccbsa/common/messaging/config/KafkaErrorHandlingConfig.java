@@ -70,8 +70,7 @@ public class KafkaErrorHandlingConfig {
      * Explicitly uses kafkaObjectMapper to ensure type information is properly deserialized.
      */
     @Bean
-    public ConsumerFactory<String, Object> dlqConsumerFactory(
-            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ConsumerFactory<String, Object> dlqConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, String.format("%s-dlq", groupId));
@@ -104,8 +103,7 @@ public class KafkaErrorHandlingConfig {
      * Explicitly uses kafkaObjectMapper to ensure type information is included in Kafka messages.
      */
     @Bean
-    public org.springframework.kafka.core.ProducerFactory<String, Object> dlqProducerFactory(
-            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public org.springframework.kafka.core.ProducerFactory<String, Object> dlqProducerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -185,8 +183,7 @@ public class KafkaErrorHandlingConfig {
         factory.setCommonErrorHandler(errorHandler);
 
         // Manual acknowledgment mode
-        factory.getContainerProperties()
-                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         return factory;
     }

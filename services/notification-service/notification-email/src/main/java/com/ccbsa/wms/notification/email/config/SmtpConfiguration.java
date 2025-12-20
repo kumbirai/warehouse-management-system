@@ -19,8 +19,7 @@ public class SmtpConfiguration {
     private String host = "localhost";
 
     @NotNull(message = "SMTP port cannot be null")
-    @Min(value = 1,
-            message = "SMTP port must be positive")
+    @Min(value = 1, message = "SMTP port must be positive")
     private int port = 1025;
 
     private String username;

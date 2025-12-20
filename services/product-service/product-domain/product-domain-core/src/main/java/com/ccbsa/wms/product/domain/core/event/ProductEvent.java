@@ -11,16 +11,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * <p>
  * All product-specific events extend this class.
  */
-public abstract class ProductEvent
-        extends DomainEvent<ProductId> {
+public abstract class ProductEvent extends DomainEvent<ProductId> {
     /**
      * Constructor for Product events without metadata.
      *
      * @param aggregateId Aggregate identifier (ProductId)
      * @throws IllegalArgumentException if aggregateId is null
      */
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "Product events must fail fast if aggregate identifiers are invalid")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "Product events must fail fast if aggregate identifiers are invalid")
     protected ProductEvent(ProductId aggregateId) {
         super(extractProductIdString(aggregateId), "Product");
     }
@@ -35,8 +33,7 @@ public abstract class ProductEvent
         if (productId == null) {
             throw new IllegalArgumentException("ProductId cannot be null");
         }
-        return productId.getValue()
-                .toString();
+        return productId.getValue().toString();
     }
 
     /**
@@ -46,8 +43,7 @@ public abstract class ProductEvent
      * @param metadata    Event metadata for traceability
      * @throws IllegalArgumentException if aggregateId is null
      */
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "Product events must fail fast if aggregate identifiers are invalid")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "Product events must fail fast if aggregate identifiers are invalid")
     protected ProductEvent(ProductId aggregateId, EventMetadata metadata) {
         super(extractProductIdString(aggregateId), "Product", metadata);
     }

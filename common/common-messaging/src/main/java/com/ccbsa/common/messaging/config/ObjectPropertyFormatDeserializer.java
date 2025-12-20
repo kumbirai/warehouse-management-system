@@ -31,8 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * expects WRAPPER_ARRAY format, and avoids deserialization failures
  * for immutable domain events.
  */
-public class ObjectPropertyFormatDeserializer
-        extends JsonDeserializer<Object> {
+public class ObjectPropertyFormatDeserializer extends JsonDeserializer<Object> {
 
     public ObjectPropertyFormatDeserializer(ObjectMapper objectMapper) {
         // ObjectMapper parameter kept for API consistency, but we use the context's mapper
@@ -42,8 +41,7 @@ public class ObjectPropertyFormatDeserializer
     @Override
     public Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         // Read the JSON as a tree to bypass Jackson's type resolution
-        JsonNode node = p.getCodec()
-                .readTree(p);
+        JsonNode node = p.getCodec().readTree(p);
 
         // CRITICAL FIX: Manually convert JsonNode to Map to bypass Jackson's type resolution
         // This ensures:

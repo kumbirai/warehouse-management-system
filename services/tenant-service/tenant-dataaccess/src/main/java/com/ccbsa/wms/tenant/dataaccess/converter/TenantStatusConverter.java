@@ -11,8 +11,7 @@ import jakarta.persistence.Converter;
  * Converts between TenantStatus domain enum and String for database storage.
  */
 @Converter(autoApply = true)
-public class TenantStatusConverter
-        implements AttributeConverter<TenantStatus, String> {
+public class TenantStatusConverter implements AttributeConverter<TenantStatus, String> {
     @Override
     public String convertToDatabaseColumn(TenantStatus tenantStatus) {
         if (tenantStatus == null) {

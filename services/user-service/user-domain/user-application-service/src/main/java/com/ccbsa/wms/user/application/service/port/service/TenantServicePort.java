@@ -44,10 +44,7 @@ public interface TenantServicePort {
      */
     record TenantInfo(TenantId tenantId, String name, TenantStatus status) {
         public enum TenantStatus {
-            PENDING,
-            ACTIVE,
-            INACTIVE,
-            SUSPENDED
+            PENDING, ACTIVE, INACTIVE, SUSPENDED
         }
     }
 }

@@ -41,16 +41,13 @@ import io.lettuce.core.TimeoutOptions;
 @Configuration
 @EnableCaching
 @EnableConfigurationProperties(CacheProperties.class)
-@ConditionalOnProperty(name = "spring.cache.type",
-        havingValue = "redis",
-        matchIfMissing = true)
+@ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis", matchIfMissing = true)
 public class CacheConfiguration {
 
     private final CacheProperties cacheProperties;
 
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-            justification = "CacheProperties is a Spring @ConfigurationProperties bean managed by Spring. It is initialized once and not "
-                    + "mutated after construction. The reference is safe to store.")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "CacheProperties is a Spring @ConfigurationProperties bean managed by Spring. It is initialized once and not "
+            + "mutated after construction. The reference is safe to store.")
     public CacheConfiguration(CacheProperties cacheProperties) {
         this.cacheProperties = cacheProperties;
     }
@@ -64,33 +61,18 @@ public class CacheConfiguration {
     public LettuceConnectionFactory redisConnectionFactory() {
         // Redis server configuration
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
-        redisConfig.setHostName(cacheProperties.getRedis()
-                .getHost());
-        redisConfig.setPort(cacheProperties.getRedis()
-                .getPort());
+        redisConfig.setHostName(cacheProperties.getRedis().getHost());
+        redisConfig.setPort(cacheProperties.getRedis().getPort());
 
-        if (cacheProperties.getRedis()
-                .getPassword() != null && !cacheProperties.getRedis()
-                .getPassword()
-                .isEmpty()) {
-            redisConfig.setPassword(cacheProperties.getRedis()
-                    .getPassword());
+        if (cacheProperties.getRedis().getPassword() != null && !cacheProperties.getRedis().getPassword().isEmpty()) {
+            redisConfig.setPassword(cacheProperties.getRedis().getPassword());
         }
 
         // Lettuce client configuration (async/reactive client)
-        ClientOptions clientOptions = ClientOptions.builder()
-                .socketOptions(SocketOptions.builder()
-                        .connectTimeout(Duration.ofSeconds(3))
-                        .keepAlive(true)
-                        .build())
-                .timeoutOptions(TimeoutOptions.enabled(Duration.ofSeconds(2)))
-                .autoReconnect(true)
-                .build();
+        ClientOptions clientOptions = ClientOptions.builder().socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(3)).keepAlive(true).build())
+                .timeoutOptions(TimeoutOptions.enabled(Duration.ofSeconds(2))).autoReconnect(true).build();
 
-        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
-                .clientOptions(clientOptions)
-                .commandTimeout(Duration.ofSeconds(2))
-                .build();
+        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder().clientOptions(clientOptions).commandTimeout(Duration.ofSeconds(2)).build();
 
         return new LettuceConnectionFactory(redisConfig, clientConfig);
     }
@@ -134,11 +116,10 @@ public class CacheConfiguration {
         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisCacheObjectMapper);
 
         // Default cache configuration
-        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(cacheProperties.getDefaultTtlMinutes()))
-                .disableCachingNullValues()
-                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));
+        RedisCacheConfiguration defaultConfig =
+                RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(cacheProperties.getDefaultTtlMinutes())).disableCachingNullValues()
+                        .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+                        .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));
 
         return new TenantAwareCacheManager(connectionFactory, defaultConfig, cacheProperties);
     }
@@ -159,8 +140,7 @@ public class CacheConfiguration {
      * Use cases: - Custom cache operations not covered by @Cacheable - Batch cache operations - Cache statistics queries
      */
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory,
-                                                       @Qualifier("redisCacheObjectMapper") ObjectMapper redisCacheObjectMapper) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory, @Qualifier("redisCacheObjectMapper") ObjectMapper redisCacheObjectMapper) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 

@@ -22,4 +22,5 @@ export interface ApiResponse<T> {
   error?: ApiError;
   links?: Record<string, string>;
   meta?: ApiMeta;
+  success?: boolean; // Optional field that may be added by gateway/middleware
 }

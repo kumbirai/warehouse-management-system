@@ -44,23 +44,16 @@ public class CreateConsignmentCommandHandler {
 
         // 2. Validate consignment reference uniqueness
         if (repository.existsByConsignmentReferenceAndTenantId(command.getConsignmentReference(), command.getTenantId())) {
-            throw new InvalidConsignmentReferenceException(String.format("Consignment reference '%s' already exists for tenant", command.getConsignmentReference()
-                    .getValue()));
+            throw new InvalidConsignmentReferenceException(String.format("Consignment reference '%s' already exists for tenant", command.getConsignmentReference().getValue()));
         }
 
         // 3. Validate product codes exist
         validateProductCodes(command.getLineItems(), command.getTenantId());
 
         // 4. Create aggregate using builder
-        StockConsignment consignment = StockConsignment.builder()
-                .consignmentId(ConsignmentId.generate())
-                .tenantId(command.getTenantId())
-                .consignmentReference(command.getConsignmentReference())
-                .warehouseId(command.getWarehouseId())
-                .receivedAt(command.getReceivedAt())
-                .receivedBy(command.getReceivedBy())
-                .lineItems(command.getLineItems())
-                .build();
+        StockConsignment consignment =
+                StockConsignment.builder().consignmentId(ConsignmentId.generate()).tenantId(command.getTenantId()).consignmentReference(command.getConsignmentReference())
+                        .warehouseId(command.getWarehouseId()).receivedAt(command.getReceivedAt()).receivedBy(command.getReceivedBy()).lineItems(command.getLineItems()).build();
 
         // 5. Persist aggregate
         repository.save(consignment);
@@ -73,11 +66,7 @@ public class CreateConsignmentCommandHandler {
         }
 
         // 7. Return command-specific result
-        return CreateConsignmentResult.builder()
-                .consignmentId(consignment.getId())
-                .status(ConsignmentStatus.RECEIVED)
-                .receivedAt(consignment.getReceivedAt())
-                .build();
+        return CreateConsignmentResult.builder().consignmentId(consignment.getId()).status(ConsignmentStatus.RECEIVED).receivedAt(consignment.getReceivedAt()).build();
     }
 
     /**
@@ -102,8 +91,7 @@ public class CreateConsignmentCommandHandler {
         if (command.getReceivedAt() == null) {
             throw new IllegalArgumentException("ReceivedAt is required");
         }
-        if (command.getLineItems() == null || command.getLineItems()
-                .isEmpty()) {
+        if (command.getLineItems() == null || command.getLineItems().isEmpty()) {
             throw new IllegalArgumentException("At least one line item is required");
         }
     }
@@ -119,8 +107,7 @@ public class CreateConsignmentCommandHandler {
         for (ConsignmentLineItem lineItem : lineItems) {
             var productInfo = productServicePort.getProductByCode(lineItem.getProductCode(), tenantId);
             if (productInfo.isEmpty()) {
-                throw new IllegalArgumentException(String.format("Product with code '%s' not found", lineItem.getProductCode()
-                        .getValue()));
+                throw new IllegalArgumentException(String.format("Product with code '%s' not found", lineItem.getProductCode().getValue()));
             }
         }
     }

@@ -17,8 +17,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Handles the creation of a new tenant.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "Ports are managed singletons injected by Spring and kept immutable")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Ports are managed singletons injected by Spring and kept immutable")
 public class CreateTenantCommandHandler {
     private final TenantRepository tenantRepository;
     private final TenantEventPublisher eventPublisher;
@@ -36,19 +35,14 @@ public class CreateTenantCommandHandler {
         }
 
         // Create tenant aggregate
-        Tenant tenant = Tenant.builder()
-                .tenantId(command.getTenantId())
-                .name(command.getName())
-                .contactInformation(command.getContactInformation())
-                .configuration(command.getConfiguration())
-                .build();
+        Tenant tenant = Tenant.builder().tenantId(command.getTenantId()).name(command.getName()).contactInformation(command.getContactInformation())
+                .configuration(command.getConfiguration()).build();
 
         // Save tenant
         tenantRepository.save(tenant);
 
         // Publish domain events
-        tenant.getDomainEvents()
-                .forEach(eventPublisher::publish);
+        tenant.getDomainEvents().forEach(eventPublisher::publish);
         tenant.clearDomainEvents();
 
         return CreateTenantResult.success(tenant.getId());

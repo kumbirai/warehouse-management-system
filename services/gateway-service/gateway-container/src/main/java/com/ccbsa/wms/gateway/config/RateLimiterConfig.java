@@ -2,7 +2,9 @@ package com.ccbsa.wms.gateway.config;
 
 import java.net.InetSocketAddress;
 
+import org.springframework.cloud.gateway.filter.factory.GatewayFilterFactory;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
+import org.springframework.cloud.gateway.filter.ratelimit.RateLimiter;
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +12,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 
 import com.ccbsa.wms.gateway.filter.GracefulRedisRateLimiter;
+import com.ccbsa.wms.gateway.filter.SafeRequestRateLimiterGatewayFilterFactory;
 
 import reactor.core.publisher.Mono;
 
@@ -34,15 +37,13 @@ public class RateLimiterConfig {
             ServerHttpRequest request = exchange.getRequest();
 
             // Priority 1: User-based rate limiting (most granular)
-            String userId = request.getHeaders()
-                    .getFirst("X-User-Id");
+            String userId = request.getHeaders().getFirst("X-User-Id");
             if (userId != null && !userId.isEmpty()) {
                 return Mono.just(String.format("user:%s", userId));
             }
 
             // Priority 2: Tenant-based rate limiting
-            String tenantId = request.getHeaders()
-                    .getFirst("X-Tenant-Id");
+            String tenantId = request.getHeaders().getFirst("X-Tenant-Id");
             if (tenantId != null && !tenantId.isEmpty()) {
                 return Mono.just(String.format("tenant:%s", tenantId));
             }
@@ -51,8 +52,7 @@ public class RateLimiterConfig {
             String remoteAddress = "unknown";
             InetSocketAddress remoteAddr = request.getRemoteAddress();
             if (remoteAddr != null && remoteAddr.getAddress() != null) {
-                remoteAddress = remoteAddr.getAddress()
-                        .getHostAddress();
+                remoteAddress = remoteAddr.getAddress().getHostAddress();
             }
             return Mono.just(String.format("ip:%s", remoteAddress));
         };
@@ -69,6 +69,22 @@ public class RateLimiterConfig {
     @Primary
     public GracefulRedisRateLimiter gracefulRedisRateLimiter(RedisRateLimiter redisRateLimiter) {
         return new GracefulRedisRateLimiter(redisRateLimiter);
+    }
+
+    /**
+     * Custom RequestRateLimiterGatewayFilterFactory that safely handles committed responses.
+     * <p>
+     * This bean overrides the default RequestRateLimiterGatewayFilterFactory from Spring Cloud Gateway
+     * to fix the issue where rate limit headers are attempted to be added to an already committed
+     * response (e.g., when returning a 429 TOO_MANY_REQUESTS status).
+     * <p>
+     * The bean name "requestRateLimiterGatewayFilterFactory" matches what Spring Cloud Gateway expects,
+     * allowing this custom implementation to override the default one.
+     */
+    @Bean
+    @Primary
+    public GatewayFilterFactory<?> requestRateLimiterGatewayFilterFactory(RateLimiter<?> rateLimiter, KeyResolver keyResolver) {
+        return new SafeRequestRateLimiterGatewayFilterFactory(rateLimiter, keyResolver);
     }
 }
 

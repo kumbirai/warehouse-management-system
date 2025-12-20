@@ -35,8 +35,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/users")
-@Tag(name = "User Queries",
-        description = "User management query operations")
+@Tag(name = "User Queries", description = "User management query operations")
 public class UserQueryController {
     private final GetUserQueryHandler getUserQueryHandler;
     private final ListUsersQueryHandler listUsersQueryHandler;
@@ -49,11 +48,9 @@ public class UserQueryController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get User by ID",
-            description = "Retrieves a user by ID")
+    @Operation(summary = "Get User by ID", description = "Retrieves a user by ID")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
-    public ResponseEntity<ApiResponse<UserResponse>> getUser(
-            @PathVariable String id) {
+    public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable String id) {
         // Check if current user is SYSTEM_ADMIN for cross-tenant query support
         boolean isSystemAdmin = isSystemAdmin();
         GetUserQueryResult result = getUserQueryHandler.handle(mapper.toGetUserQuery(id, isSystemAdmin));
@@ -70,24 +67,20 @@ public class UserQueryController {
      * @return true if user has SYSTEM_ADMIN role, false otherwise
      */
     private boolean isSystemAdmin() {
-        Authentication authentication = SecurityContextHolder.getContext()
-                .getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             return false;
         }
 
         // Check Spring Security authorities (set by GatewayRoleHeaderAuthenticationFilter)
         // Authorities have ROLE_ prefix, so check for ROLE_SYSTEM_ADMIN
-        return authentication.getAuthorities().stream()
-                .anyMatch(authority -> authority.getAuthority().equals("ROLE_SYSTEM_ADMIN"));
+        return authentication.getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_SYSTEM_ADMIN"));
     }
 
     @GetMapping("/{id}/profile")
-    @Operation(summary = "Get User Profile",
-            description = "Retrieves a user profile by ID (same as GET /users/{id})")
+    @Operation(summary = "Get User Profile", description = "Retrieves a user profile by ID (same as GET /users/{id})")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
-    public ResponseEntity<ApiResponse<UserResponse>> getUserProfile(
-            @PathVariable String id) {
+    public ResponseEntity<ApiResponse<UserResponse>> getUserProfile(@PathVariable String id) {
         // Delegate to getUser - same functionality, different endpoint for RESTful clarity
         // Check if current user is SYSTEM_ADMIN for cross-tenant query support
         boolean isSystemAdmin = isSystemAdmin();
@@ -97,11 +90,9 @@ public class UserQueryController {
     }
 
     @GetMapping("/{id}/roles")
-    @Operation(summary = "Get User Roles",
-            description = "Retrieves roles for a user")
+    @Operation(summary = "Get User Roles", description = "Retrieves roles for a user")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
-    public ResponseEntity<ApiResponse<List<String>>> getUserRoles(
-            @PathVariable String id) {
+    public ResponseEntity<ApiResponse<List<String>>> getUserRoles(@PathVariable String id) {
         // Check if current user is SYSTEM_ADMIN for cross-tenant query support
         boolean isSystemAdmin = isSystemAdmin();
         GetUserQueryResult result = getUserQueryHandler.handle(mapper.toGetUserQuery(id, isSystemAdmin));
@@ -110,18 +101,13 @@ public class UserQueryController {
     }
 
     @GetMapping
-    @Operation(summary = "List Users",
-            description = "Lists users with optional filtering and pagination")
+    @Operation(summary = "List Users", description = "Lists users with optional filtering and pagination")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
-    public ResponseEntity<ApiResponse<List<UserResponse>>> listUsers(
-            @RequestHeader(value = "X-Tenant-Id",
-                    required = false) String tenantId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false,
-                    defaultValue = "1") Integer page,
-            @RequestParam(required = false,
-                    defaultValue = "20") Integer size,
-            @RequestParam(required = false) String search) {
+    public ResponseEntity<ApiResponse<List<UserResponse>>> listUsers(@RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
+                                                                     @RequestParam(required = false) String status,
+                                                                     @RequestParam(required = false, defaultValue = "1") Integer page,
+                                                                     @RequestParam(required = false, defaultValue = "20") Integer size,
+                                                                     @RequestParam(required = false) String search) {
         // Extract user roles from SecurityContext
         boolean isTenantAdmin = isTenantAdmin();
         boolean isSystemAdmin = isSystemAdmin();
@@ -154,8 +140,8 @@ public class UserQueryController {
             TenantContext.setTenantId(tenantIdToSet);
 
             org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserQueryController.class);
-            logger.debug("Set TenantContext to '{}' for SYSTEM_ADMIN query (previous: {})",
-                    tenantIdToSet.getValue(), previousTenantId != null ? previousTenantId.getValue() : "null");
+            logger.debug("Set TenantContext to '{}' for SYSTEM_ADMIN query (previous: {})", tenantIdToSet.getValue(),
+                    previousTenantId != null ? previousTenantId.getValue() : "null");
         }
 
         try {
@@ -164,14 +150,12 @@ public class UserQueryController {
 
             // Log result for debugging
             org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserQueryController.class);
-            logger.info("ListUsers query result: tenantId={}, totalCount={}, itemsCount={}, page={}, size={}",
-                    resolvedTenantId, result.getTotalCount(), responses.size(), page, size);
+            logger.info("ListUsers query result: tenantId={}, totalCount={}, itemsCount={}, page={}, size={}", resolvedTenantId, result.getTotalCount(), responses.size(), page,
+                    size);
 
             // Build pagination metadata (using 1-indexed page for response)
             ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page != null && page > 0 ? page : 1, size != null && size > 0 ? size : 20, result.getTotalCount());
-            ApiMeta meta = ApiMeta.builder()
-                    .pagination(pagination)
-                    .build();
+            ApiMeta meta = ApiMeta.builder().pagination(pagination).build();
 
             return ApiResponseBuilder.ok(responses, null, meta);
         } finally {
@@ -195,16 +179,14 @@ public class UserQueryController {
      * @return true if user has TENANT_ADMIN role, false otherwise
      */
     private boolean isTenantAdmin() {
-        Authentication authentication = SecurityContextHolder.getContext()
-                .getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             return false;
         }
 
         // Check Spring Security authorities (set by GatewayRoleHeaderAuthenticationFilter)
         // Authorities have ROLE_ prefix, so check for ROLE_TENANT_ADMIN
-        return authentication.getAuthorities().stream()
-                .anyMatch(authority -> authority.getAuthority().equals("ROLE_TENANT_ADMIN"));
+        return authentication.getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_TENANT_ADMIN"));
     }
 }
 

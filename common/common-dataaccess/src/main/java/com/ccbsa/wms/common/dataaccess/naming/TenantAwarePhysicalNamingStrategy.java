@@ -33,8 +33,7 @@ import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
  * </pre>
  */
 @Component
-public class TenantAwarePhysicalNamingStrategy
-        implements PhysicalNamingStrategy, ApplicationContextAware {
+public class TenantAwarePhysicalNamingStrategy implements PhysicalNamingStrategy, ApplicationContextAware {
 
     private static final Logger logger = LoggerFactory.getLogger(TenantAwarePhysicalNamingStrategy.class);
     private static final String PLACEHOLDER_SCHEMA = "tenant_schema";
@@ -48,8 +47,7 @@ public class TenantAwarePhysicalNamingStrategy
     }
 
     @Override
-    public void setApplicationContext(
-            @NonNull ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 

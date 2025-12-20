@@ -9,10 +9,6 @@ package com.ccbsa.wms.product.domain.core.valueobject;
  * container)
  */
 public enum UnitOfMeasure {
-    EA,
-    CS,
-    PK,
-    BOX,
-    PAL
+    EA, CS, PK, BOX, PAL
 }
 

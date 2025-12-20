@@ -6,9 +6,7 @@ package com.ccbsa.wms.user.domain.core.valueobject;
  * Represents the status of a user account. Immutable enum-like value object.
  */
 public enum UserStatus {
-    ACTIVE,
-    INACTIVE,
-    SUSPENDED;
+    ACTIVE, INACTIVE, SUSPENDED;
 
     /**
      * Checks if a status transition is valid.

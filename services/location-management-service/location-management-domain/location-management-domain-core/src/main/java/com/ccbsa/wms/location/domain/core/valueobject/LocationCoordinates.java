@@ -43,20 +43,16 @@ public final class LocationCoordinates {
      * @throws IllegalArgumentException if validation fails
      */
     private void validate(String zone, String aisle, String rack, String level) {
-        if (zone == null || zone.trim()
-                .isEmpty()) {
+        if (zone == null || zone.trim().isEmpty()) {
             throw new IllegalArgumentException("Zone cannot be null or empty");
         }
-        if (aisle == null || aisle.trim()
-                .isEmpty()) {
+        if (aisle == null || aisle.trim().isEmpty()) {
             throw new IllegalArgumentException("Aisle cannot be null or empty");
         }
-        if (rack == null || rack.trim()
-                .isEmpty()) {
+        if (rack == null || rack.trim().isEmpty()) {
             throw new IllegalArgumentException("Rack cannot be null or empty");
         }
-        if (level == null || level.trim()
-                .isEmpty()) {
+        if (level == null || level.trim().isEmpty()) {
             throw new IllegalArgumentException("Level cannot be null or empty");
         }
     }

@@ -14,9 +14,7 @@ class ApiMetaTest {
         ApiMeta.Pagination pagination = ApiMeta.Pagination.of(1, 20, 100);
 
         // When
-        ApiMeta meta = ApiMeta.builder()
-                .pagination(pagination)
-                .build();
+        ApiMeta meta = ApiMeta.builder().pagination(pagination).build();
 
         // Then
         assertThat(meta).isNotNull();
@@ -27,8 +25,7 @@ class ApiMetaTest {
     @DisplayName("Should create ApiMeta without pagination")
     void shouldCreateApiMetaWithoutPagination() {
         // When
-        ApiMeta meta = ApiMeta.builder()
-                .build();
+        ApiMeta meta = ApiMeta.builder().build();
 
         // Then
         assertThat(meta).isNotNull();

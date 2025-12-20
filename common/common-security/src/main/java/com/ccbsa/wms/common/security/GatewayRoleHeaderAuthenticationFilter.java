@@ -50,10 +50,8 @@ public class GatewayRoleHeaderAuthenticationFilter extends OncePerRequestFilter 
     private static final String X_ROLE_HEADER = "X-Role";
 
     @Override
-    protected void doFilterInternal(
-            @NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         // Only process if we have a JWT authentication
@@ -69,14 +67,11 @@ public class GatewayRoleHeaderAuthenticationFilter extends OncePerRequestFilter 
                 logger.debug("X-Role header not present for path {}, falling back to JWT token roles", request.getRequestURI());
                 authorities = extractAuthoritiesFromJwt(jwt);
                 if (!authorities.isEmpty()) {
-                    logger.debug("Extracted {} authorities from JWT token (fallback): {}",
-                            authorities.size(),
+                    logger.debug("Extracted {} authorities from JWT token (fallback): {}", authorities.size(),
                             authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
                 }
             } else {
-                logger.info("Extracted {} authorities from X-Role header for path {}: {}",
-                        authorities.size(),
-                        request.getRequestURI(),
+                logger.info("Extracted {} authorities from X-Role header for path {}: {}", authorities.size(), request.getRequestURI(),
                         authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
             }
 
@@ -108,10 +103,7 @@ public class GatewayRoleHeaderAuthenticationFilter extends OncePerRequestFilter 
             return Collections.emptyList();
         }
 
-        return Arrays.stream(rolesHeader.split(","))
-                .map(String::trim)
-                .filter(role -> !role.isEmpty())
-                .map(role -> new SimpleGrantedAuthority(String.format("ROLE_%s", role)))
+        return Arrays.stream(rolesHeader.split(",")).map(String::trim).filter(role -> !role.isEmpty()).map(role -> new SimpleGrantedAuthority(String.format("ROLE_%s", role)))
                 .collect(Collectors.toList());
     }
 
@@ -127,15 +119,11 @@ public class GatewayRoleHeaderAuthenticationFilter extends OncePerRequestFilter 
     private Collection<GrantedAuthority> extractAuthoritiesFromJwt(Jwt jwt) {
         Object realmAccess = jwt.getClaim("realm_access");
         if (realmAccess instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
+            @SuppressWarnings("unchecked") Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
             Object rolesObj = realmAccessMap.get("roles");
             if (rolesObj instanceof List) {
-                @SuppressWarnings("unchecked")
-                List<String> roles = (List<String>) rolesObj;
-                return roles.stream()
-                        .map(role -> new SimpleGrantedAuthority(String.format("ROLE_%s", role)))
-                        .collect(Collectors.toList());
+                @SuppressWarnings("unchecked") List<String> roles = (List<String>) rolesObj;
+                return roles.stream().map(role -> new SimpleGrantedAuthority(String.format("ROLE_%s", role))).collect(Collectors.toList());
             }
         }
         return Collections.emptyList();

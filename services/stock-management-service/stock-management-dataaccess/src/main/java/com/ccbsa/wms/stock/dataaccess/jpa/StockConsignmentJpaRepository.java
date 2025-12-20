@@ -12,8 +12,7 @@ import com.ccbsa.wms.stock.dataaccess.entity.StockConsignmentEntity;
  * <p>
  * Spring Data JPA repository for StockConsignmentEntity. Provides database access methods with multi-tenant support.
  */
-public interface StockConsignmentJpaRepository
-        extends JpaRepository<StockConsignmentEntity, UUID> {
+public interface StockConsignmentJpaRepository extends JpaRepository<StockConsignmentEntity, UUID> {
     /**
      * Finds a consignment by tenant ID and consignment ID.
      *

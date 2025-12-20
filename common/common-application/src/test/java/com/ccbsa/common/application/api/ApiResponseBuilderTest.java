@@ -58,9 +58,7 @@ class ApiResponseBuilderTest {
         // Given
         String data = "test-data";
         Map<String, String> links = Map.of("self", "/api/v1/resource");
-        ApiMeta meta = ApiMeta.builder()
-                .pagination(ApiMeta.Pagination.of(1, 20, 100))
-                .build();
+        ApiMeta meta = ApiMeta.builder().pagination(ApiMeta.Pagination.of(1, 20, 100)).build();
 
         // When
         ResponseEntity<ApiResponse<String>> response = ApiResponseBuilder.ok(data, links, meta);
@@ -203,10 +201,7 @@ class ApiResponseBuilderTest {
     void shouldCreateErrorResponseWithApiErrorObject() {
         // Given
         HttpStatus status = HttpStatus.NOT_FOUND;
-        ApiError error = ApiError.builder("RESOURCE_NOT_FOUND", "Resource not found")
-                .path("/api/v1/resource")
-                .requestId("req-123")
-                .build();
+        ApiError error = ApiError.builder("RESOURCE_NOT_FOUND", "Resource not found").path("/api/v1/resource").requestId("req-123").build();
 
         // When
         ResponseEntity<ApiResponse<Void>> response = ApiResponseBuilder.error(status, error);
@@ -225,16 +220,14 @@ class ApiResponseBuilderTest {
     @DisplayName("Should throw exception when status is null")
     void shouldThrowExceptionWhenStatusIsNull() {
         // When/Then
-        assertThatThrownBy(() -> ApiResponseBuilder.error(null, "ERROR_CODE", "message")).isInstanceOf(NullPointerException.class)
-                .hasMessage("HTTP status cannot be null");
+        assertThatThrownBy(() -> ApiResponseBuilder.error(null, "ERROR_CODE", "message")).isInstanceOf(NullPointerException.class).hasMessage("HTTP status cannot be null");
     }
 
     @Test
     @DisplayName("Should throw exception when ApiError is null")
     void shouldThrowExceptionWhenApiErrorIsNull() {
         // When/Then
-        assertThatThrownBy(() -> ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, (ApiError) null)).isInstanceOf(NullPointerException.class)
-                .hasMessage("ApiError cannot be null");
+        assertThatThrownBy(() -> ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, (ApiError) null)).isInstanceOf(NullPointerException.class).hasMessage("ApiError cannot be null");
     }
 }
 

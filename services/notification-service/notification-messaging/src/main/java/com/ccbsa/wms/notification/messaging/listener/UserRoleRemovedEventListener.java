@@ -39,14 +39,9 @@ public class UserRoleRemovedEventListener {
         this.createNotificationCommandHandler = createNotificationCommandHandler;
     }
 
-    @KafkaListener(topics = "user-events",
-            groupId = "notification-service",
-            containerFactory = "externalEventKafkaListenerContainerFactory")
-    public void handle(
-            @Payload Map<String, Object> eventData,
-            @Header(value = "__TypeId__",
-                    required = false) String eventType,
-            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
+    @KafkaListener(topics = "user-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
+                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         try {
             // Extract and set correlation ID from event metadata for traceability
             extractAndSetCorrelationId(eventData);
@@ -66,21 +61,15 @@ public class UserRoleRemovedEventListener {
             String roleName = extractRoleName(eventData);
 
             logger.info("Received UserRoleRemovedEvent: userId={}, tenantId={}, email={}, role={}, eventId={}, eventDataKeys={}", aggregateId, tenantId.getValue(),
-                    recipientEmail.getValue(), roleName, extractEventId(eventData),
-                    eventData.keySet());
+                    recipientEmail.getValue(), roleName, extractEventId(eventData), eventData.keySet());
 
             // Set tenant context for multi-tenant schema resolution
             TenantContext.setTenantId(tenantId);
             try {
                 // Create role removal notification
-                CreateNotificationCommand command = CreateNotificationCommand.builder()
-                        .tenantId(tenantId)
-                        .recipientUserId(UserId.of(aggregateId))
-                        .recipientEmail(recipientEmail)
-                        .title(Title.of("Role Removed"))
-                        .message(Message.of(String.format("The role '%s' has been removed from your account.", roleName)))
-                        .type(NotificationType.USER_ROLE_REMOVED)
-                        .build();
+                CreateNotificationCommand command = CreateNotificationCommand.builder().tenantId(tenantId).recipientUserId(UserId.of(aggregateId)).recipientEmail(recipientEmail)
+                        .title(Title.of("Role Removed")).message(Message.of(String.format("The role '%s' has been removed from your account.", roleName)))
+                        .type(NotificationType.USER_ROLE_REMOVED).build();
 
                 createNotificationCommandHandler.handle(command);
 
@@ -115,8 +104,7 @@ public class UserRoleRemovedEventListener {
         try {
             Object metadataObj = eventData.get("metadata");
             if (metadataObj instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> metadata = (Map<String, Object>) metadataObj;
+                @SuppressWarnings("unchecked") Map<String, Object> metadata = (Map<String, Object>) metadataObj;
                 Object correlationIdObj = metadata.get("correlationId");
                 if (correlationIdObj != null) {
                     String correlationId = correlationIdObj.toString();
@@ -209,8 +197,7 @@ public class UserRoleRemovedEventListener {
 
         // Handle value object serialization (Map with "value" field)
         if (tenantIdObj instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> tenantIdMap = (Map<String, Object>) tenantIdObj;
+            @SuppressWarnings("unchecked") Map<String, Object> tenantIdMap = (Map<String, Object>) tenantIdObj;
             Object valueObj = tenantIdMap.get("value");
             if (valueObj != null) {
                 return TenantId.of(valueObj.toString());
@@ -237,8 +224,7 @@ public class UserRoleRemovedEventListener {
 
         // Handle nested object with value field (EmailAddress value object)
         if (emailObj instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> emailMap = (Map<String, Object>) emailObj;
+            @SuppressWarnings("unchecked") Map<String, Object> emailMap = (Map<String, Object>) emailObj;
             Object valueObj = emailMap.get("value");
             if (valueObj != null) {
                 return EmailAddress.of(valueObj.toString());

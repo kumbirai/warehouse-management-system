@@ -28,21 +28,12 @@ public class GetConsignmentQueryHandler {
     public ConsignmentQueryResult handle(GetConsignmentQuery query) {
         // 1. Load aggregate
         StockConsignment consignment = repository.findByIdAndTenantId(query.getConsignmentId(), query.getTenantId())
-                .orElseThrow(() -> new ConsignmentNotFoundException(String.format("Consignment not found: %s", query.getConsignmentId()
-                        .getValueAsString())));
+                .orElseThrow(() -> new ConsignmentNotFoundException(String.format("Consignment not found: %s", query.getConsignmentId().getValueAsString())));
 
         // 2. Map to query result
-        return ConsignmentQueryResult.builder()
-                .consignmentId(consignment.getId())
-                .consignmentReference(consignment.getConsignmentReference())
-                .warehouseId(consignment.getWarehouseId())
-                .status(consignment.getStatus())
-                .receivedAt(consignment.getReceivedAt())
-                .confirmedAt(consignment.getConfirmedAt())
-                .receivedBy(consignment.getReceivedBy())
-                .lineItems(consignment.getLineItems())
-                .createdAt(consignment.getCreatedAt())
-                .lastModifiedAt(consignment.getLastModifiedAt())
+        return ConsignmentQueryResult.builder().consignmentId(consignment.getId()).consignmentReference(consignment.getConsignmentReference())
+                .warehouseId(consignment.getWarehouseId()).status(consignment.getStatus()).receivedAt(consignment.getReceivedAt()).confirmedAt(consignment.getConfirmedAt())
+                .receivedBy(consignment.getReceivedBy()).lineItems(consignment.getLineItems()).createdAt(consignment.getCreatedAt()).lastModifiedAt(consignment.getLastModifiedAt())
                 .build();
     }
 }

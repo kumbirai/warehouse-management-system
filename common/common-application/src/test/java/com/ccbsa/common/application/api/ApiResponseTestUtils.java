@@ -35,8 +35,7 @@ public final class ApiResponseTestUtils {
             assert body.isError() == false : "Response should not be an error";
 
             if (expectedData != null) {
-                assert body.getData() != null && body.getData()
-                        .equals(expectedData) : String.format("Expected data %s but got %s", expectedData, body.getData());
+                assert body.getData() != null && body.getData().equals(expectedData) : String.format("Expected data %s but got %s", expectedData, body.getData());
             }
         }
     }
@@ -59,8 +58,8 @@ public final class ApiResponseTestUtils {
             ApiError error = body.getError();
             assert error != null : "Error should not be null";
             if (error != null) {
-                assert error.getCode() != null && error.getCode()
-                        .equals(expectedErrorCode) : String.format("Expected error code %s but got %s", expectedErrorCode, error.getCode());
+                assert error.getCode() != null && error.getCode().equals(expectedErrorCode) :
+                        String.format("Expected error code %s but got %s", expectedErrorCode, error.getCode());
             }
         }
     }
@@ -73,8 +72,7 @@ public final class ApiResponseTestUtils {
      * @return ApiError instance
      */
     public static ApiError createTestError(String code, String message) {
-        return ApiError.builder(code, message)
-                .build();
+        return ApiError.builder(code, message).build();
     }
 
     /**
@@ -88,11 +86,7 @@ public final class ApiResponseTestUtils {
      * @return ApiError instance
      */
     public static ApiError createTestError(String code, String message, String path, String requestId, Map<String, Object> details) {
-        return ApiError.builder(code, message)
-                .path(path)
-                .requestId(requestId)
-                .details(details)
-                .build();
+        return ApiError.builder(code, message).path(path).requestId(requestId).details(details).build();
     }
 
     /**
@@ -124,9 +118,7 @@ public final class ApiResponseTestUtils {
      */
     public static ApiMeta createTestPaginationMeta(int page, int size, long totalElements) {
         ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page, size, totalElements);
-        return ApiMeta.builder()
-                .pagination(pagination)
-                .build();
+        return ApiMeta.builder().pagination(pagination).build();
     }
 }
 

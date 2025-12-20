@@ -28,8 +28,7 @@ import com.ccbsa.wms.user.domain.core.valueobject.Username;
  * <p>
  * Note: User is tenant-aware, so it extends TenantAwareAggregateRoot.
  */
-public class User
-        extends TenantAwareAggregateRoot<UserId> {
+public class User extends TenantAwareAggregateRoot<UserId> {
 
     // Value Objects
     private Username username;

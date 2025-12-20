@@ -46,23 +46,12 @@ public class StockConsignmentDTOMapper {
      * @return CreateConsignmentCommand
      */
     public CreateConsignmentCommand toCreateCommand(CreateConsignmentCommandDTO dto, String tenantId) {
-        List<ConsignmentLineItem> lineItems = dto.getLineItems()
-                .stream()
-                .map(item -> ConsignmentLineItem.builder()
-                        .productCode(ProductCode.of(item.getProductCode()))
-                        .quantity(item.getQuantity())
-                        .expirationDate(item.getExpirationDate())
-                        .build())
-                .collect(Collectors.toList());
+        List<ConsignmentLineItem> lineItems = dto.getLineItems().stream()
+                .map(item -> ConsignmentLineItem.builder().productCode(ProductCode.of(item.getProductCode())).quantity(item.getQuantity()).expirationDate(item.getExpirationDate())
+                        .build()).collect(Collectors.toList());
 
-        return CreateConsignmentCommand.builder()
-                .tenantId(TenantId.of(tenantId))
-                .consignmentReference(ConsignmentReference.of(dto.getConsignmentReference()))
-                .warehouseId(WarehouseId.of(dto.getWarehouseId()))
-                .receivedAt(dto.getReceivedAt())
-                .receivedBy(dto.getReceivedBy())
-                .lineItems(lineItems)
-                .build();
+        return CreateConsignmentCommand.builder().tenantId(TenantId.of(tenantId)).consignmentReference(ConsignmentReference.of(dto.getConsignmentReference()))
+                .warehouseId(WarehouseId.of(dto.getWarehouseId())).receivedAt(dto.getReceivedAt()).receivedBy(dto.getReceivedBy()).lineItems(lineItems).build();
     }
 
     /**
@@ -73,10 +62,8 @@ public class StockConsignmentDTOMapper {
      */
     public CreateConsignmentResultDTO toCreateResultDTO(CreateConsignmentResult result) {
         CreateConsignmentResultDTO dto = new CreateConsignmentResultDTO();
-        dto.setConsignmentId(result.getConsignmentId()
-                .getValueAsString());
-        dto.setStatus(result.getStatus()
-                .name());
+        dto.setConsignmentId(result.getConsignmentId().getValueAsString());
+        dto.setStatus(result.getStatus().name());
         dto.setReceivedAt(result.getReceivedAt());
         return dto;
     }
@@ -92,11 +79,7 @@ public class StockConsignmentDTOMapper {
      */
     public UploadConsignmentCsvCommand toUploadCsvCommand(MultipartFile file, String tenantId, String receivedBy) throws IOException {
         InputStream inputStream = file.getInputStream();
-        return UploadConsignmentCsvCommand.builder()
-                .tenantId(TenantId.of(tenantId))
-                .csvInputStream(inputStream)
-                .receivedBy(receivedBy)
-                .build();
+        return UploadConsignmentCsvCommand.builder().tenantId(TenantId.of(tenantId)).csvInputStream(inputStream).receivedBy(receivedBy).build();
     }
 
     /**
@@ -112,10 +95,7 @@ public class StockConsignmentDTOMapper {
         dto.setCreatedConsignments(result.getCreatedConsignments());
         dto.setErrorRows(result.getErrorRows());
 
-        List<UploadConsignmentCsvResultDTO.ConsignmentCsvErrorDTO> errorDTOs = result.getErrors()
-                .stream()
-                .map(this::toCsvErrorDTO)
-                .collect(Collectors.toList());
+        List<UploadConsignmentCsvResultDTO.ConsignmentCsvErrorDTO> errorDTOs = result.getErrors().stream().map(this::toCsvErrorDTO).collect(Collectors.toList());
         dto.setErrors(errorDTOs);
 
         return dto;
@@ -144,22 +124,12 @@ public class StockConsignmentDTOMapper {
      * @return ValidateConsignmentCommand
      */
     public ValidateConsignmentCommand toValidateCommand(ValidateConsignmentCommandDTO dto, String tenantId) {
-        List<ConsignmentLineItem> lineItems = dto.getLineItems()
-                .stream()
-                .map(item -> ConsignmentLineItem.builder()
-                        .productCode(ProductCode.of(item.getProductCode()))
-                        .quantity(item.getQuantity())
-                        .expirationDate(item.getExpirationDate())
-                        .build())
-                .collect(Collectors.toList());
+        List<ConsignmentLineItem> lineItems = dto.getLineItems().stream()
+                .map(item -> ConsignmentLineItem.builder().productCode(ProductCode.of(item.getProductCode())).quantity(item.getQuantity()).expirationDate(item.getExpirationDate())
+                        .build()).collect(Collectors.toList());
 
-        return ValidateConsignmentCommand.builder()
-                .tenantId(TenantId.of(tenantId))
-                .consignmentReference(ConsignmentReference.of(dto.getConsignmentReference()))
-                .warehouseId(WarehouseId.of(dto.getWarehouseId()))
-                .receivedAt(dto.getReceivedAt())
-                .lineItems(lineItems)
-                .build();
+        return ValidateConsignmentCommand.builder().tenantId(TenantId.of(tenantId)).consignmentReference(ConsignmentReference.of(dto.getConsignmentReference()))
+                .warehouseId(WarehouseId.of(dto.getWarehouseId())).receivedAt(dto.getReceivedAt()).lineItems(lineItems).build();
     }
 
     /**
@@ -183,10 +153,7 @@ public class StockConsignmentDTOMapper {
      * @return GetConsignmentQuery
      */
     public GetConsignmentQuery toGetConsignmentQuery(String consignmentId, String tenantId) {
-        return GetConsignmentQuery.builder()
-                .consignmentId(ConsignmentId.of(consignmentId))
-                .tenantId(TenantId.of(tenantId))
-                .build();
+        return GetConsignmentQuery.builder().consignmentId(ConsignmentId.of(consignmentId)).tenantId(TenantId.of(tenantId)).build();
     }
 
     /**
@@ -197,14 +164,10 @@ public class StockConsignmentDTOMapper {
      */
     public ConsignmentQueryDTO toQueryResultDTO(ConsignmentQueryResult result) {
         ConsignmentQueryDTO dto = new ConsignmentQueryDTO();
-        dto.setConsignmentId(result.getConsignmentId()
-                .getValueAsString());
-        dto.setConsignmentReference(result.getConsignmentReference()
-                .getValue());
-        dto.setWarehouseId(result.getWarehouseId()
-                .getValue());
-        dto.setStatus(result.getStatus()
-                .name());
+        dto.setConsignmentId(result.getConsignmentId().getValueAsString());
+        dto.setConsignmentReference(result.getConsignmentReference().getValue());
+        dto.setWarehouseId(result.getWarehouseId().getValue());
+        dto.setStatus(result.getStatus().name());
         dto.setReceivedAt(result.getReceivedAt());
         dto.setConfirmedAt(result.getConfirmedAt());
         dto.setReceivedBy(result.getReceivedBy());
@@ -212,17 +175,13 @@ public class StockConsignmentDTOMapper {
         dto.setLastModifiedAt(result.getLastModifiedAt());
 
         // Map line items
-        List<ConsignmentQueryDTO.ConsignmentLineItemDTO> lineItemDTOs = result.getLineItems()
-                .stream()
-                .map(item -> {
-                    ConsignmentQueryDTO.ConsignmentLineItemDTO itemDTO = new ConsignmentQueryDTO.ConsignmentLineItemDTO();
-                    itemDTO.setProductCode(item.getProductCode()
-                            .getValue());
-                    itemDTO.setQuantity(item.getQuantity());
-                    itemDTO.setExpirationDate(item.getExpirationDate());
-                    return itemDTO;
-                })
-                .collect(Collectors.toList());
+        List<ConsignmentQueryDTO.ConsignmentLineItemDTO> lineItemDTOs = result.getLineItems().stream().map(item -> {
+            ConsignmentQueryDTO.ConsignmentLineItemDTO itemDTO = new ConsignmentQueryDTO.ConsignmentLineItemDTO();
+            itemDTO.setProductCode(item.getProductCode().getValue());
+            itemDTO.setQuantity(item.getQuantity());
+            itemDTO.setExpirationDate(item.getExpirationDate());
+            return itemDTO;
+        }).collect(Collectors.toList());
         dto.setLineItems(lineItemDTOs);
 
         return dto;

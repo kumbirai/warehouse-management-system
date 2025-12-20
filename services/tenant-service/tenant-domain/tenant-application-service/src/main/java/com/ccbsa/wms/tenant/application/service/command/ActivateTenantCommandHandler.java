@@ -20,8 +20,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Handles tenant activation, including Keycloak realm creation/enablement.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "Ports are managed singletons injected by Spring and kept immutable")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Ports are managed singletons injected by Spring and kept immutable")
 public class ActivateTenantCommandHandler {
     private final TenantRepository tenantRepository;
     private final TenantEventPublisher eventPublisher;
@@ -39,18 +38,15 @@ public class ActivateTenantCommandHandler {
     @Transactional
     public void handle(ActivateTenantCommand command) {
         // Find tenant
-        Tenant tenant = tenantRepository.findById(command.getTenantId())
-                .orElseThrow(() -> new EntityNotFoundException(String.format("Tenant not found: %s", command.getTenantId())));
+        Tenant tenant =
+                tenantRepository.findById(command.getTenantId()).orElseThrow(() -> new EntityNotFoundException(String.format("Tenant not found: %s", command.getTenantId())));
 
         // Activate tenant (domain logic)
         tenant.activate();
 
         // Handle Keycloak realm creation/enablement if using per-tenant realms
-        if (tenant.getConfiguration()
-                .isUsePerTenantRealm()) {
-            String realmName = tenant.getConfiguration()
-                    .getKeycloakRealmName()
-                    .orElseGet(() -> generateRealmName(tenant.getId()));
+        if (tenant.getConfiguration().isUsePerTenantRealm()) {
+            String realmName = tenant.getConfiguration().getKeycloakRealmName().orElseGet(() -> generateRealmName(tenant.getId()));
 
             if (!keycloakRealmPort.realmExists(realmName)) {
                 keycloakRealmPort.createRealm(tenant.getId(), realmName);
@@ -59,11 +55,8 @@ public class ActivateTenantCommandHandler {
             }
 
             // Update tenant configuration with realm name if not already set
-            if (tenant.getConfiguration()
-                    .getKeycloakRealmName()
-                    .isEmpty()) {
-                tenant.updateConfiguration(tenant.getConfiguration()
-                        .withKeycloakRealmName(realmName));
+            if (tenant.getConfiguration().getKeycloakRealmName().isEmpty()) {
+                tenant.updateConfiguration(tenant.getConfiguration().withKeycloakRealmName(realmName));
             }
         } else {
             tenantGroupServicePort.ensureTenantGroupEnabled(tenant.getId());
@@ -74,8 +67,7 @@ public class ActivateTenantCommandHandler {
         tenantRepository.save(tenant);
 
         // Publish domain events
-        tenant.getDomainEvents()
-                .forEach(eventPublisher::publish);
+        tenant.getDomainEvents().forEach(eventPublisher::publish);
         tenant.clearDomainEvents();
     }
 

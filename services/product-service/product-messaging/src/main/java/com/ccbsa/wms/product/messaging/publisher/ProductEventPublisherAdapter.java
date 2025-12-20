@@ -28,10 +28,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * ordering (aggregate ID)
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "Kafka template is a managed bean and treated as immutable port")
-public class ProductEventPublisherAdapter
-        implements ProductEventPublisher {
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is a managed bean and treated as immutable port")
+public class ProductEventPublisherAdapter implements ProductEventPublisher {
     private static final Logger logger = LoggerFactory.getLogger(ProductEventPublisherAdapter.class);
     private static final String PRODUCT_EVENTS_TOPIC = "product-events";
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -50,8 +48,7 @@ public class ProductEventPublisherAdapter
         if (event instanceof ProductEvent) {
             publish((ProductEvent) event);
         } else {
-            throw new IllegalArgumentException(String.format("Event must be a ProductEvent: %s", event.getClass()
-                    .getName()));
+            throw new IllegalArgumentException(String.format("Event must be a ProductEvent: %s", event.getClass().getName()));
         }
     }
 
@@ -63,12 +60,10 @@ public class ProductEventPublisherAdapter
 
             String key = enrichedEvent.getAggregateId();
             kafkaTemplate.send(PRODUCT_EVENTS_TOPIC, key, enrichedEvent);
-            logger.debug("Published product event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass()
-                    .getSimpleName(), key, enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata()
-                    .getCorrelationId() : "none");
+            logger.debug("Published product event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
+                    enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
         } catch (Exception e) {
-            logger.error("Failed to publish product event: {}", event.getClass()
-                    .getSimpleName(), e);
+            logger.error("Failed to publish product event: {}", event.getClass().getSimpleName(), e);
             throw new RuntimeException("Failed to publish product event", e);
         }
     }
@@ -99,20 +94,17 @@ public class ProductEventPublisherAdapter
         if (event instanceof ProductCreatedEvent) {
             ProductCreatedEvent productCreatedEvent = (ProductCreatedEvent) event;
             return new ProductCreatedEvent(productId, productCreatedEvent.getTenantId(), productCreatedEvent.getProductCode(), productCreatedEvent.getDescription(),
-                    productCreatedEvent.getPrimaryBarcode(),
-                    productCreatedEvent.getSecondaryBarcodes(), productCreatedEvent.getUnitOfMeasure(), productCreatedEvent.getCategory(), productCreatedEvent.getBrand(),
-                    metadata);
+                    productCreatedEvent.getPrimaryBarcode(), productCreatedEvent.getSecondaryBarcodes(), productCreatedEvent.getUnitOfMeasure(), productCreatedEvent.getCategory(),
+                    productCreatedEvent.getBrand(), metadata);
         } else if (event instanceof ProductUpdatedEvent) {
             ProductUpdatedEvent productUpdatedEvent = (ProductUpdatedEvent) event;
             return new ProductUpdatedEvent(productId, productUpdatedEvent.getTenantId(), productUpdatedEvent.getProductCode(), productUpdatedEvent.getDescription(),
-                    productUpdatedEvent.getPrimaryBarcode(),
-                    productUpdatedEvent.getSecondaryBarcodes(), productUpdatedEvent.getUnitOfMeasure(), productUpdatedEvent.getCategory(), productUpdatedEvent.getBrand(),
-                    metadata);
+                    productUpdatedEvent.getPrimaryBarcode(), productUpdatedEvent.getSecondaryBarcodes(), productUpdatedEvent.getUnitOfMeasure(), productUpdatedEvent.getCategory(),
+                    productUpdatedEvent.getBrand(), metadata);
         }
 
         // Unknown event type, return original
-        logger.warn("Unknown product event type: {}. Event will be published without metadata.", event.getClass()
-                .getName());
+        logger.warn("Unknown product event type: {}. Event will be published without metadata.", event.getClass().getName());
         return event;
     }
 
@@ -123,8 +115,7 @@ public class ProductEventPublisherAdapter
      */
     private EventMetadata buildEventMetadata() {
         String correlationId = CorrelationContext.getCorrelationId();
-        String userId = TenantContext.getUserId() != null ? TenantContext.getUserId()
-                .getValue() : null;
+        String userId = TenantContext.getUserId() != null ? TenantContext.getUserId().getValue() : null;
 
         if (correlationId == null && userId == null) {
             return null;

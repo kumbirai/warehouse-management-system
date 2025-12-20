@@ -76,8 +76,7 @@ public class CookieUtil {
             throw new IllegalArgumentException("Refresh token cannot be null or empty");
         }
 
-        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
-                .httpOnly(true) // Prevents JavaScript access (XSS protection)
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken).httpOnly(true) // Prevents JavaScript access (XSS protection)
                 .secure(cookieSecure) // Only sent over HTTPS
                 .path(COOKIE_PATH) // Restricted to auth endpoints
                 .maxAge(cookieMaxAgeSeconds); // 24 hours default
@@ -122,13 +121,8 @@ public class CookieUtil {
      * @return ResponseCookie with maxAge=0 to delete the cookie
      */
     public ResponseCookie createDeleteRefreshTokenCookie() {
-        return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .path(COOKIE_PATH)
-                .maxAge(0) // Delete cookie
-                .sameSite("Strict")
-                .build();
+        return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "").httpOnly(true).secure(cookieSecure).path(COOKIE_PATH).maxAge(0) // Delete cookie
+                .sameSite("Strict").build();
     }
 }
 

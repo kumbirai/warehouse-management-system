@@ -56,8 +56,7 @@ public class KeycloakClientSecretRetriever {
 
         try {
             Keycloak keycloak = keycloakClientPort.getAdminClient();
-            ClientsResource clientsResource = keycloak.realm(targetRealm)
-                    .clients();
+            ClientsResource clientsResource = keycloak.realm(targetRealm).clients();
 
             // Find the client by client ID
             List<ClientRepresentation> clients = clientsResource.findByClientId(clientId);
@@ -78,8 +77,7 @@ public class KeycloakClientSecretRetriever {
                 // Get client secret
                 CredentialRepresentation secret = clientResource.getSecret();
 
-                if (secret != null && secret.getValue() != null && !secret.getValue()
-                        .isEmpty()) {
+                if (secret != null && secret.getValue() != null && !secret.getValue().isEmpty()) {
                     logger.info("Successfully retrieved client secret for client '{}' in realm '{}'", clientId, targetRealm);
                     return Optional.of(secret.getValue());
                 } else {

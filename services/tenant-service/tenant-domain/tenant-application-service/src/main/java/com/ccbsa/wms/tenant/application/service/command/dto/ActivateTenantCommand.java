@@ -8,8 +8,7 @@ import com.ccbsa.common.domain.valueobject.TenantId;
  * <p>
  * Represents the intent to activate a tenant.
  */
-public final class ActivateTenantCommand
-        implements Command {
+public final class ActivateTenantCommand implements Command {
     private final TenantId tenantId;
 
     public ActivateTenantCommand(TenantId tenantId) {

@@ -5,8 +5,7 @@ package com.ccbsa.wms.user.application.service.exception;
  * <p>
  * This exception indicates a problem with the Keycloak service itself, not with the authentication credentials.
  */
-public class KeycloakServiceException
-        extends RuntimeException {
+public class KeycloakServiceException extends RuntimeException {
     public KeycloakServiceException(String message) {
         super(message);
     }

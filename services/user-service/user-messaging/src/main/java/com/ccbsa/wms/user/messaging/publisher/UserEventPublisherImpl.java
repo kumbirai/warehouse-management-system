@@ -22,10 +22,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Implements UserEventPublisher port interface. Publishes user domain events to Kafka.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "Kafka template is a managed bean and treated as immutable port")
-public class UserEventPublisherImpl
-        implements UserEventPublisher {
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is a managed bean and treated as immutable port")
+public class UserEventPublisherImpl implements UserEventPublisher {
     private static final Logger logger = LoggerFactory.getLogger(UserEventPublisherImpl.class);
     private static final String USER_EVENTS_TOPIC = "user-events";
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -44,8 +42,7 @@ public class UserEventPublisherImpl
         if (event instanceof UserEvent) {
             publish((UserEvent) event);
         } else {
-            throw new IllegalArgumentException(String.format("Event must be a UserEvent: %s", event.getClass()
-                    .getName()));
+            throw new IllegalArgumentException(String.format("Event must be a UserEvent: %s", event.getClass().getName()));
         }
     }
 
@@ -57,12 +54,10 @@ public class UserEventPublisherImpl
 
             String key = enrichedEvent.getAggregateId();
             kafkaTemplate.send(USER_EVENTS_TOPIC, key, enrichedEvent);
-            logger.debug("Published user event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass()
-                    .getSimpleName(), key, enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata()
-                    .getCorrelationId() : "none");
+            logger.debug("Published user event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
+                    enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
         } catch (Exception e) {
-            logger.error("Failed to publish user event: {}", event.getClass()
-                    .getSimpleName(), e);
+            logger.error("Failed to publish user event: {}", event.getClass().getSimpleName(), e);
             throw new RuntimeException("Failed to publish user event", e);
         }
     }
@@ -110,8 +105,7 @@ public class UserEventPublisherImpl
         }
 
         // Unknown event type, return original
-        logger.warn("Unknown user event type: {}. Event will be published without metadata.", event.getClass()
-                .getName());
+        logger.warn("Unknown user event type: {}. Event will be published without metadata.", event.getClass().getName());
         return event;
     }
 
@@ -122,8 +116,7 @@ public class UserEventPublisherImpl
      */
     private EventMetadata buildEventMetadata() {
         String correlationId = CorrelationContext.getCorrelationId();
-        String userId = TenantContext.getUserId() != null ? TenantContext.getUserId()
-                .getValue() : null;
+        String userId = TenantContext.getUserId() != null ? TenantContext.getUserId().getValue() : null;
 
         if (correlationId == null && userId == null) {
             return null;

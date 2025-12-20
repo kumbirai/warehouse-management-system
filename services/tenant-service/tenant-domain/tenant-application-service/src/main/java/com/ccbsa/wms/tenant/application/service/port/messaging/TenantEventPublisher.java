@@ -8,8 +8,7 @@ import com.ccbsa.wms.tenant.domain.core.event.TenantEvent;
  * <p>
  * Extends the common EventPublisher interface for type safety. Implemented by the messaging layer (tenant-messaging).
  */
-public interface TenantEventPublisher
-        extends EventPublisher {
+public interface TenantEventPublisher extends EventPublisher {
     /**
      * Publishes a tenant domain event.
      *

@@ -13,16 +13,11 @@ import jakarta.validation.constraints.Size;
  */
 public final class LoginRequest {
     @NotBlank(message = "Username is required")
-    @Size(min = 1,
-            max = 255,
-            message = "Username must be between 1 and 255 characters")
-    @Pattern(regexp = "^[a-zA-Z0-9._@-]+$",
-            message = "Username contains invalid characters. Only letters, numbers, dots, underscores, hyphens, and @ are allowed")
+    @Size(min = 1, max = 255, message = "Username must be between 1 and 255 characters")
+    @Pattern(regexp = "^[a-zA-Z0-9._@-]+$", message = "Username contains invalid characters. Only letters, numbers, dots, underscores, hyphens, and @ are allowed")
     private String username;
     @NotBlank(message = "Password is required")
-    @Size(min = 1,
-            max = 255,
-            message = "Password must be between 1 and 255 characters")
+    @Size(min = 1, max = 255, message = "Password must be between 1 and 255 characters")
     private String password;
 
     public LoginRequest() {

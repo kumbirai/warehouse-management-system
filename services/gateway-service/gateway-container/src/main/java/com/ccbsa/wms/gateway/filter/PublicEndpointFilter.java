@@ -30,8 +30,7 @@ import reactor.core.publisher.Mono;
  */
 @Component
 @Order(-100) // Run before Spring Security filters
-public class PublicEndpointFilter
-        implements WebFilter {
+public class PublicEndpointFilter implements WebFilter {
     /**
      * Attribute key to mark public endpoints.
      */
@@ -45,18 +44,13 @@ public class PublicEndpointFilter
 
     @Override
     @NonNull
-    public Mono<Void> filter(
-            @NonNull ServerWebExchange exchange,
-            @NonNull WebFilterChain chain) {
-        String path = exchange.getRequest()
-                .getPath()
-                .value();
+    public Mono<Void> filter(@NonNull ServerWebExchange exchange, @NonNull WebFilterChain chain) {
+        String path = exchange.getRequest().getPath().value();
 
         if (isPublicEndpoint(path)) {
             logger.debug("Marking public endpoint: {}", path);
             // Set attribute to indicate this is a public endpoint
-            exchange.getAttributes()
-                    .put(IS_PUBLIC_ENDPOINT_ATTR, true);
+            exchange.getAttributes().put(IS_PUBLIC_ENDPOINT_ATTR, true);
         }
 
         return chain.filter(exchange);

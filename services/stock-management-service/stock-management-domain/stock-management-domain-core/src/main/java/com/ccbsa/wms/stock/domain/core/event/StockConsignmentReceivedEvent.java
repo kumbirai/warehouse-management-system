@@ -15,8 +15,7 @@ import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentReference;
  * <p>
  * This event indicates that: - A new consignment has been created - Consignment is in RECEIVED status - Line items have been recorded
  */
-public class StockConsignmentReceivedEvent
-        extends StockManagementEvent<StockConsignment> {
+public class StockConsignmentReceivedEvent extends StockManagementEvent<StockConsignment> {
     private static final String AGGREGATE_TYPE = "StockConsignment";
 
     private final ConsignmentReference consignmentReference;

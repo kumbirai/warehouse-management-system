@@ -7,8 +7,7 @@ import com.ccbsa.common.domain.exception.DomainException;
  * <p>
  * Thrown when attempting to create a location with a code that already exists for the tenant.
  */
-public class CodeAlreadyExistsException
-        extends DomainException {
+public class CodeAlreadyExistsException extends DomainException {
     public CodeAlreadyExistsException(String message) {
         super(message);
     }

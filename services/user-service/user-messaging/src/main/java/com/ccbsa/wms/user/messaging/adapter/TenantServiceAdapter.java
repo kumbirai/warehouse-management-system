@@ -32,8 +32,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * Implements TenantServicePort for tenant validation operations. Calls tenant-service REST API to validate tenant status.
  */
 @Component
-public class TenantServiceAdapter
-        implements TenantServicePort {
+public class TenantServiceAdapter implements TenantServicePort {
     private static final Logger logger = LoggerFactory.getLogger(TenantServiceAdapter.class);
 
     private static final ParameterizedTypeReference<ApiResponse<String>> TENANT_STATUS_RESPONSE_TYPE = new ParameterizedTypeReference<ApiResponse<String>>() {
@@ -44,8 +43,7 @@ public class TenantServiceAdapter
     private final RestTemplate restTemplate;
     private final String tenantServiceUrl;
 
-    public TenantServiceAdapter(RestTemplate restTemplate,
-                                @Value("${tenant.service.url:http://tenant-service:8080}") String tenantServiceUrl) {
+    public TenantServiceAdapter(RestTemplate restTemplate, @Value("${tenant.service.url:http://tenant-service:8080}") String tenantServiceUrl) {
         this.restTemplate = restTemplate;
         this.tenantServiceUrl = tenantServiceUrl;
     }
@@ -202,11 +200,7 @@ public class TenantServiceAdapter
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
                 TenantResponseDto tenantResponse = responseBody.getData();
                 TenantServicePort.TenantInfo.TenantStatus status = mapStatus(tenantResponse.getStatus());
-                TenantServicePort.TenantInfo info = new TenantServicePort.TenantInfo(
-                        TenantId.of(tenantResponse.getTenantId()),
-                        tenantResponse.getName(),
-                        status
-                );
+                TenantServicePort.TenantInfo info = new TenantServicePort.TenantInfo(TenantId.of(tenantResponse.getTenantId()), tenantResponse.getName(), status);
                 logger.debug("Tenant info retrieved: tenantId={}, name={}", tenantId.getValue(), tenantResponse.getName());
                 return Optional.of(info);
             }

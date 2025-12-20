@@ -43,8 +43,7 @@ public final class CorrelationContext {
      * @throws IllegalArgumentException if correlationId is null or empty
      */
     public static void setCorrelationId(String correlationId) {
-        if (correlationId == null || correlationId.trim()
-                .isEmpty()) {
+        if (correlationId == null || correlationId.trim().isEmpty()) {
             throw new IllegalArgumentException("Correlation ID cannot be null or empty");
         }
         CORRELATION_ID.set(correlationId.trim());
@@ -56,8 +55,7 @@ public final class CorrelationContext {
      * @return the generated correlation ID
      */
     public static String generateAndSetCorrelationId() {
-        String correlationId = UUID.randomUUID()
-                .toString();
+        String correlationId = UUID.randomUUID().toString();
         CORRELATION_ID.set(correlationId);
         return correlationId;
     }

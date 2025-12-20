@@ -34,16 +34,14 @@ public class SecurityContextService implements SecurityContextPort {
      * @throws IllegalStateException if user is not authenticated
      */
     public UserId getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext()
-                .getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
             throw new IllegalStateException("User is not authenticated");
         }
 
         Jwt jwt = (Jwt) authentication.getPrincipal();
         String userId = jwt.getSubject();
-        if (userId == null || userId.trim()
-                .isEmpty()) {
+        if (userId == null || userId.trim().isEmpty()) {
             throw new IllegalStateException("JWT token does not contain subject (user ID)");
         }
 
@@ -81,8 +79,7 @@ public class SecurityContextService implements SecurityContextPort {
      * @return List of role names
      */
     public List<String> getCurrentUserRoles() {
-        Authentication authentication = SecurityContextHolder.getContext()
-                .getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
             logger.warn("No authentication found in security context");
             return Collections.emptyList();
@@ -109,16 +106,11 @@ public class SecurityContextService implements SecurityContextPort {
         try {
             Object realmAccess = jwt.getClaim("realm_access");
             if (realmAccess instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
+                @SuppressWarnings("unchecked") Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
                 Object rolesObj = realmAccessMap.get("roles");
                 if (rolesObj instanceof List) {
-                    @SuppressWarnings("unchecked")
-                    List<String> roles = (List<String>) rolesObj;
-                    return roles.stream()
-                            .filter(role -> role != null && !role.trim()
-                                    .isEmpty())
-                            .collect(Collectors.toList());
+                    @SuppressWarnings("unchecked") List<String> roles = (List<String>) rolesObj;
+                    return roles.stream().filter(role -> role != null && !role.trim().isEmpty()).collect(Collectors.toList());
                 }
             }
         } catch (Exception e) {

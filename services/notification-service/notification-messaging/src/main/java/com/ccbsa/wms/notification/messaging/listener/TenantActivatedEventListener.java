@@ -42,14 +42,9 @@ public class TenantActivatedEventListener {
         this.tenantServicePort = tenantServicePort;
     }
 
-    @KafkaListener(topics = "tenant-events",
-            groupId = "notification-service",
-            containerFactory = "externalEventKafkaListenerContainerFactory")
-    public void handle(
-            @Payload Map<String, Object> eventData,
-            @Header(value = "__TypeId__",
-                    required = false) String eventType,
-            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
+    @KafkaListener(topics = "tenant-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
+                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         logger.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));
         try {
             // Extract and set correlation ID from event metadata for traceability
@@ -80,14 +75,11 @@ public class TenantActivatedEventListener {
 
                 // Create tenant activation notification
                 // Use tenantId as recipientUserId placeholder since tenant notifications don't target a specific user
-                CreateNotificationCommand command = CreateNotificationCommand.builder()
-                        .tenantId(tenantId)
-                        .recipientUserId(UserId.of(tenantId.getValue()))
-                        .recipientEmail(tenantEmail)
-                        .title(Title.of("Tenant Activated"))
-                        .message(Message.of("Your tenant account has been activated. You can now access the Warehouse Management System."))
-                        .type(NotificationType.TENANT_ACTIVATED)
-                        .build();
+                CreateNotificationCommand command =
+                        CreateNotificationCommand.builder().tenantId(tenantId).recipientUserId(UserId.of(tenantId.getValue())).recipientEmail(tenantEmail)
+                                .title(Title.of("Tenant Activated"))
+                                .message(Message.of("Your tenant account has been activated. You can now access the Warehouse Management System."))
+                                .type(NotificationType.TENANT_ACTIVATED).build();
 
                 createNotificationCommandHandler.handle(command);
 
@@ -122,8 +114,7 @@ public class TenantActivatedEventListener {
         try {
             Object metadataObj = eventData.get("metadata");
             if (metadataObj instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> metadata = (Map<String, Object>) metadataObj;
+                @SuppressWarnings("unchecked") Map<String, Object> metadata = (Map<String, Object>) metadataObj;
                 Object correlationIdObj = metadata.get("correlationId");
                 if (correlationIdObj != null) {
                     String correlationId = correlationIdObj.toString();
@@ -220,8 +211,7 @@ public class TenantActivatedEventListener {
             }
             // Handle value object serialization (Map with "value" field)
             if (tenantIdObj instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> idMap = (Map<String, Object>) tenantIdObj;
+                @SuppressWarnings("unchecked") Map<String, Object> idMap = (Map<String, Object>) tenantIdObj;
                 Object valueObj = idMap.get("value");
                 if (valueObj != null) {
                     return valueObj.toString();

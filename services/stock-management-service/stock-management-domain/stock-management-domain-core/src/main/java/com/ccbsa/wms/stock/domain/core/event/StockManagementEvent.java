@@ -9,8 +9,7 @@ import com.ccbsa.common.domain.DomainEvent;
  *
  * @param <T> The type of the aggregate root that raised this event
  */
-public abstract class StockManagementEvent<T>
-        extends DomainEvent<T> {
+public abstract class StockManagementEvent<T> extends DomainEvent<T> {
     /**
      * Constructor for stock management events without metadata.
      *

@@ -41,8 +41,7 @@ public final class CacheKeyGenerator {
      * Generates cache key for entity lookup using current tenant context.
      */
     public static String forEntity(String namespace, UUID entityId) {
-        String tenantId = TenantContext.getTenantId() != null ? TenantContext.getTenantId()
-                .getValue() : "unknown";
+        String tenantId = TenantContext.getTenantId() != null ? TenantContext.getTenantId().getValue() : "unknown";
         return String.join(KEY_SEPARATOR, TENANT_PREFIX, tenantId, namespace, entityId.toString());
     }
 
@@ -50,15 +49,10 @@ public final class CacheKeyGenerator {
      * Generates cache key for collection queries. Format: tenant:{tenantId}:{namespace}:{queryParams}
      */
     public static String forCollection(TenantId tenantId, String namespace, String... queryParams) {
-        StringBuilder key = new StringBuilder().append(TENANT_PREFIX)
-                .append(KEY_SEPARATOR)
-                .append(tenantId.getValue())
-                .append(KEY_SEPARATOR)
-                .append(namespace);
+        StringBuilder key = new StringBuilder().append(TENANT_PREFIX).append(KEY_SEPARATOR).append(tenantId.getValue()).append(KEY_SEPARATOR).append(namespace);
 
         if (queryParams != null && queryParams.length > 0) {
-            key.append(KEY_SEPARATOR)
-                    .append(String.join(KEY_SEPARATOR, queryParams));
+            key.append(KEY_SEPARATOR).append(String.join(KEY_SEPARATOR, queryParams));
         }
 
         return key.toString();

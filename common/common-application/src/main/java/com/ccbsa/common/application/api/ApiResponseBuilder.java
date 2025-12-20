@@ -78,8 +78,7 @@ public final class ApiResponseBuilder {
      * @return ResponseEntity with ApiResponse
      */
     public static <T> ResponseEntity<ApiResponse<T>> created(T data) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(data));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data));
     }
 
     /**
@@ -91,8 +90,7 @@ public final class ApiResponseBuilder {
      * @return ResponseEntity with ApiResponse
      */
     public static <T> ResponseEntity<ApiResponse<T>> created(T data, Map<String, String> links) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(data, links));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, links));
     }
 
     /**
@@ -103,8 +101,7 @@ public final class ApiResponseBuilder {
      * @return ResponseEntity with ApiResponse
      */
     public static <T> ResponseEntity<ApiResponse<T>> accepted(T data) {
-        return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body(ApiResponse.success(data));
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(data));
     }
 
     /**
@@ -114,8 +111,7 @@ public final class ApiResponseBuilder {
      * @return ResponseEntity with no content
      */
     public static <T> ResponseEntity<ApiResponse<T>> noContent() {
-        return ResponseEntity.noContent()
-                .build();
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -133,10 +129,8 @@ public final class ApiResponseBuilder {
         if (status == null) {
             throw new NullPointerException("HTTP status cannot be null");
         }
-        ApiError error = ApiError.builder(errorCode, message)
-                .build();
-        return ResponseEntity.status(status.value())
-                .body(ApiResponse.error(error));
+        ApiError error = ApiError.builder(errorCode, message).build();
+        return ResponseEntity.status(status.value()).body(ApiResponse.error(error));
     }
 
     /**
@@ -150,11 +144,8 @@ public final class ApiResponseBuilder {
      * @return ResponseEntity with ApiResponse containing error
      */
     public static <T> ResponseEntity<ApiResponse<T>> error(HttpStatus status, String errorCode, String message, Map<String, Object> details) {
-        ApiError error = ApiError.builder(errorCode, message)
-                .details(details)
-                .build();
-        return ResponseEntity.status(status.value())
-                .body(ApiResponse.error(error));
+        ApiError error = ApiError.builder(errorCode, message).details(details).build();
+        return ResponseEntity.status(status.value()).body(ApiResponse.error(error));
     }
 
     /**
@@ -173,8 +164,7 @@ public final class ApiResponseBuilder {
         if (error == null) {
             throw new NullPointerException("ApiError cannot be null");
         }
-        return ResponseEntity.status(status.value())
-                .body(ApiResponse.error(error));
+        return ResponseEntity.status(status.value()).body(ApiResponse.error(error));
     }
 }
 

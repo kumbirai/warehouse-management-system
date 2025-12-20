@@ -21,28 +21,21 @@ import jakarta.persistence.Table;
  * This entity represents the one-to-many relationship between Product and secondary barcodes. Primary barcode is stored directly in ProductEntity.
  */
 @Entity
-@Table(name = "product_barcodes",
-        schema = "tenant_schema")
+@Table(name = "product_barcodes", schema = "tenant_schema")
 public class ProductBarcodeEntity {
     @Id
-    @Column(name = "id",
-            nullable = false)
+    @Column(name = "id", nullable = false)
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "product_id",
-            nullable = false)
+    @JoinColumn(name = "product_id", nullable = false)
     private ProductEntity product;
 
-    @Column(name = "barcode",
-            length = 255,
-            nullable = false)
+    @Column(name = "barcode", length = 255, nullable = false)
     private String barcode;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "barcode_type",
-            length = 50,
-            nullable = false)
+    @Column(name = "barcode_type", length = 50, nullable = false)
     private BarcodeType barcodeType;
 
     // JPA requires no-arg constructor

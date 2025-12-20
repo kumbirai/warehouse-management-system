@@ -35,8 +35,7 @@ public final class FirstName {
      * @return FirstName instance or null if value is null/empty
      */
     public static FirstName of(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             return null;
         }
         return new FirstName(value);

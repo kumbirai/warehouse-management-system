@@ -38,11 +38,8 @@ import jakarta.mail.internet.MimeMessage;
  * Only enabled when notification.email.enabled is true (default: true).
  */
 @Component
-@ConditionalOnProperty(name = "notification.email.enabled",
-        havingValue = "true",
-        matchIfMissing = true)
-public class SmtpEmailDeliveryAdapter
-        implements NotificationDeliveryPort {
+@ConditionalOnProperty(name = "notification.email.enabled", havingValue = "true", matchIfMissing = true)
+public class SmtpEmailDeliveryAdapter implements NotificationDeliveryPort {
     private static final Logger logger = LoggerFactory.getLogger(SmtpEmailDeliveryAdapter.class);
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -55,8 +52,7 @@ public class SmtpEmailDeliveryAdapter
     private final EmailTemplateEngine templateEngine;
 
     public SmtpEmailDeliveryAdapter(JavaMailSender mailSender, SmtpConfiguration smtpConfig, EmailConfigurationProperties emailConfig, UserServicePort userServicePort,
-                                    TenantServicePort tenantServicePort,
-                                    EmailTemplateEngine templateEngine) {
+                                    TenantServicePort tenantServicePort, EmailTemplateEngine templateEngine) {
         this.mailSender = mailSender;
         this.smtpConfig = smtpConfig;
         this.emailConfig = emailConfig;
@@ -96,21 +92,16 @@ public class SmtpEmailDeliveryAdapter
             // 4. Set email headers
             helper.setFrom(smtpConfig.getFromAddress());
             helper.setTo(emailValue);
-            helper.setSubject(notification.getTitle()
-                    .getValue());
+            helper.setSubject(notification.getTitle().getValue());
 
             // Set Reply-To if configured
-            if (emailConfig.getReplyTo() != null && !emailConfig.getReplyTo()
-                    .isEmpty()) {
+            if (emailConfig.getReplyTo() != null && !emailConfig.getReplyTo().isEmpty()) {
                 helper.setReplyTo(emailConfig.getReplyTo());
             }
 
             // Add custom headers for tracking
-            message.setHeader("X-Notification-ID", notification.getId()
-                    .getValue()
-                    .toString());
-            message.setHeader("X-Notification-Type", notification.getType()
-                    .name());
+            message.setHeader("X-Notification-ID", notification.getId().getValue().toString());
+            message.setHeader("X-Notification-Type", notification.getType().name());
 
             // 5. Render HTML email body using template engine
             String htmlContent = renderEmailBody(notification);
@@ -177,8 +168,7 @@ public class SmtpEmailDeliveryAdapter
             // Use JavaMail InternetAddress for validation
             InternetAddress emailAddr = new InternetAddress(email);
             emailAddr.validate();
-            return EMAIL_PATTERN.matcher(email)
-                    .matches();
+            return EMAIL_PATTERN.matcher(email).matches();
         } catch (Exception e) {
             return false;
         }
@@ -231,40 +221,31 @@ public class SmtpEmailDeliveryAdapter
         Map<String, Object> context = new HashMap<>();
 
         // Basic notification info
-        context.put("title", notification.getTitle()
-                .getValue());
-        context.put("message", notification.getMessage()
-                .getValue());
-        context.put("notificationId", notification.getId()
-                .getValue()
-                .toString());
-        context.put("type", notification.getType()
-                .name());
+        context.put("title", notification.getTitle().getValue());
+        context.put("message", notification.getMessage().getValue());
+        context.put("notificationId", notification.getId().getValue().toString());
+        context.put("type", notification.getType().name());
 
         // Tenant info - use the actual tenant ID from notification
-        String tenantIdValue = notification.getTenantId()
-                .getValue();
+        String tenantIdValue = notification.getTenantId().getValue();
         context.put("tenantId", tenantIdValue);
 
         // Fetch and include full tenant details for tenant-related notifications
         if (isTenantNotification(notification.getType())) {
             try {
-                tenantServicePort.getTenantDetails(notification.getTenantId())
-                        .ifPresent(details -> {
-                            context.put("tenantName", details.name());
-                            context.put("tenantStatus", details.status());
-                            if (details.emailAddress() != null) {
-                                context.put("tenantEmail", details.emailAddress());
-                            }
-                            if (details.phone() != null && !details.phone()
-                                    .isEmpty()) {
-                                context.put("tenantPhone", details.phone());
-                            }
-                            if (details.address() != null && !details.address()
-                                    .isEmpty()) {
-                                context.put("tenantAddress", details.address());
-                            }
-                        });
+                tenantServicePort.getTenantDetails(notification.getTenantId()).ifPresent(details -> {
+                    context.put("tenantName", details.name());
+                    context.put("tenantStatus", details.status());
+                    if (details.emailAddress() != null) {
+                        context.put("tenantEmail", details.emailAddress());
+                    }
+                    if (details.phone() != null && !details.phone().isEmpty()) {
+                        context.put("tenantPhone", details.phone());
+                    }
+                    if (details.address() != null && !details.address().isEmpty()) {
+                        context.put("tenantAddress", details.address());
+                    }
+                });
             } catch (Exception e) {
                 logger.warn("Failed to fetch tenant details for notification: notificationId={}, tenantId={}, error={}", notification.getId(), tenantIdValue, e.getMessage());
                 // Continue without tenant details - template will show basic info
@@ -273,20 +254,16 @@ public class SmtpEmailDeliveryAdapter
 
         // User info
         if (notification.getRecipientEmail() != null) {
-            context.put("email", notification.getRecipientEmail()
-                    .getValue());
+            context.put("email", notification.getRecipientEmail().getValue());
         }
-        context.put("userId", notification.getRecipientUserId()
-                .getValue());
+        context.put("userId", notification.getRecipientUserId().getValue());
 
         // Timestamps
         if (notification.getCreatedAt() != null) {
-            context.put("createdAt", notification.getCreatedAt()
-                    .format(DATE_FORMATTER));
+            context.put("createdAt", notification.getCreatedAt().format(DATE_FORMATTER));
         }
         if (notification.getSentAt() != null) {
-            context.put("sentAt", notification.getSentAt()
-                    .format(DATE_FORMATTER));
+            context.put("sentAt", notification.getSentAt().format(DATE_FORMATTER));
         }
 
         // Support email for footer
@@ -318,8 +295,7 @@ public class SmtpEmailDeliveryAdapter
      * @param context      Template context map to populate
      */
     private void extractAdditionalContext(Notification notification, Map<String, Object> context) {
-        String message = notification.getMessage()
-                .getValue();
+        String message = notification.getMessage().getValue();
         NotificationType type = notification.getType();
 
         // Extract role name from role assignment/removal messages
@@ -331,11 +307,9 @@ public class SmtpEmailDeliveryAdapter
                 String roleName = message.substring(roleStart + 1, roleEnd);
                 context.put("roleName", roleName);
                 if (type == NotificationType.USER_ROLE_ASSIGNED) {
-                    context.put("assignedAt", notification.getCreatedAt() != null ? notification.getCreatedAt()
-                            .format(DATE_FORMATTER) : null);
+                    context.put("assignedAt", notification.getCreatedAt() != null ? notification.getCreatedAt().format(DATE_FORMATTER) : null);
                 } else {
-                    context.put("removedAt", notification.getCreatedAt() != null ? notification.getCreatedAt()
-                            .format(DATE_FORMATTER) : null);
+                    context.put("removedAt", notification.getCreatedAt() != null ? notification.getCreatedAt().format(DATE_FORMATTER) : null);
                 }
             }
         }
@@ -345,8 +319,7 @@ public class SmtpEmailDeliveryAdapter
             // Message format: "Welcome! Your account has been created. Username: USERNAME"
             int usernameStart = message.indexOf("Username: ");
             if (usernameStart >= 0) {
-                String username = message.substring(usernameStart + 10)
-                        .trim();
+                String username = message.substring(usernameStart + 10).trim();
                 context.put("username", username);
             }
         }

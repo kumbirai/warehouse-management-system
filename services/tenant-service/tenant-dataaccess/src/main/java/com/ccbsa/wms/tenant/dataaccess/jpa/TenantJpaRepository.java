@@ -19,8 +19,7 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantStatus;
  * Spring Data JPA repository for TenantEntity. Provides standard CRUD operations and custom query methods.
  */
 @Repository
-public interface TenantJpaRepository
-        extends JpaRepository<TenantEntity, String> {
+public interface TenantJpaRepository extends JpaRepository<TenantEntity, String> {
     /**
      * Finds tenants by status.
      *
@@ -65,19 +64,15 @@ public interface TenantJpaRepository
                 OR LOWER(t.name) LIKE LOWER('%' || :search || '%')
             )
             ORDER BY t.created_at DESC
-            """,
-            countQuery = """
-                    SELECT COUNT(*) FROM tenants t
-                    WHERE (:status IS NULL OR t.status = :status)
-                    AND (
-                        :search IS NULL
-                        OR LOWER(t.tenant_id::text) LIKE LOWER('%' || :search || '%')
-                        OR LOWER(t.name) LIKE LOWER('%' || :search || '%')
-                    )
-                    """,
-            nativeQuery = true)
-    Page<TenantEntity> searchTenants(
-            @Param("status") String status,
-            @Param("search") String search, Pageable pageable);
+            """, countQuery = """
+            SELECT COUNT(*) FROM tenants t
+            WHERE (:status IS NULL OR t.status = :status)
+            AND (
+                :search IS NULL
+                OR LOWER(t.tenant_id::text) LIKE LOWER('%' || :search || '%')
+                OR LOWER(t.name) LIKE LOWER('%' || :search || '%')
+            )
+            """, nativeQuery = true)
+    Page<TenantEntity> searchTenants(@Param("status") String status, @Param("search") String search, Pageable pageable);
 }
 

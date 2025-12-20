@@ -96,8 +96,7 @@ public final class LocationQueryResultDTO {
     public void setCapacity(Integer capacity) {
         // When deserializing, create a LocationCapacityDTO with the Integer as maximumQuantity
         if (capacity != null) {
-            this.capacityDTO = new LocationCapacityDTO(
-                    java.math.BigDecimal.ZERO, // currentQuantity defaults to 0
+            this.capacityDTO = new LocationCapacityDTO(java.math.BigDecimal.ZERO, // currentQuantity defaults to 0
                     java.math.BigDecimal.valueOf(capacity) // maximumQuantity from Integer
             );
         }

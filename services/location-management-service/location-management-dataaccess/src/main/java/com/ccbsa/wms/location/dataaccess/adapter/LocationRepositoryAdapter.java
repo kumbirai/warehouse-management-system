@@ -35,8 +35,7 @@ import jakarta.persistence.PersistenceContext;
  * Implements LocationRepository port interface. Adapts between domain Location aggregate and JPA LocationEntity.
  */
 @Repository
-public class LocationRepositoryAdapter
-        implements LocationRepository {
+public class LocationRepositoryAdapter implements LocationRepository {
     private static final Logger logger = LoggerFactory.getLogger(LocationRepositoryAdapter.class);
 
     private final LocationJpaRepository jpaRepository;
@@ -47,8 +46,8 @@ public class LocationRepositoryAdapter
     @PersistenceContext
     private EntityManager entityManager;
 
-    public LocationRepositoryAdapter(LocationJpaRepository jpaRepository, LocationEntityMapper mapper,
-                                     TenantSchemaResolver schemaResolver, TenantSchemaProvisioner schemaProvisioner) {
+    public LocationRepositoryAdapter(LocationJpaRepository jpaRepository, LocationEntityMapper mapper, TenantSchemaResolver schemaResolver,
+                                     TenantSchemaProvisioner schemaProvisioner) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
         this.schemaResolver = schemaResolver;
@@ -85,9 +84,7 @@ public class LocationRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Check if entity already exists to handle version correctly
-        Optional<LocationEntity> existingEntity = jpaRepository.findByTenantIdAndId(location.getTenantId()
-                .getValue(), location.getId()
-                .getValue());
+        Optional<LocationEntity> existingEntity = jpaRepository.findByTenantIdAndId(location.getTenantId().getValue(), location.getId().getValue());
 
         LocationEntity entity;
         if (existingEntity.isPresent()) {
@@ -134,9 +131,7 @@ public class LocationRepositoryAdapter
             return;
         }
 
-        throw new IllegalArgumentException(
-                String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName)
-        );
+        throw new IllegalArgumentException(String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName));
     }
 
     /**
@@ -159,19 +154,14 @@ public class LocationRepositoryAdapter
      * @param location Domain location aggregate
      */
     private void updateEntityFromDomain(LocationEntity entity, Location location) {
-        entity.setBarcode(location.getBarcode()
-                .getValue());
+        entity.setBarcode(location.getBarcode().getValue());
         entity.setCode(location.getCode());
         entity.setName(location.getName());
         entity.setType(location.getType());
-        entity.setZone(location.getCoordinates()
-                .getZone());
-        entity.setAisle(location.getCoordinates()
-                .getAisle());
-        entity.setRack(location.getCoordinates()
-                .getRack());
-        entity.setLevel(location.getCoordinates()
-                .getLevel());
+        entity.setZone(location.getCoordinates().getZone());
+        entity.setAisle(location.getCoordinates().getAisle());
+        entity.setRack(location.getCoordinates().getRack());
+        entity.setLevel(location.getCoordinates().getLevel());
         entity.setStatus(location.getStatus());
 
         // Update capacity
@@ -183,6 +173,14 @@ public class LocationRepositoryAdapter
 
         entity.setDescription(location.getDescription());
         entity.setLastModifiedAt(location.getLastModifiedAt());
+
+        // Update parent location ID
+        if (location.getParentLocationId() != null) {
+            entity.setParentLocationId(location.getParentLocationId().getValue());
+        } else {
+            entity.setParentLocationId(null);
+        }
+
         // Version is managed by JPA - don't update it manually
     }
 
@@ -194,10 +192,8 @@ public class LocationRepositoryAdapter
      * @param connection Database connection
      * @param schemaName Validated and escaped schema name
      */
-    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
-            justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " +
-                    "and properly escaped using escapeIdentifier() method. " +
-                    "PostgreSQL SET search_path command does not support parameterized queries.")
+    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE", justification = "Schema name is validated against expected patterns (tenant_*_schema or public) "
+            + "and properly escaped using escapeIdentifier() method. " + "PostgreSQL SET search_path command does not support parameterized queries.")
     private void executeSetSearchPath(Connection connection, String schemaName) {
         try (Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
@@ -253,8 +249,7 @@ public class LocationRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantIdAndId(tenantId.getValue(), id.getValue())
-                .map(mapper::toDomain);
+        return jpaRepository.findByTenantIdAndId(tenantId.getValue(), id.getValue()).map(mapper::toDomain);
     }
 
     @Override
@@ -358,10 +353,7 @@ public class LocationRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantId(tenantId.getValue())
-                .stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
+        return jpaRepository.findByTenantId(tenantId.getValue()).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 }
 

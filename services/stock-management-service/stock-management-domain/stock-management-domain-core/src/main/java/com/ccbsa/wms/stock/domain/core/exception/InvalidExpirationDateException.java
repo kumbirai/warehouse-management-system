@@ -7,8 +7,7 @@ import com.ccbsa.common.domain.exception.DomainException;
  * <p>
  * Thrown when an expiration date is invalid or violates business rules.
  */
-public class InvalidExpirationDateException
-        extends DomainException {
+public class InvalidExpirationDateException extends DomainException {
     public InvalidExpirationDateException(String message) {
         super(message);
     }

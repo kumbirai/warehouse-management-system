@@ -27,13 +27,10 @@ public class SecurityHeadersConfig {
      * <p>
      * This filter adds security headers to all HTTP responses.
      */
-    private static class SecurityHeadersFilter
-            extends OncePerRequestFilter {
+    private static class SecurityHeadersFilter extends OncePerRequestFilter {
         @Override
-        protected void doFilterInternal(
-                @NonNull HttpServletRequest request,
-                @NonNull HttpServletResponse response,
-                @NonNull FilterChain filterChain) throws ServletException, IOException {
+        protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
+                throws ServletException, IOException {
 
             // Security headers
             response.setHeader("X-Content-Type-Options", "nosniff");

@@ -8,6 +8,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import com.ccbsa.wms.common.security.TenantContextInterceptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -16,22 +17,27 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  * Web MVC configuration. Registers interceptors and other web-related configurations. Ensures proper JSON serialization for REST API responses without type information.
  */
 @Configuration
-public class WebMvcConfig
-        implements WebMvcConfigurer {
+public class WebMvcConfig implements WebMvcConfigurer {
+    @NonNull
+    private final TenantContextInterceptor tenantContextInterceptor;
     @NonNull
     private final RequestLoggingInterceptor requestLoggingInterceptor;
 
-    public WebMvcConfig(
-            @NonNull RequestLoggingInterceptor requestLoggingInterceptor) {
+    public WebMvcConfig(@NonNull TenantContextInterceptor tenantContextInterceptor, @NonNull RequestLoggingInterceptor requestLoggingInterceptor) {
+        this.tenantContextInterceptor = tenantContextInterceptor;
         this.requestLoggingInterceptor = requestLoggingInterceptor;
     }
 
     @Override
-    public void addInterceptors(
-            @NonNull InterceptorRegistry registry) {
-        registry.addInterceptor(requestLoggingInterceptor)
-                .addPathPatterns("/**")
-                .excludePathPatterns("/actuator/**", "/error", "/swagger-ui/**", "/v3/api-docs/**");
+    public void addInterceptors(@NonNull InterceptorRegistry registry) {
+        // Register TenantContextInterceptor first to ensure tenant context is set early
+        // Exclude BFF auth endpoints as they don't require tenant ID (login/refresh/logout are public endpoints)
+        // Tenant ID is extracted from JWT token AFTER successful authentication
+        registry.addInterceptor(tenantContextInterceptor).addPathPatterns("/**")
+                .excludePathPatterns("/actuator/**", "/error", "/swagger-ui/**", "/v3/api-docs/**", "/bff/auth/login", "/bff/auth/refresh", "/bff/auth/logout");
+
+        // Register RequestLoggingInterceptor after TenantContextInterceptor
+        registry.addInterceptor(requestLoggingInterceptor).addPathPatterns("/**").excludePathPatterns("/actuator/**", "/error", "/swagger-ui/**", "/v3/api-docs/**");
     }
 
     /**

@@ -15,18 +15,14 @@ class TenantTest {
 
     @Test
     void activatePublishesSchemaEvent() {
-        Tenant tenant = Tenant.builder()
-                .tenantId(TenantId.of("ldp-001"))
-                .name(TenantName.of("LDP Test"))
-                .build();
+        Tenant tenant = Tenant.builder().tenantId(TenantId.of("ldp-001")).name(TenantName.of("LDP Test")).build();
 
         tenant.clearDomainEvents();
 
         tenant.activate();
 
         List<DomainEvent<?>> events = tenant.getDomainEvents();
-        assertTrue(events.stream()
-                .anyMatch(event -> event instanceof TenantSchemaCreatedEvent), "Activation should publish TenantSchemaCreatedEvent");
+        assertTrue(events.stream().anyMatch(event -> event instanceof TenantSchemaCreatedEvent), "Activation should publish TenantSchemaCreatedEvent");
     }
 }
 

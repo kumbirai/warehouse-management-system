@@ -3,8 +3,7 @@ package com.ccbsa.common.domain.exception;
 /**
  * Exception thrown when an entity is not found.
  */
-public class EntityNotFoundException
-        extends DomainException {
+public class EntityNotFoundException extends DomainException {
     public EntityNotFoundException(String message) {
         super(message);
     }

@@ -43,8 +43,7 @@ public enum TenantStatus {
      * @param newStatus Target status
      * @return true if transition is valid
      */
-    @SuppressFBWarnings(value = "DB_DUPLICATE_SWITCH_CLAUSES",
-            justification = "Enum switch intentionally allows overlapping transitions for clarity")
+    @SuppressFBWarnings(value = "DB_DUPLICATE_SWITCH_CLAUSES", justification = "Enum switch intentionally allows overlapping transitions for clarity")
     public boolean canTransitionTo(TenantStatus newStatus) {
         if (newStatus == null) {
             return false;

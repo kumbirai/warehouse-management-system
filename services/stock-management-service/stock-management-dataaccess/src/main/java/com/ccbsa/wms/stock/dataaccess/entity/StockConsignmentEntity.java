@@ -27,62 +27,45 @@ import jakarta.persistence.Version;
  * The schema "tenant_schema" is a placeholder that will be dynamically replaced with the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
  */
 @Entity
-@Table(name = "stock_consignments",
-        schema = "tenant_schema")
+@Table(name = "stock_consignments", schema = "tenant_schema")
 public class StockConsignmentEntity {
     @Id
-    @Column(name = "id",
-            nullable = false)
+    @Column(name = "id", nullable = false)
     private UUID id;
 
-    @Column(name = "tenant_id",
-            length = 255,
-            nullable = false)
+    @Column(name = "tenant_id", length = 255, nullable = false)
     private String tenantId;
 
-    @Column(name = "consignment_reference",
-            length = 100,
-            nullable = false)
+    @Column(name = "consignment_reference", length = 100, nullable = false)
     private String consignmentReference;
 
-    @Column(name = "warehouse_id",
-            length = 50,
-            nullable = false)
+    @Column(name = "warehouse_id", length = 50, nullable = false)
     private String warehouseId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status",
-            length = 50,
-            nullable = false)
+    @Column(name = "status", length = 50, nullable = false)
     private ConsignmentStatus status;
 
-    @Column(name = "received_at",
-            nullable = false)
+    @Column(name = "received_at", nullable = false)
     private LocalDateTime receivedAt;
 
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
 
-    @Column(name = "received_by",
-            length = 255)
+    @Column(name = "received_by", length = 255)
     private String receivedBy;
 
-    @Column(name = "created_at",
-            nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "last_modified_at",
-            nullable = false)
+    @Column(name = "last_modified_at", nullable = false)
     private LocalDateTime lastModifiedAt;
 
     @Version
-    @Column(name = "version",
-            nullable = false)
+    @Column(name = "version", nullable = false)
     private Long version;
 
-    @OneToMany(mappedBy = "consignment",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
+    @OneToMany(mappedBy = "consignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ConsignmentLineItemEntity> lineItems = new ArrayList<>();
 
     // JPA requires no-arg constructor

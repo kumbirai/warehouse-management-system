@@ -16,8 +16,7 @@ import com.ccbsa.common.keycloak.util.KeycloakClientSecretRetriever;
  * Application startup validator. Validates critical configuration on application startup. Optionally attempts to retrieve client secret from Keycloak if not configured.
  */
 @Component
-public class ApplicationStartupValidator
-        implements CommandLineRunner {
+public class ApplicationStartupValidator implements CommandLineRunner {
     private static final Logger logger = LoggerFactory.getLogger(ApplicationStartupValidator.class);
     private final KeycloakConfig keycloakConfig;
     private final KeycloakClientPort keycloakClientPort;
@@ -34,16 +33,14 @@ public class ApplicationStartupValidator
         boolean isValid = true;
 
         // Validate Keycloak configuration
-        if (keycloakConfig.getServerUrl() == null || keycloakConfig.getServerUrl()
-                .isEmpty()) {
+        if (keycloakConfig.getServerUrl() == null || keycloakConfig.getServerUrl().isEmpty()) {
             logger.error("❌ Keycloak server URL is not configured");
             isValid = false;
         } else {
             logger.info("✓ Keycloak server URL: {}", keycloakConfig.getServerUrl());
         }
 
-        if (keycloakConfig.getDefaultRealm() == null || keycloakConfig.getDefaultRealm()
-                .isEmpty()) {
+        if (keycloakConfig.getDefaultRealm() == null || keycloakConfig.getDefaultRealm().isEmpty()) {
             logger.error("❌ Keycloak default realm is not configured");
             isValid = false;
         } else {
@@ -51,8 +48,7 @@ public class ApplicationStartupValidator
         }
 
         // Check client secret configuration
-        if (keycloakConfig.getClientSecret() == null || keycloakConfig.getClientSecret()
-                .isEmpty()) {
+        if (keycloakConfig.getClientSecret() == null || keycloakConfig.getClientSecret().isEmpty()) {
             logger.warn("⚠ Keycloak client secret is not configured - attempting to retrieve from Keycloak...");
 
             try {

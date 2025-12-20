@@ -36,8 +36,7 @@ import org.springframework.stereotype.Component;
  * modifying headers. This enables public endpoints to work correctly.
  */
 @Component
-public class TenantContextFilter
-        extends AbstractGatewayFilterFactory<TenantContextFilter.Config> {
+public class TenantContextFilter extends AbstractGatewayFilterFactory<TenantContextFilter.Config> {
     private static final String TENANT_ID_CLAIM = "tenant_id";
     private static final String REALM_ACCESS_CLAIM = "realm_access";
     private static final String ROLES_CLAIM = "roles";
@@ -52,13 +51,8 @@ public class TenantContextFilter
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-            return ReactiveSecurityContextHolder.getContext()
-                    .cast(SecurityContext.class)
-                    .map(SecurityContext::getAuthentication)
-                    .filter(auth -> auth instanceof JwtAuthenticationToken)
-                    .cast(JwtAuthenticationToken.class)
-                    .map(JwtAuthenticationToken::getToken)
-                    .flatMap(jwt -> {
+            return ReactiveSecurityContextHolder.getContext().cast(SecurityContext.class).map(SecurityContext::getAuthentication)
+                    .filter(auth -> auth instanceof JwtAuthenticationToken).cast(JwtAuthenticationToken.class).map(JwtAuthenticationToken::getToken).flatMap(jwt -> {
                         ServerHttpRequest request = exchange.getRequest();
                         ServerHttpRequest.Builder requestBuilder = request.mutate();
 
@@ -81,11 +75,8 @@ public class TenantContextFilter
                         }
 
                         ServerHttpRequest modifiedRequest = requestBuilder.build();
-                        return chain.filter(exchange.mutate()
-                                .request(modifiedRequest)
-                                .build());
-                    })
-                    .switchIfEmpty(chain.filter(exchange));
+                        return chain.filter(exchange.mutate().request(modifiedRequest).build());
+                    }).switchIfEmpty(chain.filter(exchange));
         };
     }
 
@@ -115,12 +106,10 @@ public class TenantContextFilter
     private String extractRoles(Jwt jwt) {
         Object realmAccess = jwt.getClaim(REALM_ACCESS_CLAIM);
         if (realmAccess instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
+            @SuppressWarnings("unchecked") Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
             Object rolesObj = realmAccessMap.get(ROLES_CLAIM);
             if (rolesObj instanceof List) {
-                @SuppressWarnings("unchecked")
-                List<String> roles = (List<String>) rolesObj;
+                @SuppressWarnings("unchecked") List<String> roles = (List<String>) rolesObj;
                 return String.join(",", roles);
             }
         }

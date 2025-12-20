@@ -11,16 +11,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * <p>
  * All location-specific events extend this class.
  */
-public abstract class LocationManagementEvent
-        extends DomainEvent<LocationId> {
+public abstract class LocationManagementEvent extends DomainEvent<LocationId> {
     /**
      * Constructor for Location Management events without metadata.
      *
      * @param aggregateId Aggregate identifier (LocationId)
      * @throws IllegalArgumentException if aggregateId is null
      */
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "Location events must fail fast if aggregate identifiers are invalid")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "Location events must fail fast if aggregate identifiers are invalid")
     protected LocationManagementEvent(LocationId aggregateId) {
         super(extractLocationIdString(aggregateId), "Location");
     }
@@ -35,8 +33,7 @@ public abstract class LocationManagementEvent
         if (locationId == null) {
             throw new IllegalArgumentException("LocationId cannot be null");
         }
-        return locationId.getValue()
-                .toString();
+        return locationId.getValue().toString();
     }
 
     /**
@@ -46,8 +43,7 @@ public abstract class LocationManagementEvent
      * @param metadata    Event metadata for traceability
      * @throws IllegalArgumentException if aggregateId is null
      */
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "Location events must fail fast if aggregate identifiers are invalid")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "Location events must fail fast if aggregate identifiers are invalid")
     protected LocationManagementEvent(LocationId aggregateId, EventMetadata metadata) {
         super(extractLocationIdString(aggregateId), "Location", metadata);
     }

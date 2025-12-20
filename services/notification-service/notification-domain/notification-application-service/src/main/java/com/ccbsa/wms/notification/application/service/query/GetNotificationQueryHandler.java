@@ -37,10 +37,8 @@ public class GetNotificationQueryHandler {
         validateQuery(query);
 
         // 2. Load from repository
-        return repository.findById(query.getNotificationId())
-                .map(this::toQueryResult)
-                .orElseThrow(() -> new NotificationNotFoundException(query.getNotificationId()
-                        .getValueAsString(), "Notification not found"));
+        return repository.findById(query.getNotificationId()).map(this::toQueryResult)
+                .orElseThrow(() -> new NotificationNotFoundException(query.getNotificationId().getValueAsString(), "Notification not found"));
     }
 
     private void validateQuery(GetNotificationQuery query) {
@@ -53,21 +51,9 @@ public class GetNotificationQueryHandler {
     }
 
     private GetNotificationQueryResult toQueryResult(com.ccbsa.wms.notification.domain.core.entity.Notification notification) {
-        return GetNotificationQueryResult.builder()
-                .notificationId(notification.getId())
-                .tenantId(notification.getTenantId())
-                .recipientUserId(notification.getRecipientUserId())
-                .title(notification.getTitle()
-                        .getValue())
-                .message(notification.getMessage()
-                        .getValue())
-                .type(notification.getType())
-                .status(notification.getStatus())
-                .createdAt(notification.getCreatedAt())
-                .lastModifiedAt(notification.getLastModifiedAt())
-                .sentAt(notification.getSentAt())
-                .readAt(notification.getReadAt())
-                .build();
+        return GetNotificationQueryResult.builder().notificationId(notification.getId()).tenantId(notification.getTenantId()).recipientUserId(notification.getRecipientUserId())
+                .title(notification.getTitle().getValue()).message(notification.getMessage().getValue()).type(notification.getType()).status(notification.getStatus())
+                .createdAt(notification.getCreatedAt()).lastModifiedAt(notification.getLastModifiedAt()).sentAt(notification.getSentAt()).readAt(notification.getReadAt()).build();
     }
 }
 

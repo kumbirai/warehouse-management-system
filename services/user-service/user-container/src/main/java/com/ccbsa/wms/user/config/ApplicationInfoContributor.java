@@ -11,8 +11,7 @@ import org.springframework.stereotype.Component;
  * Application info contributor. Adds custom information to the /actuator/info endpoint.
  */
 @Component
-public class ApplicationInfoContributor
-        implements InfoContributor {
+public class ApplicationInfoContributor implements InfoContributor {
     @Override
     public void contribute(Info.Builder builder) {
         Map<String, Object> details = new HashMap<>();

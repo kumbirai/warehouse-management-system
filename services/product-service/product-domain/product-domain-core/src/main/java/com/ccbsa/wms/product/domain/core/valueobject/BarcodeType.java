@@ -10,10 +10,6 @@ package com.ccbsa.wms.product.domain.core.valueobject;
  * Interleaved 2 of 5 (14 digits, used for cartons) - CODE_39: Code 39 (alphanumeric, older standard)
  */
 public enum BarcodeType {
-    EAN_13,
-    CODE_128,
-    UPC_A,
-    ITF_14,
-    CODE_39
+    EAN_13, CODE_128, UPC_A, ITF_14, CODE_39
 }
 

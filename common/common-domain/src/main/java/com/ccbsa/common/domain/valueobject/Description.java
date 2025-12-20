@@ -13,8 +13,7 @@ public final class Description {
     private final String value;
 
     private Description(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("Description cannot be null or empty");
         }
         String trimmed = value.trim();

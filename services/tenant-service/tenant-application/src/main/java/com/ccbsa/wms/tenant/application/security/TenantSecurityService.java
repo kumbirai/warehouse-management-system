@@ -46,8 +46,7 @@ public class TenantSecurityService {
 
             boolean matches = currentTenantId.getValue().equals(tenantId);
 
-            logger.debug("Tenant ID check: currentTenantId={}, requestedTenantId={}, matches={}",
-                    currentTenantId.getValue(), tenantId, matches);
+            logger.debug("Tenant ID check: currentTenantId={}, requestedTenantId={}, matches={}", currentTenantId.getValue(), tenantId, matches);
 
             return matches;
         } catch (Exception e) {

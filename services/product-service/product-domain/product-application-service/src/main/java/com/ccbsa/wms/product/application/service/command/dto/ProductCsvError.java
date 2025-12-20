@@ -72,8 +72,7 @@ public final class ProductCsvError {
         }
 
         public ProductCsvError build() {
-            if (errorMessage == null || errorMessage.trim()
-                    .isEmpty()) {
+            if (errorMessage == null || errorMessage.trim().isEmpty()) {
                 throw new IllegalArgumentException("ErrorMessage is required");
             }
             return new ProductCsvError(this);

@@ -45,26 +45,22 @@ public final class RequestContext {
      */
     public static String getRequestId(HttpServletRequest request) {
         if (request == null) {
-            return UUID.randomUUID()
-                    .toString();
+            return UUID.randomUUID().toString();
         }
 
         String requestId = request.getHeader(REQUEST_ID_HEADER);
-        if (requestId != null && !requestId.trim()
-                .isEmpty()) {
+        if (requestId != null && !requestId.trim().isEmpty()) {
             return requestId.trim();
         }
 
         // Fallback to correlation ID
         requestId = request.getHeader(CORRELATION_ID_HEADER);
-        if (requestId != null && !requestId.trim()
-                .isEmpty()) {
+        if (requestId != null && !requestId.trim().isEmpty()) {
             return requestId.trim();
         }
 
         // Generate new UUID if no header present
-        return UUID.randomUUID()
-                .toString();
+        return UUID.randomUUID().toString();
     }
 
     /**
@@ -117,8 +113,7 @@ public final class RequestContext {
             return null;
         }
 
-        String requestUrl = request.getRequestURL()
-                .toString();
+        String requestUrl = request.getRequestURL().toString();
         String queryString = request.getQueryString();
 
         if (queryString != null && !queryString.isEmpty()) {

@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import com.ccbsa.common.cache.key.CacheKeyGenerator;
+import com.ccbsa.common.domain.AggregateRoot;
 import com.ccbsa.common.domain.valueobject.TenantId;
 
 import io.micrometer.core.instrument.Counter;
@@ -62,25 +63,13 @@ public abstract class CachedRepositoryDecorator<T, ID> {
         this.cacheTtl = cacheTtl;
 
         // Initialize metrics
-        this.cacheHits = Counter.builder("cache.hits")
-                .tag("namespace", cacheNamespace)
-                .description("Number of cache hits")
-                .register(meterRegistry);
+        this.cacheHits = Counter.builder("cache.hits").tag("namespace", cacheNamespace).description("Number of cache hits").register(meterRegistry);
 
-        this.cacheMisses = Counter.builder("cache.misses")
-                .tag("namespace", cacheNamespace)
-                .description("Number of cache misses")
-                .register(meterRegistry);
+        this.cacheMisses = Counter.builder("cache.misses").tag("namespace", cacheNamespace).description("Number of cache misses").register(meterRegistry);
 
-        this.cacheWrites = Counter.builder("cache.writes")
-                .tag("namespace", cacheNamespace)
-                .description("Number of cache writes")
-                .register(meterRegistry);
+        this.cacheWrites = Counter.builder("cache.writes").tag("namespace", cacheNamespace).description("Number of cache writes").register(meterRegistry);
 
-        this.cacheEvictions = Counter.builder("cache.evictions")
-                .tag("namespace", cacheNamespace)
-                .description("Number of cache evictions")
-                .register(meterRegistry);
+        this.cacheEvictions = Counter.builder("cache.evictions").tag("namespace", cacheNamespace).description("Number of cache evictions").register(meterRegistry);
     }
 
     /**
@@ -95,8 +84,7 @@ public abstract class CachedRepositoryDecorator<T, ID> {
 
         // 2. Check cache first
         try {
-            Object cached = redisTemplate.opsForValue()
-                    .get(cacheKey);
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
 
             if (cached != null) {
                 cacheHits.increment();
@@ -104,7 +92,13 @@ public abstract class CachedRepositoryDecorator<T, ID> {
                 return Optional.of((T) cached);
             }
         } catch (Exception e) {
-            log.warn("Cache read failed for key: {}, falling back to database", cacheKey, e);
+            // Log deserialization errors at DEBUG level (expected when old incompatible entries exist)
+            // Log other errors at WARN level
+            if (e instanceof org.springframework.data.redis.serializer.SerializationException) {
+                log.debug("Cache deserialization failed for key: {} (old entry may be incompatible), falling back to database", cacheKey);
+            } else {
+                log.warn("Cache read failed for key: {}, falling back to database", cacheKey, e);
+            }
             // Fall through to database query
         }
 
@@ -117,8 +111,11 @@ public abstract class CachedRepositoryDecorator<T, ID> {
         // 4. Populate cache if entity exists
         if (entity.isPresent()) {
             try {
-                redisTemplate.opsForValue()
-                        .set(cacheKey, entity.get(), cacheTtl);
+                T entityToCache = entity.get();
+                // Clear domain events before caching (domain events are transient and should not be cached)
+                clearDomainEventsIfAggregateRoot(entityToCache);
+
+                redisTemplate.opsForValue().set(cacheKey, entityToCache, cacheTtl);
                 cacheWrites.increment();
                 log.trace("Cache WRITE for key: {}", cacheKey);
             } catch (Exception e) {
@@ -128,6 +125,22 @@ public abstract class CachedRepositoryDecorator<T, ID> {
         }
 
         return entity;
+    }
+
+    /**
+     * Clears domain events from an entity if it is an AggregateRoot.
+     * <p>
+     * Domain events are transient and should not be cached. This method ensures that
+     * entities are cached without their domain events, preventing serialization issues
+     * and maintaining correct domain event lifecycle (events should be published and cleared,
+     * not persisted in cache).
+     *
+     * @param entity Entity to clear domain events from (if it's an AggregateRoot)
+     */
+    private void clearDomainEventsIfAggregateRoot(T entity) {
+        if (entity instanceof AggregateRoot) {
+            ((AggregateRoot<?>) entity).clearDomainEvents();
+        }
     }
 
     /**
@@ -143,8 +156,10 @@ public abstract class CachedRepositoryDecorator<T, ID> {
         String cacheKey = CacheKeyGenerator.forEntity(tenantId, cacheNamespace, entityId);
 
         try {
-            redisTemplate.opsForValue()
-                    .set(cacheKey, savedEntity, cacheTtl);
+            // Clear domain events before caching (domain events are transient and should not be cached)
+            clearDomainEventsIfAggregateRoot(savedEntity);
+
+            redisTemplate.opsForValue().set(cacheKey, savedEntity, cacheTtl);
             cacheWrites.increment();
             log.trace("Cache WRITE (write-through) for key: {}", cacheKey);
         } catch (Exception e) {

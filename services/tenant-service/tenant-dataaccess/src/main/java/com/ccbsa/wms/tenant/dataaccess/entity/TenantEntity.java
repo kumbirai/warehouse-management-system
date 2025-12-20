@@ -18,48 +18,34 @@ import jakarta.persistence.Version;
  * JPA representation of Tenant aggregate. Note: This service is NOT tenant-aware (it manages tenants), so we use a single schema, not schema-per-tenant.
  */
 @Entity
-@Table(name = "tenants",
-        schema = "public")
+@Table(name = "tenants", schema = "public")
 public class TenantEntity {
     @Id
-    @Column(name = "tenant_id",
-            length = 50,
-            nullable = false)
+    @Column(name = "tenant_id", length = 50, nullable = false)
     private String tenantId;
-    @Column(name = "name",
-            length = 200,
-            nullable = false)
+    @Column(name = "name", length = 200, nullable = false)
     private String name;
     @Convert(converter = TenantStatusConverter.class)
-    @Column(name = "status",
-            length = 20,
-            nullable = false)
+    @Column(name = "status", length = 20, nullable = false)
     private TenantStatus status;
-    @Column(name = "email_address",
-            length = 255)
+    @Column(name = "email_address", length = 255)
     private String emailAddress;
-    @Column(name = "phone",
-            length = 50)
+    @Column(name = "phone", length = 50)
     private String phone;
-    @Column(name = "address",
-            length = 500)
+    @Column(name = "address", length = 500)
     private String address;
-    @Column(name = "keycloak_realm_name",
-            length = 100)
+    @Column(name = "keycloak_realm_name", length = 100)
     private String keycloakRealmName;
-    @Column(name = "use_per_tenant_realm",
-            nullable = false)
+    @Column(name = "use_per_tenant_realm", nullable = false)
     private boolean usePerTenantRealm;
-    @Column(name = "created_at",
-            nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     @Column(name = "activated_at")
     private LocalDateTime activatedAt;
     @Column(name = "deactivated_at")
     private LocalDateTime deactivatedAt;
     @Version
-    @Column(name = "version",
-            nullable = false)
+    @Column(name = "version", nullable = false)
     private int version;
 
     // JPA requires no-arg constructor

@@ -1,37 +1,18 @@
-import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Grid,
-  Paper,
-  Typography,
-} from '@mui/material';
+import { Box, Grid, Paper, Typography, Divider, Stack } from '@mui/material';
+
+import { StatusBadge, getStatusVariant } from '../../../components/common';
+import { formatDateTime } from '../../../utils/dateUtils';
 import { Location } from '../types/location';
+import { LocationActions } from './LocationActions';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface LocationDetailProps {
   location: Location | null;
-  isLoading: boolean;
-  error: Error | null;
+  onStatusUpdate?: () => void;
 }
 
-export const LocationDetail = ({ location, isLoading, error }: LocationDetailProps) => {
-  if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Paper sx={{ p: 3 }}>
-        <Typography color="error">Error loading location: {error.message}</Typography>
-      </Paper>
-    );
-  }
+export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps) => {
+  const { user } = useAuth();
 
   if (!location) {
     return (
@@ -43,107 +24,200 @@ export const LocationDetail = ({ location, isLoading, error }: LocationDetailPro
 
   return (
     <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <Card>
-          <CardContent>
-            <Typography variant="h5" gutterBottom>
-              Location Details
-            </Typography>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Location ID
-                </Typography>
-                <Typography variant="body1">{location.locationId}</Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
+      {/* Basic Information */}
+      <Grid item xs={12} md={6}>
+        <Paper elevation={1} sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Basic Information
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+
+          <Stack spacing={2}>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Location ID
+              </Typography>
+              <Typography variant="body1">{location.locationId}</Typography>
+            </Box>
+
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Code
+              </Typography>
+              <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                {location.code}
+              </Typography>
+            </Box>
+
+            {location.barcode && (
+              <Box>
+                <Typography variant="caption" color="text.secondary">
                   Barcode
                 </Typography>
                 <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
                   {location.barcode}
                 </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Zone
-                </Typography>
-                <Typography variant="body1">{location.coordinates.zone}</Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Aisle
-                </Typography>
-                <Typography variant="body1">{location.coordinates.aisle}</Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Rack
-                </Typography>
-                <Typography variant="body1">{location.coordinates.rack}</Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Level
-                </Typography>
-                <Typography variant="body1">{location.coordinates.level}</Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Status
-                </Typography>
-                <Chip
+              </Box>
+            )}
+
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Status
+              </Typography>
+              <Box mt={0.5}>
+                <StatusBadge
                   label={location.status}
-                  color={location.status === 'AVAILABLE' ? 'success' : 'default'}
-                  size="small"
+                  variant={getStatusVariant(location.status)}
                 />
-              </Grid>
-              {location.capacity && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary">
-                      Current Quantity
-                    </Typography>
-                    <Typography variant="body1">{location.capacity.currentQuantity}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body2" color="text.secondary">
-                      Maximum Quantity
-                    </Typography>
-                    <Typography variant="body1">{location.capacity.maximumQuantity}</Typography>
-                  </Grid>
-                </>
-              )}
-              {location.description && (
-                <Grid item xs={12}>
-                  <Typography variant="body2" color="text.secondary">
-                    Description
-                  </Typography>
-                  <Typography variant="body1">{location.description}</Typography>
-                </Grid>
-              )}
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Created At
+              </Box>
+            </Box>
+
+            {location.description && (
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Description
+                </Typography>
+                <Typography variant="body1">{location.description}</Typography>
+              </Box>
+            )}
+          </Stack>
+        </Paper>
+      </Grid>
+
+      {/* Location Coordinates */}
+      <Grid item xs={12} md={6}>
+        <Paper elevation={1} sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Location Coordinates
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+
+          <Stack spacing={2}>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Zone
+              </Typography>
+              <Typography variant="body1">{location.coordinates.zone || '—'}</Typography>
+            </Box>
+
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Aisle
+              </Typography>
+              <Typography variant="body1">{location.coordinates.aisle || '—'}</Typography>
+            </Box>
+
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Rack
+              </Typography>
+              <Typography variant="body1">{location.coordinates.rack || '—'}</Typography>
+            </Box>
+
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Level
+              </Typography>
+              <Typography variant="body1">{location.coordinates.level || '—'}</Typography>
+            </Box>
+          </Stack>
+        </Paper>
+      </Grid>
+
+      {/* Capacity Information */}
+      {location.capacity && typeof location.capacity === 'object' && (
+        <Grid item xs={12} md={6}>
+          <Paper elevation={1} sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Capacity
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+
+            <Stack spacing={2}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Current Quantity
                 </Typography>
                 <Typography variant="body1">
-                  {new Date(location.createdAt).toLocaleString()}
+                  {location.capacity.currentQuantity || 0}
                 </Typography>
-              </Grid>
-              {location.lastModifiedAt && (
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Last Modified
-                  </Typography>
-                  <Typography variant="body1">
-                    {new Date(location.lastModifiedAt).toLocaleString()}
-                  </Typography>
-                </Grid>
-              )}
-            </Grid>
-          </CardContent>
-        </Card>
+              </Box>
+
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Maximum Quantity
+                </Typography>
+                <Typography variant="body1">
+                  {location.capacity.maximumQuantity || 0}
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Utilization
+                </Typography>
+                <Typography variant="body1">
+                  {location.capacity.maximumQuantity > 0
+                    ? `${Math.round(
+                        (location.capacity.currentQuantity / location.capacity.maximumQuantity) *
+                          100
+                      )}%`
+                    : '0%'}
+                </Typography>
+              </Box>
+            </Stack>
+          </Paper>
+        </Grid>
+      )}
+
+      {/* Audit Information */}
+      <Grid item xs={12} md={6}>
+        <Paper elevation={1} sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Audit Information
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+
+          <Stack spacing={2}>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Created At
+              </Typography>
+              <Typography variant="body1">{formatDateTime(location.createdAt)}</Typography>
+            </Box>
+
+            {location.lastModifiedAt && (
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Last Modified
+                </Typography>
+                <Typography variant="body1">
+                  {formatDateTime(location.lastModifiedAt)}
+                </Typography>
+              </Box>
+            )}
+          </Stack>
+        </Paper>
       </Grid>
+
+      {/* Actions Section */}
+      {user?.tenantId && (
+        <Grid item xs={12}>
+          <Paper elevation={1} sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Actions
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+
+            <LocationActions
+              locationId={location.locationId}
+              status={location.status as any}
+              tenantId={user.tenantId}
+              onCompleted={onStatusUpdate}
+            />
+          </Paper>
+        </Grid>
+      )}
     </Grid>
   );
 };

@@ -37,8 +37,7 @@ public final class ConsignmentId {
      * @throws IllegalArgumentException if value is null or invalid UUID format
      */
     public static ConsignmentId of(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("ConsignmentId string cannot be null or empty");
         }
         try {

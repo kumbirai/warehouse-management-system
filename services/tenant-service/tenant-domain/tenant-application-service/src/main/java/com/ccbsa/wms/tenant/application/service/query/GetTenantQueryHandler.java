@@ -18,8 +18,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Handles queries to get a tenant by ID.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "Ports are managed singletons injected by Spring and kept immutable")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Ports are managed singletons injected by Spring and kept immutable")
 public class GetTenantQueryHandler {
     private final TenantRepository tenantRepository;
 
@@ -29,22 +28,16 @@ public class GetTenantQueryHandler {
 
     @Transactional(readOnly = true)
     public Optional<TenantView> handle(GetTenantQuery query) {
-        return tenantRepository.findById(query.getTenantId())
-                .map(this::toView);
+        return tenantRepository.findById(query.getTenantId()).map(this::toView);
     }
 
     private TenantView toView(Tenant tenant) {
-        return new TenantView(tenant.getId(), tenant.getName(), tenant.getStatus(), tenant.getContactInformation() != null ? tenant.getContactInformation()
-                .getEmailValue()
-                .orElse(null) : null, tenant.getContactInformation() != null ? tenant.getContactInformation()
-                .getPhone()
-                .orElse(null) : null,
-                tenant.getContactInformation() != null ? tenant.getContactInformation()
-                        .getAddress()
-                        .orElse(null) : null, tenant.getConfiguration()
-                .getKeycloakRealmName()
-                .orElse(null), tenant.getConfiguration()
-                .isUsePerTenantRealm(), tenant.getCreatedAt(), tenant.getActivatedAt(), tenant.getDeactivatedAt());
+        return new TenantView(tenant.getId(), tenant.getName(), tenant.getStatus(),
+                tenant.getContactInformation() != null ? tenant.getContactInformation().getEmailValue().orElse(null) : null,
+                tenant.getContactInformation() != null ? tenant.getContactInformation().getPhone().orElse(null) : null,
+                tenant.getContactInformation() != null ? tenant.getContactInformation().getAddress().orElse(null) : null,
+                tenant.getConfiguration().getKeycloakRealmName().orElse(null), tenant.getConfiguration().isUsePerTenantRealm(), tenant.getCreatedAt(), tenant.getActivatedAt(),
+                tenant.getDeactivatedAt());
     }
 }
 

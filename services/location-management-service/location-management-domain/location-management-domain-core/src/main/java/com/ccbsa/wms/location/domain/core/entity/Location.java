@@ -21,8 +21,7 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
  * (AVAILABLE, OCCUPIED, RESERVED, BLOCKED) - Locations can have
  * capacity constraints - Barcodes can be auto-generated from coordinates or manually provided
  */
-public class Location
-        extends TenantAwareAggregateRoot<LocationId> {
+public class Location extends TenantAwareAggregateRoot<LocationId> {
 
     // Value Objects
     private LocationBarcode barcode;
@@ -35,6 +34,7 @@ public class Location
     private String name; // Location name
     private String type; // Location type (WAREHOUSE, ZONE, AISLE, RACK, BIN)
     private String description;
+    private LocationId parentLocationId; // Parent location ID for hierarchical relationships (null for warehouses)
     private LocalDateTime createdAt;
     private LocalDateTime lastModifiedAt;
 
@@ -236,6 +236,10 @@ public class Location
         return lastModifiedAt;
     }
 
+    public LocationId getParentLocationId() {
+        return parentLocationId;
+    }
+
     /**
      * Builder class for constructing Location instances. Ensures all required fields are set and validated.
      */
@@ -289,6 +293,11 @@ public class Location
 
         public Builder description(String description) {
             location.description = description;
+            return this;
+        }
+
+        public Builder parentLocationId(LocationId parentLocationId) {
+            location.parentLocationId = parentLocationId;
             return this;
         }
 

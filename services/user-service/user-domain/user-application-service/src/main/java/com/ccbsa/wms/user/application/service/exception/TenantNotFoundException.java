@@ -3,8 +3,7 @@ package com.ccbsa.wms.user.application.service.exception;
 /**
  * Exception thrown when a tenant is not found.
  */
-public class TenantNotFoundException
-        extends RuntimeException {
+public class TenantNotFoundException extends RuntimeException {
     public TenantNotFoundException(String message) {
         super(message);
     }

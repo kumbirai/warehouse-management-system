@@ -3,6 +3,7 @@ package com.ccbsa.wms.gateway.api.fixture;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 import com.ccbsa.wms.gateway.api.util.BarcodeGenerator;
@@ -37,8 +38,8 @@ public class TestData {
         return faker.name().username();
     }
 
-    public static String email() {
-        return faker.internet().emailAddress();
+    public static String domain() {
+        return faker.internet().domainName();
     }
 
     public static String firstName() {
@@ -92,24 +93,50 @@ public class TestData {
 
     // ==================== LOCATION DATA ====================
 
+    /**
+     * Generates a unique warehouse code by including a UUID component.
+     * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
+     */
     public static String warehouseCode() {
-        return "WH-" + faker.number().digits(2);
+        // Use UUID to ensure uniqueness, but keep it readable with a short prefix
+        String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
+        return "WH-" + faker.number().digits(2) + "-" + uuid;
     }
 
+    /**
+     * Generates a unique zone code by including a UUID component.
+     * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
+     */
     public static String zoneCode() {
-        return "ZONE-" + faker.bothify("?").toUpperCase();
+        String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
+        return "ZONE-" + faker.bothify("?").toUpperCase() + "-" + uuid;
     }
 
+    /**
+     * Generates a unique aisle code by including a UUID component.
+     * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
+     */
     public static String aisleCode() {
-        return "AISLE-" + faker.number().digits(2);
+        String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
+        return "AISLE-" + faker.number().digits(2) + "-" + uuid;
     }
 
+    /**
+     * Generates a unique rack code by including a UUID component.
+     * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
+     */
     public static String rackCode() {
-        return "RACK-" + faker.bothify("?#").toUpperCase();
+        String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
+        return "RACK-" + faker.bothify("?#").toUpperCase() + "-" + uuid;
     }
 
+    /**
+     * Generates a unique bin code by including a UUID component.
+     * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
+     */
     public static String binCode() {
-        return "BIN-" + faker.number().digits(2);
+        String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
+        return "BIN-" + faker.number().digits(2) + "-" + uuid;
     }
 
     public static int locationCapacity(String type) {

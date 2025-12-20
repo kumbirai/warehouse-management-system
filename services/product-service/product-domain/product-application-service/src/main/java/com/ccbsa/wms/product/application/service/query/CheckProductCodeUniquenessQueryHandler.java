@@ -28,10 +28,7 @@ public class CheckProductCodeUniquenessQueryHandler {
         // Check if product code exists
         boolean isUnique = !repository.existsByProductCodeAndTenantId(query.getProductCode(), query.getTenantId());
 
-        return ProductCodeUniquenessResult.builder()
-                .productCode(query.getProductCode())
-                .isUnique(isUnique)
-                .build();
+        return ProductCodeUniquenessResult.builder().productCode(query.getProductCode()).isUnique(isUnique).build();
     }
 }
 

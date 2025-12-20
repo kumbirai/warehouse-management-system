@@ -37,8 +37,8 @@ import lombok.Data;
 @Data
 @Validated
 @ConfigurationProperties(prefix = "wms.cache")
-@SuppressFBWarnings(value = {"RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", "EI_EXPOSE_REP2"},
-        justification = "Lombok @Data generates equals/hashCode with null checks. setRedis() is required by Spring @ConfigurationProperties. RedisConfig is managed by Spring and"
+@SuppressFBWarnings(value = {"RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", "EI_EXPOSE_REP2"}, justification =
+        "Lombok @Data generates equals/hashCode with null checks. setRedis() is required by Spring @ConfigurationProperties. RedisConfig is managed by Spring and"
                 + " not mutated after initialization.")
 public class CacheProperties {
 
@@ -79,8 +79,8 @@ public class CacheProperties {
      *
      * @param cacheConfigs Map of cache configurations
      */
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-            justification = "Spring @ConfigurationProperties requires setters. The map is copied defensively to prevent external " + "modification.")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring @ConfigurationProperties requires setters. The map is copied defensively to prevent external "
+            + "modification.")
     public void setCacheConfigs(Map<String, CacheConfig> cacheConfigs) {
         if (cacheConfigs == null) {
             this.cacheConfigs = new HashMap<>();
@@ -94,9 +94,8 @@ public class CacheProperties {
      *
      * @return Redis configuration
      */
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP",
-            justification = "RedisConfig is a Spring @ConfigurationProperties nested class managed by Spring. It is initialized once and not"
-                    + " mutated after construction. Returning the reference is safe.")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "RedisConfig is a Spring @ConfigurationProperties nested class managed by Spring. It is initialized once and not"
+            + " mutated after construction. Returning the reference is safe.")
     public RedisConfig getRedis() {
         return redis;
     }
@@ -106,8 +105,8 @@ public class CacheProperties {
      *
      * @param redis Redis configuration
      */
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-            justification = "Spring @ConfigurationProperties requires this setter. RedisConfig is managed by Spring and not mutated after " + "initialization.")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring @ConfigurationProperties requires this setter. RedisConfig is managed by Spring and not mutated after "
+            + "initialization.")
     public void setRedis(RedisConfig redis) {
         this.redis = redis;
     }

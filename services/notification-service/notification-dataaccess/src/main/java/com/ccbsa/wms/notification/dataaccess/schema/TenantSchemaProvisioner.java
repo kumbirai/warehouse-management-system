@@ -22,9 +22,8 @@ public class TenantSchemaProvisioner {
     private final JdbcTemplate jdbcTemplate;
     private final DataSource dataSource;
 
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-            justification = "JdbcTemplate and DataSource are Spring-managed beans that are thread-safe and effectively immutable after "
-                    + "initialization. They are safe to store directly as infrastructure dependencies.")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JdbcTemplate and DataSource are Spring-managed beans that are thread-safe and effectively immutable after "
+            + "initialization. They are safe to store directly as infrastructure dependencies.")
     public TenantSchemaProvisioner(JdbcTemplate jdbcTemplate, DataSource dataSource) {
         this.jdbcTemplate = jdbcTemplate;
         this.dataSource = dataSource;
@@ -56,12 +55,7 @@ public class TenantSchemaProvisioner {
     }
 
     private void runMigrations(String schemaName) {
-        Flyway flyway = Flyway.configure()
-                .dataSource(dataSource)
-                .schemas(schemaName)
-                .locations("classpath:db/migration")
-                .baselineOnMigrate(true)
-                .load();
+        Flyway flyway = Flyway.configure().dataSource(dataSource).schemas(schemaName).locations("classpath:db/migration").baselineOnMigrate(true).load();
 
         int applied = flyway.migrate().migrationsExecuted;
         logger.info("Flyway migrations applied to schema {}: {}", schemaName, applied);

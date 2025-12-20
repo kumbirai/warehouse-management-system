@@ -30,8 +30,7 @@ import org.springframework.stereotype.Component;
  * }</pre>
  */
 @Component
-public class CorrelationContextFilter
-        extends AbstractGatewayFilterFactory<CorrelationContextFilter.Config> {
+public class CorrelationContextFilter extends AbstractGatewayFilterFactory<CorrelationContextFilter.Config> {
     private static final Logger logger = LoggerFactory.getLogger(CorrelationContextFilter.class);
     private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
 
@@ -43,14 +42,11 @@ public class CorrelationContextFilter
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
-            String correlationId = request.getHeaders()
-                    .getFirst(CORRELATION_ID_HEADER);
+            String correlationId = request.getHeaders().getFirst(CORRELATION_ID_HEADER);
 
             // Generate correlation ID if not present
-            if (correlationId == null || correlationId.trim()
-                    .isEmpty()) {
-                correlationId = UUID.randomUUID()
-                        .toString();
+            if (correlationId == null || correlationId.trim().isEmpty()) {
+                correlationId = UUID.randomUUID().toString();
                 logger.debug("Generated new correlation ID: {}", correlationId);
             } else {
                 correlationId = correlationId.trim();
@@ -58,13 +54,9 @@ public class CorrelationContextFilter
             }
 
             // Add correlation ID to request headers for downstream services
-            ServerHttpRequest modifiedRequest = request.mutate()
-                    .header(CORRELATION_ID_HEADER, correlationId)
-                    .build();
+            ServerHttpRequest modifiedRequest = request.mutate().header(CORRELATION_ID_HEADER, correlationId).build();
 
-            return chain.filter(exchange.mutate()
-                    .request(modifiedRequest)
-                    .build());
+            return chain.filter(exchange.mutate().request(modifiedRequest).build());
         };
     }
 

@@ -1,5 +1,7 @@
 package com.ccbsa.wms.gateway.api;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -13,7 +15,10 @@ import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
 import com.ccbsa.wms.gateway.api.dto.CreateTenantRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateTenantResponse;
+import com.ccbsa.wms.gateway.api.dto.CreateUserRequest;
+import com.ccbsa.wms.gateway.api.dto.CreateUserResponse;
 import com.ccbsa.wms.gateway.api.dto.TenantResponse;
+import com.ccbsa.wms.gateway.api.dto.UserResponse;
 import com.ccbsa.wms.gateway.api.fixture.TenantTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.TestData;
 
@@ -325,6 +330,96 @@ public class TenantManagementTest extends BaseIntegrationTest {
 
         // Assert - Suspension returns 204 NO_CONTENT
         response.expectStatus().isNoContent();
+    }
+
+    // ==================== USER CREATION IN ACTIVE TENANT TESTS ====================
+
+    @Test
+    @Order(30)
+    public void testCreateUser_InFirstActiveTenant_KeycloakUserExists() {
+        // Arrange - List tenants and find first active tenant
+        EntityExchangeResult<ApiResponse<List<TenantResponse>>> listExchangeResult = authenticatedGet(
+                "/api/v1/tenants?page=0&size=100",
+                systemAdminAuth.getAccessToken()
+        ).exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<List<TenantResponse>>>() {
+                })
+                .returnResult();
+
+        ApiResponse<List<TenantResponse>> listApiResponse = listExchangeResult.getResponseBody();
+        assertThat(listApiResponse).isNotNull();
+        assertThat(listApiResponse.isSuccess()).isTrue();
+
+        List<TenantResponse> tenants = listApiResponse.getData();
+        assertThat(tenants).isNotNull();
+
+        // Find first active tenant
+        TenantResponse activeTenant = tenants.stream()
+                .filter(t -> "ACTIVE".equals(t.getStatus()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No active tenant found in the list"));
+
+        assertThat(activeTenant).isNotNull();
+        assertThat(activeTenant.getTenantId()).isNotBlank();
+
+        // Arrange - Create user request with specific username and email
+        // Username: testuser, Email: tenantuser@cm-sol.co.za
+        CreateUserRequest createUserRequest = CreateUserRequest.builder()
+                .tenantId(activeTenant.getTenantId())
+                .username("testuser")
+                .emailAddress("tenantuser@cm-sol.co.za")
+                .password("Password123@")
+                .firstName("Tenant")
+                .lastName("User")
+                .build();
+
+        // Act - Create user (user will be created successfully in Keycloak and database)
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createExchangeResult = authenticatedPost(
+                "/api/v1/users",
+                systemAdminAuth.getAccessToken(),
+                activeTenant.getTenantId(),
+                createUserRequest
+        ).exchange()
+                .expectStatus().isCreated()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                })
+                .returnResult();
+
+        // Assert - Check response indicates successful user creation
+        ApiResponse<CreateUserResponse> createApiResponse = createExchangeResult.getResponseBody();
+        assertThat(createApiResponse).isNotNull();
+        assertThat(createApiResponse.isSuccess()).isTrue();
+
+        CreateUserResponse userResponse = createApiResponse.getData();
+        assertThat(userResponse).isNotNull();
+        assertThat(userResponse.getUserId()).isNotBlank();
+        assertThat(userResponse.isSuccess()).isTrue();
+
+        // Verify user exists in database
+        EntityExchangeResult<ApiResponse<List<UserResponse>>> listUsersResult = authenticatedGet(
+                "/api/v1/users?page=0&size=100&search=testuser",
+                systemAdminAuth.getAccessToken(),
+                activeTenant.getTenantId()
+        ).exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<List<UserResponse>>>() {
+                })
+                .returnResult();
+
+        ApiResponse<List<UserResponse>> listUsersApiResponse = listUsersResult.getResponseBody();
+        assertThat(listUsersApiResponse).isNotNull();
+        assertThat(listUsersApiResponse.isSuccess()).isTrue();
+
+        List<UserResponse> users = listUsersApiResponse.getData();
+        assertThat(users).isNotNull();
+
+        // Verify the user with username "testuser" exists in the database
+        boolean userExists = users.stream()
+                .anyMatch(u -> "testuser".equals(u.getUsername()) && "tenantuser@cm-sol.co.za".equals(u.getEmailAddress()));
+        assertThat(userExists)
+                .as("User 'testuser' with email 'tenantuser@cm-sol.co.za' should exist in the database")
+                .isTrue();
     }
 }
 

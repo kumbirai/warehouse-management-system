@@ -43,13 +43,10 @@ public class ActivateUserCommandHandler {
      */
     @Transactional
     public void handle(ActivateUserCommand command) {
-        logger.debug("Activating user: userId={}", command.getUserId()
-                .getValue());
+        logger.debug("Activating user: userId={}", command.getUserId().getValue());
 
         // 1. Load user
-        User user = userRepository.findById(command.getUserId())
-                .orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", command.getUserId()
-                        .getValue())));
+        User user = userRepository.findById(command.getUserId()).orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", command.getUserId().getValue())));
 
         // 2. Validate can activate
         if (!user.canActivate()) {
@@ -63,11 +60,9 @@ public class ActivateUserCommandHandler {
         userRepository.save(user);
 
         // 5. Enable user in Keycloak
-        if (user.getKeycloakUserId()
-                .isPresent()) {
+        if (user.getKeycloakUserId().isPresent()) {
             try {
-                authenticationService.enableUser(user.getKeycloakUserId()
-                        .get());
+                authenticationService.enableUser(user.getKeycloakUserId().get());
             } catch (Exception e) {
                 logger.error("Failed to enable user in Keycloak: {}", e.getMessage(), e);
                 // Don't fail the operation - domain state is updated
@@ -81,8 +76,7 @@ public class ActivateUserCommandHandler {
             user.clearDomainEvents();
         }
 
-        logger.info("User activated successfully: userId={}", command.getUserId()
-                .getValue());
+        logger.info("User activated successfully: userId={}", command.getUserId().getValue());
     }
 }
 

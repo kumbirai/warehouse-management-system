@@ -24,52 +24,36 @@ import jakarta.persistence.Version;
  * The schema "tenant_schema" is a placeholder that will be dynamically replaced with the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
  */
 @Entity
-@Table(name = "notifications",
-        schema = "tenant_schema")
+@Table(name = "notifications", schema = "tenant_schema")
 public class NotificationEntity {
     @Id
-    @Column(name = "id",
-            nullable = false)
+    @Column(name = "id", nullable = false)
     private UUID id;
 
-    @Column(name = "tenant_id",
-            length = 50,
-            nullable = false)
+    @Column(name = "tenant_id", length = 50, nullable = false)
     private String tenantId;
 
-    @Column(name = "recipient_user_id",
-            length = 50,
-            nullable = false)
+    @Column(name = "recipient_user_id", length = 50, nullable = false)
     private String recipientUserId;
 
-    @Column(name = "recipient_email",
-            length = 255)
+    @Column(name = "recipient_email", length = 255)
     private String recipientEmail;
 
-    @Column(name = "title",
-            length = 200,
-            nullable = false)
+    @Column(name = "title", length = 200, nullable = false)
     private String title;
 
-    @Column(name = "message",
-            length = 1000,
-            nullable = false)
+    @Column(name = "message", length = 1000, nullable = false)
     private String message;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type",
-            length = 50,
-            nullable = false)
+    @Column(name = "type", length = 50, nullable = false)
     private NotificationType type;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status",
-            length = 20,
-            nullable = false)
+    @Column(name = "status", length = 20, nullable = false)
     private NotificationStatus status;
 
-    @Column(name = "created_at",
-            nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "last_modified_at")
@@ -82,8 +66,7 @@ public class NotificationEntity {
     private LocalDateTime readAt;
 
     @Version
-    @Column(name = "version",
-            nullable = false)
+    @Column(name = "version", nullable = false)
     private Long version;
 
     // JPA requires no-arg constructor

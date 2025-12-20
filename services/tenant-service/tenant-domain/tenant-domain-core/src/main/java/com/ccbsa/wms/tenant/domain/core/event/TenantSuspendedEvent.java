@@ -8,8 +8,7 @@ import com.ccbsa.common.domain.valueobject.TenantId;
  * <p>
  * Published when a tenant is suspended.
  */
-public final class TenantSuspendedEvent
-        extends TenantEvent<TenantId> {
+public final class TenantSuspendedEvent extends TenantEvent<TenantId> {
     public TenantSuspendedEvent(TenantId tenantId) {
         super(tenantId);
     }

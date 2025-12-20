@@ -22,10 +22,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Implements TenantEventPublisher port interface. Publishes tenant domain events to Kafka.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "Kafka template is a managed bean and treated as immutable port")
-public class TenantEventPublisherImpl
-        implements TenantEventPublisher {
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is a managed bean and treated as immutable port")
+public class TenantEventPublisherImpl implements TenantEventPublisher {
     private static final Logger logger = LoggerFactory.getLogger(TenantEventPublisherImpl.class);
     private static final String TENANT_EVENTS_TOPIC = "tenant-events";
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -44,8 +42,7 @@ public class TenantEventPublisherImpl
         if (event instanceof TenantEvent) {
             publish((TenantEvent<?>) event);
         } else {
-            throw new IllegalArgumentException(String.format("Event must be a TenantEvent: %s", event.getClass()
-                    .getName()));
+            throw new IllegalArgumentException(String.format("Event must be a TenantEvent: %s", event.getClass().getName()));
         }
     }
 
@@ -57,12 +54,10 @@ public class TenantEventPublisherImpl
 
             String key = enrichedEvent.getAggregateId();
             kafkaTemplate.send(TENANT_EVENTS_TOPIC, key, enrichedEvent);
-            logger.debug("Published tenant event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass()
-                    .getSimpleName(), key, enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata()
-                    .getCorrelationId() : "none");
+            logger.debug("Published tenant event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
+                    enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
         } catch (Exception e) {
-            logger.error("Failed to publish tenant event: {}", event.getClass()
-                    .getSimpleName(), e);
+            logger.error("Failed to publish tenant event: {}", event.getClass().getSimpleName(), e);
             throw new RuntimeException("Failed to publish tenant event", e);
         }
     }
@@ -93,8 +88,7 @@ public class TenantEventPublisherImpl
         if (event instanceof com.ccbsa.wms.tenant.domain.core.event.TenantCreatedEvent) {
             com.ccbsa.wms.tenant.domain.core.event.TenantCreatedEvent tenantCreatedEvent = (com.ccbsa.wms.tenant.domain.core.event.TenantCreatedEvent) event;
             return new com.ccbsa.wms.tenant.domain.core.event.TenantCreatedEvent(tenantId, tenantCreatedEvent.getName(), tenantCreatedEvent.getStatus(),
-                    tenantCreatedEvent.getEmail()
-                            .orElse(null), metadata);
+                    tenantCreatedEvent.getEmail().orElse(null), metadata);
         } else if (event instanceof com.ccbsa.wms.tenant.domain.core.event.TenantActivatedEvent) {
             return new com.ccbsa.wms.tenant.domain.core.event.TenantActivatedEvent(tenantId, metadata);
         } else if (event instanceof com.ccbsa.wms.tenant.domain.core.event.TenantDeactivatedEvent) {
@@ -111,8 +105,7 @@ public class TenantEventPublisherImpl
         }
 
         // Unknown event type, return original
-        logger.warn("Unknown tenant event type: {}. Event will be published without metadata.", event.getClass()
-                .getName());
+        logger.warn("Unknown tenant event type: {}. Event will be published without metadata.", event.getClass().getName());
         return event;
     }
 
@@ -123,8 +116,7 @@ public class TenantEventPublisherImpl
      */
     private EventMetadata buildEventMetadata() {
         String correlationId = CorrelationContext.getCorrelationId();
-        String userId = TenantContext.getUserId() != null ? TenantContext.getUserId()
-                .getValue() : null;
+        String userId = TenantContext.getUserId() != null ? TenantContext.getUserId().getValue() : null;
 
         if (correlationId == null && userId == null) {
             return null;

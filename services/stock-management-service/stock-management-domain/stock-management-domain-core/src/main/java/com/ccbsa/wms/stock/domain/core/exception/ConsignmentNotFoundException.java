@@ -7,8 +7,7 @@ import com.ccbsa.common.domain.exception.DomainException;
  * <p>
  * Thrown when a consignment is not found.
  */
-public class ConsignmentNotFoundException
-        extends DomainException {
+public class ConsignmentNotFoundException extends DomainException {
     public ConsignmentNotFoundException(String message) {
         super(message);
     }

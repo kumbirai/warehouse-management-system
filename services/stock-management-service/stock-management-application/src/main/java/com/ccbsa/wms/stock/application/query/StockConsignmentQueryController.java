@@ -28,8 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/api/v1/stock-management/consignments")
-@Tag(name = "Stock Consignment Queries",
-        description = "Stock consignment query operations")
+@Tag(name = "Stock Consignment Queries", description = "Stock consignment query operations")
 public class StockConsignmentQueryController {
     private final GetConsignmentQueryHandler getConsignmentQueryHandler;
     private final StockConsignmentDTOMapper mapper;
@@ -40,12 +39,9 @@ public class StockConsignmentQueryController {
     }
 
     @GetMapping("/{consignmentId}")
-    @Operation(summary = "Get Consignment",
-            description = "Retrieves a consignment by ID")
+    @Operation(summary = "Get Consignment", description = "Retrieves a consignment by ID")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
-    public ResponseEntity<ApiResponse<ConsignmentQueryDTO>> getConsignment(
-            @RequestHeader("X-Tenant-Id") String tenantId,
-            @PathVariable String consignmentId) {
+    public ResponseEntity<ApiResponse<ConsignmentQueryDTO>> getConsignment(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable String consignmentId) {
         // Map to query
         GetConsignmentQuery query = mapper.toGetConsignmentQuery(consignmentId, tenantId);
 

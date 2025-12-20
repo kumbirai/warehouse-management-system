@@ -37,8 +37,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * only once
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "DataSource is a Spring-managed bean and treated as immutable infrastructure component")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "DataSource is a Spring-managed bean and treated as immutable infrastructure component")
 public class TenantSchemaCreatedEventListener {
     private static final Logger logger = LoggerFactory.getLogger(TenantSchemaCreatedEventListener.class);
 
@@ -52,14 +51,9 @@ public class TenantSchemaCreatedEventListener {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
-    @KafkaListener(topics = "tenant-events",
-            groupId = "location-management-service",
-            containerFactory = "externalEventKafkaListenerContainerFactory")
-    public void handle(
-            @Payload Map<String, Object> eventData,
-            @Header(value = "__TypeId__",
-                    required = false) String eventType,
-            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
+    @KafkaListener(topics = "tenant-events", groupId = "location-management-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
+                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         logger.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));
         try {
             extractAndSetCorrelationId(eventData);
@@ -78,8 +72,7 @@ public class TenantSchemaCreatedEventListener {
             TenantId tenantId = TenantId.of(aggregateIdString);
             String schemaName = extractSchemaName(eventData);
 
-            if (schemaName == null || schemaName.trim()
-                    .isEmpty()) {
+            if (schemaName == null || schemaName.trim().isEmpty()) {
                 logger.error("Schema name is missing in TenantSchemaCreatedEvent: tenantId={}, eventId={}", tenantId.getValue(), extractEventId(eventData));
                 acknowledgment.acknowledge();
                 return;
@@ -105,8 +98,7 @@ public class TenantSchemaCreatedEventListener {
     }
 
     private void extractAndSetCorrelationId(Map<String, Object> eventData) {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> metadata = (Map<String, Object>) eventData.get("metadata");
+        @SuppressWarnings("unchecked") Map<String, Object> metadata = (Map<String, Object>) eventData.get("metadata");
         if (metadata != null) {
             Object correlationIdObj = metadata.get("correlationId");
             if (correlationIdObj != null) {
@@ -154,8 +146,7 @@ public class TenantSchemaCreatedEventListener {
             return true;
         }
         Object eventClass = eventData.get("@class");
-        if (eventClass != null && eventClass.toString()
-                .contains(TENANT_SCHEMA_CREATED_EVENT)) {
+        if (eventClass != null && eventClass.toString().contains(TENANT_SCHEMA_CREATED_EVENT)) {
             return true;
         }
         return false;
@@ -186,8 +177,7 @@ public class TenantSchemaCreatedEventListener {
 
             // Handle value object serialization (Map with "value" field)
             if (aggregateIdObj instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> idMap = (Map<String, Object>) aggregateIdObj;
+                @SuppressWarnings("unchecked") Map<String, Object> idMap = (Map<String, Object>) aggregateIdObj;
                 Object valueObj = idMap.get("value");
                 if (valueObj != null) {
                     return valueObj.toString();
@@ -199,8 +189,7 @@ public class TenantSchemaCreatedEventListener {
         }
 
         // Fallback: try to extract from nested structure
-        @SuppressWarnings("unchecked")
-        Map<String, Object> data = (Map<String, Object>) eventData.get("data");
+        @SuppressWarnings("unchecked") Map<String, Object> data = (Map<String, Object>) eventData.get("data");
         if (data != null) {
             Object aggregateId = data.get("aggregateId");
             if (aggregateId != null) {
@@ -211,8 +200,7 @@ public class TenantSchemaCreatedEventListener {
                     return (String) aggregateId;
                 }
                 if (aggregateId instanceof Map) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> idMap = (Map<String, Object>) aggregateId;
+                    @SuppressWarnings("unchecked") Map<String, Object> idMap = (Map<String, Object>) aggregateId;
                     Object valueObj = idMap.get("value");
                     if (valueObj != null) {
                         return valueObj.toString();
@@ -229,8 +217,7 @@ public class TenantSchemaCreatedEventListener {
         if (schemaNameObj != null) {
             return schemaNameObj.toString();
         }
-        @SuppressWarnings("unchecked")
-        Map<String, Object> data = (Map<String, Object>) eventData.get("data");
+        @SuppressWarnings("unchecked") Map<String, Object> data = (Map<String, Object>) eventData.get("data");
         if (data != null) {
             Object schemaName = data.get("schemaName");
             if (schemaName != null) {
@@ -266,12 +253,7 @@ public class TenantSchemaCreatedEventListener {
     private void runFlywayMigrations(String schemaName) {
         logger.info("Running Flyway migrations in tenant schema: schemaName={}", schemaName);
         try {
-            Flyway flyway = Flyway.configure()
-                    .dataSource(dataSource)
-                    .schemas(schemaName)
-                    .locations("classpath:db/migration")
-                    .baselineOnMigrate(true)
-                    .load();
+            Flyway flyway = Flyway.configure().dataSource(dataSource).schemas(schemaName).locations("classpath:db/migration").baselineOnMigrate(true).load();
 
             var migrateResult = flyway.migrate();
             int migrationsApplied = migrateResult.migrationsExecuted;

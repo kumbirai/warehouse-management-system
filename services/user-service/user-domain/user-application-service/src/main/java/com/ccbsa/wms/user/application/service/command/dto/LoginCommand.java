@@ -7,8 +7,7 @@ import com.ccbsa.common.application.command.Command;
  * <p>
  * Represents the intent to authenticate a user.
  */
-public final class LoginCommand
-        implements Command {
+public final class LoginCommand implements Command {
     private final String username;
     private final String password;
 

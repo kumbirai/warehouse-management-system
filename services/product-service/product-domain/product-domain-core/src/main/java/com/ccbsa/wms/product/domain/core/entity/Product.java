@@ -23,8 +23,7 @@ import com.ccbsa.wms.product.domain.core.valueobject.UnitOfMeasure;
  * multiple secondary barcodes - Product code cannot be changed after
  * creation - Primary barcode can be updated (must remain unique)
  */
-public class Product
-        extends TenantAwareAggregateRoot<ProductId> {
+public class Product extends TenantAwareAggregateRoot<ProductId> {
 
     // Value Objects
     private ProductCode productCode;
@@ -66,8 +65,7 @@ public class Product
      * @throws IllegalArgumentException if newDescription is invalid
      */
     public void updateDescription(String newDescription) {
-        if (newDescription == null || newDescription.trim()
-                .isEmpty()) {
+        if (newDescription == null || newDescription.trim().isEmpty()) {
             throw new IllegalArgumentException("Description cannot be null or empty");
         }
         if (newDescription.length() > 500) {
@@ -116,21 +114,17 @@ public class Product
      * @return true if product has the barcode
      */
     public boolean hasBarcode(String barcodeValue) {
-        if (barcodeValue == null || barcodeValue.trim()
-                .isEmpty()) {
+        if (barcodeValue == null || barcodeValue.trim().isEmpty()) {
             return false;
         }
 
         // Check primary barcode
-        if (primaryBarcode != null && primaryBarcode.getValue()
-                .equals(barcodeValue.trim())) {
+        if (primaryBarcode != null && primaryBarcode.getValue().equals(barcodeValue.trim())) {
             return true;
         }
 
         // Check secondary barcodes
-        return secondaryBarcodes.stream()
-                .anyMatch(barcode -> barcode.getValue()
-                        .equals(barcodeValue.trim()));
+        return secondaryBarcodes.stream().anyMatch(barcode -> barcode.getValue().equals(barcodeValue.trim()));
     }
 
     /**
@@ -147,8 +141,7 @@ public class Product
         if (barcode == null) {
             throw new IllegalArgumentException("SecondaryBarcode cannot be null");
         }
-        if (primaryBarcode != null && primaryBarcode.getValue()
-                .equals(barcode.getValue())) {
+        if (primaryBarcode != null && primaryBarcode.getValue().equals(barcode.getValue())) {
             throw new IllegalArgumentException("Secondary barcode cannot be the same as primary barcode");
         }
         if (hasBarcode(barcode.getValue())) {
@@ -428,8 +421,7 @@ public class Product
             if (product.productCode == null) {
                 throw new IllegalArgumentException("ProductCode is required");
             }
-            if (product.description == null || product.description.trim()
-                    .isEmpty()) {
+            if (product.description == null || product.description.trim().isEmpty()) {
                 throw new IllegalArgumentException("Description is required");
             }
             if (product.description.length() > 500) {

@@ -42,8 +42,7 @@ public final class NotificationId {
      * @throws IllegalArgumentException if value is invalid
      */
     public static NotificationId of(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("NotificationId string cannot be null or empty");
         }
         try {

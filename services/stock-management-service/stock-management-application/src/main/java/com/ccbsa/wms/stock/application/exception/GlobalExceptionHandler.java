@@ -27,8 +27,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * This handler extends {@link BaseGlobalExceptionHandler} to inherit common exception handling and adds stock-management-service-specific exception handlers.
  */
 @RestControllerAdvice
-public class GlobalExceptionHandler
-        extends BaseGlobalExceptionHandler {
+public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
 
     /**
      * Handles ConsignmentNotFoundException. Returns 404 Not Found.
@@ -44,10 +43,7 @@ public class GlobalExceptionHandler
 
         logger.warn("Consignment not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("CONSIGNMENT_NOT_FOUND", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("CONSIGNMENT_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
     }
 
@@ -65,10 +61,7 @@ public class GlobalExceptionHandler
 
         logger.warn("Invalid consignment reference: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("INVALID_CONSIGNMENT_REFERENCE", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("INVALID_CONSIGNMENT_REFERENCE", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
@@ -86,10 +79,7 @@ public class GlobalExceptionHandler
 
         logger.warn("Invalid quantity: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("INVALID_QUANTITY", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("INVALID_QUANTITY", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
@@ -107,10 +97,7 @@ public class GlobalExceptionHandler
 
         logger.warn("Invalid expiration date: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("INVALID_EXPIRATION_DATE", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("INVALID_EXPIRATION_DATE", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
@@ -128,10 +115,7 @@ public class GlobalExceptionHandler
 
         logger.warn("Access denied: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("ACCESS_DENIED", "You do not have permission to perform this action")
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("ACCESS_DENIED", "You do not have permission to perform this action").path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.FORBIDDEN, error);
     }
 }

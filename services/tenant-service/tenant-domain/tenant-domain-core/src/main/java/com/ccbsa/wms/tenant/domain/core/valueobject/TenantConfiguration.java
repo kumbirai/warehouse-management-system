@@ -16,8 +16,7 @@ public final class TenantConfiguration {
     private final Map<String, String> settings;
 
     private TenantConfiguration(String keycloakRealmName, boolean usePerTenantRealm, Map<String, String> settings) {
-        if (keycloakRealmName != null && keycloakRealmName.trim()
-                .isEmpty()) {
+        if (keycloakRealmName != null && keycloakRealmName.trim().isEmpty()) {
             throw new IllegalArgumentException("Keycloak realm name cannot be empty");
         }
         this.keycloakRealmName = keycloakRealmName != null ? keycloakRealmName.trim() : null;

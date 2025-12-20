@@ -1,5 +1,8 @@
-import { Container } from '@mui/material';
+import { Button } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
+
+import { DetailPageLayout } from '../../../components/layouts';
+import { Routes, getBreadcrumbs } from '../../../utils/navigationUtils';
 import { LocationDetail } from '../components/LocationDetail';
 import { useLocation } from '../hooks/useLocation';
 import { useAuth } from '../../../hooks/useAuth';
@@ -10,20 +13,44 @@ export const LocationDetailPage = () => {
   const { user } = useAuth();
 
   // Call hooks unconditionally before any early returns
-  const { location, isLoading, error } = useLocation(locationId || '', user?.tenantId || '');
+  const { location, isLoading, error, refetch } = useLocation(
+    locationId || '',
+    user?.tenantId || ''
+  );
 
+  // Handle missing location ID
   if (!locationId) {
-    navigate('/locations');
+    navigate(Routes.locations);
     return null;
   }
 
+  // Handle missing tenant ID
   if (!user?.tenantId) {
-    return <div>Tenant ID is required</div>;
+    return (
+      <DetailPageLayout
+        breadcrumbs={getBreadcrumbs.locationList()}
+        title="Location Details"
+        isLoading={false}
+        error="Tenant ID is required to view location details"
+      >
+        <div />
+      </DetailPageLayout>
+    );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <LocationDetail location={location} isLoading={isLoading} error={error} />
-    </Container>
+    <DetailPageLayout
+      breadcrumbs={getBreadcrumbs.locationDetail(location?.code || '...')}
+      title={location?.code || 'Loading...'}
+      actions={
+        <Button variant="outlined" onClick={() => navigate(Routes.locations)}>
+          Back to List
+        </Button>
+      }
+      isLoading={isLoading}
+      error={error?.message || null}
+    >
+      <LocationDetail location={location} onStatusUpdate={refetch} />
+    </DetailPageLayout>
   );
 };

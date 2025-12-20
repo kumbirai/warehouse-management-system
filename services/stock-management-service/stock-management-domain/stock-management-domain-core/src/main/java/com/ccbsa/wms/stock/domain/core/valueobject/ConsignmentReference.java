@@ -26,12 +26,10 @@ public final class ConsignmentReference {
      * @throws IllegalArgumentException if validation fails
      */
     private void validate(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("ConsignmentReference cannot be null or empty");
         }
-        if (value.trim()
-                .length() > MAX_LENGTH) {
+        if (value.trim().length() > MAX_LENGTH) {
             throw new IllegalArgumentException(String.format("ConsignmentReference cannot exceed %d characters", MAX_LENGTH));
         }
     }

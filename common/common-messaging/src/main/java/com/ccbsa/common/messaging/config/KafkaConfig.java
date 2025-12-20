@@ -146,8 +146,7 @@ public class KafkaConfig {
      * Explicitly uses kafkaObjectMapper to ensure type information is included in Kafka messages.
      */
     @Bean
-    public ProducerFactory<String, Object> producerFactory(
-            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ProducerFactory<String, Object> producerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -183,8 +182,7 @@ public class KafkaConfig {
      * Explicitly uses kafkaObjectMapper to ensure type information is included.
      */
     @Bean
-    public JsonSerializer<Object> jsonSerializer(
-            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public JsonSerializer<Object> jsonSerializer(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         JsonSerializer<Object> serializer = new JsonSerializer<>(kafkaObjectMapper);
         // Type information is handled by ObjectMapper configuration, not headers
         serializer.setAddTypeInfo(false);
@@ -205,8 +203,7 @@ public class KafkaConfig {
      * Explicitly uses kafkaObjectMapper to ensure type information is properly deserialized.
      */
     @Bean
-    public ConsumerFactory<String, Object> consumerFactory(
-            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ConsumerFactory<String, Object> consumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
@@ -259,8 +256,7 @@ public class KafkaConfig {
         factory.setConsumerFactory(consumerFactory);
 
         // Manual acknowledgment mode for reliable processing
-        factory.getContainerProperties()
-                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         // Concurrency for parallel processing
         factory.setConcurrency(concurrency);
@@ -281,9 +277,7 @@ public class KafkaConfig {
      * TRANSACTIONAL_ID_CONFIG set.
      */
     @Bean
-    @ConditionalOnProperty(name = "spring.kafka.producer.transaction-enabled",
-            havingValue = "true",
-            matchIfMissing = false)
+    @ConditionalOnProperty(name = "spring.kafka.producer.transaction-enabled", havingValue = "true", matchIfMissing = false)
     public KafkaTransactionManager<String, Object> kafkaTransactionManager(ProducerFactory<String, Object> producerFactory) {
         return new KafkaTransactionManager<>(producerFactory);
     }
@@ -292,9 +286,7 @@ public class KafkaConfig {
      * Mixin interface to add type information to DomainEvent. This allows adding Jackson annotations without modifying domain core, maintaining pure Java domain per architecture
      * guidelines.
      */
-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS,
-            include = JsonTypeInfo.As.PROPERTY,
-            property = "@class")
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
     private interface DomainEventTypeInfoMixin {
         // Empty interface - annotations are inherited by DomainEvent
     }
@@ -304,9 +296,7 @@ public class KafkaConfig {
      * the default WRAPPER_ARRAY format. This fixes deserialization
      * errors when consuming events as Object.class.
      */
-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS,
-            include = JsonTypeInfo.As.PROPERTY,
-            property = "@class")
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
     private interface ObjectTypeInfoMixin {
         // Empty interface - annotations are inherited by Object.class
     }

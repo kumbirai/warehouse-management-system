@@ -21,33 +21,26 @@ import jakarta.persistence.Table;
  * The schema "tenant_schema" is a placeholder that will be dynamically replaced with the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
  */
 @Entity
-@Table(name = "consignment_line_items",
-        schema = "tenant_schema")
+@Table(name = "consignment_line_items", schema = "tenant_schema")
 public class ConsignmentLineItemEntity {
     @Id
-    @Column(name = "id",
-            nullable = false)
+    @Column(name = "id", nullable = false)
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "consignment_id",
-            nullable = false)
+    @JoinColumn(name = "consignment_id", nullable = false)
     private StockConsignmentEntity consignment;
 
-    @Column(name = "product_code",
-            length = 50,
-            nullable = false)
+    @Column(name = "product_code", length = 50, nullable = false)
     private String productCode;
 
-    @Column(name = "quantity",
-            nullable = false)
+    @Column(name = "quantity", nullable = false)
     private int quantity;
 
     @Column(name = "expiration_date")
     private LocalDate expirationDate;
 
-    @Column(name = "created_at",
-            nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     // JPA requires no-arg constructor

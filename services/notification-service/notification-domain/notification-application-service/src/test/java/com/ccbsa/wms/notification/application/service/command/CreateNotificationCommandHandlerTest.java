@@ -62,24 +62,17 @@ class CreateNotificationCommandHandlerTest {
     @SuppressWarnings("unchecked")
     void shouldPublishNotificationCreatedEventAfterCommit() {
         // Given
-        TenantId tenantId = TenantId.of(UUID.randomUUID()
-                .toString());
-        CreateNotificationCommand command = CreateNotificationCommand.builder()
-                .tenantId(tenantId)
-                .recipientUserId(UserId.of(UUID.randomUUID()
-                        .toString()))
-                .title(Title.of("Tenant Activated"))
-                .message(Message.of("Welcome to WMS"))
-                .type(NotificationType.TENANT_ACTIVATED)
-                .build();
+        TenantId tenantId = TenantId.of(UUID.randomUUID().toString());
+        CreateNotificationCommand command =
+                CreateNotificationCommand.builder().tenantId(tenantId).recipientUserId(UserId.of(UUID.randomUUID().toString())).title(Title.of("Tenant Activated"))
+                        .message(Message.of("Welcome to WMS")).type(NotificationType.TENANT_ACTIVATED).build();
 
         when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
         handler.handle(command);
 
-        TransactionSynchronizationManager.getSynchronizations()
-                .forEach(TransactionSynchronization::afterCommit);
+        TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
 
         // Then
         ArgumentCaptor<List<DomainEvent<?>>> eventsCaptor = ArgumentCaptor.forClass(List.class);

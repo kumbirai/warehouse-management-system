@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ccbsa.common.application.api.ApiMeta;
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.application.api.ApiResponseBuilder;
 import com.ccbsa.wms.location.application.dto.mapper.LocationDTOMapper;
@@ -33,32 +34,24 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/locations")
-@Tag(name = "Location Queries",
-        description = "Location query operations")
+@Tag(name = "Location Queries", description = "Location query operations")
 public class LocationQueryController {
     private final GetLocationQueryHandler getLocationQueryHandler;
     private final ListLocationsQueryHandler listLocationsQueryHandler;
     private final LocationDTOMapper mapper;
 
-    public LocationQueryController(GetLocationQueryHandler getLocationQueryHandler,
-                                   ListLocationsQueryHandler listLocationsQueryHandler,
-                                   LocationDTOMapper mapper) {
+    public LocationQueryController(GetLocationQueryHandler getLocationQueryHandler, ListLocationsQueryHandler listLocationsQueryHandler, LocationDTOMapper mapper) {
         this.getLocationQueryHandler = getLocationQueryHandler;
         this.listLocationsQueryHandler = listLocationsQueryHandler;
         this.mapper = mapper;
     }
 
     @GetMapping
-    @Operation(summary = "List Locations",
-            description = "Retrieves a list of locations with optional filtering and pagination")
+    @Operation(summary = "List Locations", description = "Retrieves a list of locations with optional filtering and pagination")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
-    public ResponseEntity<ApiResponse<ListLocationsQueryResultDTO>> listLocations(
-            @RequestHeader("X-Tenant-Id") String tenantId,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) String zone,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String search) {
+    public ResponseEntity<ApiResponse<ListLocationsQueryResultDTO>> listLocations(@RequestHeader("X-Tenant-Id") String tenantId, @RequestParam(required = false) Integer page,
+                                                                                  @RequestParam(required = false) Integer size, @RequestParam(required = false) String zone,
+                                                                                  @RequestParam(required = false) String status, @RequestParam(required = false) String search) {
         // Map to query
         ListLocationsQuery query = mapper.toListLocationsQuery(tenantId, page, size, zone, status, search);
 
@@ -68,16 +61,20 @@ public class LocationQueryController {
         // Map result to DTO
         ListLocationsQueryResultDTO resultDTO = mapper.toListLocationsQueryResultDTO(result);
 
-        return ApiResponseBuilder.ok(resultDTO);
+        // Build pagination metadata
+        int resultPage = result.getPage() != null ? result.getPage() : 0;
+        int resultSize = result.getSize() != null ? result.getSize() : 100;
+        long totalElements = result.getTotalCount() != null ? result.getTotalCount() : 0L;
+        ApiMeta.Pagination pagination = ApiMeta.Pagination.of(resultPage, resultSize, totalElements);
+        ApiMeta meta = ApiMeta.builder().pagination(pagination).build();
+
+        return ApiResponseBuilder.ok(resultDTO, null, meta);
     }
 
     @GetMapping("/{locationId}")
-    @Operation(summary = "Get Location by ID",
-            description = "Retrieves a location by ID")
+    @Operation(summary = "Get Location by ID", description = "Retrieves a location by ID")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
-    public ResponseEntity<ApiResponse<LocationQueryResultDTO>> getLocation(
-            @PathVariable String locationId,
-            @RequestHeader("X-Tenant-Id") String tenantId) {
+    public ResponseEntity<ApiResponse<LocationQueryResultDTO>> getLocation(@PathVariable String locationId, @RequestHeader("X-Tenant-Id") String tenantId) {
         // Map to query
         GetLocationQuery query = mapper.toGetLocationQuery(locationId, tenantId);
 

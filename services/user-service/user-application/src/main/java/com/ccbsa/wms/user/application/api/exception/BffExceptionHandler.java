@@ -47,8 +47,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * </ul>
  */
 @RestControllerAdvice(basePackages = "com.ccbsa.wms.user.application.api")
-public class BffExceptionHandler
-        extends BaseGlobalExceptionHandler {
+public class BffExceptionHandler extends BaseGlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(BffExceptionHandler.class);
 
     /**
@@ -65,10 +64,7 @@ public class BffExceptionHandler
 
         logger.warn("Authentication failed: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("AUTHENTICATION_FAILED", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("AUTHENTICATION_FAILED", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.UNAUTHORIZED, error);
     }
 
@@ -101,10 +97,7 @@ public class BffExceptionHandler
 
         logger.warn("Tenant not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("TENANT_NOT_FOUND", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("TENANT_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
     }
 
@@ -122,10 +115,7 @@ public class BffExceptionHandler
 
         logger.warn("Tenant not active: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("TENANT_NOT_ACTIVE", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("TENANT_NOT_ACTIVE", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
@@ -157,10 +147,7 @@ public class BffExceptionHandler
 
         logger.warn("User not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("USER_NOT_FOUND", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("USER_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
     }
 
@@ -178,10 +165,7 @@ public class BffExceptionHandler
 
         logger.warn("Duplicate user: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("DUPLICATE_USER", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("DUPLICATE_USER", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
@@ -199,10 +183,7 @@ public class BffExceptionHandler
 
         logger.error("User creation failed: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path, ex);
 
-        ApiError error = ApiError.builder("USER_CREATION_FAILED", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("USER_CREATION_FAILED", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, error);
     }
 
@@ -220,10 +201,7 @@ public class BffExceptionHandler
 
         logger.warn("Insufficient privileges: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("INSUFFICIENT_PRIVILEGES", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("INSUFFICIENT_PRIVILEGES", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.FORBIDDEN, error);
     }
 
@@ -241,10 +219,7 @@ public class BffExceptionHandler
 
         logger.warn("Tenant mismatch: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("TENANT_MISMATCH", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("TENANT_MISMATCH", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.FORBIDDEN, error);
     }
 
@@ -262,10 +237,7 @@ public class BffExceptionHandler
 
         logger.error("Role assignment failed: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path, ex);
 
-        ApiError error = ApiError.builder("ROLE_ASSIGNMENT_FAILED", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("ROLE_ASSIGNMENT_FAILED", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, error);
     }
 }

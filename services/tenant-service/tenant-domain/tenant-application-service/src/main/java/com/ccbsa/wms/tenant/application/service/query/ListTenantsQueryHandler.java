@@ -13,8 +13,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Query handler for listing tenants with pagination support.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "Ports are injected singletons and immutable")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Ports are injected singletons and immutable")
 public class ListTenantsQueryHandler {
     private final TenantReadRepository tenantReadRepository;
 

@@ -19,8 +19,7 @@ class ApiErrorTest {
         String message = "Error message";
 
         // When
-        ApiError error = ApiError.builder(code, message)
-                .build();
+        ApiError error = ApiError.builder(code, message).build();
 
         // Then
         assertThat(error).isNotNull();
@@ -44,12 +43,7 @@ class ApiErrorTest {
         Instant timestamp = Instant.now();
 
         // When
-        ApiError error = ApiError.builder(code, message)
-                .details(details)
-                .path(path)
-                .requestId(requestId)
-                .timestamp(timestamp)
-                .build();
+        ApiError error = ApiError.builder(code, message).details(details).path(path).requestId(requestId).timestamp(timestamp).build();
 
         // Then
         assertThat(error).isNotNull();
@@ -68,8 +62,7 @@ class ApiErrorTest {
         Instant before = Instant.now();
 
         // When
-        ApiError error = ApiError.builder("ERROR_CODE", "Error message")
-                .build();
+        ApiError error = ApiError.builder("ERROR_CODE", "Error message").build();
 
         // Then
         Instant after = Instant.now();
@@ -82,64 +75,49 @@ class ApiErrorTest {
     @DisplayName("Should throw exception when code is null")
     void shouldThrowExceptionWhenCodeIsNull() {
         // When/Then
-        assertThatThrownBy(() -> ApiError.builder(null, "message")
-                .build()).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Error code is required");
+        assertThatThrownBy(() -> ApiError.builder(null, "message").build()).isInstanceOf(IllegalStateException.class).hasMessageContaining("Error code is required");
     }
 
     @Test
     @DisplayName("Should throw exception when code is empty")
     void shouldThrowExceptionWhenCodeIsEmpty() {
         // When/Then
-        assertThatThrownBy(() -> ApiError.builder("", "message")
-                .build()).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Error code is required");
+        assertThatThrownBy(() -> ApiError.builder("", "message").build()).isInstanceOf(IllegalStateException.class).hasMessageContaining("Error code is required");
     }
 
     @Test
     @DisplayName("Should throw exception when code is blank")
     void shouldThrowExceptionWhenCodeIsBlank() {
         // When/Then
-        assertThatThrownBy(() -> ApiError.builder("   ", "message")
-                .build()).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Error code is required");
+        assertThatThrownBy(() -> ApiError.builder("   ", "message").build()).isInstanceOf(IllegalStateException.class).hasMessageContaining("Error code is required");
     }
 
     @Test
     @DisplayName("Should throw exception when message is null")
     void shouldThrowExceptionWhenMessageIsNull() {
         // When/Then
-        assertThatThrownBy(() -> ApiError.builder("ERROR_CODE", null)
-                .build()).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Error message is required");
+        assertThatThrownBy(() -> ApiError.builder("ERROR_CODE", null).build()).isInstanceOf(IllegalStateException.class).hasMessageContaining("Error message is required");
     }
 
     @Test
     @DisplayName("Should throw exception when message is empty")
     void shouldThrowExceptionWhenMessageIsEmpty() {
         // When/Then
-        assertThatThrownBy(() -> ApiError.builder("ERROR_CODE", "")
-                .build()).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Error message is required");
+        assertThatThrownBy(() -> ApiError.builder("ERROR_CODE", "").build()).isInstanceOf(IllegalStateException.class).hasMessageContaining("Error message is required");
     }
 
     @Test
     @DisplayName("Should throw exception when message is blank")
     void shouldThrowExceptionWhenMessageIsBlank() {
         // When/Then
-        assertThatThrownBy(() -> ApiError.builder("ERROR_CODE", "   ")
-                .build()).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Error message is required");
+        assertThatThrownBy(() -> ApiError.builder("ERROR_CODE", "   ").build()).isInstanceOf(IllegalStateException.class).hasMessageContaining("Error message is required");
     }
 
     @Test
     @DisplayName("Should create ApiError using builder pattern")
     void shouldCreateApiErrorUsingBuilderPattern() {
         // When
-        ApiError error = ApiError.builder()
-                .code("ERROR_CODE")
-                .message("Error message")
-                .build();
+        ApiError error = ApiError.builder().code("ERROR_CODE").message("Error message").build();
 
         // Then
         assertThat(error).isNotNull();

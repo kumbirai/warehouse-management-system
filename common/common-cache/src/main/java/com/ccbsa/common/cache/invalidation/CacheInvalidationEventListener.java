@@ -58,8 +58,7 @@ public abstract class CacheInvalidationEventListener {
     protected void invalidateForEvent(DomainEvent<?> event, String namespace) {
         TenantId tenantId = extractTenantId(event);
 
-        log.debug("Invalidating caches for event: {} in namespace: {}", event.getClass()
-                .getSimpleName(), namespace);
+        log.debug("Invalidating caches for event: {} in namespace: {}", event.getClass().getSimpleName(), namespace);
 
         // Strategy 1: Invalidate single entity if event contains aggregate ID
         if (event.getAggregateId() != null) {
@@ -85,8 +84,7 @@ public abstract class CacheInvalidationEventListener {
     protected TenantId extractTenantId(DomainEvent<?> event) {
         // Strategy 1: Check for getTenantId() method (UserEvent, ProductEvent, etc.)
         try {
-            Method getTenantIdMethod = event.getClass()
-                    .getMethod("getTenantId");
+            Method getTenantIdMethod = event.getClass().getMethod("getTenantId");
             Object tenantIdObj = getTenantIdMethod.invoke(event);
             if (tenantIdObj instanceof TenantId tenantId) {
                 return tenantId;
@@ -96,8 +94,7 @@ public abstract class CacheInvalidationEventListener {
         } catch (NoSuchMethodException e) {
             // Method doesn't exist, try next strategy
         } catch (Exception e) {
-            log.warn("Failed to extract tenant ID via getTenantId() method from event: {}", event.getClass()
-                    .getSimpleName(), e);
+            log.warn("Failed to extract tenant ID via getTenantId() method from event: {}", event.getClass().getSimpleName(), e);
         }
 
         // Strategy 2: For TenantEvent, aggregateId IS the tenant ID
@@ -119,8 +116,7 @@ public abstract class CacheInvalidationEventListener {
             // TenantContext not available
         }
 
-        log.error("Failed to extract tenant ID from event: {}. Event: {}", event.getClass()
-                .getSimpleName(), event);
+        log.error("Failed to extract tenant ID from event: {}. Event: {}", event.getClass().getSimpleName(), event);
         throw new IllegalArgumentException("Event must contain tenant ID", new IllegalStateException("Cannot determine tenant ID from event"));
     }
 }

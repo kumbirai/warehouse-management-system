@@ -57,18 +57,12 @@ public class ConsignmentCsvParser {
 
         List<ConsignmentCsvRow> rows = new ArrayList<>();
 
-        try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8); CSVParser parser = CSVFormat.Builder.create()
-                .setHeader()
-                .setSkipHeaderRecord(true)
-                .setIgnoreHeaderCase(true)
-                .setTrim(true)
-                .setIgnoreEmptyLines(true)
-                .build()
-                .parse(reader)) {
+        try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+             CSVParser parser = CSVFormat.Builder.create().setHeader().setSkipHeaderRecord(true).setIgnoreHeaderCase(true).setTrim(true).setIgnoreEmptyLines(true).build()
+                     .parse(reader)) {
 
             // Validate required headers
-            validateHeaders(parser.getHeaderMap()
-                    .keySet());
+            validateHeaders(parser.getHeaderMap().keySet());
 
             long rowNumber = 1; // Start from 1 (header is row 0)
             for (CSVRecord record : parser) {
@@ -80,15 +74,10 @@ public class ConsignmentCsvParser {
                 }
 
                 try {
-                    ConsignmentCsvRow row = ConsignmentCsvRow.builder()
-                            .rowNumber(rowNumber)
-                            .consignmentReference(getValue(record, "ConsignmentReference"))
-                            .productCode(getValue(record, "ProductCode"))
-                            .quantity(parseInteger(getValue(record, "Quantity")))
-                            .expirationDate(parseOptionalDate(getValue(record, "ExpirationDate")))
-                            .receivedDate(parseDateTime(getValue(record, "ReceivedDate")))
-                            .warehouseId(getValue(record, "WarehouseId"))
-                            .build();
+                    ConsignmentCsvRow row = ConsignmentCsvRow.builder().rowNumber(rowNumber).consignmentReference(getValue(record, "ConsignmentReference"))
+                            .productCode(getValue(record, "ProductCode")).quantity(parseInteger(getValue(record, "Quantity")))
+                            .expirationDate(parseOptionalDate(getValue(record, "ExpirationDate"))).receivedDate(parseDateTime(getValue(record, "ReceivedDate")))
+                            .warehouseId(getValue(record, "WarehouseId")).build();
 
                     rows.add(row);
                 } catch (IllegalArgumentException | DateTimeParseException e) {
@@ -110,8 +99,7 @@ public class ConsignmentCsvParser {
      */
     private void validateHeaders(Set<String> headers) {
         for (String requiredColumn : REQUIRED_COLUMNS) {
-            boolean found = headers.stream()
-                    .anyMatch(header -> header.equalsIgnoreCase(requiredColumn));
+            boolean found = headers.stream().anyMatch(header -> header.equalsIgnoreCase(requiredColumn));
             if (!found) {
                 throw new IllegalArgumentException(String.format("Required column '%s' is missing from CSV header", requiredColumn));
             }
@@ -128,17 +116,13 @@ public class ConsignmentCsvParser {
     private String getValue(CSVRecord record, String columnName) {
         try {
             String value = record.get(columnName);
-            return value != null && !value.trim()
-                    .isEmpty() ? value.trim() : null;
+            return value != null && !value.trim().isEmpty() ? value.trim() : null;
         } catch (IllegalArgumentException e) {
             // Column not found - try case-insensitive search
-            for (String header : record.getParser()
-                    .getHeaderMap()
-                    .keySet()) {
+            for (String header : record.getParser().getHeaderMap().keySet()) {
                 if (header.equalsIgnoreCase(columnName)) {
                     String value = record.get(header);
-                    return value != null && !value.trim()
-                            .isEmpty() ? value.trim() : null;
+                    return value != null && !value.trim().isEmpty() ? value.trim() : null;
                 }
             }
             return null;
@@ -153,8 +137,7 @@ public class ConsignmentCsvParser {
      * @throws IllegalArgumentException if value cannot be parsed
      */
     private int parseInteger(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("Quantity is required");
         }
         try {
@@ -172,8 +155,7 @@ public class ConsignmentCsvParser {
      * @throws DateTimeParseException if value cannot be parsed
      */
     private LocalDate parseOptionalDate(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             return null;
         }
         try {
@@ -192,8 +174,7 @@ public class ConsignmentCsvParser {
      * @throws DateTimeParseException   if value cannot be parsed
      */
     private LocalDateTime parseDateTime(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("ReceivedDate is required");
         }
         String trimmed = value.trim();
@@ -203,8 +184,7 @@ public class ConsignmentCsvParser {
         } catch (DateTimeParseException e) {
             try {
                 // Try ISO date format (assume midnight)
-                return LocalDate.parse(trimmed, DATE_FORMATTER)
-                        .atStartOfDay();
+                return LocalDate.parse(trimmed, DATE_FORMATTER).atStartOfDay();
             } catch (DateTimeParseException e2) {
                 throw new DateTimeParseException(String.format("Invalid date-time format: %s", value), value, 0, e2);
             }

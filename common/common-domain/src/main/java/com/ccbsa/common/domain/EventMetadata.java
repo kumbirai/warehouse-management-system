@@ -111,8 +111,7 @@ public final class EventMetadata {
          * @return this builder
          */
         public Builder correlationId(String correlationId) {
-            if (correlationId != null && correlationId.trim()
-                    .isEmpty()) {
+            if (correlationId != null && correlationId.trim().isEmpty()) {
                 throw new IllegalArgumentException("Correlation ID cannot be empty");
             }
             this.correlationId = correlationId != null ? correlationId.trim() : null;
@@ -137,8 +136,7 @@ public final class EventMetadata {
          * @return this builder
          */
         public Builder userId(String userId) {
-            if (userId != null && userId.trim()
-                    .isEmpty()) {
+            if (userId != null && userId.trim().isEmpty()) {
                 throw new IllegalArgumentException("User ID cannot be empty");
             }
             this.userId = userId != null ? userId.trim() : null;

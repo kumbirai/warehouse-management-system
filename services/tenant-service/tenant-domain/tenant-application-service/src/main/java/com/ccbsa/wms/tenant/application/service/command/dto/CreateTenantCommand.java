@@ -11,8 +11,7 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantName;
  * <p>
  * Represents the intent to create a new tenant.
  */
-public final class CreateTenantCommand
-        implements Command {
+public final class CreateTenantCommand implements Command {
     private final TenantId tenantId;
     private final TenantName name;
     private final ContactInformation contactInformation;

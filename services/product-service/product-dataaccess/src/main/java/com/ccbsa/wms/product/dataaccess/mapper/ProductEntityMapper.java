@@ -37,17 +37,12 @@ public class ProductEntityMapper {
         }
 
         ProductEntity entity = new ProductEntity();
-        entity.setId(product.getId()
-                .getValue());
-        entity.setTenantId(product.getTenantId()
-                .getValue());
-        entity.setProductCode(product.getProductCode()
-                .getValue());
+        entity.setId(product.getId().getValue());
+        entity.setTenantId(product.getTenantId().getValue());
+        entity.setProductCode(product.getProductCode().getValue());
         entity.setDescription(product.getDescription());
-        entity.setPrimaryBarcode(product.getPrimaryBarcode()
-                .getValue());
-        entity.setPrimaryBarcodeType(product.getPrimaryBarcode()
-                .getType());
+        entity.setPrimaryBarcode(product.getPrimaryBarcode().getValue());
+        entity.setPrimaryBarcodeType(product.getPrimaryBarcode().getType());
         entity.setUnitOfMeasure(product.getUnitOfMeasure());
         entity.setCategory(product.getCategory());
         entity.setBrand(product.getBrand());
@@ -90,20 +85,13 @@ public class ProductEntityMapper {
             throw new IllegalArgumentException("ProductEntity cannot be null");
         }
 
-        Product.Builder builder = Product.builder()
-                .productId(ProductId.of(entity.getId()))
-                .tenantId(TenantId.of(entity.getTenantId()))
-                .productCode(ProductCode.of(entity.getProductCode()))
-                .description(entity.getDescription())
-                .primaryBarcode(ProductBarcode.of(entity.getPrimaryBarcode(), entity.getPrimaryBarcodeType()))
-                .unitOfMeasure(entity.getUnitOfMeasure())
-                .createdAt(entity.getCreatedAt())
-                .lastModifiedAt(entity.getLastModifiedAt())
-                .version(entity.getVersion());
+        Product.Builder builder =
+                Product.builder().productId(ProductId.of(entity.getId())).tenantId(TenantId.of(entity.getTenantId())).productCode(ProductCode.of(entity.getProductCode()))
+                        .description(entity.getDescription()).primaryBarcode(ProductBarcode.of(entity.getPrimaryBarcode(), entity.getPrimaryBarcodeType()))
+                        .unitOfMeasure(entity.getUnitOfMeasure()).createdAt(entity.getCreatedAt()).lastModifiedAt(entity.getLastModifiedAt()).version(entity.getVersion());
 
         // Map secondary barcodes
-        if (entity.getSecondaryBarcodes() != null && !entity.getSecondaryBarcodes()
-                .isEmpty()) {
+        if (entity.getSecondaryBarcodes() != null && !entity.getSecondaryBarcodes().isEmpty()) {
             List<ProductBarcode> secondaryBarcodes = new ArrayList<>();
             for (ProductBarcodeEntity barcodeEntity : entity.getSecondaryBarcodes()) {
                 ProductBarcode barcode = ProductBarcode.of(barcodeEntity.getBarcode(), barcodeEntity.getBarcodeType());
@@ -113,14 +101,10 @@ public class ProductEntityMapper {
         }
 
         // Set optional fields
-        if (entity.getCategory() != null && !entity.getCategory()
-                .trim()
-                .isEmpty()) {
+        if (entity.getCategory() != null && !entity.getCategory().trim().isEmpty()) {
             builder.category(entity.getCategory());
         }
-        if (entity.getBrand() != null && !entity.getBrand()
-                .trim()
-                .isEmpty()) {
+        if (entity.getBrand() != null && !entity.getBrand().trim().isEmpty()) {
             builder.brand(entity.getBrand());
         }
 

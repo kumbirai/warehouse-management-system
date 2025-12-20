@@ -30,8 +30,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/api/v1/notifications")
-@Tag(name = "Notification Queries",
-        description = "Notification query operations")
+@Tag(name = "Notification Queries", description = "Notification query operations")
 public class NotificationQueryController {
     private final GetNotificationQueryHandler getNotificationQueryHandler;
     private final ListNotificationsQueryHandler listNotificationsQueryHandler;
@@ -45,30 +44,22 @@ public class NotificationQueryController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get Notification by ID",
-            description = "Retrieves a notification by ID")
+    @Operation(summary = "Get Notification by ID", description = "Retrieves a notification by ID")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<NotificationResponse>> getNotification(
-            @PathVariable String id) {
+    public ResponseEntity<ApiResponse<NotificationResponse>> getNotification(@PathVariable String id) {
         GetNotificationQueryResult result = getNotificationQueryHandler.handle(mapper.toGetNotificationQuery(id));
         NotificationResponse response = mapper.toNotificationResponse(result);
         return ApiResponseBuilder.ok(response);
     }
 
     @GetMapping
-    @Operation(summary = "List Notifications",
-            description = "Lists notifications for the authenticated user with optional filtering")
+    @Operation(summary = "List Notifications", description = "Lists notifications for the authenticated user with optional filtering")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<List<NotificationResponse>>> listNotifications(
-            @RequestHeader(value = "X-Tenant-Id",
-                    required = false) String tenantId,
-            @RequestParam(required = false) String recipientUserId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String type,
-            @RequestParam(required = false,
-                    defaultValue = "0") Integer page,
-            @RequestParam(required = false,
-                    defaultValue = "20") Integer size) {
+    public ResponseEntity<ApiResponse<List<NotificationResponse>>> listNotifications(@RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
+                                                                                     @RequestParam(required = false) String recipientUserId,
+                                                                                     @RequestParam(required = false) String status, @RequestParam(required = false) String type,
+                                                                                     @RequestParam(required = false, defaultValue = "0") Integer page,
+                                                                                     @RequestParam(required = false, defaultValue = "20") Integer size) {
         ListNotificationsQueryResult result = listNotificationsQueryHandler.handle(mapper.toListNotificationsQuery(tenantId, recipientUserId, status, type, page, size));
         List<NotificationResponse> responses = mapper.toNotificationResponseList(result.getItems());
         return ApiResponseBuilder.ok(responses);

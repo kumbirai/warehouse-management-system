@@ -16,8 +16,7 @@ import com.ccbsa.wms.user.dataaccess.entity.UserEntity;
  * Spring Data JPA repository for UserEntity. Provides standard CRUD operations and custom query methods.
  */
 @Repository
-public interface UserJpaRepository
-        extends JpaRepository<UserEntity, String> {
+public interface UserJpaRepository extends JpaRepository<UserEntity, String> {
     /**
      * Finds a user by tenant ID and user ID.
      *
@@ -93,9 +92,8 @@ public interface UserJpaRepository
      * @param searchTerm Search term to match against username or email
      * @return List of users matching the search term
      */
-    @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId AND " +
-            "(LOWER(u.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-            "LOWER(u.emailAddress) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+    @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId AND " + "(LOWER(u.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR "
+            + "LOWER(u.emailAddress) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
     List<UserEntity> findByTenantIdAndSearchTerm(@Param("tenantId") String tenantId, @Param("searchTerm") String searchTerm);
 
     /**
@@ -106,11 +104,9 @@ public interface UserJpaRepository
      * @param searchTerm Search term to match against username or email
      * @return List of users matching the search term and status
      */
-    @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId AND u.status = :status AND " +
-            "(LOWER(u.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-            "LOWER(u.emailAddress) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    List<UserEntity> findByTenantIdAndStatusAndSearchTerm(@Param("tenantId") String tenantId,
-                                                          @Param("status") UserEntity.UserStatus status,
+    @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId AND u.status = :status AND " + "(LOWER(u.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR "
+            + "LOWER(u.emailAddress) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+    List<UserEntity> findByTenantIdAndStatusAndSearchTerm(@Param("tenantId") String tenantId, @Param("status") UserEntity.UserStatus status,
                                                           @Param("searchTerm") String searchTerm);
 }
 

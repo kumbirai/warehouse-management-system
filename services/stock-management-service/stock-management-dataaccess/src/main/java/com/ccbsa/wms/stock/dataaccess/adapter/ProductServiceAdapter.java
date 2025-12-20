@@ -27,8 +27,7 @@ import com.ccbsa.wms.stock.application.service.port.service.ProductServicePort;
  * Implements ProductServicePort for retrieving product information from product-service. Calls product-service REST API to validate product codes and barcodes.
  */
 @Component
-public class ProductServiceAdapter
-        implements ProductServicePort {
+public class ProductServiceAdapter implements ProductServicePort {
     private static final Logger logger = LoggerFactory.getLogger(ProductServiceAdapter.class);
 
     private static final ParameterizedTypeReference<ApiResponse<ProductResponse>> PRODUCT_RESPONSE_TYPE = new ParameterizedTypeReference<ApiResponse<ProductResponse>>() {
@@ -41,8 +40,7 @@ public class ProductServiceAdapter
     private final RestTemplate restTemplate;
     private final String productServiceUrl;
 
-    public ProductServiceAdapter(RestTemplate restTemplate,
-                                 @Value("${product.service.url:http://product-service:8080}") String productServiceUrl) {
+    public ProductServiceAdapter(RestTemplate restTemplate, @Value("${product.service.url:http://product-service:8080}") String productServiceUrl) {
         this.restTemplate = restTemplate;
         this.productServiceUrl = productServiceUrl;
     }
@@ -98,19 +96,14 @@ public class ProductServiceAdapter
             headers.set("X-Tenant-Id", tenantId.getValue());
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
-            ResponseEntity<ApiResponse<ProductResponse>> response = restTemplate.exchange(
-                    url, HttpMethod.GET, entity, PRODUCT_RESPONSE_TYPE);
+            ResponseEntity<ApiResponse<ProductResponse>> response = restTemplate.exchange(url, HttpMethod.GET, entity, PRODUCT_RESPONSE_TYPE);
 
             ApiResponse<ProductResponse> responseBody = response.getBody();
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
                 ProductResponse productResponse = responseBody.getData();
-                ProductInfo productInfo = new ProductInfo(
-                        productResponse.getProductId(),
-                        productResponse.getProductCode(),
-                        productResponse.getDescription(),
-                        productResponse.getPrimaryBarcode());
-                logger.debug("Product retrieved by code: productId={}, productCode={}",
-                        productResponse.getProductId(), productResponse.getProductCode());
+                ProductInfo productInfo =
+                        new ProductInfo(productResponse.getProductId(), productResponse.getProductCode(), productResponse.getDescription(), productResponse.getPrimaryBarcode());
+                logger.debug("Product retrieved by code: productId={}, productCode={}", productResponse.getProductId(), productResponse.getProductCode());
                 return Optional.of(productInfo);
             }
 

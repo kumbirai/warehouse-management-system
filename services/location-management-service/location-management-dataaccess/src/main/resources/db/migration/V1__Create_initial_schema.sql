@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS locations
 (
     500
 ),
+    parent_location_id UUID,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_modified_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     version BIGINT NOT NULL DEFAULT 0,
@@ -135,6 +136,8 @@ COMMENT
 ON COLUMN locations.maximum_quantity IS 'Maximum quantity capacity (null if unlimited)';
 COMMENT
 ON COLUMN locations.description IS 'Optional location description';
+COMMENT
+ON COLUMN locations.parent_location_id IS 'Parent location identifier for hierarchical relationships. NULL for warehouse locations (root of hierarchy).';
 COMMENT
 ON COLUMN locations.created_at IS 'Timestamp when location was created';
 COMMENT

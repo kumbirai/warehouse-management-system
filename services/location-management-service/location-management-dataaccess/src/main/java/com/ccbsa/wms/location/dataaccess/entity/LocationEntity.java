@@ -28,88 +28,64 @@ import jakarta.persistence.Version;
  * the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
  */
 @Entity
-@Table(name = "locations",
-        schema = "tenant_schema")
+@Table(name = "locations", schema = "tenant_schema")
 public class LocationEntity {
     @Id
-    @Column(name = "id",
-            nullable = false)
+    @Column(name = "id", nullable = false)
     private UUID id;
 
-    @Column(name = "tenant_id",
-            length = 255,
-            nullable = false)
+    @Column(name = "tenant_id", length = 255, nullable = false)
     private String tenantId;
 
-    @Column(name = "barcode",
-            length = 255,
-            nullable = false)
+    @Column(name = "barcode", length = 255, nullable = false)
     private String barcode;
 
-    @Column(name = "code",
-            length = 100)
+    @Column(name = "code", length = 100)
     private String code;
 
-    @Column(name = "name",
-            length = 255)
+    @Column(name = "name", length = 255)
     private String name;
 
-    @Column(name = "type",
-            length = 50)
+    @Column(name = "type", length = 50)
     private String type;
 
-    @Column(name = "zone",
-            length = 100,
-            nullable = false)
+    @Column(name = "zone", length = 100, nullable = false)
     private String zone;
 
-    @Column(name = "aisle",
-            length = 100,
-            nullable = false)
+    @Column(name = "aisle", length = 100, nullable = false)
     private String aisle;
 
-    @Column(name = "rack",
-            length = 100,
-            nullable = false)
+    @Column(name = "rack", length = 100, nullable = false)
     private String rack;
 
-    @Column(name = "level",
-            length = 100,
-            nullable = false)
+    @Column(name = "level", length = 100, nullable = false)
     private String level;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status",
-            length = 50,
-            nullable = false)
+    @Column(name = "status", length = 50, nullable = false)
     private LocationStatus status;
 
-    @Column(name = "current_quantity",
-            precision = 18,
-            scale = 2)
+    @Column(name = "current_quantity", precision = 18, scale = 2)
     private BigDecimal currentQuantity;
 
-    @Column(name = "maximum_quantity",
-            precision = 18,
-            scale = 2)
+    @Column(name = "maximum_quantity", precision = 18, scale = 2)
     private BigDecimal maximumQuantity;
 
-    @Column(name = "description",
-            length = 500)
+    @Column(name = "description", length = 500)
     private String description;
 
-    @Column(name = "created_at",
-            nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "last_modified_at",
-            nullable = false)
+    @Column(name = "last_modified_at", nullable = false)
     private LocalDateTime lastModifiedAt;
 
     @Version
-    @Column(name = "version",
-            nullable = false)
+    @Column(name = "version", nullable = false)
     private Long version;
+
+    @Column(name = "parent_location_id")
+    private UUID parentLocationId;
 
     // JPA requires no-arg constructor
     public LocationEntity() {
@@ -250,6 +226,14 @@ public class LocationEntity {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public UUID getParentLocationId() {
+        return parentLocationId;
+    }
+
+    public void setParentLocationId(UUID parentLocationId) {
+        this.parentLocationId = parentLocationId;
     }
 }
 

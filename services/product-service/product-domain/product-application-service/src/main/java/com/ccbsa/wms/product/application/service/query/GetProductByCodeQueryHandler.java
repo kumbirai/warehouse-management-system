@@ -30,24 +30,13 @@ public class GetProductByCodeQueryHandler {
     @Transactional(readOnly = true)
     public ProductQueryResult handle(GetProductByCodeQuery query) {
         // 1. Load aggregate by product code
-        com.ccbsa.wms.product.domain.core.entity.Product product = repository
-                .findByProductCodeAndTenantId(query.getProductCode(), query.getTenantId())
-                .orElseThrow(() -> new ProductNotFoundException(
-                        String.format("Product not found with code: %s", query.getProductCode().getValue())));
+        com.ccbsa.wms.product.domain.core.entity.Product product = repository.findByProductCodeAndTenantId(query.getProductCode(), query.getTenantId())
+                .orElseThrow(() -> new ProductNotFoundException(String.format("Product not found with code: %s", query.getProductCode().getValue())));
 
         // 2. Map to query result
-        return ProductQueryResult.builder()
-                .productId(product.getId())
-                .productCode(product.getProductCode())
-                .description(product.getDescription())
-                .primaryBarcode(product.getPrimaryBarcode())
-                .secondaryBarcodes(product.getSecondaryBarcodes())
-                .unitOfMeasure(product.getUnitOfMeasure())
-                .category(product.getCategory())
-                .brand(product.getBrand())
-                .createdAt(product.getCreatedAt())
-                .lastModifiedAt(product.getLastModifiedAt())
-                .build();
+        return ProductQueryResult.builder().productId(product.getId()).productCode(product.getProductCode()).description(product.getDescription())
+                .primaryBarcode(product.getPrimaryBarcode()).secondaryBarcodes(product.getSecondaryBarcodes()).unitOfMeasure(product.getUnitOfMeasure())
+                .category(product.getCategory()).brand(product.getBrand()).createdAt(product.getCreatedAt()).lastModifiedAt(product.getLastModifiedAt()).build();
     }
 }
 

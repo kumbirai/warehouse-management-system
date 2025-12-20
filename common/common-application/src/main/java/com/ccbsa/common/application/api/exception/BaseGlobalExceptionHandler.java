@@ -68,10 +68,7 @@ public class BaseGlobalExceptionHandler {
 
         logger.warn("Resource not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("RESOURCE_NOT_FOUND", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("RESOURCE_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
     }
 
@@ -82,10 +79,7 @@ public class BaseGlobalExceptionHandler {
 
         logger.warn("Invalid operation: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("INVALID_OPERATION", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("INVALID_OPERATION", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
@@ -96,10 +90,7 @@ public class BaseGlobalExceptionHandler {
 
         logger.warn("Domain exception: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("DOMAIN_ERROR", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("DOMAIN_ERROR", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
@@ -110,10 +101,7 @@ public class BaseGlobalExceptionHandler {
 
         logger.warn("Validation error: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("VALIDATION_ERROR", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("VALIDATION_ERROR", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
@@ -124,10 +112,7 @@ public class BaseGlobalExceptionHandler {
 
         logger.warn("Invalid state: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("INVALID_OPERATION", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("INVALID_OPERATION", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
@@ -137,20 +122,14 @@ public class BaseGlobalExceptionHandler {
         String path = RequestContext.getRequestPath(request);
 
         Map<String, Object> details = new HashMap<>();
-        Map<String, String> fieldErrors = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .collect(Collectors.toMap(FieldError::getField, fieldError -> fieldError.getDefaultMessage() != null ? fieldError.getDefaultMessage() : "Validation failed",
+        Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors().stream().collect(
+                Collectors.toMap(FieldError::getField, fieldError -> fieldError.getDefaultMessage() != null ? fieldError.getDefaultMessage() : "Validation failed",
                         (existing, replacement) -> existing));
         details.put("fieldErrors", fieldErrors);
 
         logger.warn("Request validation failed - RequestId: {}, Path: {}, FieldErrors: {}", requestId, path, fieldErrors.keySet());
 
-        ApiError error = ApiError.builder("VALIDATION_ERROR", "Request validation failed")
-                .details(details)
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("VALIDATION_ERROR", "Request validation failed").details(details).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
@@ -160,19 +139,13 @@ public class BaseGlobalExceptionHandler {
         String path = RequestContext.getRequestPath(request);
 
         Map<String, Object> details = new HashMap<>();
-        Map<String, String> violations = ex.getConstraintViolations()
-                .stream()
-                .collect(Collectors.toMap(violation -> violation.getPropertyPath()
-                        .toString(), ConstraintViolation::getMessage, (existing, replacement) -> existing));
+        Map<String, String> violations = ex.getConstraintViolations().stream()
+                .collect(Collectors.toMap(violation -> violation.getPropertyPath().toString(), ConstraintViolation::getMessage, (existing, replacement) -> existing));
         details.put("constraintViolations", violations);
 
         logger.warn("Constraint validation failed - RequestId: {}, Path: {}, Violations: {}", requestId, path, violations.keySet());
 
-        ApiError error = ApiError.builder("VALIDATION_ERROR", "Constraint validation failed")
-                .details(details)
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("VALIDATION_ERROR", "Constraint validation failed").details(details).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
@@ -183,10 +156,7 @@ public class BaseGlobalExceptionHandler {
 
         logger.error("Unexpected error occurred - RequestId: {}, Path: {}", requestId, path, ex);
 
-        ApiError error = ApiError.builder("INTERNAL_SERVER_ERROR", "An unexpected error occurred")
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("INTERNAL_SERVER_ERROR", "An unexpected error occurred").path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, error);
     }
 }

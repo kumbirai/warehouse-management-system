@@ -101,11 +101,7 @@ public class UploadProductCsvCommandHandler {
 
             } catch (Exception e) {
                 logger.warn("Error processing CSV row {}: {}", row.getRowNumber(), e.getMessage());
-                errors.add(ProductCsvError.builder()
-                        .rowNumber(row.getRowNumber())
-                        .productCode(row.getProductCode())
-                        .errorMessage(e.getMessage())
-                        .build());
+                errors.add(ProductCsvError.builder().rowNumber(row.getRowNumber()).productCode(row.getProductCode()).errorMessage(e.getMessage()).build());
             }
         }
 
@@ -115,12 +111,7 @@ public class UploadProductCsvCommandHandler {
         }
 
         // 5. Build and return result
-        return UploadProductCsvResult.builder()
-                .totalRows(rows.size())
-                .createdCount(createdCount)
-                .updatedCount(updatedCount)
-                .errors(errors)
-                .build();
+        return UploadProductCsvResult.builder().totalRows(rows.size()).createdCount(createdCount).updatedCount(updatedCount).errors(errors).build();
     }
 
     /**
@@ -136,9 +127,7 @@ public class UploadProductCsvCommandHandler {
         if (command.getTenantId() == null) {
             throw new IllegalArgumentException("TenantId is required");
         }
-        if (command.getCsvContent() == null || command.getCsvContent()
-                .trim()
-                .isEmpty()) {
+        if (command.getCsvContent() == null || command.getCsvContent().trim().isEmpty()) {
             throw new IllegalArgumentException("CSV content is required");
         }
     }
@@ -173,8 +162,7 @@ public class UploadProductCsvCommandHandler {
         }
 
         // Validate description length
-        if (row.getDescription()
-                .length() > 500) {
+        if (row.getDescription().length() > 500) {
             throw new IllegalArgumentException("Description cannot exceed 500 characters");
         }
     }
@@ -188,16 +176,13 @@ public class UploadProductCsvCommandHandler {
      */
     private void updateProductFromRow(Product product, ProductCsvRow row, TenantId tenantId) {
         // Update description
-        if (!product.getDescription()
-                .equals(row.getDescription())) {
+        if (!product.getDescription().equals(row.getDescription())) {
             product.updateDescription(row.getDescription());
         }
 
         // Update primary barcode if changed
         ProductBarcode newPrimaryBarcode = ProductBarcode.of(row.getPrimaryBarcode());
-        if (!product.getPrimaryBarcode()
-                .getValue()
-                .equals(newPrimaryBarcode.getValue())) {
+        if (!product.getPrimaryBarcode().getValue().equals(newPrimaryBarcode.getValue())) {
             // Validate uniqueness
             if (repository.existsByBarcodeAndTenantId(newPrimaryBarcode, tenantId)) {
                 throw new BarcodeAlreadyExistsException(String.format("Primary barcode already exists: %s", newPrimaryBarcode.getValue()));
@@ -219,9 +204,7 @@ public class UploadProductCsvCommandHandler {
         }
 
         // Add new secondary barcode if provided
-        if (row.getSecondaryBarcode() != null && !row.getSecondaryBarcode()
-                .trim()
-                .isEmpty()) {
+        if (row.getSecondaryBarcode() != null && !row.getSecondaryBarcode().trim().isEmpty()) {
             ProductBarcode secondaryBarcode = ProductBarcode.of(row.getSecondaryBarcode());
             // Validate uniqueness
             if (repository.existsByBarcodeAndTenantId(secondaryBarcode, tenantId)) {
@@ -250,9 +233,7 @@ public class UploadProductCsvCommandHandler {
 
         // Validate secondary barcode uniqueness if provided
         List<ProductBarcode> secondaryBarcodes = new ArrayList<>();
-        if (row.getSecondaryBarcode() != null && !row.getSecondaryBarcode()
-                .trim()
-                .isEmpty()) {
+        if (row.getSecondaryBarcode() != null && !row.getSecondaryBarcode().trim().isEmpty()) {
             ProductBarcode secondaryBarcode = ProductBarcode.of(row.getSecondaryBarcode());
             if (repository.existsByBarcodeAndTenantId(secondaryBarcode, tenantId)) {
                 throw new BarcodeAlreadyExistsException(String.format("Secondary barcode already exists: %s", secondaryBarcode.getValue()));
@@ -260,27 +241,19 @@ public class UploadProductCsvCommandHandler {
             secondaryBarcodes.add(secondaryBarcode);
         }
 
-        Product.Builder builder = Product.builder()
-                .productId(ProductId.generate())
-                .tenantId(tenantId)
-                .productCode(ProductCode.of(row.getProductCode()))
-                .description(row.getDescription())
-                .primaryBarcode(primaryBarcode)
-                .unitOfMeasure(UnitOfMeasure.valueOf(row.getUnitOfMeasure()));
+        Product.Builder builder =
+                Product.builder().productId(ProductId.generate()).tenantId(tenantId).productCode(ProductCode.of(row.getProductCode())).description(row.getDescription())
+                        .primaryBarcode(primaryBarcode).unitOfMeasure(UnitOfMeasure.valueOf(row.getUnitOfMeasure()));
 
         if (!secondaryBarcodes.isEmpty()) {
             builder.secondaryBarcodes(secondaryBarcodes);
         }
 
-        if (row.getCategory() != null && !row.getCategory()
-                .trim()
-                .isEmpty()) {
+        if (row.getCategory() != null && !row.getCategory().trim().isEmpty()) {
             builder.category(row.getCategory());
         }
 
-        if (row.getBrand() != null && !row.getBrand()
-                .trim()
-                .isEmpty()) {
+        if (row.getBrand() != null && !row.getBrand().trim().isEmpty()) {
             builder.brand(row.getBrand());
         }
 

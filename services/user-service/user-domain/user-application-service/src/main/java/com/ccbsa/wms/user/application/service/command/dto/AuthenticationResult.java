@@ -114,8 +114,7 @@ public final class AuthenticationResult {
         @Override
         public String toString() {
             return String.format("UserContext{userId='%s', username='%s', tenantId='%s', roles=%s, email='%s', firstName='%s', lastName='%s'}", userId.getValue(), username,
-                    tenantId != null ? tenantId.getValue() : "null", roles, email,
-                    firstName, lastName);
+                    tenantId != null ? tenantId.getValue() : "null", roles, email, firstName, lastName);
         }
     }
 }

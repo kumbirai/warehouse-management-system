@@ -18,8 +18,7 @@ import reactor.core.publisher.Mono;
  * <p>
  * Production Note: In production, consider implementing an in-memory fallback rate limiter or circuit breaker pattern for better control.
  */
-public class GracefulRedisRateLimiter
-        implements RateLimiter<RedisRateLimiter.Config> {
+public class GracefulRedisRateLimiter implements RateLimiter<RedisRateLimiter.Config> {
     private static final Logger logger = LoggerFactory.getLogger(GracefulRedisRateLimiter.class);
     private final RedisRateLimiter redisRateLimiter;
     private volatile boolean redisAvailable = true;
@@ -39,27 +38,24 @@ public class GracefulRedisRateLimiter
     @Override
     public Mono<Response> isAllowed(String routeId, String id) {
         // Always try Redis first, but allow on error
-        return redisRateLimiter.isAllowed(routeId, id)
-                .doOnNext(response -> {
-                    // Redis is working
-                    if (!redisAvailable) {
-                        logger.info("Redis connection restored. Re-enabling rate limiting.");
-                        redisAvailable = true;
-                    }
-                })
-                .doOnError(error -> {
-                    if (redisAvailable) {
-                        logger.warn("Redis connection error during rate limiting for route: {}, id: {}. "
-                                        + "Allowing requests and disabling rate limiting until Redis is available. Error: {}", routeId, id,
-                                error.getMessage());
-                        redisAvailable = false;
-                    }
-                })
-                .onErrorResume(error -> {
-                    // Allow request when Redis fails - graceful degradation
-                    logger.debug("Allowing request due to Redis error: {}", error.getMessage());
-                    return Mono.just(new Response(true, getDefaultHeaders()));
-                });
+        return redisRateLimiter.isAllowed(routeId, id).doOnNext(response -> {
+            // Redis is working
+            if (!redisAvailable) {
+                logger.info("Redis connection restored. Re-enabling rate limiting.");
+                redisAvailable = true;
+            }
+        }).doOnError(error -> {
+            if (redisAvailable) {
+                logger.warn(
+                        "Redis connection error during rate limiting for route: {}, id: {}. " + "Allowing requests and disabling rate limiting until Redis is available. Error: {}",
+                        routeId, id, error.getMessage());
+                redisAvailable = false;
+            }
+        }).onErrorResume(error -> {
+            // Allow request when Redis fails - graceful degradation
+            logger.debug("Allowing request due to Redis error: {}", error.getMessage());
+            return Mono.just(new Response(true, getDefaultHeaders()));
+        });
     }
 
     /**

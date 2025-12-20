@@ -1,7 +1,9 @@
 package com.ccbsa.wms.location.application.service.command;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -47,22 +49,24 @@ public class CreateLocationCommandHandler {
         // 1. Validate command
         validateCommand(command);
 
-        // 2. Validate barcode uniqueness if barcode is provided
+        // 2. Validate parent location exists if parentLocationId is provided
+        if (command.getParentLocationId() != null && !command.getParentLocationId().trim().isEmpty()) {
+            validateParentLocationExists(command.getParentLocationId(), command.getTenantId());
+        }
+
+        // 3. Validate barcode uniqueness if barcode is provided
         if (command.getBarcode() != null) {
             validateBarcodeUniqueness(command.getBarcode(), command.getTenantId());
         }
 
-        // 3. Validate code uniqueness if code is provided
+        // 4. Validate code uniqueness if code is provided
         if (command.getCode() != null && !command.getCode().trim().isEmpty()) {
             validateCodeUniqueness(command.getCode(), command.getTenantId());
         }
 
         // 4. Create aggregate using builder
-        Location.Builder builder = Location.builder()
-                .locationId(LocationId.generate())
-                .tenantId(command.getTenantId())
-                .coordinates(command.getCoordinates())
-                .status(LocationStatus.AVAILABLE);
+        Location.Builder builder =
+                Location.builder().locationId(LocationId.generate()).tenantId(command.getTenantId()).coordinates(command.getCoordinates()).status(LocationStatus.AVAILABLE);
 
         // Set barcode if provided, otherwise it will be auto-generated in build()
         if (command.getBarcode() != null) {
@@ -81,10 +85,18 @@ public class CreateLocationCommandHandler {
         }
 
         // Set description if provided
-        if (command.getDescription() != null && !command.getDescription()
-                .trim()
-                .isEmpty()) {
+        if (command.getDescription() != null && !command.getDescription().trim().isEmpty()) {
             builder.description(command.getDescription());
+        }
+
+        // Set parent location ID if provided
+        if (command.getParentLocationId() != null && !command.getParentLocationId().trim().isEmpty()) {
+            try {
+                LocationId parentId = LocationId.of(UUID.fromString(command.getParentLocationId()));
+                builder.parentLocationId(parentId);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException(String.format("Invalid parent location ID format: %s", command.getParentLocationId()), e);
+            }
         }
 
         Location location = builder.build();
@@ -105,17 +117,9 @@ public class CreateLocationCommandHandler {
         }
 
         // 7. Return result (use savedLocation which has updated version from DB)
-        return CreateLocationResult.builder()
-                .locationId(savedLocation.getId())
-                .barcode(savedLocation.getBarcode())
-                .coordinates(savedLocation.getCoordinates())
-                .status(savedLocation.getStatus())
-                .createdAt(savedLocation.getCreatedAt())
-                .code(savedLocation.getCode())
-                .name(savedLocation.getName())
-                .type(savedLocation.getType())
-                .path(generatePath(savedLocation, command))
-                .build();
+        return CreateLocationResult.builder().locationId(savedLocation.getId()).barcode(savedLocation.getBarcode()).coordinates(savedLocation.getCoordinates())
+                .status(savedLocation.getStatus()).createdAt(savedLocation.getCreatedAt()).code(savedLocation.getCode()).name(savedLocation.getName()).type(savedLocation.getType())
+                .path(generatePath(savedLocation, command)).build();
     }
 
     /**
@@ -133,6 +137,32 @@ public class CreateLocationCommandHandler {
         }
         if (command.getCoordinates() == null) {
             throw new IllegalArgumentException("LocationCoordinates is required");
+        }
+        // Validate code is required for WAREHOUSE type
+        String type = command.getType();
+        if (type != null && "WAREHOUSE".equalsIgnoreCase(type.trim())) {
+            if (command.getCode() == null || command.getCode().trim().isEmpty()) {
+                throw new IllegalArgumentException("Code is required for WAREHOUSE type");
+            }
+        }
+    }
+
+    /**
+     * Validates that the parent location exists.
+     *
+     * @param parentLocationId Parent location ID to validate
+     * @param tenantId         Tenant identifier
+     * @throws IllegalArgumentException if parent location does not exist (returns 400 BAD_REQUEST)
+     */
+    private void validateParentLocationExists(String parentLocationId, com.ccbsa.common.domain.valueobject.TenantId tenantId) {
+        try {
+            LocationId parentId = LocationId.of(UUID.fromString(parentLocationId));
+            if (repository.findByIdAndTenantId(parentId, tenantId).isEmpty()) {
+                throw new IllegalArgumentException(String.format("Parent location not found: %s", parentLocationId));
+            }
+        } catch (IllegalArgumentException e) {
+            // Re-throw as-is - will be handled by GlobalExceptionHandler as 400 BAD_REQUEST
+            throw e;
         }
     }
 
@@ -196,13 +226,13 @@ public class CreateLocationCommandHandler {
     }
 
     /**
-     * Generates a hierarchical path for the location.
+     * Generates a hierarchical path for the location by recursively traversing up the parent hierarchy.
      * For warehouses, returns "/{code}".
-     * For child locations, returns "/{parentPath}/{code}" by loading the parent location.
+     * For child locations, returns "/{warehouseCode}/{zoneCode}/{aisleCode}/{rackCode}/{binCode}" by recursively loading parents.
      *
-     * @param location Location aggregate
-     * @param command  Create location command (contains parentLocationId)
-     * @return Path string
+     * @param location Location aggregate (with stored parentLocationId)
+     * @param command  Create location command (contains parentLocationId for initial creation)
+     * @return Path string with full hierarchy
      */
     private String generatePath(Location location, CreateLocationCommand command) {
         String locationCode = location.getCode();
@@ -211,38 +241,53 @@ public class CreateLocationCommandHandler {
         }
 
         // If this is a warehouse (no parent), return "/{code}"
-        if (command.getParentLocationId() == null || command.getParentLocationId().trim().isEmpty()) {
-            return "/" + locationCode;
+        if (location.getParentLocationId() == null) {
+            return String.format("/%s", locationCode);
         }
 
-        // For child locations, load parent and build hierarchical path
-        try {
-            LocationId parentId = LocationId.of(UUID.fromString(command.getParentLocationId()));
-            Location parentLocation = repository.findByIdAndTenantId(parentId, command.getTenantId())
-                    .orElse(null);
+        // For child locations, recursively build path by traversing up the hierarchy using stored parentLocationId
+        Set<LocationId> visitedIds = new HashSet<>();
+        String parentPath = buildParentPathRecursively(location.getParentLocationId(), command.getTenantId(), visitedIds);
+        // Build hierarchical path: /{parentPath}/{childCode}
+        String hierarchicalPath = String.format("%s/%s", parentPath, locationCode);
+        logger.debug("Generated hierarchical path: {} for location with parent: {}", hierarchicalPath, location.getParentLocationId().getValueAsString());
+        return hierarchicalPath;
+    }
 
-            if (parentLocation != null) {
-                String parentCode = parentLocation.getCode();
-                if (parentCode == null || parentCode.trim().isEmpty()) {
-                    parentCode = parentLocation.getBarcode().getValue();
-                }
-                // Build hierarchical path: /{parentCode}/{childCode}
-                String hierarchicalPath = "/" + parentCode + "/" + locationCode;
-                logger.debug("Generated hierarchical path: {} for location with parent: {}", hierarchicalPath, command.getParentLocationId());
-                return hierarchicalPath;
-            } else {
-                logger.warn("Parent location not found for path generation: parentLocationId={}, tenantId={}",
-                        command.getParentLocationId(), command.getTenantId().getValue());
-            }
-        } catch (IllegalArgumentException e) {
-            logger.warn("Invalid parent location ID format for path generation: {}", command.getParentLocationId(), e);
-        } catch (Exception e) {
-            logger.warn("Failed to load parent location for path generation: parentLocationId={}, error={}",
-                    command.getParentLocationId(), e.getMessage(), e);
+    /**
+     * Recursively builds the parent path by traversing up the location hierarchy using stored parent_location_id.
+     * This method traverses from the given parent location ID up to the warehouse (root of hierarchy).
+     *
+     * @param parentLocationId Parent location ID to start traversal from
+     * @param tenantId         Tenant identifier
+     * @param visitedIds       Set of visited location IDs to prevent infinite loops
+     * @return Path string (e.g., "/WH-12/ZONE-X" for a zone)
+     */
+    private String buildParentPathRecursively(LocationId parentLocationId, com.ccbsa.common.domain.valueobject.TenantId tenantId, Set<LocationId> visitedIds) {
+        // Prevent infinite loops
+        if (visitedIds.contains(parentLocationId)) {
+            logger.warn("Circular reference detected in location hierarchy: {}", parentLocationId.getValueAsString());
+            return "";
+        }
+        visitedIds.add(parentLocationId);
+
+        Location parentLocation = repository.findByIdAndTenantId(parentLocationId, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException(String.format("Parent location not found during path generation: %s", parentLocationId.getValueAsString())));
+
+        String locationCode = parentLocation.getCode();
+        if (locationCode == null || locationCode.trim().isEmpty()) {
+            locationCode = parentLocation.getBarcode().getValue();
         }
 
-        // Fallback: return "/{code}" if parent cannot be loaded
-        return "/" + locationCode;
+        // If this is a warehouse (type is WAREHOUSE or no parent), return "/{code}"
+        String locationType = parentLocation.getType();
+        if (locationType != null && "WAREHOUSE".equalsIgnoreCase(locationType.trim()) || parentLocation.getParentLocationId() == null) {
+            return String.format("/%s", locationCode);
+        }
+
+        // Recursively build path for parent's parent
+        String parentPath = buildParentPathRecursively(parentLocation.getParentLocationId(), tenantId, visitedIds);
+        return String.format("%s/%s", parentPath, locationCode);
     }
 }
 

@@ -25,10 +25,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * for event ordering (aggregate ID)
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "Kafka template is a managed bean and treated as immutable port")
-public class StockManagementEventPublisherImpl
-        implements StockManagementEventPublisher {
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is a managed bean and treated as immutable port")
+public class StockManagementEventPublisherImpl implements StockManagementEventPublisher {
     private static final Logger logger = LoggerFactory.getLogger(StockManagementEventPublisherImpl.class);
     private static final String STOCK_MANAGEMENT_EVENTS_TOPIC = "stock-management-events";
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -47,8 +45,7 @@ public class StockManagementEventPublisherImpl
         if (event instanceof StockManagementEvent) {
             publish((StockManagementEvent<?>) event);
         } else {
-            throw new IllegalArgumentException(String.format("Event must be a StockManagementEvent: %s", event.getClass()
-                    .getName()));
+            throw new IllegalArgumentException(String.format("Event must be a StockManagementEvent: %s", event.getClass().getName()));
         }
     }
 
@@ -60,12 +57,10 @@ public class StockManagementEventPublisherImpl
 
             String key = enrichedEvent.getAggregateId();
             kafkaTemplate.send(STOCK_MANAGEMENT_EVENTS_TOPIC, key, enrichedEvent);
-            logger.debug("Published stock management event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass()
-                    .getSimpleName(), key, enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata()
-                    .getCorrelationId() : "none");
+            logger.debug("Published stock management event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
+                    enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
         } catch (Exception e) {
-            logger.error("Failed to publish stock management event: {}", event.getClass()
-                    .getSimpleName(), e);
+            logger.error("Failed to publish stock management event: {}", event.getClass().getSimpleName(), e);
             throw new RuntimeException("Failed to publish stock management event", e);
         }
     }

@@ -52,15 +52,10 @@ public class ListNotificationsQueryHandler {
         }
 
         // 3. Map to query results
-        List<GetNotificationQueryResult> results = notifications.stream()
-                .map(this::toQueryResult)
-                .collect(Collectors.toList());
+        List<GetNotificationQueryResult> results = notifications.stream().map(this::toQueryResult).collect(Collectors.toList());
 
         // 4. Return result
-        return ListNotificationsQueryResult.builder()
-                .items(results)
-                .totalCount(results.size())
-                .build();
+        return ListNotificationsQueryResult.builder().items(results).totalCount(results.size()).build();
     }
 
     private void validateQuery(ListNotificationsQuery query) {
@@ -73,21 +68,9 @@ public class ListNotificationsQueryHandler {
     }
 
     private GetNotificationQueryResult toQueryResult(com.ccbsa.wms.notification.domain.core.entity.Notification notification) {
-        return GetNotificationQueryResult.builder()
-                .notificationId(notification.getId())
-                .tenantId(notification.getTenantId())
-                .recipientUserId(notification.getRecipientUserId())
-                .title(notification.getTitle()
-                        .getValue())
-                .message(notification.getMessage()
-                        .getValue())
-                .type(notification.getType())
-                .status(notification.getStatus())
-                .createdAt(notification.getCreatedAt())
-                .lastModifiedAt(notification.getLastModifiedAt())
-                .sentAt(notification.getSentAt())
-                .readAt(notification.getReadAt())
-                .build();
+        return GetNotificationQueryResult.builder().notificationId(notification.getId()).tenantId(notification.getTenantId()).recipientUserId(notification.getRecipientUserId())
+                .title(notification.getTitle().getValue()).message(notification.getMessage().getValue()).type(notification.getType()).status(notification.getStatus())
+                .createdAt(notification.getCreatedAt()).lastModifiedAt(notification.getLastModifiedAt()).sentAt(notification.getSentAt()).readAt(notification.getReadAt()).build();
     }
 }
 

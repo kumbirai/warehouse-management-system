@@ -40,8 +40,7 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping("/api/v1/tenants")
-@Tag(name = "Tenant Commands",
-        description = "Tenant management command operations")
+@Tag(name = "Tenant Commands", description = "Tenant management command operations")
 public class TenantCommandController {
     private final CreateTenantCommandHandler createTenantHandler;
     private final ActivateTenantCommandHandler activateTenantHandler;
@@ -62,14 +61,10 @@ public class TenantCommandController {
     }
 
     @PostMapping
-    @Operation(summary = "Create tenant",
-            description = "Creates a new tenant (LDP)")
+    @Operation(summary = "Create tenant", description = "Creates a new tenant (LDP)")
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<ApiResponse<CreateTenantResponse>> createTenant(
-            @Valid
-            @RequestBody
-            CreateTenantRequest request) {
+    public ResponseEntity<ApiResponse<CreateTenantResponse>> createTenant(@Valid @RequestBody CreateTenantRequest request) {
         CreateTenantCommand command = mapper.toCreateTenantCommand(request);
         CreateTenantResult result = createTenantHandler.handle(command);
         CreateTenantResponse response = mapper.toCreateTenantResponse(result);
@@ -78,12 +73,10 @@ public class TenantCommandController {
     }
 
     @PutMapping("/{id}/activate")
-    @Operation(summary = "Activate tenant",
-            description = "Activates a tenant and creates/enables Keycloak realm if configured")
+    @Operation(summary = "Activate tenant", description = "Activates a tenant and creates/enables Keycloak realm if configured")
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<ApiResponse<Void>> activateTenant(
-            @PathVariable String id) {
+    public ResponseEntity<ApiResponse<Void>> activateTenant(@PathVariable String id) {
         TenantId tenantId = TenantId.of(id);
         ActivateTenantCommand command = new ActivateTenantCommand(tenantId);
         activateTenantHandler.handle(command);
@@ -91,12 +84,10 @@ public class TenantCommandController {
     }
 
     @PutMapping("/{id}/deactivate")
-    @Operation(summary = "Deactivate tenant",
-            description = "Deactivates a tenant and disables Keycloak realm if configured")
+    @Operation(summary = "Deactivate tenant", description = "Deactivates a tenant and disables Keycloak realm if configured")
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<ApiResponse<Void>> deactivateTenant(
-            @PathVariable String id) {
+    public ResponseEntity<ApiResponse<Void>> deactivateTenant(@PathVariable String id) {
         TenantId tenantId = TenantId.of(id);
         DeactivateTenantCommand command = new DeactivateTenantCommand(tenantId);
         deactivateTenantHandler.handle(command);
@@ -104,12 +95,10 @@ public class TenantCommandController {
     }
 
     @PutMapping("/{id}/suspend")
-    @Operation(summary = "Suspend tenant",
-            description = "Suspends a tenant and disables Keycloak realm if configured")
+    @Operation(summary = "Suspend tenant", description = "Suspends a tenant and disables Keycloak realm if configured")
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<ApiResponse<Void>> suspendTenant(
-            @PathVariable String id) {
+    public ResponseEntity<ApiResponse<Void>> suspendTenant(@PathVariable String id) {
         TenantId tenantId = TenantId.of(id);
         SuspendTenantCommand command = new SuspendTenantCommand(tenantId);
         suspendTenantHandler.handle(command);
@@ -117,15 +106,11 @@ public class TenantCommandController {
     }
 
     @PutMapping("/{id}/configuration")
-    @Operation(summary = "Update tenant configuration",
-            description = "Updates tenant configuration settings")
+    @Operation(summary = "Update tenant configuration", description = "Updates tenant configuration settings")
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<ApiResponse<Void>> updateTenantConfiguration(
-            @PathVariable String id,
-            @Valid
-            @RequestBody
-            com.ccbsa.wms.tenant.application.api.dto.UpdateTenantConfigurationRequest request) {
+    public ResponseEntity<ApiResponse<Void>> updateTenantConfiguration(@PathVariable String id,
+                                                                       @Valid @RequestBody com.ccbsa.wms.tenant.application.api.dto.UpdateTenantConfigurationRequest request) {
         TenantId tenantId = TenantId.of(id);
         UpdateTenantConfigurationCommand command = mapper.toUpdateTenantConfigurationCommand(tenantId, request);
         updateConfigurationHandler.handle(command);

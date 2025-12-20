@@ -46,9 +46,7 @@ public class SendNotificationCommandHandler {
 
         // 2. Load notification
         Notification notification = repository.findById(command.getNotificationId())
-                .orElseThrow(() -> new NotificationNotFoundException(command.getNotificationId()
-                        .getValue()
-                        .toString(), "Notification not found for sending"));
+                .orElseThrow(() -> new NotificationNotFoundException(command.getNotificationId().getValue().toString(), "Notification not found for sending"));
 
         // 3. Find adapter supporting the channel
         NotificationDeliveryPort adapter = findAdapter(command.getChannel());
@@ -75,11 +73,7 @@ public class SendNotificationCommandHandler {
         }
 
         // 8. Return result
-        return SendNotificationResult.builder()
-                .success(deliveryResult.isSuccess())
-                .externalId(deliveryResult.getExternalId())
-                .status(notification.getStatus())
-                .build();
+        return SendNotificationResult.builder().success(deliveryResult.isSuccess()).externalId(deliveryResult.getExternalId()).status(notification.getStatus()).build();
     }
 
     private void validateCommand(SendNotificationCommand command) {
@@ -102,9 +96,7 @@ public class SendNotificationCommandHandler {
      * @throws UnsupportedChannelException if no adapter supports the channel
      */
     private NotificationDeliveryPort findAdapter(com.ccbsa.wms.notification.domain.core.valueobject.NotificationChannel channel) {
-        return deliveryAdapters.stream()
-                .filter(adapter -> adapter.supports(channel))
-                .findFirst()
+        return deliveryAdapters.stream().filter(adapter -> adapter.supports(channel)).findFirst()
                 .orElseThrow(() -> new UnsupportedChannelException(channel, "No delivery adapter registered for this channel"));
     }
 

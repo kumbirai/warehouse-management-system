@@ -38,11 +38,9 @@ public class ListProductsQueryHandler {
         List<Product> allProducts = repository.findByTenantId(query.getTenantId());
 
         // 2. Apply filters
-        List<Product> filteredProducts = allProducts.stream()
-                .filter(product -> matchesCategory(product, query.getCategory()))
-                .filter(product -> matchesBrand(product, query.getBrand()))
-                .filter(product -> matchesSearch(product, query.getSearch()))
-                .collect(Collectors.toList());
+        List<Product> filteredProducts =
+                allProducts.stream().filter(product -> matchesCategory(product, query.getCategory())).filter(product -> matchesBrand(product, query.getBrand()))
+                        .filter(product -> matchesSearch(product, query.getSearch())).collect(Collectors.toList());
 
         // 3. Apply pagination
         int page = query.getPage() != null ? query.getPage() : 0;
@@ -50,39 +48,27 @@ public class ListProductsQueryHandler {
         int start = page * size;
         int end = Math.min(start + size, filteredProducts.size());
 
-        List<Product> paginatedProducts = filteredProducts.subList(
-                Math.min(start, filteredProducts.size()),
-                end
-        );
+        List<Product> paginatedProducts = filteredProducts.subList(Math.min(start, filteredProducts.size()), end);
 
         // 4. Map to query results
-        List<ProductQueryResult> productResults = paginatedProducts.stream()
-                .map(this::toProductQueryResult)
-                .collect(Collectors.toList());
+        List<ProductQueryResult> productResults = paginatedProducts.stream().map(this::toProductQueryResult).collect(Collectors.toList());
 
         // 5. Build result
-        return ListProductsQueryResult.builder()
-                .products(productResults)
-                .totalCount(filteredProducts.size())
-                .page(page)
-                .size(size)
-                .build();
+        return ListProductsQueryResult.builder().products(productResults).totalCount(filteredProducts.size()).page(page).size(size).build();
     }
 
     private boolean matchesCategory(Product product, String category) {
         if (category == null || category.isBlank()) {
             return true;
         }
-        return product.getCategory() != null &&
-                product.getCategory().equalsIgnoreCase(category);
+        return product.getCategory() != null && product.getCategory().equalsIgnoreCase(category);
     }
 
     private boolean matchesBrand(Product product, String brand) {
         if (brand == null || brand.isBlank()) {
             return true;
         }
-        return product.getBrand() != null &&
-                product.getBrand().equalsIgnoreCase(brand);
+        return product.getBrand() != null && product.getBrand().equalsIgnoreCase(brand);
     }
 
     private boolean matchesSearch(Product product, String search) {
@@ -90,26 +76,15 @@ public class ListProductsQueryHandler {
             return true;
         }
         String searchLower = search.toLowerCase();
-        return (product.getProductCode().getValue().toLowerCase().contains(searchLower)) ||
-                (product.getDescription() != null && product.getDescription().toLowerCase().contains(searchLower)) ||
-                (product.getPrimaryBarcode().getValue().toLowerCase().contains(searchLower)) ||
-                (product.getCategory() != null && product.getCategory().toLowerCase().contains(searchLower)) ||
-                (product.getBrand() != null && product.getBrand().toLowerCase().contains(searchLower));
+        return (product.getProductCode().getValue().toLowerCase().contains(searchLower)) || (product.getDescription() != null && product.getDescription().toLowerCase()
+                .contains(searchLower)) || (product.getPrimaryBarcode().getValue().toLowerCase().contains(searchLower)) || (product.getCategory() != null && product.getCategory()
+                .toLowerCase().contains(searchLower)) || (product.getBrand() != null && product.getBrand().toLowerCase().contains(searchLower));
     }
 
     private ProductQueryResult toProductQueryResult(Product product) {
-        return ProductQueryResult.builder()
-                .productId(product.getId())
-                .productCode(product.getProductCode())
-                .description(product.getDescription())
-                .primaryBarcode(product.getPrimaryBarcode())
-                .secondaryBarcodes(product.getSecondaryBarcodes())
-                .unitOfMeasure(product.getUnitOfMeasure())
-                .category(product.getCategory())
-                .brand(product.getBrand())
-                .createdAt(product.getCreatedAt())
-                .lastModifiedAt(product.getLastModifiedAt())
-                .build();
+        return ProductQueryResult.builder().productId(product.getId()).productCode(product.getProductCode()).description(product.getDescription())
+                .primaryBarcode(product.getPrimaryBarcode()).secondaryBarcodes(product.getSecondaryBarcodes()).unitOfMeasure(product.getUnitOfMeasure())
+                .category(product.getCategory()).brand(product.getBrand()).createdAt(product.getCreatedAt()).lastModifiedAt(product.getLastModifiedAt()).build();
     }
 }
 

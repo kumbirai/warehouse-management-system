@@ -26,10 +26,8 @@ import jakarta.ws.rs.core.Response;
  * Adapter handling tenant-specific Keycloak group orchestration.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "Ports are framework-managed singletons and treated as immutable dependencies")
-public class KeycloakGroupAdapter
-        implements TenantGroupServicePort {
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Ports are framework-managed singletons and treated as immutable dependencies")
+public class KeycloakGroupAdapter implements TenantGroupServicePort {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakGroupAdapter.class);
     private static final String STATUS_ATTRIBUTE = "tenant_status";
     private static final String TENANT_ID_ATTRIBUTE = "tenant_id";
@@ -75,10 +73,7 @@ public class KeycloakGroupAdapter
             return null;
         }
 
-        return groups.stream()
-                .filter(group -> groupName.equalsIgnoreCase(group.getName()))
-                .findFirst()
-                .orElse(null);
+        return groups.stream().filter(group -> groupName.equalsIgnoreCase(group.getName())).findFirst().orElse(null);
     }
 
     private GroupRepresentation createGroup(String realmName, TenantId tenantId, String groupName) {
@@ -107,14 +102,12 @@ public class KeycloakGroupAdapter
         attributes.put(STATUS_ATTRIBUTE, List.of(status.toUpperCase(Locale.ROOT)));
         group.setAttributes(attributes);
 
-        GroupResource groupResource = realm(realmName).groups()
-                .group(group.getId());
+        GroupResource groupResource = realm(realmName).groups().group(group.getId());
         groupResource.update(group);
     }
 
     private RealmResource realm(String realmName) {
-        return keycloakClientPort.getAdminClient()
-                .realm(realmName);
+        return keycloakClientPort.getAdminClient().realm(realmName);
     }
 
     @Override

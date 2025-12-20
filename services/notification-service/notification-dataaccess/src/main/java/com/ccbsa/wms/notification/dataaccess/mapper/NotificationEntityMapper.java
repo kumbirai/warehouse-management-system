@@ -34,18 +34,12 @@ public class NotificationEntityMapper {
         }
 
         NotificationEntity entity = new NotificationEntity();
-        entity.setId(notification.getId()
-                .getValue());
-        entity.setTenantId(notification.getTenantId()
-                .getValue());
-        entity.setRecipientUserId(notification.getRecipientUserId()
-                .getValue());
-        entity.setRecipientEmail(notification.getRecipientEmail() != null ? notification.getRecipientEmail()
-                .getValue() : null);
-        entity.setTitle(notification.getTitle()
-                .getValue());
-        entity.setMessage(notification.getMessage()
-                .getValue());
+        entity.setId(notification.getId().getValue());
+        entity.setTenantId(notification.getTenantId().getValue());
+        entity.setRecipientUserId(notification.getRecipientUserId().getValue());
+        entity.setRecipientEmail(notification.getRecipientEmail() != null ? notification.getRecipientEmail().getValue() : null);
+        entity.setTitle(notification.getTitle().getValue());
+        entity.setMessage(notification.getMessage().getValue());
         entity.setType(notification.getType());
         entity.setStatus(notification.getStatus());
         entity.setCreatedAt(notification.getCreatedAt());
@@ -77,23 +71,13 @@ public class NotificationEntityMapper {
             throw new IllegalArgumentException("NotificationEntity cannot be null");
         }
 
-        Notification.Builder builder = Notification.builder()
-                .notificationId(NotificationId.of(entity.getId()))
-                .tenantId(TenantId.of(entity.getTenantId()))
-                .recipientUserId(UserId.of(entity.getRecipientUserId()))
-                .title(Title.of(entity.getTitle()))
-                .message(Message.of(entity.getMessage()))
-                .type(entity.getType())
-                .status(entity.getStatus())
-                .createdAt(entity.getCreatedAt())
-                .lastModifiedAt(entity.getLastModifiedAt())
-                .sentAt(entity.getSentAt())
-                .readAt(entity.getReadAt())
+        Notification.Builder builder = Notification.builder().notificationId(NotificationId.of(entity.getId())).tenantId(TenantId.of(entity.getTenantId()))
+                .recipientUserId(UserId.of(entity.getRecipientUserId())).title(Title.of(entity.getTitle())).message(Message.of(entity.getMessage())).type(entity.getType())
+                .status(entity.getStatus()).createdAt(entity.getCreatedAt()).lastModifiedAt(entity.getLastModifiedAt()).sentAt(entity.getSentAt()).readAt(entity.getReadAt())
                 .version(entity.getVersion());
 
         // Set recipient email if available (nullable for backward compatibility)
-        if (entity.getRecipientEmail() != null && !entity.getRecipientEmail()
-                .isEmpty()) {
+        if (entity.getRecipientEmail() != null && !entity.getRecipientEmail().isEmpty()) {
             builder.recipientEmail(EmailAddress.of(entity.getRecipientEmail()));
         }
 

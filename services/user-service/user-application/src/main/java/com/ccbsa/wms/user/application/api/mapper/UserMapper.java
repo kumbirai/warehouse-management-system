@@ -60,25 +60,19 @@ public class UserMapper {
     }
 
     public List<UserResponse> toUserResponseList(ListUsersQueryResult result) {
-        return result.getItems()
-                .stream()
-                .map(this::toUserResponse)
-                .toList();
+        return result.getItems().stream().map(this::toUserResponse).toList();
     }
 
     public UserResponse toUserResponse(GetUserQueryResult result) {
         UserResponse response = new UserResponse();
-        response.setUserId(result.getUserId()
-                .getValue());
-        response.setTenantId(result.getTenantId()
-                .getValue());
+        response.setUserId(result.getUserId().getValue());
+        response.setTenantId(result.getTenantId().getValue());
         response.setTenantName(result.getTenantName());
         response.setUsername(result.getUsername());
         response.setEmailAddress(result.getEmail());
         response.setFirstName(result.getFirstName());
         response.setLastName(result.getLastName());
-        response.setStatus(result.getStatus()
-                .name());
+        response.setStatus(result.getStatus().name());
         response.setKeycloakUserId(result.getKeycloakUserId());
         response.setRoles(result.getRoles());
         response.setCreatedAt(result.getCreatedAt());

@@ -36,10 +36,14 @@ export interface CreateLocationResponse {
 
 export interface Location {
   locationId: string;
+  code?: string;
+  name?: string;
+  type?: string;
+  path?: string;
   barcode: string;
   coordinates: LocationCoordinates;
   status: string;
-  capacity?: LocationCapacity;
+  capacity?: LocationCapacity | number; // Backend may return Integer (maxQuantity) or LocationCapacity object
   description?: string;
   createdAt: string;
   lastModifiedAt?: string;
@@ -59,4 +63,11 @@ export interface LocationListQueryResult {
   totalCount: number;
   page: number;
   size: number;
+}
+
+export type LocationStatus = 'AVAILABLE' | 'OCCUPIED' | 'RESERVED' | 'BLOCKED';
+
+export interface UpdateLocationStatusRequest {
+  status: LocationStatus;
+  reason?: string;
 }

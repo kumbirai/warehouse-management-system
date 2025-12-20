@@ -42,8 +42,7 @@ public class FlywayConfiguration {
             try {
                 f.migrate();
             } catch (FlywayValidateException e) {
-                if (repairOnMigrate && e.getMessage() != null && e.getMessage()
-                        .contains("checksum mismatch")) {
+                if (repairOnMigrate && e.getMessage() != null && e.getMessage().contains("checksum mismatch")) {
                     logger.warn("Flyway validation failed with checksum mismatch. Repairing checksums...");
                     logger.warn("This should only be enabled in development environments.");
                     try {

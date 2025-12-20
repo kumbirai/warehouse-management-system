@@ -24,8 +24,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * This handler extends {@link BaseGlobalExceptionHandler} to inherit common exception handling and adds notification-service-specific exception handlers.
  */
 @RestControllerAdvice(basePackages = "com.ccbsa.wms.notification.application.api")
-public class GlobalExceptionHandler
-        extends BaseGlobalExceptionHandler {
+public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
@@ -42,10 +41,7 @@ public class GlobalExceptionHandler
 
         logger.warn("Notification not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("NOTIFICATION_NOT_FOUND", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("NOTIFICATION_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
     }
 }

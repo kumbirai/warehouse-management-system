@@ -46,22 +46,9 @@ public final class RoleConstants {
      * All valid roles for user assignment.
      * Excludes SERVICE role as it's for service-to-service communication.
      */
-    public static final Set<String> VALID_ROLES = Set.of(
-            SYSTEM_ADMIN,
-            TENANT_ADMIN,
-            WAREHOUSE_MANAGER,
-            STOCK_MANAGER,
-            LOCATION_MANAGER,
-            RECONCILIATION_MANAGER,
-            RETURNS_MANAGER,
-            OPERATOR,
-            PICKER,
-            STOCK_CLERK,
-            RECONCILIATION_CLERK,
-            RETURNS_CLERK,
-            VIEWER,
-            USER
-    );
+    public static final Set<String> VALID_ROLES =
+            Set.of(SYSTEM_ADMIN, TENANT_ADMIN, WAREHOUSE_MANAGER, STOCK_MANAGER, LOCATION_MANAGER, RECONCILIATION_MANAGER, RETURNS_MANAGER, OPERATOR, PICKER, STOCK_CLERK,
+                    RECONCILIATION_CLERK, RETURNS_CLERK, VIEWER, USER);
     /**
      * System-level roles (cross-tenant access)
      */
@@ -69,44 +56,19 @@ public final class RoleConstants {
     /**
      * Tenant-level roles (single tenant scope)
      */
-    public static final Set<String> TENANT_LEVEL_ROLES = Set.of(
-            TENANT_ADMIN,
-            WAREHOUSE_MANAGER,
-            STOCK_MANAGER,
-            LOCATION_MANAGER,
-            RECONCILIATION_MANAGER,
-            RETURNS_MANAGER
-    );
+    public static final Set<String> TENANT_LEVEL_ROLES = Set.of(TENANT_ADMIN, WAREHOUSE_MANAGER, STOCK_MANAGER, LOCATION_MANAGER, RECONCILIATION_MANAGER, RETURNS_MANAGER);
     /**
      * Operational roles (day-to-day warehouse operations)
      */
-    public static final Set<String> OPERATIONAL_ROLES = Set.of(
-            OPERATOR,
-            PICKER,
-            STOCK_CLERK,
-            RECONCILIATION_CLERK,
-            RETURNS_CLERK,
-            VIEWER,
-            USER
-    );
+    public static final Set<String> OPERATIONAL_ROLES = Set.of(OPERATOR, PICKER, STOCK_CLERK, RECONCILIATION_CLERK, RETURNS_CLERK, VIEWER, USER);
     /**
      * Manager roles (warehouse and specialized managers)
      */
-    public static final Set<String> MANAGER_ROLES = Set.of(
-            WAREHOUSE_MANAGER,
-            STOCK_MANAGER,
-            LOCATION_MANAGER,
-            RECONCILIATION_MANAGER,
-            RETURNS_MANAGER
-    );
+    public static final Set<String> MANAGER_ROLES = Set.of(WAREHOUSE_MANAGER, STOCK_MANAGER, LOCATION_MANAGER, RECONCILIATION_MANAGER, RETURNS_MANAGER);
     /**
      * Clerk roles (specialized operational roles)
      */
-    public static final Set<String> CLERK_ROLES = Set.of(
-            STOCK_CLERK,
-            RECONCILIATION_CLERK,
-            RETURNS_CLERK
-    );
+    public static final Set<String> CLERK_ROLES = Set.of(STOCK_CLERK, RECONCILIATION_CLERK, RETURNS_CLERK);
     /**
      * Admin roles (system and tenant administrators)
      */

@@ -38,14 +38,10 @@ public class StockConsignmentEntityMapper {
         }
 
         StockConsignmentEntity entity = new StockConsignmentEntity();
-        entity.setId(consignment.getId()
-                .getValue());
-        entity.setTenantId(consignment.getTenantId()
-                .getValue());
-        entity.setConsignmentReference(consignment.getConsignmentReference()
-                .getValue());
-        entity.setWarehouseId(consignment.getWarehouseId()
-                .getValue());
+        entity.setId(consignment.getId().getValue());
+        entity.setTenantId(consignment.getTenantId().getValue());
+        entity.setConsignmentReference(consignment.getConsignmentReference().getValue());
+        entity.setWarehouseId(consignment.getWarehouseId().getValue());
         entity.setStatus(consignment.getStatus());
         entity.setReceivedAt(consignment.getReceivedAt());
         entity.setConfirmedAt(consignment.getConfirmedAt());
@@ -59,8 +55,7 @@ public class StockConsignmentEntityMapper {
             ConsignmentLineItemEntity lineItemEntity = new ConsignmentLineItemEntity();
             lineItemEntity.setId(UUID.randomUUID());
             lineItemEntity.setConsignment(entity);
-            lineItemEntity.setProductCode(lineItem.getProductCode()
-                    .getValue());
+            lineItemEntity.setProductCode(lineItem.getProductCode().getValue());
             lineItemEntity.setQuantity(lineItem.getQuantity());
             lineItemEntity.setExpirationDate(lineItem.getExpirationDate());
             lineItemEntity.setCreatedAt(LocalDateTime.now());
@@ -93,30 +88,17 @@ public class StockConsignmentEntityMapper {
         List<ConsignmentLineItem> lineItems = new ArrayList<>();
         if (entity.getLineItems() != null) {
             for (ConsignmentLineItemEntity lineItemEntity : entity.getLineItems()) {
-                ConsignmentLineItem lineItem = ConsignmentLineItem.builder()
-                        .productCode(ProductCode.of(lineItemEntity.getProductCode()))
-                        .quantity(lineItemEntity.getQuantity())
-                        .expirationDate(lineItemEntity.getExpirationDate())
-                        .build();
+                ConsignmentLineItem lineItem = ConsignmentLineItem.builder().productCode(ProductCode.of(lineItemEntity.getProductCode())).quantity(lineItemEntity.getQuantity())
+                        .expirationDate(lineItemEntity.getExpirationDate()).build();
                 lineItems.add(lineItem);
             }
         }
 
         // Build domain entity using builder
-        StockConsignment consignment = StockConsignment.builder()
-                .consignmentId(ConsignmentId.of(entity.getId()))
-                .tenantId(TenantId.of(entity.getTenantId()))
-                .consignmentReference(ConsignmentReference.of(entity.getConsignmentReference()))
-                .warehouseId(WarehouseId.of(entity.getWarehouseId()))
-                .receivedAt(entity.getReceivedAt())
-                .receivedBy(entity.getReceivedBy())
-                .lineItems(lineItems)
-                .status(entity.getStatus())
-                .confirmedAt(entity.getConfirmedAt())
-                .createdAt(entity.getCreatedAt())
-                .lastModifiedAt(entity.getLastModifiedAt())
-                .version(entity.getVersion() != null ? entity.getVersion()
-                        .intValue() : 0)
+        StockConsignment consignment = StockConsignment.builder().consignmentId(ConsignmentId.of(entity.getId())).tenantId(TenantId.of(entity.getTenantId()))
+                .consignmentReference(ConsignmentReference.of(entity.getConsignmentReference())).warehouseId(WarehouseId.of(entity.getWarehouseId()))
+                .receivedAt(entity.getReceivedAt()).receivedBy(entity.getReceivedBy()).lineItems(lineItems).status(entity.getStatus()).confirmedAt(entity.getConfirmedAt())
+                .createdAt(entity.getCreatedAt()).lastModifiedAt(entity.getLastModifiedAt()).version(entity.getVersion() != null ? entity.getVersion().intValue() : 0)
                 .buildWithoutEvents();
 
         return consignment;

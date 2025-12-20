@@ -11,8 +11,7 @@ public final class TenantName {
     private final String value;
 
     private TenantName(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("Tenant name cannot be null or empty");
         }
         if (value.length() > 200) {

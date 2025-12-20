@@ -9,8 +9,7 @@ public final class TenantId {
     private final String value;
 
     private TenantId(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("Tenant ID cannot be null or empty");
         }
         if (value.length() > 50) {

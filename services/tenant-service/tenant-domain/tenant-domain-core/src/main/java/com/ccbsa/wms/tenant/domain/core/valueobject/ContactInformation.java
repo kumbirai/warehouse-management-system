@@ -19,8 +19,7 @@ public final class ContactInformation {
         this.emailAddress = emailAddress;
 
         // Phone validation
-        if (phone != null && !phone.trim()
-                .isEmpty()) {
+        if (phone != null && !phone.trim().isEmpty()) {
             if (phone.length() > 50) {
                 throw new IllegalArgumentException("Phone number cannot exceed 50 characters");
             }
@@ -30,8 +29,7 @@ public final class ContactInformation {
         }
 
         // Address validation
-        if (address != null && !address.trim()
-                .isEmpty()) {
+        if (address != null && !address.trim().isEmpty()) {
             if (address.length() > 500) {
                 throw new IllegalArgumentException("Address cannot exceed 500 characters");
             }

@@ -16,8 +16,7 @@ public final class EmailAddress {
     private final String value;
 
     private EmailAddress(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("EmailAddress cannot be null or empty");
         }
         String trimmed = value.trim();
@@ -53,8 +52,7 @@ public final class EmailAddress {
      * @return EmailAddress instance or null if value is null/empty
      */
     public static EmailAddress ofNullable(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             return null;
         }
         return new EmailAddress(value);

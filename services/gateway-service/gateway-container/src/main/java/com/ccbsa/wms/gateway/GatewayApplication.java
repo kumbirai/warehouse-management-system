@@ -20,14 +20,8 @@ import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguratio
  * Spring MVC auto-configuration is excluded as Spring Cloud Gateway uses WebFlux (reactive stack).
  * Eureka client is auto-configured when spring-cloud-starter-netflix-eureka-client is on the classpath.
  */
-@SpringBootApplication(exclude = {
-        DataSourceAutoConfiguration.class,
-        HibernateJpaAutoConfiguration.class,
-        FlywayAutoConfiguration.class,
-        WebMvcAutoConfiguration.class,
-        DispatcherServletAutoConfiguration.class,
-        ServletWebServerFactoryAutoConfiguration.class
-})
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class, FlywayAutoConfiguration.class, WebMvcAutoConfiguration.class,
+        DispatcherServletAutoConfiguration.class, ServletWebServerFactoryAutoConfiguration.class})
 public class GatewayApplication {
     public static void main(String[] args) {
         SpringApplication.run(GatewayApplication.class, args);

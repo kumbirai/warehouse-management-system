@@ -12,8 +12,7 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
  * <p>
  * Event Version: 1.0
  */
-public final class NotificationCreatedEvent
-        extends NotificationEvent {
+public final class NotificationCreatedEvent extends NotificationEvent {
     private final NotificationType type;
     private final TenantId tenantId;
 

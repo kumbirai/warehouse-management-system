@@ -10,8 +10,7 @@ import com.ccbsa.wms.location.domain.core.event.LocationManagementEvent;
  * <p>
  * This port extends the common EventPublisher interface and adds service-specific event publishing methods.
  */
-public interface LocationEventPublisher
-        extends EventPublisher {
+public interface LocationEventPublisher extends EventPublisher {
     /**
      * Publishes a Location Management event.
      *

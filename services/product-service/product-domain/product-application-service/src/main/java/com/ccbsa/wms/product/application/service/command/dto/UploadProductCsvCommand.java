@@ -58,8 +58,7 @@ public final class UploadProductCsvCommand {
             if (tenantId == null) {
                 throw new IllegalArgumentException("TenantId is required");
             }
-            if (csvContent == null || csvContent.trim()
-                    .isEmpty()) {
+            if (csvContent == null || csvContent.trim().isEmpty()) {
                 throw new IllegalArgumentException("CSV content is required");
             }
             return new UploadProductCsvCommand(this);

@@ -17,25 +17,19 @@ package com.ccbsa.common.cache.key;
 public enum CacheNamespace {
 
     // User Service
-    USERS("users"),
-    USER_ROLES("user-roles"),
-    USER_PERMISSIONS("user-permissions"),
+    USERS("users"), USER_ROLES("user-roles"), USER_PERMISSIONS("user-permissions"),
 
     // Tenant Service
-    TENANTS("tenants"),
-    TENANT_CONFIG("tenant-config"),
+    TENANTS("tenants"), TENANT_CONFIG("tenant-config"),
 
     // Product Service
-    PRODUCTS("products"),
-    PRODUCT_CATEGORIES("product-categories"),
+    PRODUCTS("products"), PRODUCT_CATEGORIES("product-categories"),
 
     // Stock Management Service
-    STOCK_CONSIGNMENTS("stock-consignments"),
-    STOCK_LEVELS("stock-levels"),
+    STOCK_CONSIGNMENTS("stock-consignments"), STOCK_LEVELS("stock-levels"),
 
     // Location Management Service
-    LOCATIONS("locations"),
-    ZONES("zones"),
+    LOCATIONS("locations"), ZONES("zones"),
 
     // Notification Service
     NOTIFICATIONS("notifications"),

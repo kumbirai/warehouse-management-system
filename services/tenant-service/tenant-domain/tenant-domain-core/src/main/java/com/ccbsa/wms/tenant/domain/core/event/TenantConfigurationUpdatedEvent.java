@@ -9,8 +9,7 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantConfiguration;
  * <p>
  * Published when tenant configuration is updated.
  */
-public final class TenantConfigurationUpdatedEvent
-        extends TenantEvent<TenantId> {
+public final class TenantConfigurationUpdatedEvent extends TenantEvent<TenantId> {
     private final TenantConfiguration configuration;
 
     public TenantConfigurationUpdatedEvent(TenantId tenantId, TenantConfiguration configuration) {

@@ -58,32 +58,21 @@ public class ProductDTOMapper {
      * @return CreateProductCommand
      */
     public CreateProductCommand toCreateCommand(CreateProductCommandDTO dto, String tenantId) {
-        CreateProductCommand.Builder builder = CreateProductCommand.builder()
-                .tenantId(TenantId.of(tenantId))
-                .productCode(ProductCode.of(dto.getProductCode()))
-                .description(dto.getDescription())
-                .primaryBarcode(ProductBarcode.of(dto.getPrimaryBarcode()))
-                .unitOfMeasure(UnitOfMeasure.valueOf(dto.getUnitOfMeasure()));
+        CreateProductCommand.Builder builder =
+                CreateProductCommand.builder().tenantId(TenantId.of(tenantId)).productCode(ProductCode.of(dto.getProductCode())).description(dto.getDescription())
+                        .primaryBarcode(ProductBarcode.of(dto.getPrimaryBarcode())).unitOfMeasure(UnitOfMeasure.valueOf(dto.getUnitOfMeasure()));
 
         // Add secondary barcodes if provided
-        if (dto.getSecondaryBarcodes() != null && !dto.getSecondaryBarcodes()
-                .isEmpty()) {
-            List<ProductBarcode> secondaryBarcodes = dto.getSecondaryBarcodes()
-                    .stream()
-                    .map(ProductBarcode::of)
-                    .collect(Collectors.toList());
+        if (dto.getSecondaryBarcodes() != null && !dto.getSecondaryBarcodes().isEmpty()) {
+            List<ProductBarcode> secondaryBarcodes = dto.getSecondaryBarcodes().stream().map(ProductBarcode::of).collect(Collectors.toList());
             builder.secondaryBarcodes(secondaryBarcodes);
         }
 
         // Set optional fields
-        if (dto.getCategory() != null && !dto.getCategory()
-                .trim()
-                .isEmpty()) {
+        if (dto.getCategory() != null && !dto.getCategory().trim().isEmpty()) {
             builder.category(dto.getCategory());
         }
-        if (dto.getBrand() != null && !dto.getBrand()
-                .trim()
-                .isEmpty()) {
+        if (dto.getBrand() != null && !dto.getBrand().trim().isEmpty()) {
             builder.brand(dto.getBrand());
         }
 
@@ -98,13 +87,10 @@ public class ProductDTOMapper {
      */
     public CreateProductResultDTO toCreateResultDTO(CreateProductResult result) {
         CreateProductResultDTO dto = new CreateProductResultDTO();
-        dto.setProductId(result.getProductId()
-                .getValueAsString());
-        dto.setProductCode(result.getProductCode()
-                .getValue());
+        dto.setProductId(result.getProductId().getValueAsString());
+        dto.setProductCode(result.getProductCode().getValue());
         dto.setDescription(result.getDescription());
-        dto.setPrimaryBarcode(result.getPrimaryBarcode()
-                .getValue());
+        dto.setPrimaryBarcode(result.getPrimaryBarcode().getValue());
         dto.setCreatedAt(result.getCreatedAt());
         return dto;
     }
@@ -118,32 +104,21 @@ public class ProductDTOMapper {
      * @return UpdateProductCommand
      */
     public UpdateProductCommand toUpdateCommand(UpdateProductCommandDTO dto, String productId, String tenantId) {
-        UpdateProductCommand.Builder builder = UpdateProductCommand.builder()
-                .productId(ProductId.of(UUID.fromString(productId)))
-                .tenantId(TenantId.of(tenantId))
-                .description(dto.getDescription())
-                .primaryBarcode(ProductBarcode.of(dto.getPrimaryBarcode()))
-                .unitOfMeasure(UnitOfMeasure.valueOf(dto.getUnitOfMeasure()));
+        UpdateProductCommand.Builder builder =
+                UpdateProductCommand.builder().productId(ProductId.of(UUID.fromString(productId))).tenantId(TenantId.of(tenantId)).description(dto.getDescription())
+                        .primaryBarcode(ProductBarcode.of(dto.getPrimaryBarcode())).unitOfMeasure(UnitOfMeasure.valueOf(dto.getUnitOfMeasure()));
 
         // Add secondary barcodes if provided
-        if (dto.getSecondaryBarcodes() != null && !dto.getSecondaryBarcodes()
-                .isEmpty()) {
-            List<ProductBarcode> secondaryBarcodes = dto.getSecondaryBarcodes()
-                    .stream()
-                    .map(ProductBarcode::of)
-                    .collect(Collectors.toList());
+        if (dto.getSecondaryBarcodes() != null && !dto.getSecondaryBarcodes().isEmpty()) {
+            List<ProductBarcode> secondaryBarcodes = dto.getSecondaryBarcodes().stream().map(ProductBarcode::of).collect(Collectors.toList());
             builder.secondaryBarcodes(secondaryBarcodes);
         }
 
         // Set optional fields
-        if (dto.getCategory() != null && !dto.getCategory()
-                .trim()
-                .isEmpty()) {
+        if (dto.getCategory() != null && !dto.getCategory().trim().isEmpty()) {
             builder.category(dto.getCategory());
         }
-        if (dto.getBrand() != null && !dto.getBrand()
-                .trim()
-                .isEmpty()) {
+        if (dto.getBrand() != null && !dto.getBrand().trim().isEmpty()) {
             builder.brand(dto.getBrand());
         }
 
@@ -158,8 +133,7 @@ public class ProductDTOMapper {
      */
     public UpdateProductResultDTO toUpdateResultDTO(UpdateProductResult result) {
         UpdateProductResultDTO dto = new UpdateProductResultDTO();
-        dto.setProductId(result.getProductId()
-                .getValueAsString());
+        dto.setProductId(result.getProductId().getValueAsString());
         dto.setLastModifiedAt(result.getLastModifiedAt());
         return dto;
     }
@@ -191,11 +165,7 @@ public class ProductDTOMapper {
             throw new IllegalArgumentException(String.format("Failed to read CSV file: %s", e.getMessage()), e);
         }
 
-        return UploadProductCsvCommand.builder()
-                .tenantId(TenantId.of(tenantId))
-                .csvContent(csvContent)
-                .fileName(file.getOriginalFilename())
-                .build();
+        return UploadProductCsvCommand.builder().tenantId(TenantId.of(tenantId)).csvContent(csvContent).fileName(file.getOriginalFilename()).build();
     }
 
     /**
@@ -212,12 +182,8 @@ public class ProductDTOMapper {
         dto.setErrorCount(result.getErrorCount());
 
         // Map errors
-        if (result.getErrors() != null && !result.getErrors()
-                .isEmpty()) {
-            List<ProductCsvErrorDTO> errorDTOs = result.getErrors()
-                    .stream()
-                    .map(this::toCsvErrorDTO)
-                    .collect(Collectors.toList());
+        if (result.getErrors() != null && !result.getErrors().isEmpty()) {
+            List<ProductCsvErrorDTO> errorDTOs = result.getErrors().stream().map(this::toCsvErrorDTO).collect(Collectors.toList());
             dto.setErrors(errorDTOs);
         } else {
             dto.setErrors(new ArrayList<>());
@@ -248,10 +214,7 @@ public class ProductDTOMapper {
      * @return GetProductQuery
      */
     public GetProductQuery toGetProductQuery(String productId, String tenantId) {
-        return GetProductQuery.builder()
-                .productId(ProductId.of(UUID.fromString(productId)))
-                .tenantId(TenantId.of(tenantId))
-                .build();
+        return GetProductQuery.builder().productId(ProductId.of(UUID.fromString(productId))).tenantId(TenantId.of(tenantId)).build();
     }
 
     /**
@@ -262,10 +225,7 @@ public class ProductDTOMapper {
      * @return GetProductByCodeQuery
      */
     public GetProductByCodeQuery toGetProductByCodeQuery(String productCode, String tenantId) {
-        return GetProductByCodeQuery.builder()
-                .productCode(ProductCode.of(productCode))
-                .tenantId(TenantId.of(tenantId))
-                .build();
+        return GetProductByCodeQuery.builder().productCode(ProductCode.of(productCode)).tenantId(TenantId.of(tenantId)).build();
     }
 
     /**
@@ -276,10 +236,7 @@ public class ProductDTOMapper {
      * @return CheckProductCodeUniquenessQuery
      */
     public CheckProductCodeUniquenessQuery toCheckProductCodeUniquenessQuery(String productCode, String tenantId) {
-        return CheckProductCodeUniquenessQuery.builder()
-                .productCode(ProductCode.of(productCode))
-                .tenantId(TenantId.of(tenantId))
-                .build();
+        return CheckProductCodeUniquenessQuery.builder().productCode(ProductCode.of(productCode)).tenantId(TenantId.of(tenantId)).build();
     }
 
     /**
@@ -290,8 +247,7 @@ public class ProductDTOMapper {
      */
     public ProductCodeUniquenessResultDTO toProductCodeUniquenessResultDTO(ProductCodeUniquenessResult result) {
         ProductCodeUniquenessResultDTO dto = new ProductCodeUniquenessResultDTO();
-        dto.setProductCode(result.getProductCode()
-                .getValue());
+        dto.setProductCode(result.getProductCode().getValue());
         dto.setUnique(result.isUnique());
         return dto;
     }
@@ -304,10 +260,7 @@ public class ProductDTOMapper {
      * @return ValidateProductBarcodeQuery
      */
     public ValidateProductBarcodeQuery toValidateProductBarcodeQuery(String barcode, String tenantId) {
-        return ValidateProductBarcodeQuery.builder()
-                .barcode(barcode)
-                .tenantId(TenantId.of(tenantId))
-                .build();
+        return ValidateProductBarcodeQuery.builder().barcode(barcode).tenantId(TenantId.of(tenantId)).build();
     }
 
     /**
@@ -325,15 +278,11 @@ public class ProductDTOMapper {
         if (result.getProductInfo() != null) {
             ProductInfo productInfo = result.getProductInfo();
             ValidateProductBarcodeResultDTO.ProductInfoDTO productInfoDTO = new ValidateProductBarcodeResultDTO.ProductInfoDTO();
-            productInfoDTO.setProductId(productInfo.getProductId()
-                    .getValueAsString());
-            productInfoDTO.setProductCode(productInfo.getProductCode()
-                    .getValue());
+            productInfoDTO.setProductId(productInfo.getProductId().getValueAsString());
+            productInfoDTO.setProductCode(productInfo.getProductCode().getValue());
             productInfoDTO.setDescription(productInfo.getDescription());
-            productInfoDTO.setBarcode(productInfo.getBarcode()
-                    .getValue());
-            productInfoDTO.setBarcodeType(productInfo.getBarcode()
-                    .getType());
+            productInfoDTO.setBarcode(productInfo.getBarcode().getValue());
+            productInfoDTO.setBarcodeType(productInfo.getBarcode().getType());
             dto.setProductInfo(productInfoDTO);
         }
 
@@ -351,10 +300,8 @@ public class ProductDTOMapper {
      * @param search   Search term (optional)
      * @return ListProductsQuery
      */
-    public ListProductsQuery toListProductsQuery(String tenantId, Integer page, Integer size,
-                                                 String category, String brand, String search) {
-        ListProductsQuery.Builder builder = ListProductsQuery.builder()
-                .tenantId(TenantId.of(tenantId));
+    public ListProductsQuery toListProductsQuery(String tenantId, Integer page, Integer size, String category, String brand, String search) {
+        ListProductsQuery.Builder builder = ListProductsQuery.builder().tenantId(TenantId.of(tenantId));
 
         if (page != null) {
             builder.page(page);
@@ -385,9 +332,7 @@ public class ProductDTOMapper {
         ListProductsQueryResultDTO dto = new ListProductsQueryResultDTO();
 
         // Map products
-        List<ProductQueryResultDTO> productDTOs = result.getProducts().stream()
-                .map(this::toQueryResultDTO)
-                .collect(Collectors.toList());
+        List<ProductQueryResultDTO> productDTOs = result.getProducts().stream().map(this::toQueryResultDTO).collect(Collectors.toList());
         dto.setProducts(productDTOs);
 
         dto.setTotalCount(result.getTotalCount());
@@ -405,23 +350,15 @@ public class ProductDTOMapper {
      */
     public ProductQueryResultDTO toQueryResultDTO(ProductQueryResult result) {
         ProductQueryResultDTO dto = new ProductQueryResultDTO();
-        dto.setProductId(result.getProductId()
-                .getValueAsString());
-        dto.setProductCode(result.getProductCode()
-                .getValue());
+        dto.setProductId(result.getProductId().getValueAsString());
+        dto.setProductCode(result.getProductCode().getValue());
         dto.setDescription(result.getDescription());
-        dto.setPrimaryBarcode(result.getPrimaryBarcode()
-                .getValue());
-        dto.setUnitOfMeasure(result.getUnitOfMeasure()
-                .name());
+        dto.setPrimaryBarcode(result.getPrimaryBarcode().getValue());
+        dto.setUnitOfMeasure(result.getUnitOfMeasure().name());
 
         // Map secondary barcodes
-        if (result.getSecondaryBarcodes() != null && !result.getSecondaryBarcodes()
-                .isEmpty()) {
-            List<String> secondaryBarcodes = result.getSecondaryBarcodes()
-                    .stream()
-                    .map(ProductBarcode::getValue)
-                    .collect(Collectors.toList());
+        if (result.getSecondaryBarcodes() != null && !result.getSecondaryBarcodes().isEmpty()) {
+            List<String> secondaryBarcodes = result.getSecondaryBarcodes().stream().map(ProductBarcode::getValue).collect(Collectors.toList());
             dto.setSecondaryBarcodes(secondaryBarcodes);
         } else {
             dto.setSecondaryBarcodes(new ArrayList<>());

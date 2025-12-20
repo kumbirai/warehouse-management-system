@@ -42,14 +42,9 @@ public class TenantCreatedEventListener {
         this.tenantServicePort = tenantServicePort;
     }
 
-    @KafkaListener(topics = "tenant-events",
-            groupId = "notification-service",
-            containerFactory = "externalEventKafkaListenerContainerFactory")
-    public void handle(
-            @Payload Map<String, Object> eventData,
-            @Header(value = "__TypeId__",
-                    required = false) String eventType,
-            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
+    @KafkaListener(topics = "tenant-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
+                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         logger.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));
         try {
             // Extract and set correlation ID from event metadata for traceability
@@ -80,14 +75,10 @@ public class TenantCreatedEventListener {
 
                 // Create tenant creation notification
                 // Use tenantId as recipientUserId placeholder since tenant notifications don't target a specific user
-                CreateNotificationCommand command = CreateNotificationCommand.builder()
-                        .tenantId(tenantId)
-                        .recipientUserId(UserId.of(tenantId.getValue()))
-                        .recipientEmail(tenantEmail)
-                        .title(Title.of("New Tenant Created"))
-                        .message(Message.of("A new tenant account has been created. Please wait for activation."))
-                        .type(NotificationType.TENANT_CREATED)
-                        .build();
+                CreateNotificationCommand command =
+                        CreateNotificationCommand.builder().tenantId(tenantId).recipientUserId(UserId.of(tenantId.getValue())).recipientEmail(tenantEmail)
+                                .title(Title.of("New Tenant Created")).message(Message.of("A new tenant account has been created. Please wait for activation."))
+                                .type(NotificationType.TENANT_CREATED).build();
 
                 createNotificationCommandHandler.handle(command);
 
@@ -122,8 +113,7 @@ public class TenantCreatedEventListener {
         try {
             Object metadataObj = eventData.get("metadata");
             if (metadataObj instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> metadata = (Map<String, Object>) metadataObj;
+                @SuppressWarnings("unchecked") Map<String, Object> metadata = (Map<String, Object>) metadataObj;
                 Object correlationIdObj = metadata.get("correlationId");
                 if (correlationIdObj != null) {
                     String correlationId = correlationIdObj.toString();
@@ -204,8 +194,7 @@ public class TenantCreatedEventListener {
             }
             // Handle value object serialization (Map with "value" field)
             if (tenantIdObj instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> idMap = (Map<String, Object>) tenantIdObj;
+                @SuppressWarnings("unchecked") Map<String, Object> idMap = (Map<String, Object>) tenantIdObj;
                 Object valueObj = idMap.get("value");
                 if (valueObj != null) {
                     return valueObj.toString();
@@ -250,8 +239,7 @@ public class TenantCreatedEventListener {
         if (emailObj != null) {
             if (emailObj instanceof Map) {
                 // Email might be serialized as a value object with a "value" field
-                @SuppressWarnings("unchecked")
-                Map<String, Object> emailMap = (Map<String, Object>) emailObj;
+                @SuppressWarnings("unchecked") Map<String, Object> emailMap = (Map<String, Object>) emailObj;
                 Object valueObj = emailMap.get("value");
                 if (valueObj instanceof String) {
                     return EmailAddress.of((String) valueObj);

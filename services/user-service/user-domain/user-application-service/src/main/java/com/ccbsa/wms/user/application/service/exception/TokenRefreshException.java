@@ -5,8 +5,7 @@ package com.ccbsa.wms.user.application.service.exception;
  * <p>
  * This is a checked exception for token refresh-related errors.
  */
-public class TokenRefreshException
-        extends Exception {
+public class TokenRefreshException extends Exception {
     public TokenRefreshException(String message) {
         super(message);
     }

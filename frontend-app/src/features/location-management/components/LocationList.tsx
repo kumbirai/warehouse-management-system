@@ -86,7 +86,15 @@ export const LocationList = ({ locations, isLoading, error }: LocationListProps)
               <TableCell>
                 <Chip
                   label={location.status}
-                  color={location.status === 'AVAILABLE' ? 'success' : 'default'}
+                  color={
+                    location.status === 'AVAILABLE'
+                      ? 'success'
+                      : location.status === 'BLOCKED'
+                        ? 'error'
+                        : location.status === 'RESERVED'
+                          ? 'warning'
+                          : 'default'
+                  }
                   size="small"
                 />
               </TableCell>

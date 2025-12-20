@@ -42,8 +42,8 @@ public class ListUsersQueryHandler {
      */
     @Transactional(readOnly = true)
     public ListUsersQueryResult handle(ListUsersQuery query) {
-        logger.debug("Listing users: tenantId={}, status={}, page={}, size={}, search={}",
-                query.getTenantId(), query.getStatus(), query.getPage(), query.getSize(), query.getSearch());
+        logger.debug("Listing users: tenantId={}, status={}, page={}, size={}, search={}", query.getTenantId(), query.getStatus(), query.getPage(), query.getSize(),
+                query.getSearch());
 
         // 1. Load users from repository
         List<User> users;
@@ -95,9 +95,7 @@ public class ListUsersQueryHandler {
         logger.debug("Returning {} users (page {} of {}, total: {})", paginatedUsers.size(), query.getPage(), (users.size() + query.getSize() - 1) / query.getSize(), users.size());
 
         // 3. Map to query results
-        List<GetUserQueryResult> results = paginatedUsers.stream()
-                .map(this::toQueryResult)
-                .collect(Collectors.toList());
+        List<GetUserQueryResult> results = paginatedUsers.stream().map(this::toQueryResult).collect(Collectors.toList());
 
         // 4. Return result with pagination info
         return new ListUsersQueryResult(results, users.size(), query.getPage(), query.getSize());
@@ -105,15 +103,9 @@ public class ListUsersQueryHandler {
 
     private GetUserQueryResult toQueryResult(User user) {
         return new GetUserQueryResult(user.getId(), user.getTenantId(), null, // tenantName not fetched in list query for performance
-                user.getUsername()
-                        .getValue(), user.getEmail()
-                .getValue(), user.getFirstName()
-                .map(fn -> fn.getValue())
-                .orElse(null), user.getLastName()
-                .map(ln -> ln.getValue())
-                .orElse(null), user.getStatus(), user.getKeycloakUserId()
-                .map(KeycloakUserId::getValue)
-                .orElse(null), List.of(), // Roles would be fetched separately if needed
+                user.getUsername().getValue(), user.getEmail().getValue(), user.getFirstName().map(fn -> fn.getValue()).orElse(null),
+                user.getLastName().map(ln -> ln.getValue()).orElse(null), user.getStatus(), user.getKeycloakUserId().map(KeycloakUserId::getValue).orElse(null),
+                List.of(), // Roles would be fetched separately if needed
                 user.getCreatedAt(), user.getLastModifiedAt());
     }
 }

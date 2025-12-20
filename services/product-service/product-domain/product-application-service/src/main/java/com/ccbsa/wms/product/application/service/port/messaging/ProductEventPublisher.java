@@ -10,8 +10,7 @@ import com.ccbsa.wms.product.domain.core.event.ProductEvent;
  * <p>
  * This port extends the common EventPublisher interface and adds service-specific event publishing methods.
  */
-public interface ProductEventPublisher
-        extends EventPublisher {
+public interface ProductEventPublisher extends EventPublisher {
     /**
      * Publishes a Product event.
      *

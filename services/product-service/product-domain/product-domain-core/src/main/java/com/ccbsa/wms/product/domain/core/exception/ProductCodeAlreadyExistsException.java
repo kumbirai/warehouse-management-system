@@ -7,8 +7,7 @@ import com.ccbsa.common.domain.exception.DomainException;
  * <p>
  * Thrown when attempting to create a product with a product code that already exists for the tenant.
  */
-public class ProductCodeAlreadyExistsException
-        extends DomainException {
+public class ProductCodeAlreadyExistsException extends DomainException {
     public ProductCodeAlreadyExistsException(String message) {
         super(message);
     }

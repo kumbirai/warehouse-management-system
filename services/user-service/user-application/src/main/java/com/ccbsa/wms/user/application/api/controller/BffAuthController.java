@@ -44,8 +44,7 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping("/bff/auth")
-@Tag(name = "BFF Authentication",
-        description = "Backend for Frontend authentication endpoints")
+@Tag(name = "BFF Authentication", description = "Backend for Frontend authentication endpoints")
 public class BffAuthController {
     private final LoginCommandHandler loginCommandHandler;
     private final RefreshTokenCommandHandler refreshTokenCommandHandler;
@@ -74,14 +73,9 @@ public class BffAuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Login",
-            description = "Authenticates user and returns tokens with user context. Refresh token is set as httpOnly cookie.")
-    @Timed(value = "bff.auth.login",
-            description = "Time taken to process login request")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(
-            @Valid
-            @RequestBody
-            LoginRequest request, HttpServletResponse httpResponse) {
+    @Operation(summary = "Login", description = "Authenticates user and returns tokens with user context. Refresh token is set as httpOnly cookie.")
+    @Timed(value = "bff.auth.login", description = "Time taken to process login request")
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request, HttpServletResponse httpResponse) {
         LoginCommand command = mapper.toLoginCommand(request);
         AuthenticationResult result = loginCommandHandler.handle(command);
         LoginResponse response = mapper.toLoginResponse(result);
@@ -97,14 +91,11 @@ public class BffAuthController {
     }
 
     @PostMapping("/refresh")
-    @Operation(summary = "Refresh token",
-            description = "Refreshes access token using refresh token from httpOnly cookie (preferred) or request body (backward compatibility)")
-    @Timed(value = "bff.auth.refresh",
-            description = "Time taken to refresh token")
-    public ResponseEntity<ApiResponse<LoginResponse>> refreshToken(
-            @CookieValue(value = "refreshToken",
-                    required = false) String refreshTokenFromCookie,
-            @RequestBody(required = false) RefreshTokenRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+    @Operation(summary = "Refresh token", description = "Refreshes access token using refresh token from httpOnly cookie (preferred) or request body (backward compatibility)")
+    @Timed(value = "bff.auth.refresh", description = "Time taken to refresh token")
+    public ResponseEntity<ApiResponse<LoginResponse>> refreshToken(@CookieValue(value = "refreshToken", required = false) String refreshTokenFromCookie,
+                                                                   @RequestBody(required = false) RefreshTokenRequest request, HttpServletRequest httpRequest,
+                                                                   HttpServletResponse httpResponse) {
 
         // Prefer refresh token from httpOnly cookie (industry best practice)
         // Fallback to request body for backward compatibility during migration
@@ -138,24 +129,18 @@ public class BffAuthController {
     }
 
     @GetMapping("/me")
-    @Operation(summary = "Get current user context",
-            description = "Returns current authenticated user context")
-    @Timed(value = "bff.auth.me",
-            description = "Time taken to get user context")
-    public ResponseEntity<ApiResponse<UserContextResponse>> getCurrentUser(
-            @AuthenticationPrincipal Jwt jwt) {
+    @Operation(summary = "Get current user context", description = "Returns current authenticated user context")
+    @Timed(value = "bff.auth.me", description = "Time taken to get user context")
+    public ResponseEntity<ApiResponse<UserContextResponse>> getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
         UserContextQuery query = mapper.toUserContextQuery(jwt.getTokenValue());
         UserContextView view = getUserContextQueryHandler.handle(query);
         UserContextResponse response = mapper.toUserContextResponse(view);
         return ApiResponseBuilder.ok(response);
     }
 
-    @PostMapping(value = "/logout",
-            consumes = {"application/json", "application/*+json", "*/*"})
-    @Operation(summary = "Logout",
-            description = "Logs out the current user and clears refresh token cookie")
-    public ResponseEntity<ApiResponse<Void>> logout(
-            @RequestBody(required = false) Map<String, Object> body, HttpServletResponse httpResponse) {
+    @PostMapping(value = "/logout", consumes = {"application/json", "application/*+json", "*/*"})
+    @Operation(summary = "Logout", description = "Logs out the current user and clears refresh token cookie")
+    public ResponseEntity<ApiResponse<Void>> logout(@RequestBody(required = false) Map<String, Object> body, HttpServletResponse httpResponse) {
         // Clear refresh token cookie
         cookieUtil.removeRefreshTokenCookie(httpResponse);
 

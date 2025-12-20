@@ -40,12 +40,8 @@ public class RemoveUserRoleCommandHandler {
     private final RoleAssignmentValidator roleAssignmentValidator;
     private final SecurityContextPort securityContextPort;
 
-    public RemoveUserRoleCommandHandler(
-            UserRepository userRepository,
-            UserEventPublisher eventPublisher,
-            AuthenticationServicePort authenticationService,
-            RoleAssignmentValidator roleAssignmentValidator,
-            SecurityContextPort securityContextPort) {
+    public RemoveUserRoleCommandHandler(UserRepository userRepository, UserEventPublisher eventPublisher, AuthenticationServicePort authenticationService,
+                                        RoleAssignmentValidator roleAssignmentValidator, SecurityContextPort securityContextPort) {
         this.userRepository = userRepository;
         this.eventPublisher = eventPublisher;
         this.authenticationService = authenticationService;
@@ -65,19 +61,16 @@ public class RemoveUserRoleCommandHandler {
      */
     @Transactional
     public void handle(RemoveUserRoleCommand command) {
-        logger.debug("Removing role from user: userId={}, role={}", command.getUserId()
-                .getValue(), command.getRoleName());
+        logger.debug("Removing role from user: userId={}, role={}", command.getUserId().getValue(), command.getRoleName());
 
         // 1. Validate role exists
         if (!RoleConstants.isValidRole(command.getRoleName())) {
-            throw new IllegalArgumentException(
-                    String.format("Invalid role: %s. Valid roles: %s", command.getRoleName(), RoleConstants.VALID_ROLES));
+            throw new IllegalArgumentException(String.format("Invalid role: %s. Valid roles: %s", command.getRoleName(), RoleConstants.VALID_ROLES));
         }
 
         // 2. Load target user
-        User targetUser = userRepository.findById(command.getUserId())
-                .orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", command.getUserId()
-                        .getValue())));
+        User targetUser =
+                userRepository.findById(command.getUserId()).orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", command.getUserId().getValue())));
 
         // 3. Get current user (remover) from security context
         UserId currentUserId = securityContextPort.getCurrentUserId();
@@ -85,32 +78,21 @@ public class RemoveUserRoleCommandHandler {
         TenantId currentUserTenantId = securityContextPort.getCurrentUserTenantId();
 
         // 4. Validate removal permissions
-        roleAssignmentValidator.validateRoleRemoval(
-                currentUserId,
-                currentUserRoles,
-                currentUserTenantId,
-                targetUser,
-                command.getRoleName()
-        );
+        roleAssignmentValidator.validateRoleRemoval(currentUserId, currentUserRoles, currentUserTenantId, targetUser, command.getRoleName());
 
         // 5. Check if user has this role
-        if (targetUser.getKeycloakUserId()
-                .isPresent()) {
-            List<String> existingRoles = authenticationService.getUserRoles(targetUser.getKeycloakUserId()
-                    .get());
+        if (targetUser.getKeycloakUserId().isPresent()) {
+            List<String> existingRoles = authenticationService.getUserRoles(targetUser.getKeycloakUserId().get());
             if (!existingRoles.contains(command.getRoleName())) {
-                logger.warn("User does not have role: userId={}, role={}", targetUser.getId()
-                        .getValue(), command.getRoleName());
+                logger.warn("User does not have role: userId={}, role={}", targetUser.getId().getValue(), command.getRoleName());
                 return; // Idempotent: already removed
             }
         }
 
         // 6. Remove role in Keycloak
-        if (targetUser.getKeycloakUserId()
-                .isPresent()) {
+        if (targetUser.getKeycloakUserId().isPresent()) {
             try {
-                authenticationService.removeRole(targetUser.getKeycloakUserId()
-                        .get(), command.getRoleName());
+                authenticationService.removeRole(targetUser.getKeycloakUserId().get(), command.getRoleName());
             } catch (Exception e) {
                 logger.error("Failed to remove role in Keycloak: {}", e.getMessage(), e);
                 throw new RoleAssignmentException(String.format("Failed to remove role: %s", e.getMessage()), e);
@@ -124,18 +106,11 @@ public class RemoveUserRoleCommandHandler {
         userRepository.save(targetUser);
 
         // 8. Publish event with metadata (including removedBy)
-        EventMetadata metadata = EventMetadata.builder()
-                .userId(currentUserId.getValue())
-                .build();
-        UserRoleRemovedEvent event = new UserRoleRemovedEvent(
-                targetUser.getId(),
-                targetUser.getTenantId(),
-                command.getRoleName(),
-                metadata);
+        EventMetadata metadata = EventMetadata.builder().userId(currentUserId.getValue()).build();
+        UserRoleRemovedEvent event = new UserRoleRemovedEvent(targetUser.getId(), targetUser.getTenantId(), command.getRoleName(), metadata);
         eventPublisher.publish(Collections.singletonList(event));
 
-        logger.info("Role removed successfully: userId={}, role={}, removedBy={}", targetUser.getId()
-                .getValue(), command.getRoleName(), currentUserId.getValue());
+        logger.info("Role removed successfully: userId={}, role={}, removedBy={}", targetUser.getId().getValue(), command.getRoleName(), currentUserId.getValue());
     }
 }
 

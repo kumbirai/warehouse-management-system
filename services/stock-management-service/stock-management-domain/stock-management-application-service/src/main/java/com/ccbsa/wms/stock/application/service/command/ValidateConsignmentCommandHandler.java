@@ -39,39 +39,30 @@ public class ValidateConsignmentCommandHandler {
 
         // 1. Validate consignment reference uniqueness
         if (repository.existsByConsignmentReferenceAndTenantId(command.getConsignmentReference(), command.getTenantId())) {
-            errors.add(String.format("Consignment reference '%s' already exists", command.getConsignmentReference()
-                    .getValue()));
+            errors.add(String.format("Consignment reference '%s' already exists", command.getConsignmentReference().getValue()));
         }
 
         // 2. Validate warehouse ID (basic validation - could be enhanced with warehouse service)
-        if (command.getWarehouseId() == null || command.getWarehouseId()
-                .getValue()
-                .trim()
-                .isEmpty()) {
+        if (command.getWarehouseId() == null || command.getWarehouseId().getValue().trim().isEmpty()) {
             errors.add("Warehouse ID is required");
         }
 
         // 3. Validate received date
         if (command.getReceivedAt() == null) {
             errors.add("Received date is required");
-        } else if (command.getReceivedAt()
-                .isAfter(LocalDateTime.now())) {
+        } else if (command.getReceivedAt().isAfter(LocalDateTime.now())) {
             errors.add("Received date cannot be in the future");
         }
 
         // 4. Validate line items
-        if (command.getLineItems() == null || command.getLineItems()
-                .isEmpty()) {
+        if (command.getLineItems() == null || command.getLineItems().isEmpty()) {
             errors.add("At least one line item is required");
         } else {
             validateLineItems(command.getLineItems(), command.getTenantId(), errors);
         }
 
         // 5. Build result
-        return ValidateConsignmentResult.builder()
-                .valid(errors.isEmpty())
-                .validationErrors(errors)
-                .build();
+        return ValidateConsignmentResult.builder().valid(errors.isEmpty()).validationErrors(errors).build();
     }
 
     /**
@@ -99,8 +90,7 @@ public class ValidateConsignmentCommandHandler {
             }
 
             // Validate expiration date (if provided)
-            if (lineItem.hasExpirationDate() && lineItem.getExpirationDate()
-                    .isBefore(LocalDate.now())) {
+            if (lineItem.hasExpirationDate() && lineItem.getExpirationDate().isBefore(LocalDate.now())) {
                 errors.add(String.format("Line %d: Expiration date cannot be in the past", lineNumber));
             }
         }

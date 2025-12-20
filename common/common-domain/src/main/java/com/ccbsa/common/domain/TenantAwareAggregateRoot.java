@@ -9,8 +9,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  *
  * @param <ID> The type of the aggregate identifier
  */
-public abstract class TenantAwareAggregateRoot<ID>
-        extends AggregateRoot<ID> {
+public abstract class TenantAwareAggregateRoot<ID> extends AggregateRoot<ID> {
     protected TenantId tenantId;
 
     /**
@@ -27,8 +26,8 @@ public abstract class TenantAwareAggregateRoot<ID>
      * @param tenantId The tenant identifier (must not be null)
      * @throws IllegalArgumentException if tenantId is null
      */
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "Tenant-aware aggregates must fail fast when tenant context is missing; " + "the aggregate instance is not published if validation fails.")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "Tenant-aware aggregates must fail fast when tenant context is missing; "
+            + "the aggregate instance is not published if validation fails.")
     protected TenantAwareAggregateRoot(TenantId tenantId) {
         this(validateTenantId(tenantId), true);
     }

@@ -13,8 +13,7 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantStatus;
  * <p>
  * Published when a new tenant is created.
  */
-public final class TenantCreatedEvent
-        extends TenantEvent<TenantId> {
+public final class TenantCreatedEvent extends TenantEvent<TenantId> {
     private final TenantName name;
     private final TenantStatus status;
     private final EmailAddress email;

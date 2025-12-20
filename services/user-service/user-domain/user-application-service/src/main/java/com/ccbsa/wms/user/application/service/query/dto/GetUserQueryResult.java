@@ -26,9 +26,7 @@ public class GetUserQueryResult {
     private final LocalDateTime lastModifiedAt;
 
     public GetUserQueryResult(UserId userId, TenantId tenantId, String tenantName, String username, String email, String firstName, String lastName, UserStatus status,
-                              String keycloakUserId,
-                              List<String> roles, LocalDateTime createdAt,
-                              LocalDateTime lastModifiedAt) {
+                              String keycloakUserId, List<String> roles, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
         this.userId = Objects.requireNonNull(userId, "UserId is required");
         this.tenantId = Objects.requireNonNull(tenantId, "TenantId is required");
         this.tenantName = tenantName;

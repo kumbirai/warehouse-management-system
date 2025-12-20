@@ -8,8 +8,7 @@ import jakarta.validation.constraints.Size;
  * Request DTO for updating tenant configuration.
  */
 public final class UpdateTenantConfigurationRequest {
-    @Size(max = 100,
-            message = "Keycloak realm name cannot exceed 100 characters")
+    @Size(max = 100, message = "Keycloak realm name cannot exceed 100 characters")
     private String keycloakRealmName;
     private Boolean usePerTenantRealm;
 

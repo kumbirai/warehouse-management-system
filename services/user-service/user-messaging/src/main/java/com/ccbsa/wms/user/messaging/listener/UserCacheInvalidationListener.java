@@ -24,8 +24,7 @@ import com.ccbsa.wms.user.domain.core.event.UserUpdatedEvent;
  * UserRoleAssignedEvent: Invalidate user roles + permissions - UserRoleRemovedEvent: Invalidate user roles + permissions
  */
 @Component
-public class UserCacheInvalidationListener
-        extends CacheInvalidationEventListener {
+public class UserCacheInvalidationListener extends CacheInvalidationEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(UserCacheInvalidationListener.class);
 
@@ -33,9 +32,7 @@ public class UserCacheInvalidationListener
         super(cacheInvalidator);
     }
 
-    @KafkaListener(topics = "user-events",
-            groupId = "user-service-cache-invalidation",
-            containerFactory = "cacheInvalidationKafkaListenerContainerFactory")
+    @KafkaListener(topics = "user-events", groupId = "user-service-cache-invalidation", containerFactory = "cacheInvalidationKafkaListenerContainerFactory")
     public void handleUserEvent(Object event) {
         if (event instanceof UserCreatedEvent userCreated) {
             handleUserCreated(userCreated);

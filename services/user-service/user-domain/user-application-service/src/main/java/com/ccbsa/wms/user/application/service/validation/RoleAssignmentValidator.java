@@ -34,38 +34,16 @@ public class RoleAssignmentValidator {
     private static final Logger logger = LoggerFactory.getLogger(RoleAssignmentValidator.class);
 
     // Roles that WAREHOUSE_MANAGER can assign
-    private static final Set<String> WAREHOUSE_MANAGER_ASSIGNABLE_ROLES = Set.of(
-            RoleConstants.OPERATOR,
-            RoleConstants.PICKER,
-            RoleConstants.STOCK_CLERK,
-            RoleConstants.RECONCILIATION_CLERK,
-            RoleConstants.RETURNS_CLERK,
-            RoleConstants.VIEWER,
-            RoleConstants.USER
-    );
+    private static final Set<String> WAREHOUSE_MANAGER_ASSIGNABLE_ROLES =
+            Set.of(RoleConstants.OPERATOR, RoleConstants.PICKER, RoleConstants.STOCK_CLERK, RoleConstants.RECONCILIATION_CLERK, RoleConstants.RETURNS_CLERK, RoleConstants.VIEWER,
+                    RoleConstants.USER);
 
     // Mapping of manager roles to their assignable clerk roles
-    private static final Map<String, Set<String>> MANAGER_TO_CLERK_ROLES = Map.of(
-            RoleConstants.STOCK_MANAGER, Set.of(
-                    RoleConstants.STOCK_CLERK,
-                    RoleConstants.VIEWER,
-                    RoleConstants.USER
-            ),
-            RoleConstants.LOCATION_MANAGER, Set.of(
-                    RoleConstants.VIEWER,
-                    RoleConstants.USER
-            ),
-            RoleConstants.RECONCILIATION_MANAGER, Set.of(
-                    RoleConstants.RECONCILIATION_CLERK,
-                    RoleConstants.VIEWER,
-                    RoleConstants.USER
-            ),
-            RoleConstants.RETURNS_MANAGER, Set.of(
-                    RoleConstants.RETURNS_CLERK,
-                    RoleConstants.VIEWER,
-                    RoleConstants.USER
-            )
-    );
+    private static final Map<String, Set<String>> MANAGER_TO_CLERK_ROLES =
+            Map.of(RoleConstants.STOCK_MANAGER, Set.of(RoleConstants.STOCK_CLERK, RoleConstants.VIEWER, RoleConstants.USER), RoleConstants.LOCATION_MANAGER,
+                    Set.of(RoleConstants.VIEWER, RoleConstants.USER), RoleConstants.RECONCILIATION_MANAGER,
+                    Set.of(RoleConstants.RECONCILIATION_CLERK, RoleConstants.VIEWER, RoleConstants.USER), RoleConstants.RETURNS_MANAGER,
+                    Set.of(RoleConstants.RETURNS_CLERK, RoleConstants.VIEWER, RoleConstants.USER));
 
     /**
      * Validates that the current user can remove the specified role from the target user.
@@ -84,17 +62,11 @@ public class RoleAssignmentValidator {
      * @throws InsufficientPrivilegesException if user cannot remove the role
      * @throws TenantMismatchException         if tenant mismatch
      */
-    public void validateRoleRemoval(
-            UserId currentUserId,
-            List<String> currentUserRoles,
-            TenantId currentUserTenantId,
-            User targetUser,
-            String roleToRemove) {
+    public void validateRoleRemoval(UserId currentUserId, List<String> currentUserRoles, TenantId currentUserTenantId, User targetUser, String roleToRemove) {
 
         // Cannot remove base role
         if (RoleConstants.BASE_ROLE.equals(roleToRemove)) {
-            throw new InsufficientPrivilegesException(
-                    String.format("Cannot remove base role: %s", roleToRemove));
+            throw new InsufficientPrivilegesException(String.format("Cannot remove base role: %s", roleToRemove));
         }
 
         // Use same validation as assignment
@@ -112,24 +84,16 @@ public class RoleAssignmentValidator {
      * @throws InsufficientPrivilegesException if user cannot assign the role
      * @throws TenantMismatchException         if tenant mismatch
      */
-    public void validateRoleAssignment(
-            UserId currentUserId,
-            List<String> currentUserRoles,
-            TenantId currentUserTenantId,
-            User targetUser,
-            String roleToAssign) {
+    public void validateRoleAssignment(UserId currentUserId, List<String> currentUserRoles, TenantId currentUserTenantId, User targetUser, String roleToAssign) {
 
-        logger.debug("Validating role assignment: currentUserId={}, currentUserRoles={}, targetUserId={}, targetTenantId={}, role={}",
-                currentUserId.getValue(), currentUserRoles, targetUser.getId()
-                        .getValue(), targetUser.getTenantId()
-                        .getValue(), roleToAssign);
+        logger.debug("Validating role assignment: currentUserId={}, currentUserRoles={}, targetUserId={}, targetTenantId={}, role={}", currentUserId.getValue(), currentUserRoles,
+                targetUser.getId().getValue(), targetUser.getTenantId().getValue(), roleToAssign);
 
         // Rule 1: SYSTEM_ADMIN can assign any role to any user
         if (currentUserRoles.contains(RoleConstants.SYSTEM_ADMIN)) {
             // Special check: SYSTEM_ADMIN can only be assigned by existing SYSTEM_ADMIN
             if (RoleConstants.SYSTEM_ADMIN.equals(roleToAssign) && !currentUserRoles.contains(RoleConstants.SYSTEM_ADMIN)) {
-                throw new InsufficientPrivilegesException(
-                        "SYSTEM_ADMIN role can only be assigned by existing SYSTEM_ADMIN");
+                throw new InsufficientPrivilegesException("SYSTEM_ADMIN role can only be assigned by existing SYSTEM_ADMIN");
             }
             logger.debug("SYSTEM_ADMIN can assign any role");
             return; // SYSTEM_ADMIN can assign any role
@@ -138,19 +102,14 @@ public class RoleAssignmentValidator {
         // Rule 2: TENANT_ADMIN can assign any role to users within own tenant only
         if (currentUserRoles.contains(RoleConstants.TENANT_ADMIN)) {
             // Validate tenant match
-            if (!targetUser.getTenantId()
-                    .equals(currentUserTenantId)) {
-                throw new TenantMismatchException(
-                        String.format("TENANT_ADMIN can only assign roles to users in own tenant. " +
-                                        "Target user tenant: %s, Current user tenant: %s",
-                                targetUser.getTenantId()
-                                        .getValue(), currentUserTenantId.getValue()));
+            if (!targetUser.getTenantId().equals(currentUserTenantId)) {
+                throw new TenantMismatchException(String.format("TENANT_ADMIN can only assign roles to users in own tenant. " + "Target user tenant: %s, Current user tenant: %s",
+                        targetUser.getTenantId().getValue(), currentUserTenantId.getValue()));
             }
 
             // TENANT_ADMIN cannot assign SYSTEM_ADMIN
             if (RoleConstants.SYSTEM_ADMIN.equals(roleToAssign)) {
-                throw new InsufficientPrivilegesException(
-                        "TENANT_ADMIN cannot assign SYSTEM_ADMIN role");
+                throw new InsufficientPrivilegesException("TENANT_ADMIN cannot assign SYSTEM_ADMIN role");
             }
 
             logger.debug("TENANT_ADMIN can assign role within own tenant");
@@ -159,16 +118,13 @@ public class RoleAssignmentValidator {
 
         // Rule 3: WAREHOUSE_MANAGER can assign operational roles to users within own tenant
         if (currentUserRoles.contains(RoleConstants.WAREHOUSE_MANAGER)) {
-            if (!targetUser.getTenantId()
-                    .equals(currentUserTenantId)) {
-                throw new TenantMismatchException(
-                        "WAREHOUSE_MANAGER can only assign roles to users in own tenant");
+            if (!targetUser.getTenantId().equals(currentUserTenantId)) {
+                throw new TenantMismatchException("WAREHOUSE_MANAGER can only assign roles to users in own tenant");
             }
 
             // WAREHOUSE_MANAGER can assign operational roles only
             if (!WAREHOUSE_MANAGER_ASSIGNABLE_ROLES.contains(roleToAssign)) {
-                throw new InsufficientPrivilegesException(
-                        String.format("WAREHOUSE_MANAGER cannot assign role: %s", roleToAssign));
+                throw new InsufficientPrivilegesException(String.format("WAREHOUSE_MANAGER cannot assign role: %s", roleToAssign));
             }
 
             logger.debug("WAREHOUSE_MANAGER can assign operational role");
@@ -181,15 +137,12 @@ public class RoleAssignmentValidator {
             Set<String> allowedClerkRoles = entry.getValue();
 
             if (currentUserRoles.contains(managerRole)) {
-                if (!targetUser.getTenantId()
-                        .equals(currentUserTenantId)) {
-                    throw new TenantMismatchException(
-                            String.format("%s can only assign roles to users in own tenant", managerRole));
+                if (!targetUser.getTenantId().equals(currentUserTenantId)) {
+                    throw new TenantMismatchException(String.format("%s can only assign roles to users in own tenant", managerRole));
                 }
 
                 if (!allowedClerkRoles.contains(roleToAssign)) {
-                    throw new InsufficientPrivilegesException(
-                            String.format("%s cannot assign role: %s", managerRole, roleToAssign));
+                    throw new InsufficientPrivilegesException(String.format("%s cannot assign role: %s", managerRole, roleToAssign));
                 }
 
                 logger.debug("{} can assign clerk role", managerRole);
@@ -198,8 +151,7 @@ public class RoleAssignmentValidator {
         }
 
         // Rule 5: Other roles cannot manage roles
-        throw new InsufficientPrivilegesException(
-                String.format("User with roles %s cannot assign roles", currentUserRoles));
+        throw new InsufficientPrivilegesException(String.format("User with roles %s cannot assign roles", currentUserRoles));
     }
 }
 

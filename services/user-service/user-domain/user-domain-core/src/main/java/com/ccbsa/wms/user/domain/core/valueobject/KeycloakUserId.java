@@ -11,8 +11,7 @@ public final class KeycloakUserId {
     private final String value;
 
     private KeycloakUserId(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("Keycloak user ID cannot be null or empty");
         }
         String trimmed = value.trim();

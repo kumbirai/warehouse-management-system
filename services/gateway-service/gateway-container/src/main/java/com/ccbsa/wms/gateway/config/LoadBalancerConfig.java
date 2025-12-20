@@ -36,15 +36,9 @@ public class LoadBalancerConfig {
 
         @Bean
         @Primary
-        public ServiceInstanceListSupplier caseInsensitiveServiceInstanceListSupplier(
-                ConfigurableApplicationContext context,
-                DiscoveryClient discoveryClient) {
+        public ServiceInstanceListSupplier caseInsensitiveServiceInstanceListSupplier(ConfigurableApplicationContext context, DiscoveryClient discoveryClient) {
             // Get the default supplier
-            ServiceInstanceListSupplier defaultSupplier =
-                    ServiceInstanceListSupplier.builder()
-                            .withDiscoveryClient()
-                            .withCaching()
-                            .build(context);
+            ServiceInstanceListSupplier defaultSupplier = ServiceInstanceListSupplier.builder().withDiscoveryClient().withCaching().build(context);
 
             // Wrap it to add case-insensitive lookup
             return new ServiceInstanceListSupplier() {
@@ -59,14 +53,12 @@ public class LoadBalancerConfig {
                     }
 
                     // Try with original service ID first
-                    return defaultSupplier.get()
-                            .switchIfEmpty(
-                                    // If not found, try with uppercase service ID using DiscoveryClient
-                                    Flux.defer(() -> {
-                                        List<ServiceInstance> instances = discoveryClient.getInstances(uppercaseServiceId);
-                                        return Flux.just(instances);
-                                    })
-                            );
+                    return defaultSupplier.get().switchIfEmpty(
+                            // If not found, try with uppercase service ID using DiscoveryClient
+                            Flux.defer(() -> {
+                                List<ServiceInstance> instances = discoveryClient.getInstances(uppercaseServiceId);
+                                return Flux.just(instances);
+                            }));
                 }
 
                 @Override

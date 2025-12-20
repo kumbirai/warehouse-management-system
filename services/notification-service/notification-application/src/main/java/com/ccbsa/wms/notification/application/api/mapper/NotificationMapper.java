@@ -30,9 +30,7 @@ public class NotificationMapper {
      * @return List of notification responses
      */
     public List<NotificationResponse> toNotificationResponseList(List<GetNotificationQueryResult> results) {
-        return results.stream()
-                .map(this::toNotificationResponse)
-                .collect(Collectors.toList());
+        return results.stream().map(this::toNotificationResponse).collect(Collectors.toList());
     }
 
     /**
@@ -42,11 +40,8 @@ public class NotificationMapper {
      * @return Notification response
      */
     public NotificationResponse toNotificationResponse(GetNotificationQueryResult result) {
-        return new NotificationResponse(result.getNotificationId()
-                .getValueAsString(), result.getTenantId()
-                .getValue(), result.getRecipientUserId()
-                .getValue(), result.getTitle(), result.getMessage(), result.getType(), result.getStatus(), result.getCreatedAt(), result.getLastModifiedAt(),
-                result.getSentAt(), result.getReadAt());
+        return new NotificationResponse(result.getNotificationId().getValueAsString(), result.getTenantId().getValue(), result.getRecipientUserId().getValue(), result.getTitle(),
+                result.getMessage(), result.getType(), result.getStatus(), result.getCreatedAt(), result.getLastModifiedAt(), result.getSentAt(), result.getReadAt());
     }
 
     /**
@@ -71,8 +66,7 @@ public class NotificationMapper {
      * @return ListNotificationsQuery
      */
     public ListNotificationsQuery toListNotificationsQuery(String tenantId, String recipientUserId, String status, String type, Integer page, Integer size) {
-        ListNotificationsQuery.Builder builder = ListNotificationsQuery.builder()
-                .tenantId(TenantId.of(tenantId));
+        ListNotificationsQuery.Builder builder = ListNotificationsQuery.builder().tenantId(TenantId.of(tenantId));
 
         if (recipientUserId != null) {
             builder.recipientUserId(UserId.of(recipientUserId));

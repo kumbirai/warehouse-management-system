@@ -82,8 +82,7 @@ public class UserServiceConfiguration {
      * @return Consumer factory configured for typed deserialization
      */
     @Bean("externalEventConsumerFactory")
-    public ConsumerFactory<String, Object> externalEventConsumerFactory(
-            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ConsumerFactory<String, Object> externalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "user-service");
@@ -127,8 +126,7 @@ public class UserServiceConfiguration {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(externalEventConsumerFactory);
 
-        factory.getContainerProperties()
-                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.setConcurrency(concurrency);
 
         BackOff backOff = createExponentialBackOff();
@@ -163,8 +161,7 @@ public class UserServiceConfiguration {
      * @return Consumer factory configured for cache invalidation events
      */
     @Bean("cacheInvalidationConsumerFactory")
-    public ConsumerFactory<String, Object> cacheInvalidationConsumerFactory(
-            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ConsumerFactory<String, Object> cacheInvalidationConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "user-service-cache-invalidation");
@@ -209,8 +206,7 @@ public class UserServiceConfiguration {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(cacheInvalidationConsumerFactory);
 
-        factory.getContainerProperties()
-                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.setConcurrency(concurrency);
 
         BackOff backOff = createExponentialBackOff();

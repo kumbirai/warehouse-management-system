@@ -43,13 +43,10 @@ public class DeactivateUserCommandHandler {
      */
     @Transactional
     public void handle(DeactivateUserCommand command) {
-        logger.debug("Deactivating user: userId={}", command.getUserId()
-                .getValue());
+        logger.debug("Deactivating user: userId={}", command.getUserId().getValue());
 
         // 1. Load user
-        User user = userRepository.findById(command.getUserId())
-                .orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", command.getUserId()
-                        .getValue())));
+        User user = userRepository.findById(command.getUserId()).orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", command.getUserId().getValue())));
 
         // 2. Validate can deactivate
         if (!user.canDeactivate()) {
@@ -63,11 +60,9 @@ public class DeactivateUserCommandHandler {
         userRepository.save(user);
 
         // 5. Disable user in Keycloak
-        if (user.getKeycloakUserId()
-                .isPresent()) {
+        if (user.getKeycloakUserId().isPresent()) {
             try {
-                authenticationService.disableUser(user.getKeycloakUserId()
-                        .get());
+                authenticationService.disableUser(user.getKeycloakUserId().get());
             } catch (Exception e) {
                 logger.error("Failed to disable user in Keycloak: {}", e.getMessage(), e);
                 // Don't fail the operation - domain state is updated
@@ -81,8 +76,7 @@ public class DeactivateUserCommandHandler {
             user.clearDomainEvents();
         }
 
-        logger.info("User deactivated successfully: userId={}", command.getUserId()
-                .getValue());
+        logger.info("User deactivated successfully: userId={}", command.getUserId().getValue());
     }
 }
 

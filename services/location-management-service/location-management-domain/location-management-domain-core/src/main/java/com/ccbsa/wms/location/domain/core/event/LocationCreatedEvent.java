@@ -14,8 +14,7 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
  * <p>
  * Event Version: 1.0
  */
-public final class LocationCreatedEvent
-        extends LocationManagementEvent {
+public final class LocationCreatedEvent extends LocationManagementEvent {
     private final LocationBarcode barcode;
     private final LocationCoordinates coordinates;
     private final LocationStatus status;

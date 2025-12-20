@@ -36,8 +36,7 @@ import jakarta.persistence.PersistenceContext;
  * Implements NotificationRepository port interface. Adapts between domain Notification aggregate and JPA NotificationEntity.
  */
 @Repository
-public class NotificationRepositoryAdapter
-        implements NotificationRepository {
+public class NotificationRepositoryAdapter implements NotificationRepository {
     private static final Logger logger = LoggerFactory.getLogger(NotificationRepositoryAdapter.class);
 
     private final NotificationJpaRepository jpaRepository;
@@ -48,8 +47,8 @@ public class NotificationRepositoryAdapter
     @PersistenceContext
     private EntityManager entityManager;
 
-    public NotificationRepositoryAdapter(NotificationJpaRepository jpaRepository, NotificationEntityMapper mapper,
-                                         TenantSchemaResolver schemaResolver, TenantSchemaProvisioner schemaProvisioner) {
+    public NotificationRepositoryAdapter(NotificationJpaRepository jpaRepository, NotificationEntityMapper mapper, TenantSchemaResolver schemaResolver,
+                                         TenantSchemaProvisioner schemaProvisioner) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
         this.schemaResolver = schemaResolver;
@@ -86,9 +85,7 @@ public class NotificationRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Check if entity already exists to handle version correctly
-        Optional<NotificationEntity> existingEntity = jpaRepository.findByTenantIdAndId(notification.getTenantId()
-                .getValue(), notification.getId()
-                .getValue());
+        Optional<NotificationEntity> existingEntity = jpaRepository.findByTenantIdAndId(notification.getTenantId().getValue(), notification.getId().getValue());
 
         NotificationEntity entity;
         if (existingEntity.isPresent()) {
@@ -136,9 +133,7 @@ public class NotificationRepositoryAdapter
             return;
         }
 
-        throw new IllegalArgumentException(
-                String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName)
-        );
+        throw new IllegalArgumentException(String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName));
     }
 
     /**
@@ -161,14 +156,10 @@ public class NotificationRepositoryAdapter
      * @param notification Domain notification aggregate
      */
     private void updateEntityFromDomain(NotificationEntity entity, Notification notification) {
-        entity.setRecipientUserId(notification.getRecipientUserId()
-                .getValue());
-        entity.setRecipientEmail(notification.getRecipientEmail() != null ? notification.getRecipientEmail()
-                .getValue() : null);
-        entity.setTitle(notification.getTitle()
-                .getValue());
-        entity.setMessage(notification.getMessage()
-                .getValue());
+        entity.setRecipientUserId(notification.getRecipientUserId().getValue());
+        entity.setRecipientEmail(notification.getRecipientEmail() != null ? notification.getRecipientEmail().getValue() : null);
+        entity.setTitle(notification.getTitle().getValue());
+        entity.setMessage(notification.getMessage().getValue());
         entity.setType(notification.getType());
         entity.setStatus(notification.getStatus());
         entity.setCreatedAt(notification.getCreatedAt());
@@ -186,10 +177,8 @@ public class NotificationRepositoryAdapter
      * @param connection Database connection
      * @param schemaName Validated and escaped schema name
      */
-    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
-            justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " +
-                    "and properly escaped using escapeIdentifier() method. " +
-                    "PostgreSQL SET search_path command does not support parameterized queries.")
+    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE", justification = "Schema name is validated against expected patterns (tenant_*_schema or public) "
+            + "and properly escaped using escapeIdentifier() method. " + "PostgreSQL SET search_path command does not support parameterized queries.")
     private void executeSetSearchPath(Connection connection, String schemaName) {
         try (Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
@@ -238,8 +227,7 @@ public class NotificationRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantIdAndId(tenantId.getValue(), notificationId.getValue())
-                .map(mapper::toDomain);
+        return jpaRepository.findByTenantIdAndId(tenantId.getValue(), notificationId.getValue()).map(mapper::toDomain);
     }
 
     @Override
@@ -272,10 +260,7 @@ public class NotificationRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantIdAndRecipientUserId(tenantId.getValue(), recipientUserId.getValue())
-                .stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
+        return jpaRepository.findByTenantIdAndRecipientUserId(tenantId.getValue(), recipientUserId.getValue()).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 
     @Override
@@ -308,9 +293,7 @@ public class NotificationRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantIdAndRecipientUserIdAndStatus(tenantId.getValue(), recipientUserId.getValue(), status)
-                .stream()
-                .map(mapper::toDomain)
+        return jpaRepository.findByTenantIdAndRecipientUserIdAndStatus(tenantId.getValue(), recipientUserId.getValue(), status).stream().map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
@@ -344,10 +327,7 @@ public class NotificationRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantIdAndType(tenantId.getValue(), type)
-                .stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
+        return jpaRepository.findByTenantIdAndType(tenantId.getValue(), type).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 
     @Override

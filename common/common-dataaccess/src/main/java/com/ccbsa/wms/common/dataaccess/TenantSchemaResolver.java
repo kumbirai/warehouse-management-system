@@ -50,16 +50,12 @@ public class TenantSchemaResolver {
      * @return Sanitized tenant ID suitable for use in PostgreSQL schema name
      */
     private String sanitizeTenantId(String tenantId) {
-        if (tenantId == null || tenantId.trim()
-                .isEmpty()) {
+        if (tenantId == null || tenantId.trim().isEmpty()) {
             throw new IllegalArgumentException("Tenant ID cannot be null or empty");
         }
 
         // Convert to lowercase and replace hyphens and other special characters with underscores
-        String sanitized = tenantId.toLowerCase(Locale.ROOT)
-                .replace("-", "_")
-                .replace(".", "_")
-                .replace(" ", "_");
+        String sanitized = tenantId.toLowerCase(Locale.ROOT).replace("-", "_").replace(".", "_").replace(" ", "_");
 
         // Remove any remaining invalid characters (keep only alphanumeric and underscores)
         sanitized = sanitized.replaceAll("[^a-z0-9_]", "");

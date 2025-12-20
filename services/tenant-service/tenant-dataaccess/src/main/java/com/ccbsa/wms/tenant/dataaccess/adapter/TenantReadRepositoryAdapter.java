@@ -20,8 +20,7 @@ import com.ccbsa.wms.tenant.dataaccess.mapper.TenantViewMapper;
  * Adapter implementing the read-only tenant repository port.
  */
 @Repository
-public class TenantReadRepositoryAdapter
-        implements TenantReadRepository {
+public class TenantReadRepositoryAdapter implements TenantReadRepository {
     private final TenantJpaRepository tenantJpaRepository;
     private final TenantViewMapper tenantViewMapper;
 
@@ -36,18 +35,11 @@ public class TenantReadRepositoryAdapter
         Pageable pageable = PageRequest.of(query.getPage() - 1, query.getSize());
 
         // Convert TenantStatus enum to String for native query to avoid PostgreSQL type inference issues
-        String statusString = query.getStatus()
-                .map(Enum::name)
-                .orElse(null);
+        String statusString = query.getStatus().map(Enum::name).orElse(null);
 
-        Page<TenantEntity> page = tenantJpaRepository.searchTenants(statusString, query.getSearch()
-                .map(String::toLowerCase)
-                .orElse(null), pageable);
+        Page<TenantEntity> page = tenantJpaRepository.searchTenants(statusString, query.getSearch().map(String::toLowerCase).orElse(null), pageable);
 
-        List<TenantView> tenants = page.getContent()
-                .stream()
-                .map(tenantViewMapper::toView)
-                .collect(Collectors.toUnmodifiableList());
+        List<TenantView> tenants = page.getContent().stream().map(tenantViewMapper::toView).collect(Collectors.toUnmodifiableList());
 
         return new TenantListResult(tenants, query.getPage(), query.getSize(), page.getTotalElements());
     }

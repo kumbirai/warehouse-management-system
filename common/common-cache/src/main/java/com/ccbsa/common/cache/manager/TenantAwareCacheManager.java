@@ -23,15 +23,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Extends RedisCacheManager to provide: - Automatic tenant prefix injection in cache keys - Per-cache TTL configuration from CacheProperties - Support for cache-specific
  * configurations
  */
-public class TenantAwareCacheManager
-        extends RedisCacheManager {
+public class TenantAwareCacheManager extends RedisCacheManager {
 
     private final CacheProperties cacheProperties;
     private final Map<String, RedisCacheConfiguration> cacheConfigurations;
     private final Map<String, Cache> dynamicCaches;
 
-    @SuppressFBWarnings(value = {"EI_EXPOSE_REP2", "MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR"},
-            justification = "CacheProperties is a Spring @ConfigurationProperties bean managed by Spring. It is initialized once and not mutated after construction. The "
+    @SuppressFBWarnings(value = {"EI_EXPOSE_REP2", "MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR"}, justification =
+            "CacheProperties is a Spring @ConfigurationProperties bean managed by Spring. It is initialized once and not mutated after construction. The "
                     + "reference is safe to store. getDefaultCacheConfiguration() is called to initialize cache configurations, and this is safe as the method is not overridden "
                     + "in practice.")
     public TenantAwareCacheManager(RedisConnectionFactory connectionFactory, RedisCacheConfiguration defaultCacheConfiguration, CacheProperties cacheProperties) {
@@ -42,20 +41,19 @@ public class TenantAwareCacheManager
         initializeCacheConfigurations();
     }
 
-    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE",
-            justification = "getCacheConfigs() returns Collections.unmodifiableMap() which is never null. The null check is defensive programming for clarity.")
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "getCacheConfigs() returns Collections.unmodifiableMap() which is never null. The "
+            + "null check is defensive programming for clarity.")
     private void initializeCacheConfigurations() {
         // Build cache configurations from properties
         if (cacheProperties.getCacheConfigs() != null) {
-            cacheProperties.getCacheConfigs()
-                    .forEach((cacheName, config) -> {
-                        RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
-                                .entryTtl(Duration.ofMinutes(config.getTtlMinutes() != null ? config.getTtlMinutes() : cacheProperties.getDefaultTtlMinutes()))
-                                .serializeKeysWith(getDefaultCacheConfiguration().getKeySerializationPair())
-                                .serializeValuesWith(getDefaultCacheConfiguration().getValueSerializationPair());
+            cacheProperties.getCacheConfigs().forEach((cacheName, config) -> {
+                RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
+                        .entryTtl(Duration.ofMinutes(config.getTtlMinutes() != null ? config.getTtlMinutes() : cacheProperties.getDefaultTtlMinutes()))
+                        .serializeKeysWith(getDefaultCacheConfiguration().getKeySerializationPair())
+                        .serializeValuesWith(getDefaultCacheConfiguration().getValueSerializationPair());
 
-                        cacheConfigurations.put(cacheName, cacheConfig);
-                    });
+                cacheConfigurations.put(cacheName, cacheConfig);
+            });
         }
     }
 

@@ -19,8 +19,7 @@ import com.ccbsa.wms.tenant.domain.core.entity.Tenant;
  * Implements TenantRepository port interface. Adapts between domain Tenant aggregate and JPA TenantEntity.
  */
 @Repository
-public class TenantRepositoryAdapter
-        implements TenantRepository {
+public class TenantRepositoryAdapter implements TenantRepository {
     private final TenantJpaRepository jpaRepository;
     private final TenantEntityMapper mapper;
 
@@ -32,8 +31,7 @@ public class TenantRepositoryAdapter
     @Override
     public void save(Tenant tenant) {
         // Check if entity already exists to handle updates correctly
-        Optional<TenantEntity> existingEntity = jpaRepository.findById(tenant.getId()
-                .getValue());
+        Optional<TenantEntity> existingEntity = jpaRepository.findById(tenant.getId().getValue());
 
         TenantEntity entity;
         if (existingEntity.isPresent()) {
@@ -53,22 +51,15 @@ public class TenantRepositoryAdapter
      * Updates an existing entity with values from the domain model. Preserves JPA managed state and version for optimistic locking.
      */
     private void updateEntityFromDomain(TenantEntity entity, Tenant tenant) {
-        entity.setName(tenant.getName()
-                .getValue());
+        entity.setName(tenant.getName().getValue());
         entity.setStatus(tenant.getStatus());
         entity.setVersion(tenant.getVersion());
 
         // Contact information
         if (tenant.getContactInformation() != null) {
-            entity.setEmailAddress(tenant.getContactInformation()
-                    .getEmailValue()
-                    .orElse(null));
-            entity.setPhone(tenant.getContactInformation()
-                    .getPhone()
-                    .orElse(null));
-            entity.setAddress(tenant.getContactInformation()
-                    .getAddress()
-                    .orElse(null));
+            entity.setEmailAddress(tenant.getContactInformation().getEmailValue().orElse(null));
+            entity.setPhone(tenant.getContactInformation().getPhone().orElse(null));
+            entity.setAddress(tenant.getContactInformation().getAddress().orElse(null));
         } else {
             entity.setEmailAddress(null);
             entity.setPhone(null);
@@ -77,11 +68,8 @@ public class TenantRepositoryAdapter
 
         // Configuration
         if (tenant.getConfiguration() != null) {
-            entity.setKeycloakRealmName(tenant.getConfiguration()
-                    .getKeycloakRealmName()
-                    .orElse(null));
-            entity.setUsePerTenantRealm(tenant.getConfiguration()
-                    .isUsePerTenantRealm());
+            entity.setKeycloakRealmName(tenant.getConfiguration().getKeycloakRealmName().orElse(null));
+            entity.setUsePerTenantRealm(tenant.getConfiguration().isUsePerTenantRealm());
         }
 
         // Timestamps
@@ -93,16 +81,12 @@ public class TenantRepositoryAdapter
     @Override
     public Optional<Tenant> findById(TenantId tenantId) {
         String tenantIdValue = tenantId.getValue();
-        return jpaRepository.findById(tenantIdValue)
-                .map(mapper::toDomain);
+        return jpaRepository.findById(tenantIdValue).map(mapper::toDomain);
     }
 
     @Override
     public List<Tenant> findAll() {
-        return jpaRepository.findAll()
-                .stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
+        return jpaRepository.findAll().stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 
     @Override

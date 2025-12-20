@@ -33,20 +33,13 @@ public class LocationEntityMapper {
         }
 
         LocationEntity entity = new LocationEntity();
-        entity.setId(location.getId()
-                .getValue());
-        entity.setTenantId(location.getTenantId()
-                .getValue());
-        entity.setBarcode(location.getBarcode()
-                .getValue());
-        entity.setZone(location.getCoordinates()
-                .getZone());
-        entity.setAisle(location.getCoordinates()
-                .getAisle());
-        entity.setRack(location.getCoordinates()
-                .getRack());
-        entity.setLevel(location.getCoordinates()
-                .getLevel());
+        entity.setId(location.getId().getValue());
+        entity.setTenantId(location.getTenantId().getValue());
+        entity.setBarcode(location.getBarcode().getValue());
+        entity.setZone(location.getCoordinates().getZone());
+        entity.setAisle(location.getCoordinates().getAisle());
+        entity.setRack(location.getCoordinates().getRack());
+        entity.setLevel(location.getCoordinates().getLevel());
         entity.setStatus(location.getStatus());
 
         // Map capacity
@@ -62,6 +55,13 @@ public class LocationEntityMapper {
         entity.setDescription(location.getDescription());
         entity.setCreatedAt(location.getCreatedAt());
         entity.setLastModifiedAt(location.getLastModifiedAt());
+
+        // Map parent location ID
+        if (location.getParentLocationId() != null) {
+            entity.setParentLocationId(location.getParentLocationId().getValue());
+        } else {
+            entity.setParentLocationId(null);
+        }
 
         // For new entities, version will be set by Hibernate when persisting
         // For existing entities loaded from DB, version is already set
@@ -87,15 +87,10 @@ public class LocationEntityMapper {
             throw new IllegalArgumentException("LocationEntity cannot be null");
         }
 
-        Location.Builder builder = Location.builder()
-                .locationId(LocationId.of(entity.getId()))
-                .tenantId(TenantId.of(entity.getTenantId()))
-                .barcode(LocationBarcode.of(entity.getBarcode()))
-                .coordinates(LocationCoordinates.of(entity.getZone(), entity.getAisle(), entity.getRack(), entity.getLevel()))
-                .status(entity.getStatus())
-                .createdAt(entity.getCreatedAt())
-                .lastModifiedAt(entity.getLastModifiedAt())
-                .version(entity.getVersion());
+        Location.Builder builder =
+                Location.builder().locationId(LocationId.of(entity.getId())).tenantId(TenantId.of(entity.getTenantId())).barcode(LocationBarcode.of(entity.getBarcode()))
+                        .coordinates(LocationCoordinates.of(entity.getZone(), entity.getAisle(), entity.getRack(), entity.getLevel())).status(entity.getStatus())
+                        .createdAt(entity.getCreatedAt()).lastModifiedAt(entity.getLastModifiedAt()).version(entity.getVersion());
 
         // Map capacity
         if (entity.getCurrentQuantity() != null || entity.getMaximumQuantity() != null) {
@@ -116,10 +111,13 @@ public class LocationEntityMapper {
         }
 
         // Set description if available
-        if (entity.getDescription() != null && !entity.getDescription()
-                .trim()
-                .isEmpty()) {
+        if (entity.getDescription() != null && !entity.getDescription().trim().isEmpty()) {
             builder.description(entity.getDescription());
+        }
+
+        // Set parent location ID if available
+        if (entity.getParentLocationId() != null) {
+            builder.parentLocationId(LocationId.of(entity.getParentLocationId()));
         }
 
         return builder.buildWithoutEvents();

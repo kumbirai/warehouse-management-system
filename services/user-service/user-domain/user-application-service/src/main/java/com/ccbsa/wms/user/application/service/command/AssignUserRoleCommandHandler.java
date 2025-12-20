@@ -40,12 +40,8 @@ public class AssignUserRoleCommandHandler {
     private final RoleAssignmentValidator roleAssignmentValidator;
     private final SecurityContextPort securityContextPort;
 
-    public AssignUserRoleCommandHandler(
-            UserRepository userRepository,
-            UserEventPublisher eventPublisher,
-            AuthenticationServicePort authenticationService,
-            RoleAssignmentValidator roleAssignmentValidator,
-            SecurityContextPort securityContextPort) {
+    public AssignUserRoleCommandHandler(UserRepository userRepository, UserEventPublisher eventPublisher, AuthenticationServicePort authenticationService,
+                                        RoleAssignmentValidator roleAssignmentValidator, SecurityContextPort securityContextPort) {
         this.userRepository = userRepository;
         this.eventPublisher = eventPublisher;
         this.authenticationService = authenticationService;
@@ -65,19 +61,16 @@ public class AssignUserRoleCommandHandler {
      */
     @Transactional
     public void handle(AssignUserRoleCommand command) {
-        logger.debug("Assigning role to user: userId={}, role={}", command.getUserId()
-                .getValue(), command.getRoleName());
+        logger.debug("Assigning role to user: userId={}, role={}", command.getUserId().getValue(), command.getRoleName());
 
         // 1. Validate role exists
         if (!RoleConstants.isValidRole(command.getRoleName())) {
-            throw new IllegalArgumentException(
-                    String.format("Invalid role: %s. Valid roles: %s", command.getRoleName(), RoleConstants.VALID_ROLES));
+            throw new IllegalArgumentException(String.format("Invalid role: %s. Valid roles: %s", command.getRoleName(), RoleConstants.VALID_ROLES));
         }
 
         // 2. Load target user
-        User targetUser = userRepository.findById(command.getUserId())
-                .orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", command.getUserId()
-                        .getValue())));
+        User targetUser =
+                userRepository.findById(command.getUserId()).orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", command.getUserId().getValue())));
 
         // 3. Get current user (assigner) from security context
         UserId currentUserId = securityContextPort.getCurrentUserId();
@@ -85,32 +78,21 @@ public class AssignUserRoleCommandHandler {
         TenantId currentUserTenantId = securityContextPort.getCurrentUserTenantId();
 
         // 4. Validate assignment permissions
-        roleAssignmentValidator.validateRoleAssignment(
-                currentUserId,
-                currentUserRoles,
-                currentUserTenantId,
-                targetUser,
-                command.getRoleName()
-        );
+        roleAssignmentValidator.validateRoleAssignment(currentUserId, currentUserRoles, currentUserTenantId, targetUser, command.getRoleName());
 
         // 5. Check if user already has this role
-        if (targetUser.getKeycloakUserId()
-                .isPresent()) {
-            List<String> existingRoles = authenticationService.getUserRoles(targetUser.getKeycloakUserId()
-                    .get());
+        if (targetUser.getKeycloakUserId().isPresent()) {
+            List<String> existingRoles = authenticationService.getUserRoles(targetUser.getKeycloakUserId().get());
             if (existingRoles.contains(command.getRoleName())) {
-                logger.warn("User already has role: userId={}, role={}", targetUser.getId()
-                        .getValue(), command.getRoleName());
+                logger.warn("User already has role: userId={}, role={}", targetUser.getId().getValue(), command.getRoleName());
                 return; // Idempotent: already assigned
             }
         }
 
         // 6. Assign role in Keycloak
-        if (targetUser.getKeycloakUserId()
-                .isPresent()) {
+        if (targetUser.getKeycloakUserId().isPresent()) {
             try {
-                authenticationService.assignRole(targetUser.getKeycloakUserId()
-                        .get(), command.getRoleName());
+                authenticationService.assignRole(targetUser.getKeycloakUserId().get(), command.getRoleName());
             } catch (Exception e) {
                 logger.error("Failed to assign role in Keycloak: {}", e.getMessage(), e);
                 throw new RoleAssignmentException(String.format("Failed to assign role: %s", e.getMessage()), e);
@@ -125,18 +107,11 @@ public class AssignUserRoleCommandHandler {
         userRepository.save(targetUser);
 
         // 8. Publish event with metadata (including assignedBy)
-        EventMetadata metadata = EventMetadata.builder()
-                .userId(currentUserId.getValue())
-                .build();
-        UserRoleAssignedEvent event = new UserRoleAssignedEvent(
-                targetUser.getId(),
-                targetUser.getTenantId(),
-                command.getRoleName(),
-                metadata);
+        EventMetadata metadata = EventMetadata.builder().userId(currentUserId.getValue()).build();
+        UserRoleAssignedEvent event = new UserRoleAssignedEvent(targetUser.getId(), targetUser.getTenantId(), command.getRoleName(), metadata);
         eventPublisher.publish(Collections.singletonList(event));
 
-        logger.info("Role assigned successfully: userId={}, role={}, assignedBy={}", targetUser.getId()
-                .getValue(), command.getRoleName(), currentUserId.getValue());
+        logger.info("Role assigned successfully: userId={}, role={}, assignedBy={}", targetUser.getId().getValue(), command.getRoleName(), currentUserId.getValue());
     }
 }
 

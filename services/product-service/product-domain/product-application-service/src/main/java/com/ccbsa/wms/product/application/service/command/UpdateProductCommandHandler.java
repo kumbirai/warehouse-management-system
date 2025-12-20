@@ -47,21 +47,16 @@ public class UpdateProductCommandHandler {
 
         // 2. Load existing product
         Product product = repository.findByIdAndTenantId(command.getProductId(), command.getTenantId())
-                .orElseThrow(() -> new ProductNotFoundException(String.format("Product not found: %s", command.getProductId()
-                        .getValueAsString())));
+                .orElseThrow(() -> new ProductNotFoundException(String.format("Product not found: %s", command.getProductId().getValueAsString())));
 
         // 3. Validate primary barcode uniqueness if changed
-        if (!product.getPrimaryBarcode()
-                .getValue()
-                .equals(command.getPrimaryBarcode()
-                        .getValue())) {
+        if (!product.getPrimaryBarcode().getValue().equals(command.getPrimaryBarcode().getValue())) {
             validateBarcodeUniqueness(command.getPrimaryBarcode(), command.getTenantId());
             product.updatePrimaryBarcode(command.getPrimaryBarcode());
         }
 
         // 4. Update description if changed
-        if (!product.getDescription()
-                .equals(command.getDescription())) {
+        if (!product.getDescription().equals(command.getDescription())) {
             product.updateDescription(command.getDescription());
         }
 
@@ -76,8 +71,7 @@ public class UpdateProductCommandHandler {
         for (ProductBarcode existingBarcode : existingSecondaryBarcodes) {
             product.removeSecondaryBarcode(existingBarcode);
         }
-        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes()
-                .isEmpty()) {
+        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
             for (ProductBarcode newBarcode : command.getSecondaryBarcodes()) {
                 // Validate uniqueness before adding
                 validateBarcodeUniqueness(newBarcode, command.getTenantId());
@@ -101,10 +95,7 @@ public class UpdateProductCommandHandler {
         }
 
         // 11. Return result
-        return UpdateProductResult.builder()
-                .productId(savedProduct.getId())
-                .lastModifiedAt(savedProduct.getLastModifiedAt())
-                .build();
+        return UpdateProductResult.builder().productId(savedProduct.getId()).lastModifiedAt(savedProduct.getLastModifiedAt()).build();
     }
 
     /**
@@ -123,9 +114,7 @@ public class UpdateProductCommandHandler {
         if (command.getTenantId() == null) {
             throw new IllegalArgumentException("TenantId is required");
         }
-        if (command.getDescription() == null || command.getDescription()
-                .trim()
-                .isEmpty()) {
+        if (command.getDescription() == null || command.getDescription().trim().isEmpty()) {
             throw new IllegalArgumentException("Description is required");
         }
         if (command.getPrimaryBarcode() == null) {

@@ -33,10 +33,7 @@ public class TenantContextInterceptor implements HandlerInterceptor {
     private static final String SYSTEM_ADMIN_ROLE = "SYSTEM_ADMIN";
 
     @Override
-    public boolean preHandle(
-            @NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull Object handler) {
+    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) {
 
         // Check if user has SYSTEM_ADMIN role
         boolean isSystemAdmin = isSystemAdmin(request);
@@ -45,8 +42,7 @@ public class TenantContextInterceptor implements HandlerInterceptor {
         if (isSystemAdmin) {
             // SYSTEM_ADMIN users don't need tenant_id
             String userIdValue = request.getHeader(X_USER_ID_HEADER);
-            if (userIdValue != null && !userIdValue.trim()
-                    .isEmpty()) {
+            if (userIdValue != null && !userIdValue.trim().isEmpty()) {
                 TenantContext.setUserId(UserId.of(userIdValue));
             }
             // Don't set tenant context for SYSTEM_ADMIN
@@ -55,13 +51,11 @@ public class TenantContextInterceptor implements HandlerInterceptor {
 
         // For non-SYSTEM_ADMIN users, tenant_id is required
         String tenantIdValue = request.getHeader(X_TENANT_ID_HEADER);
-        if (tenantIdValue == null || tenantIdValue.trim()
-                .isEmpty()) {
+        if (tenantIdValue == null || tenantIdValue.trim().isEmpty()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.setContentType("application/json");
             try {
-                response.getWriter()
-                        .write("{\"error\":{\"code\":\"MISSING_TENANT_ID\",\"message\":\"X-Tenant-Id header is required\"}}");
+                response.getWriter().write("{\"error\":{\"code\":\"MISSING_TENANT_ID\",\"message\":\"X-Tenant-Id header is required\"}}");
             } catch (IOException e) {
                 // Ignore
             }
@@ -73,8 +67,7 @@ public class TenantContextInterceptor implements HandlerInterceptor {
 
         // Set tenant context
         TenantContext.setTenantId(TenantId.of(tenantIdValue));
-        if (userIdValue != null && !userIdValue.trim()
-                .isEmpty()) {
+        if (userIdValue != null && !userIdValue.trim().isEmpty()) {
             TenantContext.setUserId(UserId.of(userIdValue));
         }
 
@@ -112,18 +105,15 @@ public class TenantContextInterceptor implements HandlerInterceptor {
         }
 
         // Check JWT token in SecurityContext as fallback
-        Authentication authentication = SecurityContextHolder.getContext()
-                .getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt) {
             Jwt jwt = (Jwt) authentication.getPrincipal();
             Object realmAccess = jwt.getClaim("realm_access");
             if (realmAccess instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
+                @SuppressWarnings("unchecked") Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
                 Object rolesObj = realmAccessMap.get("roles");
                 if (rolesObj instanceof List) {
-                    @SuppressWarnings("unchecked")
-                    List<String> roles = (List<String>) rolesObj;
+                    @SuppressWarnings("unchecked") List<String> roles = (List<String>) rolesObj;
                     return roles.contains(role);
                 }
             }
@@ -133,11 +123,7 @@ public class TenantContextInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public void afterCompletion(
-            @NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull Object handler,
-            @Nullable Exception ex) {
+    public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, @Nullable Exception ex) {
         // Clear tenant context to prevent memory leaks
         TenantContext.clear();
     }

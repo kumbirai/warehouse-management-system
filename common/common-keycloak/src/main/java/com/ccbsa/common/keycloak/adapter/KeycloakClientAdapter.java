@@ -19,8 +19,7 @@ import jakarta.annotation.PreDestroy;
  * This adapter manages the Keycloak client lifecycle and connection pooling.
  */
 @Component
-public class KeycloakClientAdapter
-        implements KeycloakClientPort {
+public class KeycloakClientAdapter implements KeycloakClientPort {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakClientAdapter.class);
     private final KeycloakConfig config;
     private Keycloak keycloak;
@@ -32,20 +31,14 @@ public class KeycloakClientAdapter
     }
 
     private Keycloak createKeycloakClient() {
-        return KeycloakBuilder.builder()
-                .serverUrl(config.getServerUrl())
-                .realm(config.getAdminRealm())
-                .username(config.getAdminUsername())
-                .password(config.getAdminPassword())
-                .clientId(config.getAdminClientId())
-                .build();
+        return KeycloakBuilder.builder().serverUrl(config.getServerUrl()).realm(config.getAdminRealm()).username(config.getAdminUsername()).password(config.getAdminPassword())
+                .clientId(config.getAdminClientId()).build();
     }
 
     @Override
     public boolean isAccessible() {
         try {
-            getAdminClient().realms()
-                    .findAll();
+            getAdminClient().realms().findAll();
             return true;
         } catch (Exception e) {
             logger.warn("Keycloak is not accessible: {}", e.getMessage());
@@ -66,8 +59,7 @@ public class KeycloakClientAdapter
         // Keycloak client doesn't expose a direct "isClosed" method
         // We check accessibility by attempting a simple operation
         try {
-            keycloak.realms()
-                    .findAll();
+            keycloak.realms().findAll();
             return false;
         } catch (Exception e) {
             return true;

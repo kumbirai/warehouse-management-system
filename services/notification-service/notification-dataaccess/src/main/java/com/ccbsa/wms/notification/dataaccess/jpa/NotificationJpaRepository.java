@@ -19,8 +19,7 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
  * Spring Data JPA repository for NotificationEntity.
  */
 @Repository
-public interface NotificationJpaRepository
-        extends JpaRepository<NotificationEntity, UUID> {
+public interface NotificationJpaRepository extends JpaRepository<NotificationEntity, UUID> {
 
     /**
      * Finds notification by tenant ID and ID.
@@ -67,8 +66,6 @@ public interface NotificationJpaRepository
      * @return Count of unread notifications
      */
     @Query("SELECT COUNT(n) FROM NotificationEntity n " + "WHERE n.tenantId = :tenantId " + "AND n.recipientUserId = :recipientUserId " + "AND n.status != 'READ'")
-    long countUnreadByTenantIdAndRecipientUserId(
-            @Param("tenantId") String tenantId,
-            @Param("recipientUserId") String recipientUserId);
+    long countUnreadByTenantIdAndRecipientUserId(@Param("tenantId") String tenantId, @Param("recipientUserId") String recipientUserId);
 }
 

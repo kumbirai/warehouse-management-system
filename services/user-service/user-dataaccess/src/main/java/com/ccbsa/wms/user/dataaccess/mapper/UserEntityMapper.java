@@ -36,23 +36,13 @@ public class UserEntityMapper {
         }
 
         UserEntity entity = new UserEntity();
-        entity.setUserId(user.getId()
-                .getValue());
-        entity.setTenantId(user.getTenantId()
-                .getValue());
-        entity.setUsername(user.getUsername()
-                .getValue());
-        entity.setEmailAddress(user.getEmail()
-                .getValue());
-        entity.setFirstName(user.getFirstName()
-                .map(FirstName::getValue)
-                .orElse(null));
-        entity.setLastName(user.getLastName()
-                .map(LastName::getValue)
-                .orElse(null));
-        entity.setKeycloakUserId(user.getKeycloakUserId()
-                .map(KeycloakUserId::getValue)
-                .orElse(null));
+        entity.setUserId(user.getId().getValue());
+        entity.setTenantId(user.getTenantId().getValue());
+        entity.setUsername(user.getUsername().getValue());
+        entity.setEmailAddress(user.getEmail().getValue());
+        entity.setFirstName(user.getFirstName().map(FirstName::getValue).orElse(null));
+        entity.setLastName(user.getLastName().map(LastName::getValue).orElse(null));
+        entity.setKeycloakUserId(user.getKeycloakUserId().map(KeycloakUserId::getValue).orElse(null));
         entity.setStatus(mapToEntityStatus(user.getStatus()));
         entity.setCreatedAt(user.getCreatedAt());
         entity.setLastModifiedAt(user.getLastModifiedAt());
@@ -94,19 +84,10 @@ public class UserEntityMapper {
             throw new IllegalArgumentException("UserEntity cannot be null");
         }
 
-        return User.builder()
-                .userId(UserId.of(entity.getUserId()))
-                .tenantId(TenantId.of(entity.getTenantId()))
-                .username(Username.of(entity.getUsername()))
-                .email(EmailAddress.of(entity.getEmailAddress()))
-                .firstName(FirstName.of(entity.getFirstName()))
-                .lastName(LastName.of(entity.getLastName()))
-                .keycloakUserId(entity.getKeycloakUserId() != null ? KeycloakUserId.of(entity.getKeycloakUserId()) : null)
-                .status(mapToDomainStatus(entity.getStatus()))
-                .createdAt(entity.getCreatedAt())
-                .lastModifiedAt(entity.getLastModifiedAt())
-                .version(entity.getVersion() != null ? entity.getVersion()
-                        .intValue() : 0)
+        return User.builder().userId(UserId.of(entity.getUserId())).tenantId(TenantId.of(entity.getTenantId())).username(Username.of(entity.getUsername()))
+                .email(EmailAddress.of(entity.getEmailAddress())).firstName(FirstName.of(entity.getFirstName())).lastName(LastName.of(entity.getLastName()))
+                .keycloakUserId(entity.getKeycloakUserId() != null ? KeycloakUserId.of(entity.getKeycloakUserId()) : null).status(mapToDomainStatus(entity.getStatus()))
+                .createdAt(entity.getCreatedAt()).lastModifiedAt(entity.getLastModifiedAt()).version(entity.getVersion() != null ? entity.getVersion().intValue() : 0)
                 .buildWithoutEvents();
     }
 

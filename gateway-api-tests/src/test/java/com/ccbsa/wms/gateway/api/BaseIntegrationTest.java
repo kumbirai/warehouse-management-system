@@ -66,7 +66,7 @@ public abstract class BaseIntegrationTest {
         this.systemAdminPassword = System.getProperty("test.system.admin.password",
                 System.getenv().getOrDefault("TEST_SYSTEM_ADMIN_PASSWORD", "Password123@"));
         this.tenantAdminUsername = System.getProperty("test.tenant.admin.username",
-                System.getenv().getOrDefault("TEST_TENANT_ADMIN_USERNAME", "lacresha.haag@yahoo.com"));
+                System.getenv().getOrDefault("TEST_TENANT_ADMIN_USERNAME", "tenantuser@cm-sol.co.za"));
         this.tenantAdminPassword = System.getProperty("test.tenant.admin.password",
                 System.getenv().getOrDefault("TEST_TENANT_ADMIN_PASSWORD", "Password123@"));
 

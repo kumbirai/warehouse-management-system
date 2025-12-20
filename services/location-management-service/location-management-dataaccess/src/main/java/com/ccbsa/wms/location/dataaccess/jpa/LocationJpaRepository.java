@@ -13,8 +13,7 @@ import com.ccbsa.wms.location.dataaccess.entity.LocationEntity;
  * <p>
  * Spring Data JPA repository for LocationEntity. Provides database access methods with multi-tenant support.
  */
-public interface LocationJpaRepository
-        extends JpaRepository<LocationEntity, UUID> {
+public interface LocationJpaRepository extends JpaRepository<LocationEntity, UUID> {
     /**
      * Finds a location by tenant ID and location ID.
      *

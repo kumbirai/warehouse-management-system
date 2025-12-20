@@ -9,8 +9,7 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantConfiguration;
  * <p>
  * Represents the intent to update tenant configuration.
  */
-public final class UpdateTenantConfigurationCommand
-        implements Command {
+public final class UpdateTenantConfigurationCommand implements Command {
     private final TenantId tenantId;
     private final TenantConfiguration configuration;
 

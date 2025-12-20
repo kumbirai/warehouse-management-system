@@ -17,8 +17,7 @@ import com.ccbsa.common.keycloak.config.KeycloakConfig;
  * Health indicator for Keycloak connectivity. Checks if Keycloak server is reachable and responsive.
  */
 @Component
-public class KeycloakHealthIndicator
-        implements HealthIndicator {
+public class KeycloakHealthIndicator implements HealthIndicator {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakHealthIndicator.class);
     private final KeycloakConfig keycloakConfig;
     private final RestTemplate restTemplate;
@@ -43,9 +42,7 @@ public class KeycloakHealthIndicator
 
             logger.debug("Keycloak health check passed");
 
-            return Health.up()
-                    .withDetails(details)
-                    .build();
+            return Health.up().withDetails(details).build();
         } catch (Exception e) {
             logger.warn("Keycloak health check failed: {}", e.getMessage());
 
@@ -55,9 +52,7 @@ public class KeycloakHealthIndicator
             details.put("error", e.getMessage());
             details.put("status", "DOWN");
 
-            return Health.down()
-                    .withDetails(details)
-                    .build();
+            return Health.down().withDetails(details).build();
         }
     }
 }

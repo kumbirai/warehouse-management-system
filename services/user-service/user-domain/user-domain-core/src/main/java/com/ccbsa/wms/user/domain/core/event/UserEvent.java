@@ -14,8 +14,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * <p>
  * All user-specific events extend this class. Includes tenantId for tenant-aware aggregates.
  */
-public abstract class UserEvent
-        extends DomainEvent<UserId> {
+public abstract class UserEvent extends DomainEvent<UserId> {
     private final TenantId tenantId;
 
     /**
@@ -25,8 +24,7 @@ public abstract class UserEvent
      * @param tenantId    Tenant identifier
      * @throws IllegalArgumentException if tenantId is null
      */
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "User events must fail fast if aggregate identifiers are invalid")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "User events must fail fast if aggregate identifiers are invalid")
     protected UserEvent(UserId aggregateId, TenantId tenantId) {
         super(extractUserIdString(aggregateId), "User");
         this.tenantId = Objects.requireNonNull(tenantId, "TenantId cannot be null for user events");
@@ -53,8 +51,7 @@ public abstract class UserEvent
      * @param metadata    Event metadata for traceability
      * @throws IllegalArgumentException if tenantId is null
      */
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "User events must fail fast if aggregate identifiers are invalid")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "User events must fail fast if aggregate identifiers are invalid")
     protected UserEvent(UserId aggregateId, TenantId tenantId, EventMetadata metadata) {
         super(extractUserIdString(aggregateId), "User", metadata);
         this.tenantId = Objects.requireNonNull(tenantId, "TenantId cannot be null for user events");

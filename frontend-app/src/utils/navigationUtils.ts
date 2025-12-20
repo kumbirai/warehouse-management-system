@@ -1,0 +1,150 @@
+/**
+ * Navigation utilities for consistent routing across the application.
+ */
+
+/**
+ * Application routes
+ */
+export const Routes = {
+  // Public routes
+  login: '/login',
+  unauthorized: '/unauthorized',
+
+  // Dashboard
+  dashboard: '/dashboard',
+
+  // Admin routes (System Admin only)
+  admin: {
+    tenants: '/admin/tenants',
+    tenantDetail: (id: string) => `/admin/tenants/${id}`,
+    tenantCreate: '/admin/tenants/create',
+    tenantEdit: (id: string) => `/admin/tenants/${id}/edit`,
+
+    users: '/admin/users',
+    userDetail: (id: string) => `/admin/users/${id}`,
+    userCreate: '/admin/users/create',
+    userEdit: (id: string) => `/admin/users/${id}/edit`,
+  },
+
+  // Tenant routes
+  locations: '/locations',
+  locationDetail: (id: string) => `/locations/${id}`,
+  locationCreate: '/locations/create',
+  locationEdit: (id: string) => `/locations/${id}/edit`,
+
+  products: '/products',
+  productDetail: (id: string) => `/products/${id}`,
+  productCreate: '/products/create',
+  productEdit: (id: string) => `/products/${id}/edit`,
+
+  consignments: '/consignments',
+  consignmentDetail: (id: string) => `/consignments/${id}`,
+  consignmentCreate: '/consignments/create',
+
+  // Future routes (placeholder)
+  inventory: '/inventory',
+  picking: '/picking',
+  returns: '/returns',
+  reconciliation: '/reconciliation',
+  reports: '/reports',
+};
+
+/**
+ * Breadcrumb configurations for different pages
+ */
+export const getBreadcrumbs = {
+  // Tenant Management
+  tenantList: () => [{ label: 'Dashboard', href: Routes.dashboard }, { label: 'Tenants' }],
+  tenantDetail: (tenantName: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Tenants', href: Routes.admin.tenants },
+    { label: tenantName },
+  ],
+  tenantCreate: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Tenants', href: Routes.admin.tenants },
+    { label: 'Create Tenant' },
+  ],
+
+  // User Management
+  userList: () => [{ label: 'Dashboard', href: Routes.dashboard }, { label: 'Users' }],
+  userDetail: (userName: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Users', href: Routes.admin.users },
+    { label: userName },
+  ],
+  userCreate: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Users', href: Routes.admin.users },
+    { label: 'Create User' },
+  ],
+
+  // Location Management
+  locationList: () => [{ label: 'Dashboard', href: Routes.dashboard }, { label: 'Locations' }],
+  locationDetail: (locationCode: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Locations', href: Routes.locations },
+    { label: locationCode },
+  ],
+  locationCreate: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Locations', href: Routes.locations },
+    { label: 'Create Location' },
+  ],
+
+  // Product Management
+  productList: () => [{ label: 'Dashboard', href: Routes.dashboard }, { label: 'Products' }],
+  productDetail: (productCode: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Products', href: Routes.products },
+    { label: productCode },
+  ],
+  productCreate: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Products', href: Routes.products },
+    { label: 'Create Product' },
+  ],
+
+  // Consignment Management
+  consignmentList: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Consignments' },
+  ],
+  consignmentDetail: (reference: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Consignments', href: Routes.consignments },
+    { label: reference },
+  ],
+  consignmentCreate: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Consignments', href: Routes.consignments },
+    { label: 'Create Consignment' },
+  ],
+};
+
+/**
+ * Check if a route requires admin privileges
+ */
+export const isAdminRoute = (path: string): boolean => {
+  return path.startsWith('/admin');
+};
+
+/**
+ * Check if a route is public (no authentication required)
+ */
+export const isPublicRoute = (path: string): boolean => {
+  const publicRoutes = [Routes.login, Routes.unauthorized];
+  return publicRoutes.includes(path);
+};
+
+/**
+ * Get the list page route for a given detail/edit route
+ */
+export const getListPageRoute = (currentPath: string): string => {
+  if (currentPath.includes('/admin/tenants')) return Routes.admin.tenants;
+  if (currentPath.includes('/admin/users')) return Routes.admin.users;
+  if (currentPath.includes('/locations')) return Routes.locations;
+  if (currentPath.includes('/products')) return Routes.products;
+  if (currentPath.includes('/consignments')) return Routes.consignments;
+  return Routes.dashboard;
+};

@@ -32,8 +32,7 @@ import com.ccbsa.wms.common.security.ServiceSecurityConfig;
  * <p>Note: CORS is handled at the gateway level, not in this service.
  */
 @Configuration
-public class UserServiceSecurityConfig
-        extends ServiceSecurityConfig {
+public class UserServiceSecurityConfig extends ServiceSecurityConfig {
     private static final Logger logger = LoggerFactory.getLogger(UserServiceSecurityConfig.class);
     /**
      * Public endpoints that do not require authentication. Note: Gateway strips /api/v1 prefix, so these paths are what the service receives.
@@ -59,12 +58,10 @@ public class UserServiceSecurityConfig
     public SecurityFilterChain publicEndpointsSecurityFilterChain(HttpSecurity http) throws Exception {
         logger.info("Configuring public endpoints security filter chain (Order 1) - no OAuth2 Resource Server");
         logger.info("Public endpoints: /bff/auth/login, /bff/auth/refresh, /bff/auth/logout, /actuator/**, /error, /swagger-ui/**, /v3/api-docs/**");
-        http.securityMatcher(createPublicEndpointsMatcher())
-                .csrf(csrf -> csrf.disable())
+        http.securityMatcher(createPublicEndpointsMatcher()).csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(securityHeadersConfig.securityHeadersFilter(), UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(auth -> auth.anyRequest()
-                        .permitAll());
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
         SecurityFilterChain chain = http.build();
         logger.info("Public endpoints security filter chain configured successfully");
@@ -115,8 +112,7 @@ public class UserServiceSecurityConfig
             return true;
         }
         // Check if path starts with any public endpoint prefix
-        boolean matches = PUBLIC_ENDPOINTS.stream()
-                .anyMatch(endpoint -> path.startsWith(endpoint));
+        boolean matches = PUBLIC_ENDPOINTS.stream().anyMatch(endpoint -> path.startsWith(endpoint));
         if (matches) {
             logger.debug("Path {} matched public endpoint prefix", path);
         } else {
@@ -128,25 +124,18 @@ public class UserServiceSecurityConfig
     @Bean
     @Order(2)
     @Override
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            com.ccbsa.wms.common.security.GatewayRoleHeaderAuthenticationFilter gatewayRoleHeaderAuthenticationFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, com.ccbsa.wms.common.security.GatewayRoleHeaderAuthenticationFilter gatewayRoleHeaderAuthenticationFilter)
+            throws Exception {
         logger.info("Configuring protected endpoints security filter chain (Order 2) - with OAuth2 Resource Server");
-        http.securityMatcher(createProtectedEndpointsMatcher())
-                .csrf(csrf -> csrf.disable())
+        http.securityMatcher(createProtectedEndpointsMatcher()).csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(securityHeadersConfig.securityHeadersFilter(), UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(auth -> auth
+                .addFilterBefore(securityHeadersConfig.securityHeadersFilter(), UsernamePasswordAuthenticationFilter.class).authorizeHttpRequests(auth -> auth
                         // All endpoints in this chain require authentication
-                        .anyRequest()
-                        .authenticated())
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder())
-                        .jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                        .anyRequest().authenticated()).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder()).jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 // Add filter to extract roles from X-Role header (set by gateway) after JWT BearerTokenAuthenticationFilter
                 // Note: BearerTokenAuthenticationFilter is added by oauth2ResourceServer(), so we add our filter after it
                 .addFilterAfter(gatewayRoleHeaderAuthenticationFilter, BearerTokenAuthenticationFilter.class)
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(createAuthenticationEntryPoint())
-                        .accessDeniedHandler(createAccessDeniedHandler()));
+                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(createAuthenticationEntryPoint()).accessDeniedHandler(createAccessDeniedHandler()));
 
         SecurityFilterChain chain = http.build();
         logger.info("Protected endpoints security filter chain configured successfully");
@@ -205,8 +194,7 @@ public class UserServiceSecurityConfig
                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
                 response.setContentType("application/json");
                 response.getWriter()
-                        .write(String.format("{\"error\":{\"code\":\"UNAUTHORIZED\",\"message\":\"Authentication required\",\"timestamp\":\"%s\"}}", Instant.now()
-                                .toString()));
+                        .write(String.format("{\"error\":{\"code\":\"UNAUTHORIZED\",\"message\":\"Authentication required\",\"timestamp\":\"%s\"}}", Instant.now().toString()));
             }
         };
     }
@@ -233,9 +221,7 @@ public class UserServiceSecurityConfig
             // For protected endpoints, return 403 Forbidden
             response.setStatus(HttpStatus.FORBIDDEN.value());
             response.setContentType("application/json");
-            response.getWriter()
-                    .write(String.format("{\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Access denied\",\"timestamp\":\"%s\"}}", Instant.now()
-                            .toString()));
+            response.getWriter().write(String.format("{\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"Access denied\",\"timestamp\":\"%s\"}}", Instant.now().toString()));
         };
     }
 }

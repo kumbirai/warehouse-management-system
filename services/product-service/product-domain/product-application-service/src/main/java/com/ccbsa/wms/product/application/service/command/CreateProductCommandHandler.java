@@ -53,37 +53,27 @@ public class CreateProductCommandHandler {
         validateBarcodeUniqueness(command.getPrimaryBarcode(), command.getTenantId());
 
         // 4. Validate secondary barcodes uniqueness
-        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes()
-                .isEmpty()) {
+        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
             for (ProductBarcode barcode : command.getSecondaryBarcodes()) {
                 validateBarcodeUniqueness(barcode, command.getTenantId());
             }
         }
 
         // 5. Create aggregate using builder
-        Product.Builder builder = Product.builder()
-                .productId(ProductId.generate())
-                .tenantId(command.getTenantId())
-                .productCode(command.getProductCode())
-                .description(command.getDescription())
-                .primaryBarcode(command.getPrimaryBarcode())
-                .unitOfMeasure(command.getUnitOfMeasure());
+        Product.Builder builder =
+                Product.builder().productId(ProductId.generate()).tenantId(command.getTenantId()).productCode(command.getProductCode()).description(command.getDescription())
+                        .primaryBarcode(command.getPrimaryBarcode()).unitOfMeasure(command.getUnitOfMeasure());
 
         // Add secondary barcodes if provided
-        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes()
-                .isEmpty()) {
+        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
             builder.secondaryBarcodes(command.getSecondaryBarcodes());
         }
 
         // Set optional fields
-        if (command.getCategory() != null && !command.getCategory()
-                .trim()
-                .isEmpty()) {
+        if (command.getCategory() != null && !command.getCategory().trim().isEmpty()) {
             builder.category(command.getCategory());
         }
-        if (command.getBrand() != null && !command.getBrand()
-                .trim()
-                .isEmpty()) {
+        if (command.getBrand() != null && !command.getBrand().trim().isEmpty()) {
             builder.brand(command.getBrand());
         }
 
@@ -103,13 +93,8 @@ public class CreateProductCommandHandler {
         }
 
         // 9. Return result (use savedProduct which has updated version from DB)
-        return CreateProductResult.builder()
-                .productId(savedProduct.getId())
-                .productCode(savedProduct.getProductCode())
-                .description(savedProduct.getDescription())
-                .primaryBarcode(savedProduct.getPrimaryBarcode())
-                .createdAt(savedProduct.getCreatedAt())
-                .build();
+        return CreateProductResult.builder().productId(savedProduct.getId()).productCode(savedProduct.getProductCode()).description(savedProduct.getDescription())
+                .primaryBarcode(savedProduct.getPrimaryBarcode()).createdAt(savedProduct.getCreatedAt()).build();
     }
 
     /**
@@ -128,9 +113,7 @@ public class CreateProductCommandHandler {
         if (command.getProductCode() == null) {
             throw new IllegalArgumentException("ProductCode is required");
         }
-        if (command.getDescription() == null || command.getDescription()
-                .trim()
-                .isEmpty()) {
+        if (command.getDescription() == null || command.getDescription().trim().isEmpty()) {
             throw new IllegalArgumentException("Description is required");
         }
         if (command.getPrimaryBarcode() == null) {

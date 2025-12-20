@@ -38,8 +38,7 @@ import jakarta.persistence.PersistenceContext;
  * Implements ProductRepository port interface. Adapts between domain Product aggregate and JPA ProductEntity.
  */
 @Repository
-public class ProductRepositoryAdapter
-        implements ProductRepository {
+public class ProductRepositoryAdapter implements ProductRepository {
     private static final Logger logger = LoggerFactory.getLogger(ProductRepositoryAdapter.class);
 
     private final ProductJpaRepository jpaRepository;
@@ -90,9 +89,7 @@ public class ProductRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Check if entity already exists to handle version correctly
-        Optional<ProductEntity> existingEntity = jpaRepository.findByTenantIdAndId(product.getTenantId()
-                .getValue(), product.getId()
-                .getValue());
+        Optional<ProductEntity> existingEntity = jpaRepository.findByTenantIdAndId(product.getTenantId().getValue(), product.getId().getValue());
 
         ProductEntity entity;
         if (existingEntity.isPresent()) {
@@ -141,9 +138,7 @@ public class ProductRepositoryAdapter
             return;
         }
 
-        throw new IllegalArgumentException(
-                String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName)
-        );
+        throw new IllegalArgumentException(String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName));
     }
 
     /**
@@ -166,29 +161,24 @@ public class ProductRepositoryAdapter
      * @param product Domain product aggregate
      */
     private void updateEntityFromDomain(ProductEntity entity, Product product) {
-        entity.setProductCode(product.getProductCode()
-                .getValue());
+        entity.setProductCode(product.getProductCode().getValue());
         entity.setDescription(product.getDescription());
-        entity.setPrimaryBarcode(product.getPrimaryBarcode()
-                .getValue());
-        entity.setPrimaryBarcodeType(product.getPrimaryBarcode()
-                .getType());
+        entity.setPrimaryBarcode(product.getPrimaryBarcode().getValue());
+        entity.setPrimaryBarcodeType(product.getPrimaryBarcode().getType());
         entity.setUnitOfMeasure(product.getUnitOfMeasure());
         entity.setCategory(product.getCategory());
         entity.setBrand(product.getBrand());
         entity.setLastModifiedAt(product.getLastModifiedAt());
 
         // Update secondary barcodes - remove all existing and add new ones
-        entity.getSecondaryBarcodes()
-                .clear();
+        entity.getSecondaryBarcodes().clear();
         for (ProductBarcode barcode : product.getSecondaryBarcodes()) {
             ProductBarcodeEntity barcodeEntity = new ProductBarcodeEntity();
             barcodeEntity.setId(UUID.randomUUID());
             barcodeEntity.setProduct(entity);
             barcodeEntity.setBarcode(barcode.getValue());
             barcodeEntity.setBarcodeType(barcode.getType());
-            entity.getSecondaryBarcodes()
-                    .add(barcodeEntity);
+            entity.getSecondaryBarcodes().add(barcodeEntity);
         }
 
         // Version is managed by JPA - don't update it manually
@@ -202,10 +192,8 @@ public class ProductRepositoryAdapter
      * @param connection Database connection
      * @param schemaName Validated and escaped schema name
      */
-    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
-            justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " +
-                    "and properly escaped using escapeIdentifier() method. " +
-                    "PostgreSQL SET search_path command does not support parameterized queries.")
+    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE", justification = "Schema name is validated against expected patterns (tenant_*_schema or public) "
+            + "and properly escaped using escapeIdentifier() method. " + "PostgreSQL SET search_path command does not support parameterized queries.")
     private void executeSetSearchPath(Connection connection, String schemaName) {
         try (Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
@@ -261,8 +249,7 @@ public class ProductRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantIdAndId(tenantId.getValue(), id.getValue())
-                .map(mapper::toDomain);
+        return jpaRepository.findByTenantIdAndId(tenantId.getValue(), id.getValue()).map(mapper::toDomain);
     }
 
     @Override
@@ -295,8 +282,7 @@ public class ProductRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantIdAndProductCode(tenantId.getValue(), productCode.getValue())
-                .map(mapper::toDomain);
+        return jpaRepository.findByTenantIdAndProductCode(tenantId.getValue(), productCode.getValue()).map(mapper::toDomain);
     }
 
     @Override
@@ -407,8 +393,7 @@ public class ProductRepositoryAdapter
         // Then check secondary barcodes
         Optional<ProductBarcodeEntity> secondaryBarcode = barcodeJpaRepository.findByBarcodeAndTenantId(barcode, tenantId.getValue());
         if (secondaryBarcode.isPresent()) {
-            ProductEntity productEntity = secondaryBarcode.get()
-                    .getProduct();
+            ProductEntity productEntity = secondaryBarcode.get().getProduct();
             return Optional.of(mapper.toDomain(productEntity));
         }
 
@@ -445,10 +430,7 @@ public class ProductRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantId(tenantId.getValue())
-                .stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
+        return jpaRepository.findByTenantId(tenantId.getValue()).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 
     @Override
@@ -481,10 +463,7 @@ public class ProductRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantIdAndCategory(tenantId.getValue(), category)
-                .stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
+        return jpaRepository.findByTenantIdAndCategory(tenantId.getValue(), category).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 }
 

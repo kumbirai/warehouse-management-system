@@ -36,8 +36,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * </ul>
  */
 @RestControllerAdvice
-public class GlobalExceptionHandler
-        extends BaseGlobalExceptionHandler {
+public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
 
     /**
      * Handles authorization denied exceptions from Spring Security method security. Returns 403 Forbidden instead of 500 Internal Server Error.
@@ -53,10 +52,7 @@ public class GlobalExceptionHandler
 
         logger.warn("Access denied - RequestId: {}, Path: {}, Message: {}", requestId, path, ex.getMessage());
 
-        ApiError error = ApiError.builder("ACCESS_DENIED", "Access denied. Insufficient permissions to perform this operation.")
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("ACCESS_DENIED", "Access denied. Insufficient permissions to perform this operation.").path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.FORBIDDEN, error);
     }
 }

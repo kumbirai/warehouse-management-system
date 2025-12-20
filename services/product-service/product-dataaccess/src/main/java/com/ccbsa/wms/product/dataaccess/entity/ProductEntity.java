@@ -28,70 +28,49 @@ import jakarta.persistence.Version;
  * The schema "tenant_schema" is a placeholder that will be dynamically replaced with the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
  */
 @Entity
-@Table(name = "products",
-        schema = "tenant_schema")
+@Table(name = "products", schema = "tenant_schema")
 public class ProductEntity {
     @Id
-    @Column(name = "id",
-            nullable = false)
+    @Column(name = "id", nullable = false)
     private UUID id;
 
-    @Column(name = "tenant_id",
-            length = 255,
-            nullable = false)
+    @Column(name = "tenant_id", length = 255, nullable = false)
     private String tenantId;
 
-    @Column(name = "product_code",
-            length = 100,
-            nullable = false)
+    @Column(name = "product_code", length = 100, nullable = false)
     private String productCode;
 
-    @Column(name = "description",
-            length = 500,
-            nullable = false)
+    @Column(name = "description", length = 500, nullable = false)
     private String description;
 
-    @Column(name = "primary_barcode",
-            length = 255,
-            nullable = false)
+    @Column(name = "primary_barcode", length = 255, nullable = false)
     private String primaryBarcode;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "primary_barcode_type",
-            length = 50,
-            nullable = false)
+    @Column(name = "primary_barcode_type", length = 50, nullable = false)
     private BarcodeType primaryBarcodeType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "unit_of_measure",
-            length = 50,
-            nullable = false)
+    @Column(name = "unit_of_measure", length = 50, nullable = false)
     private UnitOfMeasure unitOfMeasure;
 
-    @Column(name = "category",
-            length = 100)
+    @Column(name = "category", length = 100)
     private String category;
 
-    @Column(name = "brand",
-            length = 100)
+    @Column(name = "brand", length = 100)
     private String brand;
 
-    @Column(name = "created_at",
-            nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "last_modified_at",
-            nullable = false)
+    @Column(name = "last_modified_at", nullable = false)
     private LocalDateTime lastModifiedAt;
 
     @Version
-    @Column(name = "version",
-            nullable = false)
+    @Column(name = "version", nullable = false)
     private Long version;
 
-    @OneToMany(mappedBy = "product",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductBarcodeEntity> secondaryBarcodes = new ArrayList<>();
 
     // JPA requires no-arg constructor

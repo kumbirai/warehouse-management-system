@@ -38,25 +38,18 @@ public class ProductCsvParser {
      * @throws IllegalArgumentException if CSV format is invalid
      */
     public List<ProductCsvRow> parse(String csvContent) {
-        if (csvContent == null || csvContent.trim()
-                .isEmpty()) {
+        if (csvContent == null || csvContent.trim().isEmpty()) {
             throw new IllegalArgumentException("CSV content cannot be null or empty");
         }
 
         List<ProductCsvRow> rows = new ArrayList<>();
 
-        try (StringReader reader = new StringReader(csvContent); CSVParser parser = CSVFormat.Builder.create()
-                .setHeader()
-                .setSkipHeaderRecord(true)
-                .setIgnoreHeaderCase(true)
-                .setTrim(true)
-                .setIgnoreEmptyLines(true)
-                .build()
-                .parse(reader)) {
+        try (StringReader reader = new StringReader(csvContent);
+             CSVParser parser = CSVFormat.Builder.create().setHeader().setSkipHeaderRecord(true).setIgnoreHeaderCase(true).setTrim(true).setIgnoreEmptyLines(true).build()
+                     .parse(reader)) {
 
             // Validate required headers
-            validateHeaders(parser.getHeaderMap()
-                    .keySet());
+            validateHeaders(parser.getHeaderMap().keySet());
 
             long rowNumber = 1; // Start from 1 (header is row 0)
             for (CSVRecord record : parser) {
@@ -68,16 +61,9 @@ public class ProductCsvParser {
                 }
 
                 try {
-                    ProductCsvRow row = ProductCsvRow.builder()
-                            .rowNumber(rowNumber)
-                            .productCode(getValue(record, "product_code"))
-                            .description(getValue(record, "description"))
-                            .primaryBarcode(getValue(record, "primary_barcode"))
-                            .unitOfMeasure(getValue(record, "unit_of_measure"))
-                            .secondaryBarcode(getValue(record, "secondary_barcode"))
-                            .category(getValue(record, "category"))
-                            .brand(getValue(record, "brand"))
-                            .build();
+                    ProductCsvRow row = ProductCsvRow.builder().rowNumber(rowNumber).productCode(getValue(record, "product_code")).description(getValue(record, "description"))
+                            .primaryBarcode(getValue(record, "primary_barcode")).unitOfMeasure(getValue(record, "unit_of_measure"))
+                            .secondaryBarcode(getValue(record, "secondary_barcode")).category(getValue(record, "category")).brand(getValue(record, "brand")).build();
 
                     rows.add(row);
                 } catch (IllegalArgumentException e) {
@@ -105,8 +91,7 @@ public class ProductCsvParser {
         List<String> missingHeaders = new ArrayList<>();
 
         for (String requiredHeader : requiredHeaders) {
-            boolean found = headers.stream()
-                    .anyMatch(header -> header.equalsIgnoreCase(requiredHeader));
+            boolean found = headers.stream().anyMatch(header -> header.equalsIgnoreCase(requiredHeader));
             if (!found) {
                 missingHeaders.add(requiredHeader);
             }
@@ -127,8 +112,7 @@ public class ProductCsvParser {
     private String getValue(CSVRecord record, String columnName) {
         try {
             String value = record.get(columnName);
-            return (value != null && !value.trim()
-                    .isEmpty()) ? value.trim() : null;
+            return (value != null && !value.trim().isEmpty()) ? value.trim() : null;
         } catch (IllegalArgumentException e) {
             // Column not found, return null for optional columns
             return null;

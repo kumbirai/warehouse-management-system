@@ -9,11 +9,15 @@ import org.springframework.stereotype.Component;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.location.application.dto.command.CreateLocationCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.CreateLocationResultDTO;
+import com.ccbsa.wms.location.application.dto.command.UpdateLocationStatusCommandDTO;
+import com.ccbsa.wms.location.application.dto.command.UpdateLocationStatusResultDTO;
 import com.ccbsa.wms.location.application.dto.query.ListLocationsQueryResultDTO;
 import com.ccbsa.wms.location.application.dto.query.LocationCapacityDTO;
 import com.ccbsa.wms.location.application.dto.query.LocationQueryResultDTO;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationCommand;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationResult;
+import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationStatusCommand;
+import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationStatusResult;
 import com.ccbsa.wms.location.application.service.query.dto.GetLocationQuery;
 import com.ccbsa.wms.location.application.service.query.dto.ListLocationsQuery;
 import com.ccbsa.wms.location.application.service.query.dto.ListLocationsQueryResult;
@@ -21,6 +25,7 @@ import com.ccbsa.wms.location.application.service.query.dto.LocationQueryResult;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationBarcode;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationCoordinates;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
 
 /**
  * DTO Mapper: LocationDTOMapper
@@ -38,21 +43,17 @@ public class LocationDTOMapper {
      * @return CreateLocationCommand
      */
     public CreateLocationCommand toCreateCommand(CreateLocationCommandDTO dto, String tenantId) {
-        CreateLocationCommand.Builder builder = CreateLocationCommand.builder()
-                .tenantId(TenantId.of(tenantId));
+        CreateLocationCommand.Builder builder = CreateLocationCommand.builder().tenantId(TenantId.of(tenantId));
 
         // Determine coordinates based on model type
         // Priority: coordinate-based model > hierarchical model > defaults
         LocationCoordinates coordinates;
-        if (dto.isCoordinateBasedModel() &&
-                (dto.getZone() != null || dto.getAisle() != null || dto.getRack() != null || dto.getLevel() != null)) {
+        if (dto.isCoordinateBasedModel() && (dto.getZone() != null || dto.getAisle() != null || dto.getRack() != null || dto.getLevel() != null)) {
             // Coordinate-based model: use provided coordinates (fill with defaults if partially provided)
-            coordinates = LocationCoordinates.of(
-                    dto.getZone() != null && !dto.getZone().trim().isEmpty() ? dto.getZone() : "00",
+            coordinates = LocationCoordinates.of(dto.getZone() != null && !dto.getZone().trim().isEmpty() ? dto.getZone() : "00",
                     dto.getAisle() != null && !dto.getAisle().trim().isEmpty() ? dto.getAisle() : "00",
                     dto.getRack() != null && !dto.getRack().trim().isEmpty() ? dto.getRack() : "00",
-                    dto.getLevel() != null && !dto.getLevel().trim().isEmpty() ? dto.getLevel() : "00"
-            );
+                    dto.getLevel() != null && !dto.getLevel().trim().isEmpty() ? dto.getLevel() : "00");
         } else if (dto.isHierarchicalModel()) {
             // Hierarchical model: generate coordinates from location type and code
             coordinates = generateCoordinatesFromHierarchy(dto);
@@ -64,9 +65,7 @@ public class LocationDTOMapper {
         builder.coordinates(coordinates);
 
         // Set barcode if provided
-        if (dto.getBarcode() != null && !dto.getBarcode()
-                .trim()
-                .isEmpty()) {
+        if (dto.getBarcode() != null && !dto.getBarcode().trim().isEmpty()) {
             builder.barcode(LocationBarcode.of(dto.getBarcode()));
         }
 
@@ -107,53 +106,29 @@ public class LocationDTOMapper {
         switch (type) {
             case "WAREHOUSE":
                 // For warehouses, use sanitized code as zone, generate defaults for others
-                return LocationCoordinates.of(
-                        sanitizedCode.isEmpty() ? "WH" : sanitizedCode,
-                        "00",
-                        "00",
-                        "00"
-                );
+                return LocationCoordinates.of(sanitizedCode.isEmpty() ? "WH" : sanitizedCode, "00", "00", "00");
             case "ZONE":
                 // For zones, use sanitized code as zone identifier
-                return LocationCoordinates.of(
-                        sanitizedCode.isEmpty() ? "ZONE" : sanitizedCode,
-                        "00",
-                        "00",
-                        "00"
-                );
+                return LocationCoordinates.of(sanitizedCode.isEmpty() ? "ZONE" : sanitizedCode, "00", "00", "00");
             case "AISLE":
                 // For aisles, derive from parent or use sanitized code
-                return LocationCoordinates.of(
-                        "ZONE", // Will be derived from parent in future
-                        sanitizedCode.isEmpty() ? "AISLE" : sanitizedCode,
-                        "00",
-                        "00"
-                );
+                return LocationCoordinates.of("ZONE", // Will be derived from parent in future
+                        sanitizedCode.isEmpty() ? "AISLE" : sanitizedCode, "00", "00");
             case "RACK":
                 // For racks, derive from parent hierarchy
-                return LocationCoordinates.of(
-                        "ZONE", // Will be derived from parent in future
+                return LocationCoordinates.of("ZONE", // Will be derived from parent in future
                         "AISLE", // Will be derived from parent in future
-                        sanitizedCode.isEmpty() ? "RACK" : sanitizedCode,
-                        "00"
-                );
+                        sanitizedCode.isEmpty() ? "RACK" : sanitizedCode, "00");
             case "BIN":
             case "LEVEL":
                 // For bins/levels, derive from parent hierarchy
-                return LocationCoordinates.of(
-                        "ZONE", // Will be derived from parent in future
+                return LocationCoordinates.of("ZONE", // Will be derived from parent in future
                         "AISLE", // Will be derived from parent in future
                         "RACK", // Will be derived from parent in future
-                        sanitizedCode.isEmpty() ? "BIN" : sanitizedCode
-                );
+                        sanitizedCode.isEmpty() ? "BIN" : sanitizedCode);
             default:
                 // Default: use sanitized code as zone if available
-                return LocationCoordinates.of(
-                        sanitizedCode.isEmpty() ? "LOC" : sanitizedCode,
-                        "00",
-                        "00",
-                        "00"
-                );
+                return LocationCoordinates.of(sanitizedCode.isEmpty() ? "LOC" : sanitizedCode, "00", "00", "00");
         }
     }
 
@@ -197,13 +172,10 @@ public class LocationDTOMapper {
      */
     public CreateLocationResultDTO toCreateResultDTO(CreateLocationResult result) {
         CreateLocationResultDTO dto = new CreateLocationResultDTO();
-        dto.setLocationId(result.getLocationId()
-                .getValueAsString());
-        dto.setBarcode(result.getBarcode()
-                .getValue());
+        dto.setLocationId(result.getLocationId().getValueAsString());
+        dto.setBarcode(result.getBarcode().getValue());
         dto.setCoordinates(toCommandCoordinatesDTO(result.getCoordinates()));
-        dto.setStatus(result.getStatus()
-                .name());
+        dto.setStatus(result.getStatus().name());
         dto.setCreatedAt(result.getCreatedAt());
 
         // Set code/name/type/path from result (path is already generated hierarchically in command handler)
@@ -231,10 +203,7 @@ public class LocationDTOMapper {
      * @return GetLocationQuery
      */
     public GetLocationQuery toGetLocationQuery(String locationId, String tenantId) {
-        return GetLocationQuery.builder()
-                .locationId(LocationId.of(UUID.fromString(locationId)))
-                .tenantId(TenantId.of(tenantId))
-                .build();
+        return GetLocationQuery.builder().locationId(LocationId.of(UUID.fromString(locationId))).tenantId(TenantId.of(tenantId)).build();
     }
 
     /**
@@ -248,10 +217,8 @@ public class LocationDTOMapper {
      * @param search   Search term (optional)
      * @return ListLocationsQuery
      */
-    public ListLocationsQuery toListLocationsQuery(String tenantId, Integer page, Integer size,
-                                                   String zone, String status, String search) {
-        ListLocationsQuery.Builder builder = ListLocationsQuery.builder()
-                .tenantId(TenantId.of(tenantId));
+    public ListLocationsQuery toListLocationsQuery(String tenantId, Integer page, Integer size, String zone, String status, String search) {
+        ListLocationsQuery.Builder builder = ListLocationsQuery.builder().tenantId(TenantId.of(tenantId));
 
         if (page != null) {
             builder.page(page);
@@ -282,9 +249,7 @@ public class LocationDTOMapper {
         ListLocationsQueryResultDTO dto = new ListLocationsQueryResultDTO();
 
         // Map locations
-        List<LocationQueryResultDTO> locationDTOs = result.getLocations().stream()
-                .map(this::toQueryResultDTO)
-                .collect(Collectors.toList());
+        List<LocationQueryResultDTO> locationDTOs = result.getLocations().stream().map(this::toQueryResultDTO).collect(Collectors.toList());
         dto.setLocations(locationDTOs);
 
         dto.setTotalCount(result.getTotalCount());
@@ -302,13 +267,10 @@ public class LocationDTOMapper {
      */
     public LocationQueryResultDTO toQueryResultDTO(LocationQueryResult result) {
         LocationQueryResultDTO dto = new LocationQueryResultDTO();
-        dto.setLocationId(result.getLocationId()
-                .getValueAsString());
-        dto.setBarcode(result.getBarcode()
-                .getValue());
+        dto.setLocationId(result.getLocationId().getValueAsString());
+        dto.setBarcode(result.getBarcode().getValue());
         dto.setCoordinates(toQueryCoordinatesDTO(result.getCoordinates()));
-        dto.setStatus(result.getStatus()
-                .name());
+        dto.setStatus(result.getStatus().name());
 
         // Set capacity DTO - getCapacity() will extract Integer value for JSON
         LocationCapacityDTO capacityDTO = toCapacityDTO(result.getCapacity());
@@ -342,6 +304,40 @@ public class LocationDTOMapper {
             return null;
         }
         return new LocationCapacityDTO(capacity.getCurrentQuantity(), capacity.getMaximumQuantity());
+    }
+
+    /**
+     * Converts UpdateLocationStatusCommandDTO to UpdateLocationStatusCommand.
+     *
+     * @param dto        Command DTO
+     * @param locationId Location ID string
+     * @param tenantId   Tenant identifier string
+     * @return UpdateLocationStatusCommand
+     */
+    public UpdateLocationStatusCommand toUpdateStatusCommand(UpdateLocationStatusCommandDTO dto, String locationId, String tenantId) {
+        LocationStatus status;
+        try {
+            status = LocationStatus.valueOf(dto.getStatus().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(String.format("Invalid location status: %s", dto.getStatus()));
+        }
+
+        return UpdateLocationStatusCommand.builder().locationId(LocationId.of(UUID.fromString(locationId))).tenantId(TenantId.of(tenantId)).status(status).reason(dto.getReason())
+                .build();
+    }
+
+    /**
+     * Converts UpdateLocationStatusResult to UpdateLocationStatusResultDTO.
+     *
+     * @param result Command result
+     * @return UpdateLocationStatusResultDTO
+     */
+    public UpdateLocationStatusResultDTO toUpdateStatusResultDTO(UpdateLocationStatusResult result) {
+        UpdateLocationStatusResultDTO dto = new UpdateLocationStatusResultDTO();
+        dto.setLocationId(result.getLocationId().getValueAsString());
+        dto.setStatus(result.getStatus());
+        dto.setLastModifiedAt(result.getLastModifiedAt());
+        return dto;
     }
 }
 

@@ -52,8 +52,7 @@ class TenantActivatedEventListenerTest {
 
     @BeforeEach
     void setUp() {
-        tenantId = TenantId.of(UUID.randomUUID()
-                .toString());
+        tenantId = TenantId.of(UUID.randomUUID().toString());
         tenantEmail = EmailAddress.of("test@example.com");
 
         // Clear contexts before each test
@@ -85,8 +84,7 @@ class TenantActivatedEventListenerTest {
         assertThat(command.getTenantId()).isEqualTo(tenantId);
         assertThat(command.getRecipientEmail()).isEqualTo(tenantEmail);
         assertThat(command.getType()).isEqualTo(NotificationType.TENANT_ACTIVATED);
-        assertThat(command.getTitle()
-                .getValue()).isEqualTo("Tenant Activated");
+        assertThat(command.getTitle().getValue()).isEqualTo("Tenant Activated");
     }
 
     /**
@@ -96,8 +94,7 @@ class TenantActivatedEventListenerTest {
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("aggregateId", tenantId.getValue());
         eventData.put("aggregateType", "Tenant");
-        eventData.put("eventId", UUID.randomUUID()
-                .toString());
+        eventData.put("eventId", UUID.randomUUID().toString());
         eventData.put("@class", "com.ccbsa.wms.tenant.domain.core.event.TenantActivatedEvent");
 
         if (correlationId != null) {
@@ -150,8 +147,7 @@ class TenantActivatedEventListenerTest {
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("aggregateId", tenantId.getValue());
         eventData.put("aggregateType", "Tenant");
-        eventData.put("eventId", UUID.randomUUID()
-                .toString());
+        eventData.put("eventId", UUID.randomUUID().toString());
         eventData.put("@class", "com.ccbsa.wms.tenant.domain.core.event.TenantCreatedEvent");
         eventData.put("name", "Test Tenant");
         eventData.put("status", "PENDING");
@@ -181,8 +177,7 @@ class TenantActivatedEventListenerTest {
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("aggregateId", tenantId.getValue());
         eventData.put("aggregateType", "Tenant");
-        eventData.put("eventId", UUID.randomUUID()
-                .toString());
+        eventData.put("eventId", UUID.randomUUID().toString());
         eventData.put("@class", "com.ccbsa.wms.tenant.domain.core.event.TenantSchemaCreatedEvent");
         eventData.put("schemaName", "tenant_schema");
         return eventData;

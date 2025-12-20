@@ -32,9 +32,7 @@ import io.micrometer.core.instrument.MeterRegistry;
  */
 @Repository
 @Primary
-public class CachedUserRepositoryAdapter
-        extends CachedRepositoryDecorator<User, UserId>
-        implements UserRepository {
+public class CachedUserRepositoryAdapter extends CachedRepositoryDecorator<User, UserId> implements UserRepository {
 
     private static final Logger log = LoggerFactory.getLogger(CachedUserRepositoryAdapter.class);
 
@@ -203,12 +201,13 @@ public class CachedUserRepositoryAdapter
 
         // Write-through cache update
         if (user.getTenantId() != null && user.getId() != null) {
-            String cacheKey = com.ccbsa.common.cache.key.CacheKeyGenerator.forEntity(user.getTenantId(), CacheNamespace.USERS.getValue(), user.getId()
-                    .getUuid());
+            String cacheKey = com.ccbsa.common.cache.key.CacheKeyGenerator.forEntity(user.getTenantId(), CacheNamespace.USERS.getValue(), user.getId().getUuid());
 
             try {
-                redisTemplate.opsForValue()
-                        .set(cacheKey, user, Duration.ofMinutes(15));
+                // Clear domain events before caching (domain events are transient and should not be cached)
+                user.clearDomainEvents();
+
+                redisTemplate.opsForValue().set(cacheKey, user, Duration.ofMinutes(15));
                 log.trace("Cache WRITE (write-through) for key: {}", cacheKey);
             } catch (Exception e) {
                 log.error("Cache write-through failed for key: {}", cacheKey, e);

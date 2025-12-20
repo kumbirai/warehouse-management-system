@@ -16,8 +16,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Handles queries to get the Keycloak realm name for a tenant. Used by user-service to determine which realm to create users in.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "Ports are managed singletons injected by Spring and kept immutable")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Ports are managed singletons injected by Spring and kept immutable")
 public class GetTenantRealmQueryHandler {
     private final TenantRepository tenantRepository;
 
@@ -27,9 +26,7 @@ public class GetTenantRealmQueryHandler {
 
     @Transactional(readOnly = true)
     public Optional<String> handle(TenantId tenantId) {
-        return tenantRepository.findById(tenantId)
-                .flatMap(tenant -> tenant.getConfiguration()
-                        .getKeycloakRealmName());
+        return tenantRepository.findById(tenantId).flatMap(tenant -> tenant.getConfiguration().getKeycloakRealmName());
     }
 }
 

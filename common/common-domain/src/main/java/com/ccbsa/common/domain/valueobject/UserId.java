@@ -10,8 +10,7 @@ public final class UserId {
     private final String value;
 
     private UserId(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("User ID cannot be null or empty");
         }
         this.value = value.trim();

@@ -50,8 +50,7 @@ public class CreateUserCommandHandler {
     private final String frontendBaseUrl;
 
     public CreateUserCommandHandler(UserRepository userRepository, UserEventPublisher eventPublisher, AuthenticationServicePort authenticationService,
-                                    TenantServicePort tenantService,
-                                    @Value("${frontend.base-url:http://localhost:3000}") String frontendBaseUrl) {
+                                    TenantServicePort tenantService, @Value("${frontend.base-url:http://localhost:3000}") String frontendBaseUrl) {
         this.userRepository = userRepository;
         this.eventPublisher = eventPublisher;
         this.authenticationService = authenticationService;
@@ -77,24 +76,16 @@ public class CreateUserCommandHandler {
         }
 
         logger.debug("Creating user: username={}, tenantId={}", command.getUsername(), command.getTenantId());
-        if (command.getTenantId() == null || command.getTenantId()
-                .trim()
-                .isEmpty()) {
+        if (command.getTenantId() == null || command.getTenantId().trim().isEmpty()) {
             throw new IllegalArgumentException("TenantId is required");
         }
-        if (command.getUsername() == null || command.getUsername()
-                .trim()
-                .isEmpty()) {
+        if (command.getUsername() == null || command.getUsername().trim().isEmpty()) {
             throw new IllegalArgumentException("Username is required");
         }
-        if (command.getEmail() == null || command.getEmail()
-                .trim()
-                .isEmpty()) {
+        if (command.getEmail() == null || command.getEmail().trim().isEmpty()) {
             throw new IllegalArgumentException("EmailAddress is required");
         }
-        if (command.getPassword() == null || command.getPassword()
-                .trim()
-                .isEmpty()) {
+        if (command.getPassword() == null || command.getPassword().trim().isEmpty()) {
             throw new IllegalArgumentException("Password is required");
         }
 
@@ -105,17 +96,10 @@ public class CreateUserCommandHandler {
         }
 
         // 3. Build domain entity
-        UserId userId = UserId.of(UUID.randomUUID()
-                .toString());
-        User user = User.builder()
-                .userId(userId)
-                .tenantId(tenantId)
-                .username(Username.of(command.getUsername()))
-                .email(EmailAddress.of(command.getEmail()))
+        UserId userId = UserId.of(UUID.randomUUID().toString());
+        User user = User.builder().userId(userId).tenantId(tenantId).username(Username.of(command.getUsername())).email(EmailAddress.of(command.getEmail()))
                 .firstName(command.getFirstName() != null ? FirstName.of(command.getFirstName()) : null)
-                .lastName(command.getLastName() != null ? LastName.of(command.getLastName()) : null)
-                .status(UserStatus.ACTIVE)
-                .build();
+                .lastName(command.getLastName() != null ? LastName.of(command.getLastName()) : null).status(UserStatus.ACTIVE).build();
 
         // 4. Persist domain entity
         userRepository.save(user);
@@ -135,8 +119,7 @@ public class CreateUserCommandHandler {
             logger.debug("Base USER role assigned to new user: userId={}", keycloakUserId.getValue());
 
             // 8. Assign additional roles if provided
-            if (!command.getRoles()
-                    .isEmpty()) {
+            if (!command.getRoles().isEmpty()) {
                 for (String role : command.getRoles()) {
                     // Skip USER role if already in the list to avoid duplicate assignment
                     if (!RoleConstants.BASE_ROLE.equals(role)) {
@@ -148,7 +131,7 @@ public class CreateUserCommandHandler {
             // 9. Send email verification and password reset email
             // This sends a Keycloak email with links for both VERIFY_EMAIL and UPDATE_PASSWORD actions
             try {
-                String redirectUri = frontendBaseUrl + "/verify-email";
+                String redirectUri = String.format("%s/verify-email", frontendBaseUrl);
                 authenticationService.sendEmailVerificationAndPasswordReset(keycloakUserId, redirectUri);
                 logger.debug("Email verification and password reset email sent: userId={}", keycloakUserId.getValue());
             } catch (Exception emailException) {

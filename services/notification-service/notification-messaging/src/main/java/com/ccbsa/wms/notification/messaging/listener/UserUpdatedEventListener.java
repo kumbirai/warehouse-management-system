@@ -39,14 +39,9 @@ public class UserUpdatedEventListener {
         this.createNotificationCommandHandler = createNotificationCommandHandler;
     }
 
-    @KafkaListener(topics = "user-events",
-            groupId = "notification-service",
-            containerFactory = "externalEventKafkaListenerContainerFactory")
-    public void handle(
-            @Payload Map<String, Object> eventData,
-            @Header(value = "__TypeId__",
-                    required = false) String eventType,
-            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
+    @KafkaListener(topics = "user-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
+                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         try {
             // Extract and set correlation ID from event metadata for traceability
             extractAndSetCorrelationId(eventData);
@@ -92,14 +87,9 @@ public class UserUpdatedEventListener {
                 }
 
                 // Create notification
-                CreateNotificationCommand command = CreateNotificationCommand.builder()
-                        .tenantId(tenantId)
-                        .recipientUserId(UserId.of(aggregateId))
-                        .recipientEmail(recipientEmail)
-                        .title(Title.of(title))
-                        .message(Message.of(message))
-                        .type(notificationType)
-                        .build();
+                CreateNotificationCommand command =
+                        CreateNotificationCommand.builder().tenantId(tenantId).recipientUserId(UserId.of(aggregateId)).recipientEmail(recipientEmail).title(Title.of(title))
+                                .message(Message.of(message)).type(notificationType).build();
 
                 createNotificationCommandHandler.handle(command);
 
@@ -134,8 +124,7 @@ public class UserUpdatedEventListener {
         try {
             Object metadataObj = eventData.get("metadata");
             if (metadataObj instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> metadata = (Map<String, Object>) metadataObj;
+                @SuppressWarnings("unchecked") Map<String, Object> metadata = (Map<String, Object>) metadataObj;
                 Object correlationIdObj = metadata.get("correlationId");
                 if (correlationIdObj != null) {
                     String correlationId = correlationIdObj.toString();
@@ -226,8 +215,7 @@ public class UserUpdatedEventListener {
 
         // Handle value object serialization (Map with "value" field)
         if (tenantIdObj instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> tenantIdMap = (Map<String, Object>) tenantIdObj;
+            @SuppressWarnings("unchecked") Map<String, Object> tenantIdMap = (Map<String, Object>) tenantIdObj;
             Object valueObj = tenantIdMap.get("value");
             if (valueObj != null) {
                 return TenantId.of(valueObj.toString());
@@ -254,8 +242,7 @@ public class UserUpdatedEventListener {
 
         // Handle nested object with value field (EmailAddress value object)
         if (emailObj instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> emailMap = (Map<String, Object>) emailObj;
+            @SuppressWarnings("unchecked") Map<String, Object> emailMap = (Map<String, Object>) emailObj;
             Object valueObj = emailMap.get("value");
             if (valueObj != null) {
                 return EmailAddress.of(valueObj.toString());
@@ -277,8 +264,7 @@ public class UserUpdatedEventListener {
 
         // Handle nested object with value field (Description value object)
         if (descriptionObj instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> descriptionMap = (Map<String, Object>) descriptionObj;
+            @SuppressWarnings("unchecked") Map<String, Object> descriptionMap = (Map<String, Object>) descriptionObj;
             Object valueObj = descriptionMap.get("value");
             if (valueObj != null) {
                 return valueObj.toString();

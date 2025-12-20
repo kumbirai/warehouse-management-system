@@ -42,8 +42,7 @@ public final class ProductId {
      * @throws IllegalArgumentException if value is invalid
      */
     public static ProductId of(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("ProductId string cannot be null or empty");
         }
         try {

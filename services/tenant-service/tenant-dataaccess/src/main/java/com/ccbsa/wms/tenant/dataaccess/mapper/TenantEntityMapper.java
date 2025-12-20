@@ -18,24 +18,16 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantName;
 public class TenantEntityMapper {
     public TenantEntity toEntity(Tenant tenant) {
         TenantEntity entity = new TenantEntity();
-        entity.setTenantId(tenant.getId()
-                .getValue());
-        entity.setName(tenant.getName()
-                .getValue());
+        entity.setTenantId(tenant.getId().getValue());
+        entity.setName(tenant.getName().getValue());
         entity.setStatus(tenant.getStatus());
         entity.setVersion(tenant.getVersion());
 
         // Contact information - always set fields explicitly (even if null) to ensure proper persistence
         if (tenant.getContactInformation() != null) {
-            entity.setEmailAddress(tenant.getContactInformation()
-                    .getEmailValue()
-                    .orElse(null));
-            entity.setPhone(tenant.getContactInformation()
-                    .getPhone()
-                    .orElse(null));
-            entity.setAddress(tenant.getContactInformation()
-                    .getAddress()
-                    .orElse(null));
+            entity.setEmailAddress(tenant.getContactInformation().getEmailValue().orElse(null));
+            entity.setPhone(tenant.getContactInformation().getPhone().orElse(null));
+            entity.setAddress(tenant.getContactInformation().getAddress().orElse(null));
         } else {
             // Explicitly set to null to ensure proper persistence
             entity.setEmailAddress(null);
@@ -45,11 +37,8 @@ public class TenantEntityMapper {
 
         // Configuration
         if (tenant.getConfiguration() != null) {
-            entity.setKeycloakRealmName(tenant.getConfiguration()
-                    .getKeycloakRealmName()
-                    .orElse(null));
-            entity.setUsePerTenantRealm(tenant.getConfiguration()
-                    .isUsePerTenantRealm());
+            entity.setKeycloakRealmName(tenant.getConfiguration().getKeycloakRealmName().orElse(null));
+            entity.setUsePerTenantRealm(tenant.getConfiguration().isUsePerTenantRealm());
         }
 
         // Timestamps
@@ -69,24 +58,12 @@ public class TenantEntityMapper {
             contactInfo = ContactInformation.of(entity.getEmailAddress(), entity.getPhone(), entity.getAddress());
         }
 
-        TenantConfiguration configuration = TenantConfiguration.builder()
-                .keycloakRealmName(entity.getKeycloakRealmName())
-                .usePerTenantRealm(entity.isUsePerTenantRealm())
-                .build();
+        TenantConfiguration configuration = TenantConfiguration.builder().keycloakRealmName(entity.getKeycloakRealmName()).usePerTenantRealm(entity.isUsePerTenantRealm()).build();
 
         // Use buildWithoutEvents() to avoid publishing creation event when loading from database
         // Set version and timestamps using builder methods
-        Tenant tenant = Tenant.builder()
-                .tenantId(tenantId)
-                .name(name)
-                .contactInformation(contactInfo)
-                .configuration(configuration)
-                .status(entity.getStatus())
-                .createdAt(entity.getCreatedAt())
-                .activatedAt(entity.getActivatedAt())
-                .deactivatedAt(entity.getDeactivatedAt())
-                .version(entity.getVersion())
-                .buildWithoutEvents();
+        Tenant tenant = Tenant.builder().tenantId(tenantId).name(name).contactInformation(contactInfo).configuration(configuration).status(entity.getStatus())
+                .createdAt(entity.getCreatedAt()).activatedAt(entity.getActivatedAt()).deactivatedAt(entity.getDeactivatedAt()).version(entity.getVersion()).buildWithoutEvents();
 
         return tenant;
     }

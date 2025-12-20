@@ -8,8 +8,7 @@ import com.ccbsa.common.domain.valueobject.TenantId;
  * <p>
  * Represents a query to get a tenant by ID.
  */
-public final class GetTenantQuery
-        implements Query<TenantView> {
+public final class GetTenantQuery implements Query<TenantView> {
     private final TenantId tenantId;
 
     public GetTenantQuery(TenantId tenantId) {

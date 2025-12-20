@@ -26,8 +26,7 @@ public final class TenantView {
     private final LocalDateTime deactivatedAt;
 
     public TenantView(TenantId tenantId, TenantName name, TenantStatus status, String email, String phone, String address, String keycloakRealmName, boolean usePerTenantRealm,
-                      LocalDateTime createdAt, LocalDateTime activatedAt,
-                      LocalDateTime deactivatedAt) {
+                      LocalDateTime createdAt, LocalDateTime activatedAt, LocalDateTime deactivatedAt) {
         this.tenantId = tenantId;
         this.name = name;
         this.status = status;

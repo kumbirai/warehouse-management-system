@@ -82,8 +82,7 @@ public class ReconciliationServiceConfiguration {
      * @return Consumer factory configured for typed deserialization
      */
     @Bean("externalEventConsumerFactory")
-    public ConsumerFactory<String, Object> externalEventConsumerFactory(
-            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ConsumerFactory<String, Object> externalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "reconciliation-service");
@@ -127,8 +126,7 @@ public class ReconciliationServiceConfiguration {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(externalEventConsumerFactory);
 
-        factory.getContainerProperties()
-                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.setConcurrency(concurrency);
 
         BackOff backOff = createExponentialBackOff();

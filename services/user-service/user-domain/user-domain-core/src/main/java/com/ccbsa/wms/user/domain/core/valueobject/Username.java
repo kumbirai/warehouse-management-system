@@ -11,8 +11,7 @@ public final class Username {
     private final String value;
 
     private Username(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("Username cannot be null or empty");
         }
         String trimmed = value.trim();

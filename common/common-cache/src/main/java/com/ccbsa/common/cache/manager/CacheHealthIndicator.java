@@ -16,8 +16,7 @@ import org.springframework.stereotype.Component;
  * Exposed via: /actuator/health
  */
 @Component
-public class CacheHealthIndicator
-        implements HealthIndicator {
+public class CacheHealthIndicator implements HealthIndicator {
 
     private final RedisConnectionFactory connectionFactory;
 
@@ -31,21 +30,12 @@ public class CacheHealthIndicator
             String pong = connection.ping();
 
             if ("PONG".equalsIgnoreCase(pong)) {
-                return Health.up()
-                        .withDetail("redis", "Available")
-                        .withDetail("response", pong)
-                        .build();
+                return Health.up().withDetail("redis", "Available").withDetail("response", pong).build();
             } else {
-                return Health.down()
-                        .withDetail("redis", "Unexpected response")
-                        .withDetail("response", pong)
-                        .build();
+                return Health.down().withDetail("redis", "Unexpected response").withDetail("response", pong).build();
             }
         } catch (Exception e) {
-            return Health.down()
-                    .withDetail("redis", "Unavailable")
-                    .withException(e)
-                    .build();
+            return Health.down().withDetail("redis", "Unavailable").withException(e).build();
         }
     }
 }

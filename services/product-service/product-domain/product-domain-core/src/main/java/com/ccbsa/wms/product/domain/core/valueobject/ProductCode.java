@@ -34,8 +34,7 @@ public final class ProductCode {
      * @throws IllegalArgumentException if validation fails
      */
     private void validate(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("ProductCode cannot be null or empty");
         }
 
@@ -45,8 +44,7 @@ public final class ProductCode {
             throw new IllegalArgumentException("ProductCode must not exceed 50 characters");
         }
 
-        if (!PRODUCT_CODE_PATTERN.matcher(trimmedValue)
-                .matches()) {
+        if (!PRODUCT_CODE_PATTERN.matcher(trimmedValue).matches()) {
             throw new IllegalArgumentException(String.format("ProductCode must be alphanumeric with hyphens/underscores only: %s", value));
         }
     }

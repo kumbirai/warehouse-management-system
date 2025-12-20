@@ -7,8 +7,7 @@ import com.ccbsa.common.domain.exception.DomainException;
  * <p>
  * Thrown when a location cannot be found by ID and tenant ID.
  */
-public class LocationNotFoundException
-        extends DomainException {
+public class LocationNotFoundException extends DomainException {
     public LocationNotFoundException(String message) {
         super(message);
     }

@@ -30,12 +30,10 @@ public final class Message {
      * @throws IllegalArgumentException if validation fails
      */
     private void validate(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("Message cannot be null or empty");
         }
-        if (value.trim()
-                .length() > 1000) {
+        if (value.trim().length() > 1000) {
             throw new IllegalArgumentException("Message cannot exceed 1000 characters");
         }
     }

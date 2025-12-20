@@ -19,23 +19,17 @@ import jakarta.servlet.http.HttpServletResponse;
  * Request logging interceptor. Adds correlation ID and logs request/response details.
  */
 @Component
-public class RequestLoggingInterceptor
-        implements HandlerInterceptor {
+public class RequestLoggingInterceptor implements HandlerInterceptor {
     private static final Logger logger = LoggerFactory.getLogger(RequestLoggingInterceptor.class);
     private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
     private static final String CORRELATION_ID_MDC = "correlationId";
 
     @Override
-    public boolean preHandle(
-            @NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull Object handler) {
+    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) {
         // Generate or extract correlation ID
         String correlationId = request.getHeader(CORRELATION_ID_HEADER);
-        if (correlationId == null || correlationId.trim()
-                .isEmpty()) {
-            correlationId = UUID.randomUUID()
-                    .toString();
+        if (correlationId == null || correlationId.trim().isEmpty()) {
+            correlationId = UUID.randomUUID().toString();
             logger.debug("Generated new correlation ID: {}", correlationId);
         } else {
             correlationId = correlationId.trim();
@@ -71,11 +65,7 @@ public class RequestLoggingInterceptor
     }
 
     @Override
-    public void afterCompletion(
-            @NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull Object handler,
-            @Nullable Exception ex) {
+    public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, @Nullable Exception ex) {
         // Log response (excluding sensitive endpoints)
         if (!isSensitiveEndpoint(request.getRequestURI())) {
             logger.debug("Completed request: {} {} - Status: {}", request.getMethod(), request.getRequestURI(), response.getStatus());

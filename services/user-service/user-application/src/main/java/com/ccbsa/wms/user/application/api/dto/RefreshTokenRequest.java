@@ -11,11 +11,8 @@ import jakarta.validation.constraints.Size;
  */
 public final class RefreshTokenRequest {
     @NotBlank(message = "Refresh token is required")
-    @Size(min = 10,
-            max = 5000,
-            message = "Refresh token must be between 10 and 5000 characters")
-    @Pattern(regexp = "^[A-Za-z0-9._-]+$",
-            message = "Refresh token contains invalid characters")
+    @Size(min = 10, max = 5000, message = "Refresh token must be between 10 and 5000 characters")
+    @Pattern(regexp = "^[A-Za-z0-9._-]+$", message = "Refresh token contains invalid characters")
     private String refreshToken;
 
     public RefreshTokenRequest() {

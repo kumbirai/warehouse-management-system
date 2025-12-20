@@ -41,13 +41,9 @@ public class CreateNotificationCommandHandler {
         validateCommand(command);
 
         // 2. Create aggregate using builder
-        Notification.Builder builder = Notification.builder()
-                .notificationId(NotificationId.generate())
-                .tenantId(command.getTenantId())
-                .recipientUserId(command.getRecipientUserId())
-                .title(command.getTitle())
-                .message(command.getMessage())
-                .type(command.getType());
+        Notification.Builder builder =
+                Notification.builder().notificationId(NotificationId.generate()).tenantId(command.getTenantId()).recipientUserId(command.getRecipientUserId())
+                        .title(command.getTitle()).message(command.getMessage()).type(command.getType());
 
         // Set recipient email if provided (from event payload)
         if (command.getRecipientEmail() != null) {
@@ -75,10 +71,7 @@ public class CreateNotificationCommandHandler {
         }
 
         // 6. Return result (use savedNotification which has updated version from DB)
-        return CreateNotificationResult.builder()
-                .notificationId(savedNotification.getId())
-                .status(savedNotification.getStatus())
-                .createdAt(savedNotification.getCreatedAt())
+        return CreateNotificationResult.builder().notificationId(savedNotification.getId()).status(savedNotification.getStatus()).createdAt(savedNotification.getCreatedAt())
                 .build();
     }
 

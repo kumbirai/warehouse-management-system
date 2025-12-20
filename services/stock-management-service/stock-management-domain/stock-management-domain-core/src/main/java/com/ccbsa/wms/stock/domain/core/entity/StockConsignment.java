@@ -24,8 +24,7 @@ import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentStatus;
  * a cancelled consignment - Cannot cancel a confirmed
  * consignment
  */
-public class StockConsignment
-        extends TenantAwareAggregateRoot<ConsignmentId> {
+public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
     private ConsignmentReference consignmentReference;
     private WarehouseId warehouseId;
     private ConsignmentStatus status;
@@ -69,8 +68,7 @@ public class StockConsignment
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish domain event
-        addDomainEvent(new StockConsignmentConfirmedEvent(this.getId()
-                .getValueAsString(), this.consignmentReference, this.getTenantId(), this.warehouseId));
+        addDomainEvent(new StockConsignmentConfirmedEvent(this.getId().getValueAsString(), this.consignmentReference, this.getTenantId(), this.warehouseId));
     }
 
     /**
@@ -278,8 +276,8 @@ public class StockConsignment
 
             // Publish creation event only if this is a new consignment (no version set)
             if (consignment.getVersion() == 0) {
-                consignment.addDomainEvent(new StockConsignmentReceivedEvent(consignment.getId()
-                        .getValueAsString(), consignment.consignmentReference, consignment.getTenantId(), consignment.warehouseId, consignment.lineItems));
+                consignment.addDomainEvent(new StockConsignmentReceivedEvent(consignment.getId().getValueAsString(), consignment.consignmentReference, consignment.getTenantId(),
+                        consignment.warehouseId, consignment.lineItems));
             }
 
             return consumeConsignment();

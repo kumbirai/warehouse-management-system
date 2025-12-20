@@ -65,9 +65,7 @@ class ApiResponseTest {
         String testData = "test-data";
         Map<String, String> links = Map.of("self", "/api/v1/resource");
         ApiMeta.Pagination pagination = ApiMeta.Pagination.of(1, 20, 100);
-        ApiMeta meta = ApiMeta.builder()
-                .pagination(pagination)
-                .build();
+        ApiMeta meta = ApiMeta.builder().pagination(pagination).build();
 
         // When
         ApiResponse<String> response = ApiResponse.success(testData, links, meta);
@@ -84,8 +82,7 @@ class ApiResponseTest {
     @DisplayName("Should create error response")
     void shouldCreateErrorResponse() {
         // Given
-        ApiError error = ApiError.builder("ERROR_CODE", "Error message")
-                .build();
+        ApiError error = ApiError.builder("ERROR_CODE", "Error message").build();
 
         // When
         ApiResponse<String> response = ApiResponse.error(error);
@@ -102,8 +99,7 @@ class ApiResponseTest {
     @DisplayName("Should throw NullPointerException when creating error response with null error")
     void shouldThrowExceptionWhenCreatingErrorResponseWithNullError() {
         // When/Then
-        assertThatThrownBy(() -> ApiResponse.error(null)).isInstanceOf(NullPointerException.class)
-                .hasMessage("Error cannot be null");
+        assertThatThrownBy(() -> ApiResponse.error(null)).isInstanceOf(NullPointerException.class).hasMessage("Error cannot be null");
     }
 
     @Test
@@ -123,8 +119,7 @@ class ApiResponseTest {
     @DisplayName("Should correctly identify error response")
     void shouldCorrectlyIdentifyErrorResponse() {
         // Given
-        ApiError error = ApiError.builder("ERROR_CODE", "Error message")
-                .build();
+        ApiError error = ApiError.builder("ERROR_CODE", "Error message").build();
         ApiResponse<String> errorResponse = ApiResponse.error(error);
 
         // When/Then

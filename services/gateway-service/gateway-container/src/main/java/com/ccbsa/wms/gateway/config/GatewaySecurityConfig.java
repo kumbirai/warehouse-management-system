@@ -75,33 +75,25 @@ public class GatewaySecurityConfig {
     @Order(1)
     public SecurityWebFilterChain publicSecurityWebFilterChain(ServerHttpSecurity http) {
         http.securityMatcher(exchange -> {
-                    String path = exchange.getRequest()
-                            .getPath()
-                            .value();
-                    String method = exchange.getRequest()
-                            .getMethod()
-                            .name();
+            String path = exchange.getRequest().getPath().value();
+            String method = exchange.getRequest().getMethod().name();
 
-                    logger.debug("Public chain checking path: {} method: {}", path, method);
+            logger.debug("Public chain checking path: {} method: {}", path, method);
 
-                    // Allow all OPTIONS requests for CORS preflight
-                    if ("OPTIONS".equals(method)) {
-                        logger.info("Matched OPTIONS request for CORS preflight: {}", path);
-                        return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.match();
-                    }
+            // Allow all OPTIONS requests for CORS preflight
+            if ("OPTIONS".equals(method)) {
+                logger.info("Matched OPTIONS request for CORS preflight: {}", path);
+                return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.match();
+            }
 
-                    boolean isPublic = isPublicEndpoint(path);
-                    logger.debug("Is public endpoint: {}", isPublic);
-                    if (isPublic) {
-                        logger.info("Matched public endpoint: {}", path);
-                        return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.match();
-                    }
-                    return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.notMatch();
-                })
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeExchange(exchanges -> exchanges.anyExchange()
-                        .permitAll());
+            boolean isPublic = isPublicEndpoint(path);
+            logger.debug("Is public endpoint: {}", isPublic);
+            if (isPublic) {
+                logger.info("Matched public endpoint: {}", path);
+                return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.match();
+            }
+            return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.notMatch();
+        }).csrf(csrf -> csrf.disable()).cors(cors -> cors.configurationSource(corsConfigurationSource())).authorizeExchange(exchanges -> exchanges.anyExchange().permitAll());
 
         return http.build();
     }
@@ -168,9 +160,7 @@ public class GatewaySecurityConfig {
     @Order(2)
     public SecurityWebFilterChain protectedSecurityWebFilterChain(ServerHttpSecurity http) {
         http.securityMatcher(exchange -> {
-                    String path = exchange.getRequest()
-                            .getPath()
-                            .value();
+                    String path = exchange.getRequest().getPath().value();
                     // Only match if NOT a public endpoint
                     boolean isPublic = isPublicEndpoint(path);
                     if (!isPublic) {
@@ -178,13 +168,9 @@ public class GatewaySecurityConfig {
                         return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.match();
                     }
                     return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.notMatch();
-                })
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeExchange(exchanges -> exchanges.anyExchange()
-                        .authenticated())
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtDecoder(jwtDecoder())
-                        .jwtAuthenticationConverter(new ReactiveJwtAuthenticationConverterAdapter(new JwtAuthenticationConverter()))));
+                }).csrf(csrf -> csrf.disable()).cors(cors -> cors.configurationSource(corsConfigurationSource())).authorizeExchange(exchanges -> exchanges.anyExchange().authenticated())
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(
+                        jwt -> jwt.jwtDecoder(jwtDecoder()).jwtAuthenticationConverter(new ReactiveJwtAuthenticationConverterAdapter(new JwtAuthenticationConverter()))));
 
         return http.build();
     }
@@ -200,8 +186,7 @@ public class GatewaySecurityConfig {
     @Bean
     public ReactiveJwtDecoder jwtDecoder() {
         logger.info("Configuring JWT decoder with JWK set URI: {}", jwkSetUri);
-        return NimbusReactiveJwtDecoder.withJwkSetUri(jwkSetUri)
-                .build();
+        return NimbusReactiveJwtDecoder.withJwkSetUri(jwkSetUri).build();
     }
 }
 

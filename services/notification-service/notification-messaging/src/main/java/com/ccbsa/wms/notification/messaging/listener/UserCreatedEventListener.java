@@ -39,14 +39,9 @@ public class UserCreatedEventListener {
         this.createNotificationCommandHandler = createNotificationCommandHandler;
     }
 
-    @KafkaListener(topics = "user-events",
-            groupId = "notification-service",
-            containerFactory = "externalEventKafkaListenerContainerFactory")
-    public void handle(
-            @Payload Map<String, Object> eventData,
-            @Header(value = "__TypeId__",
-                    required = false) String eventType,
-            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
+    @KafkaListener(topics = "user-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
+                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         try {
             // Extract and set correlation ID from event metadata for traceability
             extractAndSetCorrelationId(eventData);
@@ -72,14 +67,9 @@ public class UserCreatedEventListener {
             TenantContext.setTenantId(tenantId);
             try {
                 // Create welcome notification with email from event
-                CreateNotificationCommand command = CreateNotificationCommand.builder()
-                        .tenantId(tenantId)
-                        .recipientUserId(UserId.of(aggregateId))
-                        .recipientEmail(recipientEmail)
-                        .title(Title.of("Welcome to WMS"))
-                        .message(Message.of(String.format("Welcome! Your account has been created. Username: %s", username)))
-                        .type(NotificationType.USER_CREATED)
-                        .build();
+                CreateNotificationCommand command = CreateNotificationCommand.builder().tenantId(tenantId).recipientUserId(UserId.of(aggregateId)).recipientEmail(recipientEmail)
+                        .title(Title.of("Welcome to WMS")).message(Message.of(String.format("Welcome! Your account has been created. Username: %s", username)))
+                        .type(NotificationType.USER_CREATED).build();
 
                 createNotificationCommandHandler.handle(command);
 
@@ -114,8 +104,7 @@ public class UserCreatedEventListener {
         try {
             Object metadataObj = eventData.get("metadata");
             if (metadataObj instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> metadata = (Map<String, Object>) metadataObj;
+                @SuppressWarnings("unchecked") Map<String, Object> metadata = (Map<String, Object>) metadataObj;
                 Object correlationIdObj = metadata.get("correlationId");
                 if (correlationIdObj != null) {
                     String correlationId = correlationIdObj.toString();
@@ -206,8 +195,7 @@ public class UserCreatedEventListener {
 
         // Handle value object serialization (Map with "value" field)
         if (tenantIdObj instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> tenantIdMap = (Map<String, Object>) tenantIdObj;
+            @SuppressWarnings("unchecked") Map<String, Object> tenantIdMap = (Map<String, Object>) tenantIdObj;
             Object valueObj = tenantIdMap.get("value");
             if (valueObj != null) {
                 return TenantId.of(valueObj.toString());
@@ -234,8 +222,7 @@ public class UserCreatedEventListener {
 
         // Handle nested object with value field (EmailAddress value object)
         if (emailObj instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> emailMap = (Map<String, Object>) emailObj;
+            @SuppressWarnings("unchecked") Map<String, Object> emailMap = (Map<String, Object>) emailObj;
             Object valueObj = emailMap.get("value");
             if (valueObj != null) {
                 return EmailAddress.of(valueObj.toString());
@@ -257,8 +244,7 @@ public class UserCreatedEventListener {
 
         // Handle nested object with value field (Username value object)
         if (usernameObj instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> usernameMap = (Map<String, Object>) usernameObj;
+            @SuppressWarnings("unchecked") Map<String, Object> usernameMap = (Map<String, Object>) usernameObj;
             Object valueObj = usernameMap.get("value");
             if (valueObj != null) {
                 return valueObj.toString();

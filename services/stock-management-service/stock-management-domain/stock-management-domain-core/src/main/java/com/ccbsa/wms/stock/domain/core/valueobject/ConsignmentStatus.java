@@ -9,8 +9,6 @@ package com.ccbsa.wms.stock.domain.core.valueobject;
  * has been cancelled
  */
 public enum ConsignmentStatus {
-    RECEIVED,
-    CONFIRMED,
-    CANCELLED
+    RECEIVED, CONFIRMED, CANCELLED
 }
 

@@ -41,20 +41,13 @@ public class ServiceSecurityConfig {
      */
     @Bean
     @ConditionalOnMissingBean(SecurityFilterChain.class)
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            GatewayRoleHeaderAuthenticationFilter gatewayRoleHeaderAuthenticationFilter) throws Exception {
-        http.csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder())
-                        .jwtAuthenticationConverter(jwtAuthenticationConverter())))
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, GatewayRoleHeaderAuthenticationFilter gatewayRoleHeaderAuthenticationFilter) throws Exception {
+        http.csrf(csrf -> csrf.disable()).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder()).jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 // Add filter to extract roles from X-Role header (set by gateway) after JWT BearerTokenAuthenticationFilter
                 // Note: BearerTokenAuthenticationFilter is added by oauth2ResourceServer(), so we add our filter after it
                 .addFilterAfter(gatewayRoleHeaderAuthenticationFilter, BearerTokenAuthenticationFilter.class)
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/**", "/error", "/swagger-ui/**", "/v3/api-docs/**")
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated());
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/actuator/**", "/error", "/swagger-ui/**", "/v3/api-docs/**").permitAll().anyRequest().authenticated());
 
         return http.build();
     }
@@ -65,8 +58,7 @@ public class ServiceSecurityConfig {
     @Bean
     @ConditionalOnMissingBean(JwtDecoder.class)
     public JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri)
-                .build();
+        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
     }
 
     /**
@@ -103,15 +95,11 @@ public class ServiceSecurityConfig {
     private Collection<GrantedAuthority> extractAuthoritiesFromJwt(Jwt jwt) {
         Object realmAccess = jwt.getClaim("realm_access");
         if (realmAccess instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
+            @SuppressWarnings("unchecked") Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
             Object rolesObj = realmAccessMap.get("roles");
             if (rolesObj instanceof List) {
-                @SuppressWarnings("unchecked")
-                List<String> roles = (List<String>) rolesObj;
-                return roles.stream()
-                        .map(role -> new SimpleGrantedAuthority(String.format("ROLE_%s", role)))
-                        .collect(Collectors.toList());
+                @SuppressWarnings("unchecked") List<String> roles = (List<String>) rolesObj;
+                return roles.stream().map(role -> new SimpleGrantedAuthority(String.format("ROLE_%s", role))).collect(Collectors.toList());
             }
         }
         return List.of();

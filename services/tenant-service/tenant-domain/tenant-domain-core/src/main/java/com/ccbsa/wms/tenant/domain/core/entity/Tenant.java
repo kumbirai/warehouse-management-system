@@ -28,8 +28,7 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantStatus;
  * <p>
  * Note: Tenant is NOT tenant-aware (it IS the tenant), so it extends AggregateRoot, not TenantAwareAggregateRoot.
  */
-public class Tenant
-        extends AggregateRoot<TenantId> {
+public class Tenant extends AggregateRoot<TenantId> {
     // Value Objects
     private TenantName name;
     private TenantStatus status;
@@ -95,15 +94,11 @@ public class Tenant
      * @return Schema name in format: `tenant_{sanitized_tenant_id}_schema`
      */
     String resolveSchemaName() {
-        String tenantIdValue = this.getId()
-                .getValue();
+        String tenantIdValue = this.getId().getValue();
 
         // Sanitize tenant ID to ensure valid PostgreSQL identifier
         // Convert to lowercase and replace special characters with underscores
-        String sanitized = tenantIdValue.toLowerCase(Locale.ROOT)
-                .replace("-", "_")
-                .replace(".", "_")
-                .replace(" ", "_");
+        String sanitized = tenantIdValue.toLowerCase(Locale.ROOT).replace("-", "_").replace(".", "_").replace(" ", "_");
 
         // Remove any remaining invalid characters (keep only alphanumeric and underscores)
         sanitized = sanitized.replaceAll("[^a-z0-9_]", "");
@@ -357,8 +352,7 @@ public class Tenant
                 // Extract email from contact information if available
                 EmailAddress email = null;
                 if (tenant.contactInformation != null) {
-                    email = tenant.contactInformation.getEmail()
-                            .orElse(null);
+                    email = tenant.contactInformation.getEmail().orElse(null);
                 }
                 tenant.addDomainEvent(new TenantCreatedEvent(tenant.getId(), tenant.name, tenant.status, email));
 

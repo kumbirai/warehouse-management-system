@@ -35,26 +35,19 @@ public class RestTemplateConfig {
         // Note: setConnectTimeout is deprecated in HttpClient 5 but still functional.
         // The replacement API is not yet stable, so we continue using this method.
         // This is a known limitation and will be updated when HttpClient 5 provides a stable replacement.
-        @SuppressWarnings("deprecation")
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(Timeout.ofSeconds(CONNECTION_TIMEOUT_SECONDS))
-                .setResponseTimeout(Timeout.ofSeconds(READ_TIMEOUT_SECONDS))
-                .setConnectionRequestTimeout(Timeout.ofSeconds(CONNECTION_REQUEST_TIMEOUT_SECONDS))
-                .build();
+        @SuppressWarnings("deprecation") RequestConfig requestConfig =
+                RequestConfig.custom().setConnectTimeout(Timeout.ofSeconds(CONNECTION_TIMEOUT_SECONDS)).setResponseTimeout(Timeout.ofSeconds(READ_TIMEOUT_SECONDS))
+                        .setConnectionRequestTimeout(Timeout.ofSeconds(CONNECTION_REQUEST_TIMEOUT_SECONDS)).build();
 
         // Create HTTP client with connection pooling
-        HttpClient httpClient = HttpClientBuilder.create()
-                .setConnectionManager(connectionManager)
-                .setDefaultRequestConfig(requestConfig)
-                .evictIdleConnections(Timeout.ofSeconds(30))
-                .evictExpiredConnections()
-                .build();
+        HttpClient httpClient =
+                HttpClientBuilder.create().setConnectionManager(connectionManager).setDefaultRequestConfig(requestConfig).evictIdleConnections(Timeout.ofSeconds(30))
+                        .evictExpiredConnections().build();
 
         // Create request factory with pooled HTTP client
         HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 
-        return builder.requestFactory(() -> requestFactory)
-                .build();
+        return builder.requestFactory(() -> requestFactory).build();
     }
 }
 

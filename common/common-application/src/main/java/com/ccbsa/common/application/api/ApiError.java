@@ -45,8 +45,7 @@ public final class ApiError {
     }
 
     public static Builder builder(String code, String message) {
-        return new Builder().code(code)
-                .message(message);
+        return new Builder().code(code).message(message);
     }
 
     public String getCode() {
@@ -124,12 +123,10 @@ public final class ApiError {
          * @throws IllegalStateException if code or message is null or empty
          */
         public ApiError build() {
-            if (code == null || code.trim()
-                    .isEmpty()) {
+            if (code == null || code.trim().isEmpty()) {
                 throw new IllegalStateException("Error code is required and cannot be empty");
             }
-            if (message == null || message.trim()
-                    .isEmpty()) {
+            if (message == null || message.trim().isEmpty()) {
                 throw new IllegalStateException("Error message is required and cannot be empty");
             }
             return new ApiError(this);

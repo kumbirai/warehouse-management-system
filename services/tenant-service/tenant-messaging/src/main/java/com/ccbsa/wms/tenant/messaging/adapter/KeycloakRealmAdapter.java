@@ -20,8 +20,7 @@ import jakarta.ws.rs.core.Response;
  * Implements KeycloakRealmServicePort for tenant-service. Provides Keycloak realm management operations.
  */
 @Component
-public class KeycloakRealmAdapter
-        implements KeycloakRealmServicePort {
+public class KeycloakRealmAdapter implements KeycloakRealmServicePort {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakRealmAdapter.class);
     private final KeycloakClientPort keycloakClient;
 
@@ -51,16 +50,14 @@ public class KeycloakRealmAdapter
         realm.setEnabled(true);
         realm.setDisplayName(String.format("Tenant: %s", tenantId.getValue()));
 
-        RealmsResource realmsResource = keycloakClient.getAdminClient()
-                .realms();
+        RealmsResource realmsResource = keycloakClient.getAdminClient().realms();
 
         try {
             realmsResource.create(realm);
             logger.info("Keycloak realm created: {}", realmName);
         } catch (ClientErrorException e) {
             // Handle 409 Conflict - realm already exists (race condition)
-            if (e.getResponse() != null && e.getResponse()
-                    .getStatus() == Response.Status.CONFLICT.getStatusCode()) {
+            if (e.getResponse() != null && e.getResponse().getStatus() == Response.Status.CONFLICT.getStatusCode()) {
                 logger.warn("Keycloak realm already exists (409 Conflict): {}. This may be due to a race condition. Enabling realm.", realmName);
                 // Realm exists but might be disabled, ensure it's enabled
                 enableRealm(realmName);
@@ -77,14 +74,11 @@ public class KeycloakRealmAdapter
     @Override
     public RealmRepresentation getRealm(String realmName) {
         try {
-            RealmResource realmResource = keycloakClient.getAdminClient()
-                    .realms()
-                    .realm(realmName);
+            RealmResource realmResource = keycloakClient.getAdminClient().realms().realm(realmName);
             return realmResource.toRepresentation();
         } catch (ClientErrorException e) {
             // Handle 404 Not Found specifically
-            if (e.getResponse() != null && e.getResponse()
-                    .getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+            if (e.getResponse() != null && e.getResponse().getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
                 logger.debug("Realm not found: {}", realmName);
                 return null;
             }
@@ -116,9 +110,7 @@ public class KeycloakRealmAdapter
     public void updateRealm(String realmName, RealmRepresentation realm) {
         logger.info("Updating Keycloak realm: {}", realmName);
 
-        RealmResource realmResource = keycloakClient.getAdminClient()
-                .realms()
-                .realm(realmName);
+        RealmResource realmResource = keycloakClient.getAdminClient().realms().realm(realmName);
         realmResource.update(realm);
 
         logger.info("Keycloak realm updated: {}", realmName);

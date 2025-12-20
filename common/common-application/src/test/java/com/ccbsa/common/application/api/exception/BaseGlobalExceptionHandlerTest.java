@@ -49,10 +49,8 @@ class BaseGlobalExceptionHandlerTest {
             assertThat(body.isError()).isTrue();
             assertThat(body.getError()).isNotNull();
             if (body.getError() != null) {
-                assertThat(body.getError()
-                        .getCode()).isEqualTo("RESOURCE_NOT_FOUND");
-                assertThat(body.getError()
-                        .getMessage()).isEqualTo("Resource not found");
+                assertThat(body.getError().getCode()).isEqualTo("RESOURCE_NOT_FOUND");
+                assertThat(body.getError().getMessage()).isEqualTo("Resource not found");
             }
         }
     }
@@ -72,8 +70,7 @@ class BaseGlobalExceptionHandlerTest {
         ApiResponse<Void> body = response.getBody();
         assertThat(body).isNotNull();
         if (body != null && body.getError() != null) {
-            assertThat(body.getError()
-                    .getCode()).isEqualTo("INVALID_OPERATION");
+            assertThat(body.getError().getCode()).isEqualTo("INVALID_OPERATION");
         }
     }
 
@@ -93,8 +90,7 @@ class BaseGlobalExceptionHandlerTest {
         ApiResponse<Void> body = response.getBody();
         assertThat(body).isNotNull();
         if (body != null && body.getError() != null) {
-            assertThat(body.getError()
-                    .getCode()).isEqualTo("DOMAIN_ERROR");
+            assertThat(body.getError().getCode()).isEqualTo("DOMAIN_ERROR");
         }
     }
 
@@ -113,8 +109,7 @@ class BaseGlobalExceptionHandlerTest {
         ApiResponse<Void> body = response.getBody();
         assertThat(body).isNotNull();
         if (body != null && body.getError() != null) {
-            assertThat(body.getError()
-                    .getCode()).isEqualTo("VALIDATION_ERROR");
+            assertThat(body.getError().getCode()).isEqualTo("VALIDATION_ERROR");
         }
     }
 
@@ -133,8 +128,7 @@ class BaseGlobalExceptionHandlerTest {
         ApiResponse<Void> body = response.getBody();
         assertThat(body).isNotNull();
         if (body != null && body.getError() != null) {
-            assertThat(body.getError()
-                    .getCode()).isEqualTo("INVALID_OPERATION");
+            assertThat(body.getError().getCode()).isEqualTo("INVALID_OPERATION");
         }
     }
 
@@ -153,8 +147,7 @@ class BaseGlobalExceptionHandlerTest {
         ApiResponse<Void> body = response.getBody();
         assertThat(body).isNotNull();
         if (body != null && body.getError() != null) {
-            assertThat(body.getError()
-                    .getCode()).isEqualTo("INTERNAL_SERVER_ERROR");
+            assertThat(body.getError().getCode()).isEqualTo("INTERNAL_SERVER_ERROR");
         }
     }
 
@@ -173,10 +166,8 @@ class BaseGlobalExceptionHandlerTest {
         ApiResponse<Void> body = response.getBody();
         assertThat(body).isNotNull();
         if (body != null && body.getError() != null) {
-            assertThat(body.getError()
-                    .getRequestId()).isEqualTo("custom-request-id");
-            assertThat(body.getError()
-                    .getPath()).isEqualTo("/api/v1/custom");
+            assertThat(body.getError().getRequestId()).isEqualTo("custom-request-id");
+            assertThat(body.getError().getPath()).isEqualTo("/api/v1/custom");
         }
     }
 }

@@ -32,8 +32,7 @@ import jakarta.persistence.PersistenceContext;
  * Implements StockConsignmentRepository port interface. Adapts between domain StockConsignment aggregate and JPA StockConsignmentEntity.
  */
 @Repository
-public class StockConsignmentRepositoryAdapter
-        implements StockConsignmentRepository {
+public class StockConsignmentRepositoryAdapter implements StockConsignmentRepository {
     private static final Logger logger = LoggerFactory.getLogger(StockConsignmentRepositoryAdapter.class);
 
     private final StockConsignmentJpaRepository jpaRepository;
@@ -44,8 +43,8 @@ public class StockConsignmentRepositoryAdapter
     @PersistenceContext
     private EntityManager entityManager;
 
-    public StockConsignmentRepositoryAdapter(StockConsignmentJpaRepository jpaRepository, StockConsignmentEntityMapper mapper,
-                                             TenantSchemaResolver schemaResolver, TenantSchemaProvisioner schemaProvisioner) {
+    public StockConsignmentRepositoryAdapter(StockConsignmentJpaRepository jpaRepository, StockConsignmentEntityMapper mapper, TenantSchemaResolver schemaResolver,
+                                             TenantSchemaProvisioner schemaProvisioner) {
         this.jpaRepository = jpaRepository;
         this.mapper = mapper;
         this.schemaResolver = schemaResolver;
@@ -82,9 +81,7 @@ public class StockConsignmentRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Check if entity already exists to handle version correctly
-        Optional<StockConsignmentEntity> existingEntity = jpaRepository.findByTenantIdAndId(consignment.getTenantId()
-                .getValue(), consignment.getId()
-                .getValue());
+        Optional<StockConsignmentEntity> existingEntity = jpaRepository.findByTenantIdAndId(consignment.getTenantId().getValue(), consignment.getId().getValue());
 
         StockConsignmentEntity entity;
         if (existingEntity.isPresent()) {
@@ -129,9 +126,7 @@ public class StockConsignmentRepositoryAdapter
             return;
         }
 
-        throw new IllegalArgumentException(
-                String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName)
-        );
+        throw new IllegalArgumentException(String.format("Invalid schema name format: '%s'. Expected 'public' or 'tenant_*_schema' pattern", schemaName));
     }
 
     /**
@@ -154,10 +149,8 @@ public class StockConsignmentRepositoryAdapter
      * @param consignment Domain consignment aggregate
      */
     private void updateEntityFromDomain(StockConsignmentEntity entity, StockConsignment consignment) {
-        entity.setConsignmentReference(consignment.getConsignmentReference()
-                .getValue());
-        entity.setWarehouseId(consignment.getWarehouseId()
-                .getValue());
+        entity.setConsignmentReference(consignment.getConsignmentReference().getValue());
+        entity.setWarehouseId(consignment.getWarehouseId().getValue());
         entity.setStatus(consignment.getStatus());
         entity.setReceivedAt(consignment.getReceivedAt());
         entity.setConfirmedAt(consignment.getConfirmedAt());
@@ -165,14 +158,11 @@ public class StockConsignmentRepositoryAdapter
         entity.setLastModifiedAt(consignment.getLastModifiedAt());
 
         // Update line items - remove all existing and add new ones
-        entity.getLineItems()
-                .clear();
+        entity.getLineItems().clear();
         StockConsignmentEntity newEntity = mapper.toEntity(consignment);
-        entity.getLineItems()
-                .addAll(newEntity.getLineItems());
+        entity.getLineItems().addAll(newEntity.getLineItems());
         // Update line item references to point to this entity
-        entity.getLineItems()
-                .forEach(lineItem -> lineItem.setConsignment(entity));
+        entity.getLineItems().forEach(lineItem -> lineItem.setConsignment(entity));
 
         // Version is managed by JPA - don't update it manually
     }
@@ -185,10 +175,8 @@ public class StockConsignmentRepositoryAdapter
      * @param connection Database connection
      * @param schemaName Validated and escaped schema name
      */
-    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
-            justification = "Schema name is validated against expected patterns (tenant_*_schema or public) " +
-                    "and properly escaped using escapeIdentifier() method. " +
-                    "PostgreSQL SET search_path command does not support parameterized queries.")
+    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE", justification = "Schema name is validated against expected patterns (tenant_*_schema or public) "
+            + "and properly escaped using escapeIdentifier() method. " + "PostgreSQL SET search_path command does not support parameterized queries.")
     private void executeSetSearchPath(Connection connection, String schemaName) {
         try (Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
@@ -244,8 +232,7 @@ public class StockConsignmentRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantIdAndId(tenantId.getValue(), id.getValue())
-                .map(mapper::toDomain);
+        return jpaRepository.findByTenantIdAndId(tenantId.getValue(), id.getValue()).map(mapper::toDomain);
     }
 
     @Override
@@ -278,8 +265,7 @@ public class StockConsignmentRepositoryAdapter
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantIdAndConsignmentReference(tenantId.getValue(), reference.getValue())
-                .map(mapper::toDomain);
+        return jpaRepository.findByTenantIdAndConsignmentReference(tenantId.getValue(), reference.getValue()).map(mapper::toDomain);
     }
 
     @Override

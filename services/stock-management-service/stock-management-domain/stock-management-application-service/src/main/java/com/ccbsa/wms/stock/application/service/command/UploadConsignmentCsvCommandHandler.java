@@ -70,8 +70,7 @@ public class UploadConsignmentCsvCommandHandler {
         }
 
         // 3. Group rows by ConsignmentReference
-        Map<String, List<ConsignmentCsvRow>> rowsByConsignment = rows.stream()
-                .collect(Collectors.groupingBy(ConsignmentCsvRow::getConsignmentReference));
+        Map<String, List<ConsignmentCsvRow>> rowsByConsignment = rows.stream().collect(Collectors.groupingBy(ConsignmentCsvRow::getConsignmentReference));
 
         // 4. Process each consignment
         int processedRows = 0;
@@ -90,25 +89,19 @@ public class UploadConsignmentCsvCommandHandler {
                 if (repository.existsByConsignmentReferenceAndTenantId(reference, command.getTenantId())) {
                     // Add error for all rows in this consignment
                     for (ConsignmentCsvRow row : consignmentRows) {
-                        errors.add(ConsignmentCsvError.builder()
-                                .rowNumber(row.getRowNumber())
-                                .consignmentReference(consignmentRef)
-                                .productCode(row.getProductCode())
-                                .errorMessage("Consignment reference already exists")
-                                .build());
+                        errors.add(ConsignmentCsvError.builder().rowNumber(row.getRowNumber()).consignmentReference(consignmentRef).productCode(row.getProductCode())
+                                .errorMessage("Consignment reference already exists").build());
                         errorRows++;
                     }
                     continue;
                 }
 
                 // Get warehouse ID from first row (all rows should have same warehouse)
-                String warehouseIdStr = consignmentRows.get(0)
-                        .getWarehouseId();
+                String warehouseIdStr = consignmentRows.get(0).getWarehouseId();
                 WarehouseId warehouseId = WarehouseId.of(warehouseIdStr);
 
                 // Get received date from first row
-                LocalDateTime receivedAt = consignmentRows.get(0)
-                        .getReceivedDate();
+                LocalDateTime receivedAt = consignmentRows.get(0).getReceivedDate();
 
                 // Convert CSV rows to line items
                 List<ConsignmentLineItem> lineItems = new ArrayList<>();
@@ -117,22 +110,15 @@ public class UploadConsignmentCsvCommandHandler {
                     ProductCode productCode = ProductCode.of(row.getProductCode());
                     var productInfo = productServicePort.getProductByCode(productCode, command.getTenantId());
                     if (productInfo.isEmpty()) {
-                        errors.add(ConsignmentCsvError.builder()
-                                .rowNumber(row.getRowNumber())
-                                .consignmentReference(consignmentRef)
-                                .productCode(row.getProductCode())
-                                .errorMessage(String.format("Product code not found: %s", row.getProductCode()))
-                                .build());
+                        errors.add(ConsignmentCsvError.builder().rowNumber(row.getRowNumber()).consignmentReference(consignmentRef).productCode(row.getProductCode())
+                                .errorMessage(String.format("Product code not found: %s", row.getProductCode())).build());
                         errorRows++;
                         continue;
                     }
 
                     // Create line item
-                    ConsignmentLineItem lineItem = ConsignmentLineItem.builder()
-                            .productCode(productCode)
-                            .quantity(row.getQuantity())
-                            .expirationDate(row.getExpirationDate())
-                            .build();
+                    ConsignmentLineItem lineItem =
+                            ConsignmentLineItem.builder().productCode(productCode).quantity(row.getQuantity()).expirationDate(row.getExpirationDate()).build();
 
                     lineItems.add(lineItem);
                     processedRows++;
@@ -141,15 +127,9 @@ public class UploadConsignmentCsvCommandHandler {
                 // Only create consignment if we have at least one valid line item
                 if (!lineItems.isEmpty()) {
                     // Create consignment
-                    StockConsignment consignment = StockConsignment.builder()
-                            .consignmentId(ConsignmentId.generate())
-                            .tenantId(command.getTenantId())
-                            .consignmentReference(reference)
-                            .warehouseId(warehouseId)
-                            .receivedAt(receivedAt)
-                            .receivedBy(command.getReceivedBy())
-                            .lineItems(lineItems)
-                            .build();
+                    StockConsignment consignment =
+                            StockConsignment.builder().consignmentId(ConsignmentId.generate()).tenantId(command.getTenantId()).consignmentReference(reference)
+                                    .warehouseId(warehouseId).receivedAt(receivedAt).receivedBy(command.getReceivedBy()).lineItems(lineItems).build();
 
                     // Persist consignment
                     repository.save(consignment);
@@ -167,12 +147,8 @@ public class UploadConsignmentCsvCommandHandler {
                 logger.warn("Error processing consignment {}: {}", consignmentRef, e.getMessage());
                 // Add error for all rows in this consignment
                 for (ConsignmentCsvRow row : consignmentRows) {
-                    errors.add(ConsignmentCsvError.builder()
-                            .rowNumber(row.getRowNumber())
-                            .consignmentReference(consignmentRef)
-                            .productCode(row.getProductCode())
-                            .errorMessage(e.getMessage())
-                            .build());
+                    errors.add(ConsignmentCsvError.builder().rowNumber(row.getRowNumber()).consignmentReference(consignmentRef).productCode(row.getProductCode())
+                            .errorMessage(e.getMessage()).build());
                     errorRows++;
                 }
             }
@@ -184,12 +160,7 @@ public class UploadConsignmentCsvCommandHandler {
         }
 
         // 6. Build and return result
-        return UploadConsignmentCsvResult.builder()
-                .totalRows(rows.size())
-                .processedRows(processedRows)
-                .createdConsignments(createdConsignments)
-                .errorRows(errorRows)
-                .errors(errors)
+        return UploadConsignmentCsvResult.builder().totalRows(rows.size()).processedRows(processedRows).createdConsignments(createdConsignments).errorRows(errorRows).errors(errors)
                 .build();
     }
 

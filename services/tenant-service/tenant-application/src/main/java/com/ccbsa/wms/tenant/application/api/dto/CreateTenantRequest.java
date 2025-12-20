@@ -13,21 +13,17 @@ import jakarta.validation.constraints.Size;
  */
 public final class CreateTenantRequest {
     @NotBlank(message = "Tenant ID is required")
-    @Size(max = 50,
-            message = "Tenant ID cannot exceed 50 characters")
+    @Size(max = 50, message = "Tenant ID cannot exceed 50 characters")
     private String tenantId;
     @NotBlank(message = "Tenant name is required")
-    @Size(max = 200,
-            message = "Tenant name cannot exceed 200 characters")
+    @Size(max = 200, message = "Tenant name cannot exceed 200 characters")
     private String name;
     @Email(message = "EmailAddress must be valid")
     @JsonProperty("emailAddress")
     private String emailAddress;
-    @Size(max = 50,
-            message = "Phone cannot exceed 50 characters")
+    @Size(max = 50, message = "Phone cannot exceed 50 characters")
     private String phone;
-    @Size(max = 500,
-            message = "Address cannot exceed 500 characters")
+    @Size(max = 500, message = "Address cannot exceed 500 characters")
     private String address;
     private String keycloakRealmName;
     private Boolean usePerTenantRealm;

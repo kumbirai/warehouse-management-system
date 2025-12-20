@@ -24,16 +24,14 @@ import org.springframework.stereotype.Component;
  * Checks: - Kafka broker connectivity - Cluster information - Producer/consumer health
  */
 @Component
-public class KafkaHealthIndicator
-        implements HealthIndicator {
+public class KafkaHealthIndicator implements HealthIndicator {
     private static final Logger logger = LoggerFactory.getLogger(KafkaHealthIndicator.class);
 
     private final String bootstrapServers;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private AdminClient adminClient;
 
-    public KafkaHealthIndicator(
-            @Value("${spring.kafka.bootstrap-servers:localhost:9092}") String bootstrapServers, KafkaTemplate<String, Object> kafkaTemplate) {
+    public KafkaHealthIndicator(@Value("${spring.kafka.bootstrap-servers:localhost:9092}") String bootstrapServers, KafkaTemplate<String, Object> kafkaTemplate) {
         this.bootstrapServers = Objects.requireNonNull(bootstrapServers, "bootstrapServers must not be null");
         this.kafkaTemplate = Objects.requireNonNull(kafkaTemplate, "kafkaTemplate must not be null");
     }
@@ -53,8 +51,7 @@ public class KafkaHealthIndicator
 
             // Get cluster ID (non-blocking check)
             try {
-                String clusterId = clusterResult.clusterId()
-                        .get(5, TimeUnit.SECONDS);
+                String clusterId = clusterResult.clusterId().get(5, TimeUnit.SECONDS);
                 details.put("clusterId", clusterId);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 logger.warn("Could not retrieve cluster ID: {}", e.getMessage());
@@ -63,9 +60,7 @@ public class KafkaHealthIndicator
 
             // Get controller (non-blocking check)
             try {
-                String controller = clusterResult.controller()
-                        .get(5, TimeUnit.SECONDS)
-                        .idString();
+                String controller = clusterResult.controller().get(5, TimeUnit.SECONDS).idString();
                 details.put("controller", controller);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 logger.warn("Could not retrieve controller: {}", e.getMessage());
@@ -73,9 +68,7 @@ public class KafkaHealthIndicator
 
             // Get node count (non-blocking check)
             try {
-                int nodeCount = clusterResult.nodes()
-                        .get(5, TimeUnit.SECONDS)
-                        .size();
+                int nodeCount = clusterResult.nodes().get(5, TimeUnit.SECONDS).size();
                 details.put("nodeCount", nodeCount);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 logger.warn("Could not retrieve node count: {}", e.getMessage());
@@ -83,24 +76,18 @@ public class KafkaHealthIndicator
 
             // Test producer connectivity
             try {
-                kafkaTemplate.getProducerFactory()
-                        .createProducer();
+                kafkaTemplate.getProducerFactory().createProducer();
                 details.put("producer", "available");
             } catch (RuntimeException e) {
                 logger.warn("Producer health check failed: {}", e.getMessage());
                 details.put("producer", "unavailable");
-                return Health.down()
-                        .withDetails(details)
-                        .withException(e)
-                        .build();
+                return Health.down().withDetails(details).withException(e).build();
             }
 
             details.put("status", "UP");
             logger.debug("Kafka health check passed");
 
-            return Health.up()
-                    .withDetails(details)
-                    .build();
+            return Health.up().withDetails(details).build();
 
         } catch (RuntimeException e) {
             logger.error("Kafka health check failed", e);
@@ -110,10 +97,7 @@ public class KafkaHealthIndicator
             details.put("status", "DOWN");
             details.put("error", e.getMessage());
 
-            return Health.down()
-                    .withDetails(details)
-                    .withException(e)
-                    .build();
+            return Health.down().withDetails(details).withException(e).build();
         }
     }
 

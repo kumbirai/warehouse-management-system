@@ -36,8 +36,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * </ul>
  */
 @RestControllerAdvice
-public class GlobalExceptionHandler
-        extends BaseGlobalExceptionHandler {
+public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
 
     /**
      * Handles LocationNotFoundException. Returns 404 Not Found.
@@ -53,10 +52,7 @@ public class GlobalExceptionHandler
 
         logger.warn("Location not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("LOCATION_NOT_FOUND", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("LOCATION_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
     }
 
@@ -74,10 +70,7 @@ public class GlobalExceptionHandler
 
         logger.warn("Barcode already exists: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("BARCODE_ALREADY_EXISTS", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("BARCODE_ALREADY_EXISTS", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
@@ -95,10 +88,7 @@ public class GlobalExceptionHandler
 
         logger.warn("Code already exists: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
-        ApiError error = ApiError.builder("CODE_ALREADY_EXISTS", ex.getMessage())
-                .path(path)
-                .requestId(requestId)
-                .build();
+        ApiError error = ApiError.builder("CODE_ALREADY_EXISTS", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 }

@@ -9,9 +9,6 @@ package com.ccbsa.wms.location.domain.core.valueobject;
  * assignment - BLOCKED: Location is blocked and cannot be used
  */
 public enum LocationStatus {
-    AVAILABLE,
-    OCCUPIED,
-    RESERVED,
-    BLOCKED
+    AVAILABLE, OCCUPIED, RESERVED, BLOCKED
 }
 

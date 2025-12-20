@@ -35,8 +35,7 @@ public final class LastName {
      * @return LastName instance or null if value is null/empty
      */
     public static LastName of(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             return null;
         }
         return new LastName(value);

@@ -7,8 +7,7 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationChannel;
  * <p>
  * Thrown when no delivery adapter is available for the requested notification channel.
  */
-public class UnsupportedChannelException
-        extends RuntimeException {
+public class UnsupportedChannelException extends RuntimeException {
 
     public UnsupportedChannelException(NotificationChannel channel) {
         super(String.format("No delivery adapter available for channel: %s", channel));

@@ -28,8 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/users")
-@Tag(name = "User Verification",
-        description = "User verification and password reset operations")
+@Tag(name = "User Verification", description = "User verification and password reset operations")
 public class UserVerificationController {
     private final UserRepository userRepository;
     private final AuthenticationServicePort authenticationService;
@@ -43,27 +42,22 @@ public class UserVerificationController {
     }
 
     @PostMapping("/{userId}/resend-verification")
-    @Operation(summary = "Resend Verification Email",
-            description = "Resends email verification and password reset email to user (admin only)")
+    @Operation(summary = "Resend Verification Email", description = "Resends email verification and password reset email to user (admin only)")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(
-            @PathVariable String userId) {
+    public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(@PathVariable String userId) {
         // Load user to get Keycloak user ID
-        User user = userRepository.findById(UserId.of(userId))
-                .orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", userId)));
+        User user = userRepository.findById(UserId.of(userId)).orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", userId)));
 
         // Check if user has Keycloak user ID
-        if (!user.getKeycloakUserId()
-                .isPresent()) {
+        if (!user.getKeycloakUserId().isPresent()) {
             throw new IllegalStateException(String.format("User does not have a Keycloak account: %s", userId));
         }
 
-        KeycloakUserId keycloakUserId = user.getKeycloakUserId()
-                .get();
+        KeycloakUserId keycloakUserId = user.getKeycloakUserId().get();
 
         try {
             // Send verification and password reset email
-            String redirectUri = frontendBaseUrl + "/verify-email";
+            String redirectUri = String.format("%s/verify-email", frontendBaseUrl);
             authenticationService.sendEmailVerificationAndPasswordReset(keycloakUserId, redirectUri);
 
             return ApiResponseBuilder.ok(null);

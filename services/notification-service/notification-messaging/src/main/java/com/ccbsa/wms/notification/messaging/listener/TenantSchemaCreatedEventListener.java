@@ -33,8 +33,7 @@ import jakarta.annotation.PostConstruct;
  * Uses Flyway programmatically to ensure migrations are properly tracked in Flyway's history table. Uses local DTO to avoid tight coupling with tenant-service domain classes.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "DataSource is a Spring-managed bean and treated as immutable infrastructure component")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "DataSource is a Spring-managed bean and treated as immutable infrastructure component")
 public class TenantSchemaCreatedEventListener {
     private static final Logger logger = LoggerFactory.getLogger(TenantSchemaCreatedEventListener.class);
 
@@ -53,14 +52,9 @@ public class TenantSchemaCreatedEventListener {
         logger.info("TenantSchemaCreatedEventListener initialized and ready to consume TenantSchemaCreatedEvent from topic 'tenant-events' with groupId 'notification-service'");
     }
 
-    @KafkaListener(topics = "tenant-events",
-            groupId = "notification-service-schema-creation",
-            containerFactory = "externalEventKafkaListenerContainerFactory")
-    public void handle(
-            @Payload Map<String, Object> eventData,
-            @Header(value = "__TypeId__",
-                    required = false) String eventType,
-            @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
+    @KafkaListener(topics = "tenant-events", groupId = "notification-service-schema-creation", containerFactory = "externalEventKafkaListenerContainerFactory")
+    public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
+                       @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         logger.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));
         try {
             // Extract and set correlation ID from event metadata for traceability
@@ -82,8 +76,7 @@ public class TenantSchemaCreatedEventListener {
             TenantId tenantId = TenantId.of(tenantIdString);
             String schemaName = extractSchemaName(eventData);
 
-            if (schemaName == null || schemaName.trim()
-                    .isEmpty()) {
+            if (schemaName == null || schemaName.trim().isEmpty()) {
                 logger.error("Schema name is missing in TenantSchemaCreatedEvent: tenantId={}, eventId={}", tenantId.getValue(), extractEventId(eventData));
                 acknowledgment.acknowledge();
                 return;
@@ -119,8 +112,7 @@ public class TenantSchemaCreatedEventListener {
      * @param eventData The event data map
      */
     private void extractAndSetCorrelationId(Map<String, Object> eventData) {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> metadata = (Map<String, Object>) eventData.get("metadata");
+        @SuppressWarnings("unchecked") Map<String, Object> metadata = (Map<String, Object>) eventData.get("metadata");
         if (metadata != null) {
             Object correlationIdObj = metadata.get("correlationId");
             if (correlationIdObj != null) {
@@ -188,8 +180,7 @@ public class TenantSchemaCreatedEventListener {
 
         // Check @class field
         Object eventClass = eventData.get("@class");
-        if (eventClass != null && eventClass.toString()
-                .contains(TENANT_SCHEMA_CREATED_EVENT)) {
+        if (eventClass != null && eventClass.toString().contains(TENANT_SCHEMA_CREATED_EVENT)) {
             return true;
         }
 
@@ -217,8 +208,7 @@ public class TenantSchemaCreatedEventListener {
 
         // Handle value object serialization (Map with "value" field)
         if (tenantIdObj instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> idMap = (Map<String, Object>) tenantIdObj;
+            @SuppressWarnings("unchecked") Map<String, Object> idMap = (Map<String, Object>) tenantIdObj;
             Object valueObj = idMap.get("value");
             if (valueObj != null) {
                 return valueObj.toString();
@@ -242,8 +232,7 @@ public class TenantSchemaCreatedEventListener {
         }
 
         // Fallback: try to extract from nested structure
-        @SuppressWarnings("unchecked")
-        Map<String, Object> data = (Map<String, Object>) eventData.get("data");
+        @SuppressWarnings("unchecked") Map<String, Object> data = (Map<String, Object>) eventData.get("data");
         if (data != null) {
             Object schemaName = data.get("schemaName");
             if (schemaName != null) {
@@ -302,12 +291,7 @@ public class TenantSchemaCreatedEventListener {
     private void runFlywayMigrations(String schemaName) {
         logger.info("Running Flyway migrations in tenant schema: schemaName={}", schemaName);
         try {
-            Flyway flyway = Flyway.configure()
-                    .dataSource(dataSource)
-                    .schemas(schemaName)
-                    .locations("classpath:db/migration")
-                    .baselineOnMigrate(true)
-                    .load();
+            Flyway flyway = Flyway.configure().dataSource(dataSource).schemas(schemaName).locations("classpath:db/migration").baselineOnMigrate(true).load();
 
             var migrateResult = flyway.migrate();
             int migrationsApplied = migrateResult.migrationsExecuted;

@@ -14,8 +14,7 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantName;
 public class TenantViewMapper {
     public TenantView toView(TenantEntity entity) {
         return new TenantView(TenantId.of(entity.getTenantId()), TenantName.of(entity.getName()), entity.getStatus(), entity.getEmailAddress(), entity.getPhone(),
-                entity.getAddress(), entity.getKeycloakRealmName(),
-                entity.isUsePerTenantRealm(), entity.getCreatedAt(), entity.getActivatedAt(), entity.getDeactivatedAt());
+                entity.getAddress(), entity.getKeycloakRealmName(), entity.isUsePerTenantRealm(), entity.getCreatedAt(), entity.getActivatedAt(), entity.getDeactivatedAt());
     }
 }
 

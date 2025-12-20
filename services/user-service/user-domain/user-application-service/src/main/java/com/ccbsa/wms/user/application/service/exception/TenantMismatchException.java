@@ -6,8 +6,7 @@ package com.ccbsa.wms.user.application.service.exception;
  * This exception indicates that an operation was attempted across tenant boundaries,
  * which is not allowed for tenant-scoped roles.
  */
-public class TenantMismatchException
-        extends RuntimeException {
+public class TenantMismatchException extends RuntimeException {
     public TenantMismatchException(String message) {
         super(message);
     }

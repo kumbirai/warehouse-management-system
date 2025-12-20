@@ -29,8 +29,8 @@ public class LocalCacheInvalidator {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-            justification = "RedisTemplate is a Spring-managed bean that is thread-safe and immutable after initialization. It is safe to " + "store the reference.")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "RedisTemplate is a Spring-managed bean that is thread-safe and immutable after initialization. It is safe to "
+            + "store the reference.")
     public LocalCacheInvalidator(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }

@@ -25,10 +25,7 @@ public class ProductBarcodeCache {
     private final Cache<String, ProductInfo> cache;
 
     public ProductBarcodeCache() {
-        this.cache = Caffeine.newBuilder()
-                .maximumSize(MAX_SIZE)
-                .expireAfterWrite(TTL_HOURS, TimeUnit.HOURS)
-                .build();
+        this.cache = Caffeine.newBuilder().maximumSize(MAX_SIZE).expireAfterWrite(TTL_HOURS, TimeUnit.HOURS).build();
     }
 
     /**

@@ -19,15 +19,9 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI userServiceOpenAPI() {
         return new OpenAPI().info(new Info().title("User Service API")
-                        .description("User Management Service API - Provides user management operations, IAM integration, and BFF authentication endpoints")
-                        .version("1.0.0")
-                        .contact(new Contact().name("WMS Development Team")
-                                .email("dev@ccbsa.com"))
-                        .license(new License().name("Proprietary")
-                                .url("https://ccbsa.com")))
-                .servers(List.of(new Server().url("http://localhost:8088")
-                        .description("Development Server"), new Server().url("https://api.ccbsa.com")
-                        .description("Production Server")));
+                .description("User Management Service API - Provides user management operations, IAM integration, and BFF authentication endpoints").version("1.0.0")
+                .contact(new Contact().name("WMS Development Team").email("dev@ccbsa.com")).license(new License().name("Proprietary").url("https://ccbsa.com"))).servers(
+                List.of(new Server().url("http://localhost:8088").description("Development Server"), new Server().url("https://api.ccbsa.com").description("Production Server")));
     }
 }
 

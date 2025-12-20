@@ -15,23 +15,25 @@ spring:
   # Force WebFlux (reactive) application type - prevents Spring MVC auto-configuration
   main:
     web-application-type: reactive
+    # Allow bean definition overriding to enable custom RequestRateLimiterGatewayFilterFactory
+    allow-bean-definition-overriding: true
   
   cloud:
     gateway:
-      # HTTP client configuration for load-balanced routes
-      httpclient:
-        connect-timeout: 5000  # 5 seconds connection timeout
-        response-timeout: 30s  # 30 seconds response timeout (matches frontend timeout)
-        pool:
-          type: ELASTIC
-          max-connections: 500
-          max-idle-time: 30s
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
       server:
         webflux:
+          # HTTP client configuration for load-balanced routes
+          httpclient:
+            connect-timeout: 5000  # 5 seconds connection timeout
+            response-timeout: 30s  # 30 seconds response timeout (matches frontend timeout)
+            pool:
+              type: ELASTIC
+              max-connections: 500
+              max-idle-time: 30s
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
           routes:
             # User Service (BFF)
             - id: user-service-bff
@@ -188,28 +190,28 @@ spring:
             redis-rate-limiter.burstCapacity: 100
             key-resolver: "#{@keyResolver}"
 
-      # Global CORS configuration for Spring Cloud Gateway
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowed-origins:
-              - "http://localhost:3000"
-              - "https://localhost:3000"
-              - "http://localhost:5173"
-              - "https://localhost:5173"
-              - "http://192.168.50.30:3000"
-              - "https://192.168.50.30:3000"
-            allowed-methods:
-              - GET
-              - POST
-              - PUT
-              - PATCH
-              - DELETE
-              - OPTIONS
-            allowed-headers:
-              - "*"
-            allow-credentials: true
-            max-age: 3600
+          # Global CORS configuration for Spring Cloud Gateway
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origins:
+                  - "http://localhost:3000"
+                  - "https://localhost:3000"
+                  - "http://localhost:5173"
+                  - "https://localhost:5173"
+                  - "http://192.168.50.30:3000"
+                  - "https://192.168.50.30:3000"
+                allowed-methods:
+                  - GET
+                  - POST
+                  - PUT
+                  - PATCH
+                  - DELETE
+                  - OPTIONS
+                allowed-headers:
+                  - "*"
+                allow-credentials: true
+                max-age: 3600
   
   # Keycloak Configuration
   security:
@@ -272,10 +274,10 @@ logging:
     root: INFO
     com.ccbsa.wms.gateway: DEBUG
     com.ccbsa.wms.gateway.application: DEBUG
-    org.springframework.cloud.gateway: DEBUG
-    org.springframework.cloud.gateway.handler.RoutePredicateHandlerMapping: DEBUG
-    org.springframework.cloud.gateway.filter.NettyRoutingFilter: TRACE
-    org.springframework.cloud.gateway.filter.ReactiveLoadBalancerClientFilter: TRACE
+    org.springframework.cloud.gateway: INFO
+    org.springframework.cloud.gateway.handler.RoutePredicateHandlerMapping: INFO
+    org.springframework.cloud.gateway.filter.NettyRoutingFilter: INFO
+    org.springframework.cloud.gateway.filter.ReactiveLoadBalancerClientFilter: INFO
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG
     org.springframework.web.cors: DEBUG

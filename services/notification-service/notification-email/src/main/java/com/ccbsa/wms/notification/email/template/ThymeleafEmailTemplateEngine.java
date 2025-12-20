@@ -16,10 +16,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Implements EmailTemplateEngine using Thymeleaf template engine. Renders HTML email templates from resources/templates/email/ directory.
  */
 @Component
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "TemplateEngine is a managed bean and treated as immutable port")
-public class ThymeleafEmailTemplateEngine
-        implements EmailTemplateEngine {
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "TemplateEngine is a managed bean and treated as immutable port")
+public class ThymeleafEmailTemplateEngine implements EmailTemplateEngine {
     private static final Logger logger = LoggerFactory.getLogger(ThymeleafEmailTemplateEngine.class);
     private static final String TEMPLATE_PREFIX = "email/";
     private static final String TEMPLATE_SUFFIX = ".html";

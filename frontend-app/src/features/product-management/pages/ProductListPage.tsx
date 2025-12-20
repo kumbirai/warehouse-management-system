@@ -1,5 +1,5 @@
 import { Box, Breadcrumbs, Button, Container, Link, Tab, Tabs, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { ProductList } from '../components/ProductList';
 import { useProducts } from '../hooks/useProducts';
@@ -9,16 +9,24 @@ import AddIcon from '@mui/icons-material/Add';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { ProductCsvUploadForm } from '../components/ProductCsvUploadForm';
 import { useUploadProductCsv } from '../hooks/useUploadProductCsv';
+import { ProductListFilters } from '../types/product';
 
 export const ProductListPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
-  const { products, isLoading, error } = useProducts({
-    tenantId: user?.tenantId ?? undefined,
-    page: 0,
-    size: 100,
-  });
+
+  // Memoize filters object to prevent infinite loop in useProducts hook
+  const filters: ProductListFilters = useMemo(
+    () => ({
+      tenantId: user?.tenantId ?? undefined,
+      page: 0,
+      size: 100,
+    }),
+    [user?.tenantId]
+  );
+
+  const { products, isLoading, error } = useProducts(filters);
   const { uploadCsv, isLoading: isUploading } = useUploadProductCsv();
 
   const handleUpload = async (file: File) => {

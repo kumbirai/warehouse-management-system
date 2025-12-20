@@ -24,8 +24,7 @@ public final class TenantResponse {
     private final LocalDateTime deactivatedAt;
 
     public TenantResponse(String tenantId, String name, String status, String emailAddress, String phone, String address, String keycloakRealmName, boolean usePerTenantRealm,
-                          LocalDateTime createdAt, LocalDateTime activatedAt,
-                          LocalDateTime deactivatedAt) {
+                          LocalDateTime createdAt, LocalDateTime activatedAt, LocalDateTime deactivatedAt) {
         this.tenantId = tenantId;
         this.name = name;
         this.status = status;

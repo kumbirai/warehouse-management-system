@@ -38,8 +38,7 @@ import reactor.core.publisher.Mono;
  * via the X-Tenant-Id header, it validates that it matches the JWT tenant ID.
  */
 @Component
-public class TenantValidationFilter
-        extends AbstractGatewayFilterFactory<TenantValidationFilter.Config> {
+public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantValidationFilter.Config> {
     private static final Logger logger = LoggerFactory.getLogger(TenantValidationFilter.class);
     private static final String TENANT_ID_CLAIM = "tenant_id";
     private static final String X_TENANT_ID_HEADER = "X-Tenant-Id";
@@ -55,21 +54,12 @@ public class TenantValidationFilter
 
     @Override
     public GatewayFilter apply(Config config) {
-        return (exchange, chain) -> ReactiveSecurityContextHolder.getContext()
-                .cast(SecurityContext.class)
-                .map(SecurityContext::getAuthentication)
-                .filter(Objects::nonNull)
-                .filter(authentication -> authentication instanceof JwtAuthenticationToken)
-                .cast(JwtAuthenticationToken.class)
-                .map(JwtAuthenticationToken::getToken)
+        return (exchange, chain) -> ReactiveSecurityContextHolder.getContext().cast(SecurityContext.class).map(SecurityContext::getAuthentication).filter(Objects::nonNull)
+                .filter(authentication -> authentication instanceof JwtAuthenticationToken).cast(JwtAuthenticationToken.class).map(JwtAuthenticationToken::getToken)
                 .flatMap(jwt -> {
                     String jwtTenantId = extractTenantId(jwt);
-                    String path = exchange.getRequest()
-                            .getPath()
-                            .value();
-                    String method = exchange.getRequest()
-                            .getMethod()
-                            .name();
+                    String path = exchange.getRequest().getPath().value();
+                    String method = exchange.getRequest().getMethod().name();
 
                     // Check if user has SYSTEM_ADMIN or ADMIN role
                     boolean isSystemAdmin = hasSystemAdminRole(jwt);
@@ -84,9 +74,7 @@ public class TenantValidationFilter
                         ServerHttpRequest.Builder requestBuilder = request.mutate();
                         // Don't set X-Tenant-Id header for SYSTEM_ADMIN
                         ServerHttpRequest modifiedRequest = requestBuilder.build();
-                        return chain.filter(exchange.mutate()
-                                .request(modifiedRequest)
-                                .build());
+                        return chain.filter(exchange.mutate().request(modifiedRequest).build());
                     }
 
                     // Allow ADMIN users to access list endpoint without tenant_id requirement
@@ -96,21 +84,17 @@ public class TenantValidationFilter
                         ServerHttpRequest.Builder requestBuilder = request.mutate();
                         // Don't set X-Tenant-Id header for list endpoint
                         ServerHttpRequest modifiedRequest = requestBuilder.build();
-                        return chain.filter(exchange.mutate()
-                                .request(modifiedRequest)
-                                .build());
+                        return chain.filter(exchange.mutate().request(modifiedRequest).build());
                     }
 
                     // For non-SYSTEM_ADMIN and non-ADMIN users, or non-list endpoints, tenant_id is required
                     if (jwtTenantId == null || jwtTenantId.isEmpty()) {
-                        logger.warn("Tenant ID not found in JWT token for {} {} from {}", method, path, exchange.getRequest()
-                                .getRemoteAddress());
+                        logger.warn("Tenant ID not found in JWT token for {} {} from {}", method, path, exchange.getRequest().getRemoteAddress());
                         return handleError(exchange, HttpStatus.FORBIDDEN, "Tenant ID not found in token");
                     }
 
                     ServerHttpRequest request = exchange.getRequest();
-                    String requestedTenantId = request.getHeaders()
-                            .getFirst(X_TENANT_ID_HEADER);
+                    String requestedTenantId = request.getHeaders().getFirst(X_TENANT_ID_HEADER);
 
                     // If tenant ID is explicitly requested, validate it matches JWT tenant
                     if (requestedTenantId != null && !requestedTenantId.isEmpty()) {
@@ -127,9 +111,7 @@ public class TenantValidationFilter
                     logger.debug("Tenant validation passed for {} {}: tenant={}", method, path, jwtTenantId);
 
                     ServerHttpRequest modifiedRequest = requestBuilder.build();
-                    return chain.filter(exchange.mutate()
-                            .request(modifiedRequest)
-                            .build());
+                    return chain.filter(exchange.mutate().request(modifiedRequest).build());
                 })
                 // If SecurityContext is empty or authentication is not JWT, this means:
                 // 1. The OAuth2 Resource Server should have already rejected unauthenticated requests
@@ -137,12 +119,8 @@ public class TenantValidationFilter
                 // However, we should not block the request here - let it proceed and let the
                 // downstream service or OAuth2 Resource Server handle it
                 .switchIfEmpty(Mono.defer(() -> {
-                    String path = exchange.getRequest()
-                            .getPath()
-                            .value();
-                    String method = exchange.getRequest()
-                            .getMethod()
-                            .name();
+                    String path = exchange.getRequest().getPath().value();
+                    String method = exchange.getRequest().getMethod().name();
                     logger.warn("No JWT authentication found in SecurityContext for {} {} - this should not happen if OAuth2 Resource Server is configured correctly", method,
                             path);
                     // Log warning but allow request to proceed - OAuth2 Resource Server should have handled this
@@ -207,15 +185,12 @@ public class TenantValidationFilter
     private Mono<Void> handleError(ServerWebExchange exchange, HttpStatus status, String message) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(status);
-        response.getHeaders()
-                .add("Content-Type", "application/json");
+        response.getHeaders().add("Content-Type", "application/json");
 
-        String errorBody = String.format("{\"error\":{\"code\":\"%s\",\"message\":\"%s\",\"timestamp\":\"%s\"}}", status.name(), message, Instant.now()
-                .toString());
+        String errorBody = String.format("{\"error\":{\"code\":\"%s\",\"message\":\"%s\",\"timestamp\":\"%s\"}}", status.name(), message, Instant.now().toString());
 
         byte[] errorBytes = Objects.requireNonNull(errorBody.getBytes(StandardCharsets.UTF_8), "Error body bytes cannot be null");
-        DataBuffer buffer = response.bufferFactory()
-                .wrap(errorBytes);
+        DataBuffer buffer = response.bufferFactory().wrap(errorBytes);
 
         Mono<DataBuffer> bufferMono = Objects.requireNonNull(Mono.just(buffer), "Buffer mono cannot be null");
         return response.writeWith(bufferMono);
@@ -231,12 +206,10 @@ public class TenantValidationFilter
     private boolean hasRole(Jwt jwt, String role) {
         Object realmAccess = jwt.getClaim(REALM_ACCESS_CLAIM);
         if (realmAccess instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
+            @SuppressWarnings("unchecked") Map<String, Object> realmAccessMap = (Map<String, Object>) realmAccess;
             Object rolesObj = realmAccessMap.get(ROLES_CLAIM);
             if (rolesObj instanceof List) {
-                @SuppressWarnings("unchecked")
-                List<String> roles = (List<String>) rolesObj;
+                @SuppressWarnings("unchecked") List<String> roles = (List<String>) rolesObj;
                 return roles.contains(role);
             }
         }

@@ -15,15 +15,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  *
  * @param <T> The aggregate root type (TenantId)
  */
-public abstract class TenantEvent<T>
-        extends DomainEvent<T> {
+public abstract class TenantEvent<T> extends DomainEvent<T> {
     /**
      * Constructor for Tenant events without metadata.
      *
      * @param aggregateId Aggregate identifier (TenantId)
      */
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "Tenant events must fail fast if aggregate identifiers are invalid")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "Tenant events must fail fast if aggregate identifiers are invalid")
     protected TenantEvent(TenantId aggregateId) {
         super(extractTenantIdString(aggregateId), "Tenant");
     }
@@ -47,8 +45,7 @@ public abstract class TenantEvent<T>
      * @param aggregateId Aggregate identifier (TenantId)
      * @param metadata    Event metadata for traceability
      */
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "Tenant events must fail fast if aggregate identifiers are invalid")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "Tenant events must fail fast if aggregate identifiers are invalid")
     protected TenantEvent(TenantId aggregateId, EventMetadata metadata) {
         super(extractTenantIdString(aggregateId), "Tenant", metadata);
     }
@@ -61,8 +58,7 @@ public abstract class TenantEvent<T>
      * @deprecated Use constructor with EventMetadata parameter instead
      */
     @Deprecated
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "Tenant events must fail fast if aggregate identifiers are invalid")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "Tenant events must fail fast if aggregate identifiers are invalid")
     protected TenantEvent(TenantId aggregateId, int eventVersion) {
         super(extractTenantIdString(aggregateId), "Tenant");
         // Note: DomainEvent base class handles versioning

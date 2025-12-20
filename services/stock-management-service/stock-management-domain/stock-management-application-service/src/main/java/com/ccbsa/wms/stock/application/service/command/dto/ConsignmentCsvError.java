@@ -65,8 +65,7 @@ public final class ConsignmentCsvError {
         }
 
         public ConsignmentCsvError build() {
-            if (errorMessage == null || errorMessage.trim()
-                    .isEmpty()) {
+            if (errorMessage == null || errorMessage.trim().isEmpty()) {
                 throw new IllegalArgumentException("ErrorMessage is required");
             }
             return new ConsignmentCsvError(this);

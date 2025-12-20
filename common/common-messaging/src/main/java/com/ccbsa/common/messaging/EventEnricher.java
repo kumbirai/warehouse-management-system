@@ -42,9 +42,7 @@ public final class EventEnricher {
         if (events == null || events.isEmpty()) {
             return events;
         }
-        return events.stream()
-                .map(event -> enrich(event, metadata))
-                .collect(Collectors.toList());
+        return events.stream().map(event -> enrich(event, metadata)).collect(Collectors.toList());
     }
 
     /**
@@ -65,8 +63,7 @@ public final class EventEnricher {
         }
         if (event.getMetadata() != null) {
             // Event already has metadata, return as-is
-            logger.debug("Event {} already has metadata, skipping enrichment", event.getClass()
-                    .getSimpleName());
+            logger.debug("Event {} already has metadata, skipping enrichment", event.getClass().getSimpleName());
             return event;
         }
 
@@ -98,8 +95,7 @@ public final class EventEnricher {
             // Create enriched event instance
             return (T) enrichedConstructor.newInstance(enrichedParams);
         } catch (ReflectiveOperationException | IllegalArgumentException | SecurityException e) {
-            logger.error("Failed to enrich event {} with metadata: {}", event.getClass()
-                    .getSimpleName(), e.getMessage(), e);
+            logger.error("Failed to enrich event {} with metadata: {}", event.getClass().getSimpleName(), e.getMessage(), e);
             // Return original event on failure to avoid breaking event publishing
             return event;
         }
@@ -141,14 +137,13 @@ public final class EventEnricher {
             Object[] params = new Object[paramCount];
 
             // Get all getter methods from the event class
-            Method[] methods = event.getClass()
-                    .getMethods();
+            Method[] methods = event.getClass().getMethods();
             List<Method> getters = new ArrayList<>();
             for (Method method : methods) {
                 String methodName = method.getName();
                 if (methodName.startsWith("get") && method.getParameterCount() == 0 && !methodName.equals("getClass") && !methodName.equals("getEventId") && !methodName.equals(
-                        "getAggregateId") && !methodName.equals("getAggregateType")
-                        && !methodName.equals("getOccurredOn") && !methodName.equals("getVersion") && !methodName.equals("getMetadata")) {
+                        "getAggregateId") && !methodName.equals("getAggregateType") && !methodName.equals("getOccurredOn") && !methodName.equals("getVersion")
+                        && !methodName.equals("getMetadata")) {
                     getters.add(method);
                 }
             }
@@ -172,8 +167,7 @@ public final class EventEnricher {
                 } else {
                     // If no matching getter found, try to infer from common patterns
                     // For UserEvent, TenantEvent, etc., we might need special handling
-                    logger.debug("No matching getter found for parameter {} of type {} in event {}", i, paramType.getSimpleName(), event.getClass()
-                            .getSimpleName());
+                    logger.debug("No matching getter found for parameter {} of type {} in event {}", i, paramType.getSimpleName(), event.getClass().getSimpleName());
                     // Return empty array to indicate failure (SpotBugs prefers zero-length arrays)
                     return new Object[0];
                 }

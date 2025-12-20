@@ -30,12 +30,10 @@ public final class Title {
      * @throws IllegalArgumentException if validation fails
      */
     private void validate(String value) {
-        if (value == null || value.trim()
-                .isEmpty()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("Title cannot be null or empty");
         }
-        if (value.trim()
-                .length() > 200) {
+        if (value.trim().length() > 200) {
             throw new IllegalArgumentException("Title cannot exceed 200 characters");
         }
     }

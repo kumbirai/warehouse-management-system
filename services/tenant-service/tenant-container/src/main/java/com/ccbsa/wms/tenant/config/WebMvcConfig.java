@@ -15,22 +15,17 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  * Web MVC configuration. Registers interceptors and other web-related configurations. Ensures proper date/time serialization for REST API responses.
  */
 @Configuration
-public class WebMvcConfig
-        implements WebMvcConfigurer {
+public class WebMvcConfig implements WebMvcConfigurer {
     @NonNull
     private final RequestLoggingInterceptor requestLoggingInterceptor;
 
-    public WebMvcConfig(
-            @NonNull RequestLoggingInterceptor requestLoggingInterceptor) {
+    public WebMvcConfig(@NonNull RequestLoggingInterceptor requestLoggingInterceptor) {
         this.requestLoggingInterceptor = requestLoggingInterceptor;
     }
 
     @Override
-    public void addInterceptors(
-            @NonNull InterceptorRegistry registry) {
-        registry.addInterceptor(requestLoggingInterceptor)
-                .addPathPatterns("/**")
-                .excludePathPatterns("/actuator/**", "/error", "/swagger-ui/**", "/v3/api-docs/**");
+    public void addInterceptors(@NonNull InterceptorRegistry registry) {
+        registry.addInterceptor(requestLoggingInterceptor).addPathPatterns("/**").excludePathPatterns("/actuator/**", "/error", "/swagger-ui/**", "/v3/api-docs/**");
     }
 
     /**
@@ -43,8 +38,7 @@ public class WebMvcConfig
      */
     @Bean
     public Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder() {
-        return new Jackson2ObjectMapperBuilder().modules(new JavaTimeModule())
-                .featuresToDisable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        return new Jackson2ObjectMapperBuilder().modules(new JavaTimeModule()).featuresToDisable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .postConfigurer(objectMapper -> {
                     // Disable default typing which adds type information to JSON
                     // This ensures REST API responses are clean JSON without @class or array wrappers

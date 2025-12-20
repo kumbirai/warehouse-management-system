@@ -13,8 +13,7 @@ import com.ccbsa.wms.user.domain.core.valueobject.UserStatus;
  * <p>
  * Event Version: 1.0
  */
-public final class UserUpdatedEvent
-        extends UserEvent {
+public final class UserUpdatedEvent extends UserEvent {
     private final UserStatus status;
     private final Description description;
 

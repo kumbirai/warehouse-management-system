@@ -11,16 +11,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * <p>
  * All notification-specific events extend this class.
  */
-public abstract class NotificationEvent
-        extends DomainEvent<NotificationId> {
+public abstract class NotificationEvent extends DomainEvent<NotificationId> {
     /**
      * Constructor for Notification events without metadata.
      *
      * @param aggregateId Aggregate identifier (NotificationId)
      * @throws IllegalArgumentException if aggregateId is null
      */
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "Notification events must fail fast if aggregate identifiers are invalid")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "Notification events must fail fast if aggregate identifiers are invalid")
     protected NotificationEvent(NotificationId aggregateId) {
         super(extractNotificationIdString(aggregateId), "Notification");
     }
@@ -35,8 +33,7 @@ public abstract class NotificationEvent
         if (notificationId == null) {
             throw new IllegalArgumentException("NotificationId cannot be null");
         }
-        return notificationId.getValue()
-                .toString();
+        return notificationId.getValue().toString();
     }
 
     /**
@@ -46,8 +43,7 @@ public abstract class NotificationEvent
      * @param metadata    Event metadata for traceability
      * @throws IllegalArgumentException if aggregateId is null
      */
-    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
-            justification = "Notification events must fail fast if aggregate identifiers are invalid")
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "Notification events must fail fast if aggregate identifiers are invalid")
     protected NotificationEvent(NotificationId aggregateId, EventMetadata metadata) {
         super(extractNotificationIdString(aggregateId), "Notification", metadata);
     }

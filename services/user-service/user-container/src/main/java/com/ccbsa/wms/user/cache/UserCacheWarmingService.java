@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.ccbsa.common.cache.warming.CacheWarmingService;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.user.application.service.port.repository.UserRepository;
 import com.ccbsa.wms.user.domain.core.entity.User;
 
@@ -31,8 +32,7 @@ import com.ccbsa.wms.user.domain.core.entity.User;
  * handled gracefully and do not prevent application startup.
  */
 @Service
-public class UserCacheWarmingService
-        extends CacheWarmingService {
+public class UserCacheWarmingService extends CacheWarmingService {
 
     private static final Logger log = LoggerFactory.getLogger(UserCacheWarmingService.class);
 
@@ -57,9 +57,7 @@ public class UserCacheWarmingService
             }
 
             // Extract distinct tenant IDs
-            Set<TenantId> tenantIds = allUsers.stream()
-                    .map(User::getTenantId)
-                    .collect(Collectors.toSet());
+            Set<TenantId> tenantIds = allUsers.stream().map(User::getTenantId).collect(Collectors.toSet());
 
             log.info("Found {} tenants with users - warming caches", tenantIds.size());
 
@@ -70,14 +68,12 @@ public class UserCacheWarmingService
                     int warmed = warmTenantUserCache(tenantId);
                     totalWarmed += warmed;
                 } catch (Exception e) {
-                    log.warn("Failed to warm cache for tenant: {} - continuing with next tenant",
-                            tenantId.getValue(), e);
+                    log.warn("Failed to warm cache for tenant: {} - continuing with next tenant", tenantId.getValue(), e);
                     // Continue with next tenant - don't fail entire warming process
                 }
             }
 
-            log.info("User cache warming completed - warmed {} users across {} tenants",
-                    totalWarmed, tenantIds.size());
+            log.info("User cache warming completed - warmed {} users across {} tenants", totalWarmed, tenantIds.size());
         } catch (Exception e) {
             log.error("Cache warming failed - continuing startup", e);
             // Don't throw - warming failure shouldn't prevent startup
@@ -90,36 +86,49 @@ public class UserCacheWarmingService
      * Loads all users for the tenant and triggers cache population by calling
      * findByTenantIdAndId for each user. This ensures users are cached and
      * available for fast retrieval.
+     * <p>
+     * Note: TenantContext must be set before querying users as the repository
+     * adapter uses it to resolve the correct tenant schema.
      *
      * @param tenantId Tenant ID to warm cache for
      * @return Number of users warmed for this tenant
      */
     private int warmTenantUserCache(TenantId tenantId) {
         try {
-            // Load all users for this tenant
-            List<User> users = userRepository.findByTenantId(tenantId);
+            // Set tenant context before querying users
+            // This is required because UserRepositoryAdapter uses TenantContext to resolve schema
+            TenantContext.setTenantId(tenantId);
 
-            if (users.isEmpty()) {
-                log.debug("No users found for tenant: {} - skipping cache warming", tenantId.getValue());
-                return 0;
-            }
+            try {
+                // Load all users for this tenant
+                List<User> users = userRepository.findByTenantId(tenantId);
 
-            // Trigger cache population by calling findByTenantIdAndId for each user
-            // This ensures users are cached via CachedUserRepositoryAdapter
-            users.forEach(user -> {
-                try {
-                    userRepository.findByTenantIdAndId(tenantId, user.getId());
-                } catch (Exception e) {
-                    log.debug("Failed to cache user {} for tenant {}: {}",
-                            user.getId().getValue(), tenantId.getValue(), e.getMessage());
-                    // Continue with next user
+                if (users.isEmpty()) {
+                    log.debug("No users found for tenant: {} - skipping cache warming", tenantId.getValue());
+                    return 0;
                 }
-            });
 
-            log.debug("Warmed cache for {} users in tenant: {}", users.size(), tenantId.getValue());
-            return users.size();
+                // Trigger cache population by calling findByTenantIdAndId for each user
+                // This ensures users are cached via CachedUserRepositoryAdapter
+                users.forEach(user -> {
+                    try {
+                        userRepository.findByTenantIdAndId(tenantId, user.getId());
+                    } catch (Exception e) {
+                        log.debug("Failed to cache user {} for tenant {}: {}", user.getId().getValue(), tenantId.getValue(), e.getMessage());
+                        // Continue with next user
+                    }
+                });
+
+                log.debug("Warmed cache for {} users in tenant: {}", users.size(), tenantId.getValue());
+                return users.size();
+            } finally {
+                // Always clear tenant context to prevent memory leaks
+                TenantContext.clear();
+            }
         } catch (Exception e) {
             log.warn("Failed to warm cache for tenant: {}", tenantId.getValue(), e);
+            // Ensure context is cleared even on exception
+            TenantContext.clear();
             throw e; // Re-throw to be caught by caller
         }
     }

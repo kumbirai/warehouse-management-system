@@ -23,8 +23,7 @@ import com.ccbsa.wms.notification.application.service.port.service.UserServicePo
  * Implements UserServicePort for retrieving user information from user-service. Calls user-service REST API to get user email address.
  */
 @Component
-public class UserServiceAdapter
-        implements UserServicePort {
+public class UserServiceAdapter implements UserServicePort {
     private static final Logger logger = LoggerFactory.getLogger(UserServiceAdapter.class);
 
     private static final ParameterizedTypeReference<ApiResponse<UserResponse>> USER_RESPONSE_TYPE = new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
@@ -33,8 +32,7 @@ public class UserServiceAdapter
     private final RestTemplate restTemplate;
     private final String userServiceUrl;
 
-    public UserServiceAdapter(RestTemplate restTemplate,
-                              @Value("${user.service.url:http://user-service:8080}") String userServiceUrl) {
+    public UserServiceAdapter(RestTemplate restTemplate, @Value("${user.service.url:http://user-service:8080}") String userServiceUrl) {
         this.restTemplate = restTemplate;
         this.userServiceUrl = userServiceUrl;
     }
@@ -52,8 +50,7 @@ public class UserServiceAdapter
             ApiResponse<UserResponse> responseBody = response.getBody();
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
                 UserResponse userResponse = responseBody.getData();
-                if (userResponse.getEmail() != null && !userResponse.getEmail()
-                        .isEmpty()) {
+                if (userResponse.getEmail() != null && !userResponse.getEmail().isEmpty()) {
                     logger.debug("User email retrieved: userId={}, email={}", userId.getValue(), userResponse.getEmail());
                     return EmailAddress.of(userResponse.getEmail());
                 } else {

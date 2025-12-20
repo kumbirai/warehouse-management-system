@@ -41,8 +41,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/products")
-@Tag(name = "Product Queries",
-        description = "Product query operations")
+@Tag(name = "Product Queries", description = "Product query operations")
 public class ProductQueryController {
     private final GetProductQueryHandler getProductQueryHandler;
     private final GetProductByCodeQueryHandler getProductByCodeQueryHandler;
@@ -51,12 +50,9 @@ public class ProductQueryController {
     private final ValidateProductBarcodeQueryHandler validateProductBarcodeQueryHandler;
     private final ProductDTOMapper mapper;
 
-    public ProductQueryController(GetProductQueryHandler getProductQueryHandler,
-                                  GetProductByCodeQueryHandler getProductByCodeQueryHandler,
-                                  ListProductsQueryHandler listProductsQueryHandler,
-                                  CheckProductCodeUniquenessQueryHandler checkProductCodeUniquenessQueryHandler,
-                                  ValidateProductBarcodeQueryHandler validateProductBarcodeQueryHandler,
-                                  ProductDTOMapper mapper) {
+    public ProductQueryController(GetProductQueryHandler getProductQueryHandler, GetProductByCodeQueryHandler getProductByCodeQueryHandler,
+                                  ListProductsQueryHandler listProductsQueryHandler, CheckProductCodeUniquenessQueryHandler checkProductCodeUniquenessQueryHandler,
+                                  ValidateProductBarcodeQueryHandler validateProductBarcodeQueryHandler, ProductDTOMapper mapper) {
         this.getProductQueryHandler = getProductQueryHandler;
         this.getProductByCodeQueryHandler = getProductByCodeQueryHandler;
         this.listProductsQueryHandler = listProductsQueryHandler;
@@ -66,16 +62,11 @@ public class ProductQueryController {
     }
 
     @GetMapping
-    @Operation(summary = "List Products",
-            description = "Retrieves a list of products with optional filtering and pagination")
+    @Operation(summary = "List Products", description = "Retrieves a list of products with optional filtering and pagination")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
-    public ResponseEntity<ApiResponse<ListProductsQueryResultDTO>> listProducts(
-            @RequestHeader("X-Tenant-Id") String tenantId,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String brand,
-            @RequestParam(required = false) String search) {
+    public ResponseEntity<ApiResponse<ListProductsQueryResultDTO>> listProducts(@RequestHeader("X-Tenant-Id") String tenantId, @RequestParam(required = false) Integer page,
+                                                                                @RequestParam(required = false) Integer size, @RequestParam(required = false) String category,
+                                                                                @RequestParam(required = false) String brand, @RequestParam(required = false) String search) {
         // Map to query
         ListProductsQuery query = mapper.toListProductsQuery(tenantId, page, size, category, brand, search);
 
@@ -89,12 +80,9 @@ public class ProductQueryController {
     }
 
     @GetMapping("/{productId}")
-    @Operation(summary = "Get Product",
-            description = "Retrieves a product by ID")
+    @Operation(summary = "Get Product", description = "Retrieves a product by ID")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
-    public ResponseEntity<ApiResponse<ProductQueryResultDTO>> getProduct(
-            @RequestHeader("X-Tenant-Id") String tenantId,
-            @PathVariable String productId) {
+    public ResponseEntity<ApiResponse<ProductQueryResultDTO>> getProduct(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable String productId) {
         // Map to query
         GetProductQuery query = mapper.toGetProductQuery(productId, tenantId);
 
@@ -108,12 +96,9 @@ public class ProductQueryController {
     }
 
     @GetMapping("/by-code/{productCode}")
-    @Operation(summary = "Get Product by Code",
-            description = "Retrieves a product by product code")
+    @Operation(summary = "Get Product by Code", description = "Retrieves a product by product code")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
-    public ResponseEntity<ApiResponse<ProductQueryResultDTO>> getProductByCode(
-            @RequestHeader("X-Tenant-Id") String tenantId,
-            @PathVariable String productCode) {
+    public ResponseEntity<ApiResponse<ProductQueryResultDTO>> getProductByCode(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable String productCode) {
         // Map to query
         GetProductByCodeQuery query = mapper.toGetProductByCodeQuery(productCode, tenantId);
 
@@ -127,12 +112,10 @@ public class ProductQueryController {
     }
 
     @GetMapping("/check-uniqueness")
-    @Operation(summary = "Check Product Code Uniqueness",
-            description = "Checks if a product code is unique for the tenant")
+    @Operation(summary = "Check Product Code Uniqueness", description = "Checks if a product code is unique for the tenant")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER')")
-    public ResponseEntity<ApiResponse<ProductCodeUniquenessResultDTO>> checkProductCodeUniqueness(
-            @RequestHeader("X-Tenant-Id") String tenantId,
-            @RequestParam("productCode") String productCode) {
+    public ResponseEntity<ApiResponse<ProductCodeUniquenessResultDTO>> checkProductCodeUniqueness(@RequestHeader("X-Tenant-Id") String tenantId,
+                                                                                                  @RequestParam("productCode") String productCode) {
         // Map to query
         com.ccbsa.wms.product.application.service.query.dto.CheckProductCodeUniquenessQuery query = mapper.toCheckProductCodeUniquenessQuery(productCode, tenantId);
 
@@ -146,12 +129,9 @@ public class ProductQueryController {
     }
 
     @GetMapping("/validate-barcode")
-    @Operation(summary = "Validate Product Barcode",
-            description = "Validates a product barcode and returns product information if found")
+    @Operation(summary = "Validate Product Barcode", description = "Validates a product barcode and returns product information if found")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'OPERATOR', 'PICKER', 'STOCK_CLERK', 'RECONCILIATION_CLERK', 'RETURNS_CLERK')")
-    public ResponseEntity<ApiResponse<ValidateProductBarcodeResultDTO>> validateBarcode(
-            @RequestHeader("X-Tenant-Id") String tenantId,
-            @RequestParam("barcode") String barcode) {
+    public ResponseEntity<ApiResponse<ValidateProductBarcodeResultDTO>> validateBarcode(@RequestHeader("X-Tenant-Id") String tenantId, @RequestParam("barcode") String barcode) {
         // Map to query
         com.ccbsa.wms.product.application.service.query.dto.ValidateProductBarcodeQuery query = mapper.toValidateProductBarcodeQuery(barcode, tenantId);
 

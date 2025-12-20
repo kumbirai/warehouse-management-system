@@ -21,8 +21,7 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
  * Business Rules: - Notifications are tenant-aware - Notifications have a recipient user - Notifications can be marked as read - Notifications have a status (PENDING, SENT,
  * DELIVERED, FAILED, READ)
  */
-public class Notification
-        extends TenantAwareAggregateRoot<NotificationId> {
+public class Notification extends TenantAwareAggregateRoot<NotificationId> {
 
     // Value Objects
     private Title title;
