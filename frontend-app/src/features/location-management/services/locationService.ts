@@ -6,6 +6,7 @@ import {
   Location,
   LocationListFilters,
   LocationListQueryResult,
+  UpdateLocationRequest,
   UpdateLocationStatusRequest,
 } from '../types/location';
 import { logger } from '../../../utils/logger';
@@ -94,6 +95,23 @@ export const locationService = {
       });
     }
 
+    return response.data;
+  },
+
+  async updateLocation(
+    locationId: string,
+    request: UpdateLocationRequest,
+    tenantId: string
+  ): Promise<ApiResponse<Location>> {
+    const response = await apiClient.put<ApiResponse<Location>>(
+      `${LOCATION_BASE_PATH}/${locationId}`,
+      request,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
     return response.data;
   },
 

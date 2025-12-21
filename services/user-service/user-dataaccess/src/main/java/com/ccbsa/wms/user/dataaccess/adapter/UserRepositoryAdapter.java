@@ -438,7 +438,7 @@ public class UserRepositoryAdapter implements UserRepository {
 
             // 3. Execute query using JdbcTemplate (bypasses Hibernate naming strategy)
             // We need to pass parameters for each UNION part: status (if provided) and searchTerm (twice for username and email)
-            String searchPattern = String.format("%%%s%%", searchTerm.toLowerCase());
+            String searchPattern = String.format("%%%s%%", searchTerm.toLowerCase(java.util.Locale.ROOT));
             List<UserEntity> entities;
             if (status != null) {
                 // For UNION queries: status, username search, email search for each UNION part

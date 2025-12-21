@@ -1,6 +1,7 @@
 package com.ccbsa.wms.gateway.config;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
@@ -45,7 +46,7 @@ public class LoadBalancerConfig {
                 @Override
                 public Flux<List<ServiceInstance>> get() {
                     String serviceId = getServiceId();
-                    String uppercaseServiceId = serviceId.toUpperCase();
+                    String uppercaseServiceId = serviceId.toUpperCase(Locale.ROOT);
 
                     // If already uppercase, use default supplier directly
                     if (serviceId.equals(uppercaseServiceId)) {

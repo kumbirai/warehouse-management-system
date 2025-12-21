@@ -1,6 +1,7 @@
 package com.ccbsa.wms.location.application.service.query;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -82,11 +83,11 @@ public class ListLocationsQueryHandler {
         if (search == null || search.isBlank()) {
             return true;
         }
-        String searchLower = search.toLowerCase();
-        return (location.getBarcode() != null && location.getBarcode().getValue().toLowerCase().contains(searchLower)) || (location.getCoordinates() != null
-                && location.getCoordinates().getZone() != null && location.getCoordinates().getZone().toLowerCase().contains(searchLower)) || (location.getCoordinates() != null
-                && location.getCoordinates().getAisle() != null && location.getCoordinates().getAisle().toLowerCase().contains(searchLower)) || (location.getDescription() != null
-                && location.getDescription().toLowerCase().contains(searchLower));
+        String searchLower = search.toLowerCase(Locale.ROOT);
+        return (location.getBarcode() != null && location.getBarcode().getValue().toLowerCase(Locale.ROOT).contains(searchLower)) || (location.getCoordinates() != null
+                && location.getCoordinates().getZone() != null && location.getCoordinates().getZone().toLowerCase(Locale.ROOT).contains(searchLower)) || (
+                location.getCoordinates() != null && location.getCoordinates().getAisle() != null && location.getCoordinates().getAisle().toLowerCase(Locale.ROOT)
+                        .contains(searchLower)) || (location.getDescription() != null && location.getDescription().toLowerCase(Locale.ROOT).contains(searchLower));
     }
 
     private LocationQueryResult toLocationQueryResult(Location location) {

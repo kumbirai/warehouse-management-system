@@ -11,6 +11,7 @@ import {
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMemo } from 'react';
 
 const tenantSchema = z.object({
   tenantId: z
@@ -56,21 +57,27 @@ export const TenantForm = ({
   onCancel,
   isSubmitting = false,
 }: TenantFormProps) => {
+  // Memoize form default values to prevent unnecessary re-renders
+  const formDefaultValues = useMemo(
+    () => ({
+      tenantId: defaultValues?.tenantId || '',
+      name: defaultValues?.name || '',
+      emailAddress: defaultValues?.emailAddress || '',
+      phone: defaultValues?.phone || '',
+      address: defaultValues?.address || '',
+      usePerTenantRealm: defaultValues?.usePerTenantRealm || false,
+      keycloakRealmName: defaultValues?.keycloakRealmName || '',
+    }),
+    [defaultValues]
+  );
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<TenantFormValues>({
     resolver: zodResolver(tenantSchema),
-    defaultValues: {
-      tenantId: '',
-      name: '',
-      emailAddress: '',
-      phone: '',
-      address: '',
-      usePerTenantRealm: false,
-      ...defaultValues,
-    },
+    defaultValues: formDefaultValues,
   });
 
   return (

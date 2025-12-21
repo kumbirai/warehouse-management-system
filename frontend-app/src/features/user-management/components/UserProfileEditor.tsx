@@ -2,6 +2,7 @@ import { Box, Button, Grid, Paper, TextField, Typography } from '@mui/material';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMemo } from 'react';
 import { UpdateUserProfileRequest, User } from '../types/user';
 
 const profileSchema = z.object({
@@ -29,17 +30,23 @@ export const UserProfileEditor = ({
   onCancel,
   isLoading = false,
 }: UserProfileEditorProps) => {
+  // Memoize default values to prevent unnecessary re-renders
+  const defaultValues = useMemo(
+    () => ({
+      emailAddress: user.emailAddress,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+    }),
+    [user.emailAddress, user.firstName, user.lastName]
+  );
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      emailAddress: user.emailAddress,
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-    },
+    defaultValues,
   });
 
   return (

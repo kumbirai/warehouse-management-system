@@ -67,6 +67,15 @@ export interface LocationListQueryResult {
 
 export type LocationStatus = 'AVAILABLE' | 'OCCUPIED' | 'RESERVED' | 'BLOCKED';
 
+export interface UpdateLocationRequest {
+  zone: string;
+  aisle: string;
+  rack: string;
+  level: string;
+  barcode?: string;
+  description?: string;
+}
+
 export interface UpdateLocationStatusRequest {
   status: LocationStatus;
   reason?: string;

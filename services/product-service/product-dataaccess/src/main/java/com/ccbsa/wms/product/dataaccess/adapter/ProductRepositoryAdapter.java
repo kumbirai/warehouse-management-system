@@ -162,7 +162,7 @@ public class ProductRepositoryAdapter implements ProductRepository {
      */
     private void updateEntityFromDomain(ProductEntity entity, Product product) {
         entity.setProductCode(product.getProductCode().getValue());
-        entity.setDescription(product.getDescription());
+        entity.setDescription(product.getDescription().getValue());
         entity.setPrimaryBarcode(product.getPrimaryBarcode().getValue());
         entity.setPrimaryBarcodeType(product.getPrimaryBarcode().getType());
         entity.setUnitOfMeasure(product.getUnitOfMeasure());
@@ -356,6 +356,43 @@ public class ProductRepositoryAdapter implements ProductRepository {
     }
 
     @Override
+    public boolean existsByBarcodeAndTenantIdExcludingProduct(ProductBarcode barcode, TenantId tenantId, ProductId excludeProductId) {
+        // Verify TenantContext is set (critical for schema resolution)
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when checking barcode existence! Cannot resolve schema.");
+            throw new IllegalStateException("TenantContext must be set before checking barcode existence");
+        }
+
+        // Verify tenantId matches TenantContext
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
+        }
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Check primary barcode (excluding the specified product)
+        if (jpaRepository.existsByTenantIdAndPrimaryBarcodeAndIdNot(tenantId.getValue(), barcode.getValue(), excludeProductId.getValue())) {
+            return true;
+        }
+        // Check secondary barcodes (excluding the specified product)
+        return barcodeJpaRepository.existsByBarcodeAndTenantIdExcludingProduct(barcode.getValue(), tenantId.getValue(), excludeProductId.getValue());
+    }
+
+    @Override
     public Optional<Product> findByBarcodeAndTenantId(String barcode, TenantId tenantId) {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
@@ -464,6 +501,89 @@ public class ProductRepositoryAdapter implements ProductRepository {
 
         // Now query using JPA repository (will use the schema set in search_path)
         return jpaRepository.findByTenantIdAndCategory(tenantId.getValue(), category).stream().map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Product> findByTenantIdWithFilters(TenantId tenantId, String category, String brand, String search, int page, int size) {
+        // Verify TenantContext is set (critical for schema resolution)
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when querying products with filters! Cannot resolve schema.");
+            throw new IllegalStateException("TenantContext must be set before querying products with filters");
+        }
+
+        // Verify tenantId matches TenantContext
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
+        }
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Normalize filter values (null for empty strings)
+        String normalizedCategory = (category != null && !category.trim().isEmpty()) ? category.trim() : null;
+        String normalizedBrand = (brand != null && !brand.trim().isEmpty()) ? brand.trim() : null;
+        String normalizedSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+
+        // Create Pageable for pagination
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+
+        // Query using JPA repository with database-level filtering
+        // Returns Page to enable automatic pagination by Spring Data JPA
+        org.springframework.data.domain.Page<ProductEntity> productPage =
+                jpaRepository.findByTenantIdWithFilters(tenantId.getValue(), normalizedCategory, normalizedBrand, normalizedSearch, pageable);
+
+        return productPage.getContent().stream().map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public long countByTenantIdWithFilters(TenantId tenantId, String category, String brand, String search) {
+        // Verify TenantContext is set (critical for schema resolution)
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when counting products with filters! Cannot resolve schema.");
+            throw new IllegalStateException("TenantContext must be set before counting products with filters");
+        }
+
+        // Verify tenantId matches TenantContext
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
+        }
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Normalize filter values (null for empty strings)
+        String normalizedCategory = (category != null && !category.trim().isEmpty()) ? category.trim() : null;
+        String normalizedBrand = (brand != null && !brand.trim().isEmpty()) ? brand.trim() : null;
+        String normalizedSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+
+        // Count using JPA repository with database-level filtering
+        return jpaRepository.countByTenantIdWithFilters(tenantId.getValue(), normalizedCategory, normalizedBrand, normalizedSearch);
     }
 }
 

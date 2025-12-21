@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.ccbsa.wms.location.dataaccess.entity.LocationEntity;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
 
 /**
  * JPA Repository: LocationJpaRepository
@@ -33,6 +34,15 @@ public interface LocationJpaRepository extends JpaRepository<LocationEntity, UUI
     boolean existsByTenantIdAndBarcode(String tenantId, String barcode);
 
     /**
+     * Finds a location by tenant ID and barcode.
+     *
+     * @param tenantId Tenant identifier
+     * @param barcode  Location barcode
+     * @return Optional LocationEntity if found
+     */
+    Optional<LocationEntity> findByTenantIdAndBarcode(String tenantId, String barcode);
+
+    /**
      * Checks if a location exists with the given code for the tenant.
      *
      * @param tenantId Tenant identifier
@@ -56,7 +66,7 @@ public interface LocationJpaRepository extends JpaRepository<LocationEntity, UUI
      * @param status   Location status
      * @return List of LocationEntity matching the criteria
      */
-    List<LocationEntity> findByTenantIdAndStatus(String tenantId, com.ccbsa.wms.location.domain.core.valueobject.LocationStatus status);
+    List<LocationEntity> findByTenantIdAndStatus(String tenantId, LocationStatus status);
 
     /**
      * Finds locations by tenant ID and zone.

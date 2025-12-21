@@ -40,5 +40,16 @@ public interface ProductBarcodeJpaRepository extends JpaRepository<ProductBarcod
      */
     @Query("SELECT pb FROM ProductBarcodeEntity pb " + "JOIN pb.product p " + "WHERE pb.barcode = :barcode AND p.tenantId = :tenantId")
     Optional<ProductBarcodeEntity> findByBarcodeAndTenantId(@Param("barcode") String barcode, @Param("tenantId") String tenantId);
+
+    /**
+     * Checks if a barcode exists for a tenant, excluding a specific product.
+     *
+     * @param barcode          Barcode value
+     * @param tenantId         Tenant identifier
+     * @param excludeProductId Product ID to exclude from the check
+     * @return true if barcode exists (excluding the specified product)
+     */
+    @Query("SELECT COUNT(pb) > 0 FROM ProductBarcodeEntity pb " + "JOIN pb.product p " + "WHERE pb.barcode = :barcode AND p.tenantId = :tenantId AND p.id != :excludeProductId")
+    boolean existsByBarcodeAndTenantIdExcludingProduct(@Param("barcode") String barcode, @Param("tenantId") String tenantId, @Param("excludeProductId") UUID excludeProductId);
 }
 

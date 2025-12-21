@@ -12,3 +12,4 @@ export { FormActions } from './FormActions';
 export { ResponsiveTable } from './ResponsiveTable';
 export type { Column } from './ResponsiveTable';
 export { Pagination } from './Pagination';
+export { BarcodeInput } from './BarcodeInput';

@@ -1,8 +1,10 @@
 import { Box, Button, Grid, Paper, TextField, Typography } from '@mui/material';
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CreateLocationRequest } from '../types/location';
+import { useMemo } from 'react';
+import { CreateLocationRequest, UpdateLocationRequest } from '../types/location';
+import { BarcodeInput } from '../../../components/common';
 
 const locationSchema = z.object({
   zone: z.string().min(1, 'Zone is required').max(10, 'Zone cannot exceed 10 characters'),
@@ -17,9 +19,10 @@ export type LocationFormValues = z.infer<typeof locationSchema>;
 
 interface LocationFormProps {
   defaultValues?: Partial<LocationFormValues>;
-  onSubmit: (values: CreateLocationRequest) => Promise<void> | void;
+  onSubmit: (values: CreateLocationRequest | UpdateLocationRequest) => Promise<void> | void;
   onCancel: () => void;
   isSubmitting?: boolean;
+  isUpdate?: boolean;
 }
 
 export const LocationForm = ({
@@ -27,28 +30,32 @@ export const LocationForm = ({
   onSubmit,
   onCancel,
   isSubmitting = false,
+  isUpdate = false,
 }: LocationFormProps) => {
+  // Memoize form default values to prevent unnecessary re-renders
+  const formDefaultValues = useMemo(() => ({
+    zone: defaultValues?.zone || '',
+    aisle: defaultValues?.aisle || '',
+    rack: defaultValues?.rack || '',
+    level: defaultValues?.level || '',
+    barcode: defaultValues?.barcode || '',
+    description: defaultValues?.description || '',
+  }), [defaultValues]);
+
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<LocationFormValues>({
     resolver: zodResolver(locationSchema),
-    defaultValues: {
-      zone: '',
-      aisle: '',
-      rack: '',
-      level: '',
-      barcode: '',
-      description: '',
-      ...defaultValues,
-    },
+    defaultValues: formDefaultValues,
   });
 
   return (
     <Paper sx={{ p: 3 }}>
       <Typography variant="h6" gutterBottom>
-        Create Location
+        {isUpdate ? 'Update Location' : 'Create Location'}
       </Typography>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={2}>
@@ -93,12 +100,20 @@ export const LocationForm = ({
             />
           </Grid>
           <Grid item xs={12}>
-            <TextField
-              {...register('barcode')}
-              label="Barcode (Optional - auto-generated if not provided)"
-              fullWidth
-              error={!!errors.barcode}
-              helperText={errors.barcode?.message}
+            <Controller
+              name="barcode"
+              control={control}
+              render={({ field }) => (
+                <BarcodeInput
+                  {...field}
+                  label="Barcode (Optional - auto-generated if not provided)"
+                  fullWidth
+                  error={!!errors.barcode}
+                  helperText={errors.barcode?.message || 'Scan or enter barcode. Leave empty to auto-generate.'}
+                  value={field.value || ''}
+                  onChange={(value) => field.onChange(value)}
+                />
+              )}
             />
           </Grid>
           <Grid item xs={12}>
@@ -118,7 +133,13 @@ export const LocationForm = ({
                 Cancel
               </Button>
               <Button type="submit" variant="contained" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Create Location'}
+                {isSubmitting
+                  ? isUpdate
+                    ? 'Updating...'
+                    : 'Creating...'
+                  : isUpdate
+                    ? 'Update Location'
+                    : 'Create Location'}
               </Button>
             </Box>
           </Grid>

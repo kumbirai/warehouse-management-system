@@ -34,55 +34,26 @@ public class ListProductsQueryHandler {
 
     @Transactional(readOnly = true)
     public ListProductsQueryResult handle(ListProductsQuery query) {
-        // 1. Load all products for tenant
-        List<Product> allProducts = repository.findByTenantId(query.getTenantId());
-
-        // 2. Apply filters
-        List<Product> filteredProducts =
-                allProducts.stream().filter(product -> matchesCategory(product, query.getCategory())).filter(product -> matchesBrand(product, query.getBrand()))
-                        .filter(product -> matchesSearch(product, query.getSearch())).collect(Collectors.toList());
-
-        // 3. Apply pagination
+        // 1. Normalize pagination parameters
         int page = query.getPage() != null ? query.getPage() : 0;
         int size = query.getSize() != null ? query.getSize() : 100;
-        int start = page * size;
-        int end = Math.min(start + size, filteredProducts.size());
 
-        List<Product> paginatedProducts = filteredProducts.subList(Math.min(start, filteredProducts.size()), end);
+        // 2. Query products with database-level filtering and pagination
+        // This is much more efficient than loading all products into memory
+        List<Product> paginatedProducts = repository.findByTenantIdWithFilters(query.getTenantId(), query.getCategory(), query.getBrand(), query.getSearch(), page, size);
+
+        // 3. Get total count for pagination metadata
+        long totalCount = repository.countByTenantIdWithFilters(query.getTenantId(), query.getCategory(), query.getBrand(), query.getSearch());
 
         // 4. Map to query results
         List<ProductQueryResult> productResults = paginatedProducts.stream().map(this::toProductQueryResult).collect(Collectors.toList());
 
-        // 5. Build result
-        return ListProductsQueryResult.builder().products(productResults).totalCount(filteredProducts.size()).page(page).size(size).build();
-    }
-
-    private boolean matchesCategory(Product product, String category) {
-        if (category == null || category.isBlank()) {
-            return true;
-        }
-        return product.getCategory() != null && product.getCategory().equalsIgnoreCase(category);
-    }
-
-    private boolean matchesBrand(Product product, String brand) {
-        if (brand == null || brand.isBlank()) {
-            return true;
-        }
-        return product.getBrand() != null && product.getBrand().equalsIgnoreCase(brand);
-    }
-
-    private boolean matchesSearch(Product product, String search) {
-        if (search == null || search.isBlank()) {
-            return true;
-        }
-        String searchLower = search.toLowerCase();
-        return (product.getProductCode().getValue().toLowerCase().contains(searchLower)) || (product.getDescription() != null && product.getDescription().toLowerCase()
-                .contains(searchLower)) || (product.getPrimaryBarcode().getValue().toLowerCase().contains(searchLower)) || (product.getCategory() != null && product.getCategory()
-                .toLowerCase().contains(searchLower)) || (product.getBrand() != null && product.getBrand().toLowerCase().contains(searchLower));
+        // 5. Build result with pagination metadata
+        return ListProductsQueryResult.builder().products(productResults).totalCount((int) totalCount).page(page).size(size).build();
     }
 
     private ProductQueryResult toProductQueryResult(Product product) {
-        return ProductQueryResult.builder().productId(product.getId()).productCode(product.getProductCode()).description(product.getDescription())
+        return ProductQueryResult.builder().productId(product.getId()).productCode(product.getProductCode()).description(product.getDescription().getValue())
                 .primaryBarcode(product.getPrimaryBarcode()).secondaryBarcodes(product.getSecondaryBarcodes()).unitOfMeasure(product.getUnitOfMeasure())
                 .category(product.getCategory()).brand(product.getBrand()).createdAt(product.getCreatedAt()).lastModifiedAt(product.getLastModifiedAt()).build();
     }

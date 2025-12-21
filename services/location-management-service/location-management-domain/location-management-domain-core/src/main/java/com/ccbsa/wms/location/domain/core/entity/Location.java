@@ -143,6 +143,35 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
     }
 
     /**
+     * Business logic method: Updates the location coordinates.
+     * <p>
+     * Business Rules: - Coordinates can be updated for any status - Coordinates update will trigger barcode regeneration if barcode was auto-generated
+     *
+     * @param newCoordinates New coordinates value
+     * @throws IllegalArgumentException if newCoordinates is null
+     */
+    public void updateCoordinates(LocationCoordinates newCoordinates) {
+        if (newCoordinates == null) {
+            throw new IllegalArgumentException("LocationCoordinates cannot be null");
+        }
+
+        this.coordinates = newCoordinates;
+        this.lastModifiedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Business logic method: Updates the location description.
+     * <p>
+     * Business Rules: - Description can be updated for any status - Description can be set to null to clear it
+     *
+     * @param newDescription New description value (can be null)
+     */
+    public void updateDescription(String newDescription) {
+        this.description = newDescription;
+        this.lastModifiedAt = LocalDateTime.now();
+    }
+
+    /**
      * Query method: Checks if location can accommodate additional quantity.
      *
      * @param quantity Quantity to check

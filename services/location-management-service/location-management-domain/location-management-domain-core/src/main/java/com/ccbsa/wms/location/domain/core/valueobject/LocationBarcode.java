@@ -110,8 +110,10 @@ public final class LocationBarcode {
         if (uniqueId != null) {
             // Generate a 2-character alphanumeric suffix from UUID hash
             int hash = uniqueId.hashCode();
-            // Use absolute value and modulo to get a positive number, then convert to base-36 (0-9, A-Z)
-            String suffix = Integer.toString(Math.abs(hash) % 1296, 36).toUpperCase();
+            // Use unsigned conversion to avoid Integer.MIN_VALUE overflow issue, then modulo to get a positive number
+            // Convert to base-36 (0-9, A-Z) for alphanumeric representation
+            long unsignedHash = Integer.toUnsignedLong(hash);
+            String suffix = Long.toString(unsignedHash % 1296, 36).toUpperCase(Locale.ROOT);
             // Pad to 2 characters if needed
             if (suffix.length() < 2) {
                 suffix = String.format("0%s", suffix);

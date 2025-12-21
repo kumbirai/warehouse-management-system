@@ -18,6 +18,7 @@ import com.ccbsa.wms.gateway.api.dto.CreateLocationRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationResponse;
 import com.ccbsa.wms.gateway.api.dto.ListLocationsResponse;
 import com.ccbsa.wms.gateway.api.dto.LocationResponse;
+import com.ccbsa.wms.gateway.api.dto.UpdateLocationRequest;
 import com.ccbsa.wms.gateway.api.dto.UpdateLocationStatusRequest;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
 
@@ -542,10 +543,292 @@ public class LocationManagementTest extends BaseIntegrationTest {
         response.expectStatus().isNotFound();
     }
 
-    // ==================== LOCATION HIERARCHY TESTS ====================
+    // ==================== LOCATION UPDATE TESTS ====================
+
+    @Test
+    @Order(24)
+    public void testUpdateLocation_Success() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-A")
+                .aisle("AISLE-01")
+                .rack("RACK-02")
+                .level("LEVEL-03")
+                .description("Updated location description")
+                .build();
+
+        // Act
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                })
+                .returnResult();
+
+        // Assert
+        ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isTrue();
+
+        LocationResponse updatedLocation = apiResponse.getData();
+        assertThat(updatedLocation).isNotNull();
+        assertThat(updatedLocation.getLocationId()).isEqualTo(location.getLocationId());
+        assertThat(updatedLocation.getCoordinates()).isNotNull();
+        assertThat(updatedLocation.getCoordinates().getZone()).isEqualTo("ZONE-A");
+        assertThat(updatedLocation.getCoordinates().getAisle()).isEqualTo("AISLE-01");
+        assertThat(updatedLocation.getCoordinates().getRack()).isEqualTo("RACK-02");
+        assertThat(updatedLocation.getCoordinates().getLevel()).isEqualTo("LEVEL-03");
+        assertThat(updatedLocation.getDescription()).isEqualTo("Updated location description");
+    }
+
+    @Test
+    @Order(25)
+    public void testUpdateLocation_WithBarcode() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-B")
+                .aisle("AISLE-02")
+                .rack("RACK-03")
+                .level("LEVEL-04")
+                .barcode("UPDATED-BARCODE-123")
+                .description("Location with updated barcode")
+                .build();
+
+        // Act
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                })
+                .returnResult();
+
+        // Assert
+        ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isTrue();
+
+        LocationResponse updatedLocation = apiResponse.getData();
+        assertThat(updatedLocation).isNotNull();
+        assertThat(updatedLocation.getBarcode()).isEqualTo("UPDATED-BARCODE-123");
+        assertThat(updatedLocation.getCoordinates().getZone()).isEqualTo("ZONE-B");
+    }
+
+    @Test
+    @Order(26)
+    public void testUpdateLocation_DuplicateBarcode() {
+        // Arrange - Create two locations
+        CreateLocationResponse location1 = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        CreateLocationResponse location2 = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        // Get location1's barcode
+        LocationResponse location1Details = getLocationById(location1.getLocationId());
+        String location1Barcode = location1Details.getBarcode();
+        assertThat(location1Barcode).isNotBlank();
+
+        // Try to update location2 with location1's barcode
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-C")
+                .aisle("AISLE-03")
+                .rack("RACK-04")
+                .level("LEVEL-05")
+                .barcode(location1Barcode)
+                .build();
+
+        // Act
+        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location2.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange();
+
+        // Assert - Should fail with duplicate barcode error
+        response.expectStatus().isBadRequest(); // or 409 CONFLICT
+    }
+
+    @Test
+    @Order(27)
+    public void testUpdateLocation_LocationNotFound() {
+        // Arrange
+        String nonExistentId = UUID.randomUUID().toString();
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-D")
+                .aisle("AISLE-04")
+                .rack("RACK-05")
+                .level("LEVEL-06")
+                .build();
+
+        // Act
+        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + nonExistentId,
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange();
+
+        // Assert
+        response.expectStatus().isNotFound();
+    }
+
+    @Test
+    @Order(28)
+    public void testUpdateLocation_WithoutAuthentication() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-E")
+                .aisle("AISLE-05")
+                .rack("RACK-06")
+                .level("LEVEL-07")
+                .build();
+
+        // Act - Try without authentication
+        WebTestClient.ResponseSpec response = webTestClient.put()
+                .uri("/api/v1/location-management/locations/" + location.getLocationId())
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .bodyValue(updateRequest)
+                .exchange();
+
+        // Assert
+        response.expectStatus().isUnauthorized();
+    }
+
+    @Test
+    @Order(29)
+    public void testUpdateLocation_OnlyCoordinates() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-F")
+                .aisle("AISLE-06")
+                .rack("RACK-07")
+                .level("LEVEL-08")
+                .build();
+
+        // Act
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                })
+                .returnResult();
+
+        // Assert
+        ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isTrue();
+
+        LocationResponse updatedLocation = apiResponse.getData();
+        assertThat(updatedLocation).isNotNull();
+        assertThat(updatedLocation.getCoordinates().getZone()).isEqualTo("ZONE-F");
+        assertThat(updatedLocation.getCoordinates().getAisle()).isEqualTo("AISLE-06");
+        assertThat(updatedLocation.getCoordinates().getRack()).isEqualTo("RACK-07");
+        assertThat(updatedLocation.getCoordinates().getLevel()).isEqualTo("LEVEL-08");
+    }
 
     @Test
     @Order(30)
+    public void testUpdateLocation_OnlyDescription() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        // Get current coordinates to preserve them
+        LocationResponse currentLocation = getLocationById(location.getLocationId());
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone(currentLocation.getCoordinates().getZone())
+                .aisle(currentLocation.getCoordinates().getAisle())
+                .rack(currentLocation.getCoordinates().getRack())
+                .level(currentLocation.getCoordinates().getLevel())
+                .description("Only description updated")
+                .build();
+
+        // Act
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                })
+                .returnResult();
+
+        // Assert
+        ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isTrue();
+
+        LocationResponse updatedLocation = apiResponse.getData();
+        assertThat(updatedLocation).isNotNull();
+        assertThat(updatedLocation.getDescription()).isEqualTo("Only description updated");
+        // Coordinates should remain unchanged
+        assertThat(updatedLocation.getCoordinates().getZone()).isEqualTo(currentLocation.getCoordinates().getZone());
+    }
+
+    @Test
+    @Order(31)
+    public void testUpdateLocation_SameBarcode() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        LocationResponse currentLocation = getLocationById(location.getLocationId());
+        String currentBarcode = currentLocation.getBarcode();
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-G")
+                .aisle("AISLE-07")
+                .rack("RACK-08")
+                .level("LEVEL-09")
+                .barcode(currentBarcode) // Same barcode should be allowed
+                .description("Updated with same barcode")
+                .build();
+
+        // Act
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                })
+                .returnResult();
+
+        // Assert
+        ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isTrue();
+
+        LocationResponse updatedLocation = apiResponse.getData();
+        assertThat(updatedLocation).isNotNull();
+        assertThat(updatedLocation.getBarcode()).isEqualTo(currentBarcode);
+        assertThat(updatedLocation.getDescription()).isEqualTo("Updated with same barcode");
+    }
+
+    // ==================== LOCATION HIERARCHY TESTS ====================
+
+    @Test
+    @Order(32)
     public void testLocationPathGeneration() {
         // Arrange - Create full hierarchy
         CreateLocationResponse warehouse = createLocation(LocationTestDataBuilder.buildWarehouseRequest());

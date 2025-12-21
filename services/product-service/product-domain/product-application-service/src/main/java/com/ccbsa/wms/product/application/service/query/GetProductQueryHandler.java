@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ccbsa.wms.product.application.service.port.repository.ProductRepository;
 import com.ccbsa.wms.product.application.service.query.dto.GetProductQuery;
 import com.ccbsa.wms.product.application.service.query.dto.ProductQueryResult;
+import com.ccbsa.wms.product.domain.core.entity.Product;
 import com.ccbsa.wms.product.domain.core.exception.ProductNotFoundException;
 
 /**
@@ -27,11 +28,11 @@ public class GetProductQueryHandler {
     @Transactional(readOnly = true)
     public ProductQueryResult handle(GetProductQuery query) {
         // 1. Load aggregate
-        com.ccbsa.wms.product.domain.core.entity.Product product = repository.findByIdAndTenantId(query.getProductId(), query.getTenantId())
+        Product product = repository.findByIdAndTenantId(query.getProductId(), query.getTenantId())
                 .orElseThrow(() -> new ProductNotFoundException(String.format("Product not found: %s", query.getProductId().getValueAsString())));
 
         // 2. Map to query result
-        return ProductQueryResult.builder().productId(product.getId()).productCode(product.getProductCode()).description(product.getDescription())
+        return ProductQueryResult.builder().productId(product.getId()).productCode(product.getProductCode()).description(product.getDescription().getValue())
                 .primaryBarcode(product.getPrimaryBarcode()).secondaryBarcodes(product.getSecondaryBarcodes()).unitOfMeasure(product.getUnitOfMeasure())
                 .category(product.getCategory()).brand(product.getBrand()).createdAt(product.getCreatedAt()).lastModifiedAt(product.getLastModifiedAt()).build();
     }

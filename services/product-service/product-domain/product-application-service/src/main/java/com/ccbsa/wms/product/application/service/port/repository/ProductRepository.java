@@ -64,6 +64,18 @@ public interface ProductRepository {
     boolean existsByBarcodeAndTenantId(ProductBarcode barcode, TenantId tenantId);
 
     /**
+     * Checks if a product with the given barcode exists for the tenant, excluding a specific product.
+     * <p>
+     * Used when updating a product to allow the same barcode if it belongs to the product being updated.
+     *
+     * @param barcode          Product barcode
+     * @param tenantId         Tenant identifier
+     * @param excludeProductId Product ID to exclude from the check
+     * @return true if product exists with the barcode (excluding the specified product)
+     */
+    boolean existsByBarcodeAndTenantIdExcludingProduct(ProductBarcode barcode, TenantId tenantId, ProductId excludeProductId);
+
+    /**
      * Finds a Product by barcode and tenant ID. Searches both primary and secondary barcodes.
      *
      * @param barcode  Barcode value (as string)
@@ -88,5 +100,34 @@ public interface ProductRepository {
      * @return List of products matching the criteria
      */
     List<Product> findByTenantIdAndCategory(TenantId tenantId, String category);
+
+    /**
+     * Finds products with filtering and pagination support.
+     * <p>
+     * This method performs database-level filtering for efficient querying.
+     * All filtering (category, brand, search) is done at the database level.
+     *
+     * @param tenantId Tenant identifier
+     * @param category Optional category filter (case-insensitive)
+     * @param brand    Optional brand filter (case-insensitive)
+     * @param search   Optional search term (searches in product code, description, primary barcode, category, brand)
+     * @param page     Page number (0-based)
+     * @param size     Page size
+     * @return List of products matching the criteria with pagination applied
+     */
+    List<Product> findByTenantIdWithFilters(TenantId tenantId, String category, String brand, String search, int page, int size);
+
+    /**
+     * Counts products matching the filter criteria.
+     * <p>
+     * This method is used for pagination to determine total count of matching products.
+     *
+     * @param tenantId Tenant identifier
+     * @param category Optional category filter (case-insensitive)
+     * @param brand    Optional brand filter (case-insensitive)
+     * @param search   Optional search term (searches in product code, description, primary barcode, category, brand)
+     * @return Total count of products matching the criteria
+     */
+    long countByTenantIdWithFilters(TenantId tenantId, String category, String brand, String search);
 }
 

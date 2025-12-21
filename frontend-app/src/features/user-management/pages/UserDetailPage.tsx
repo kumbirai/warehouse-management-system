@@ -125,6 +125,7 @@ export const UserDetailPage = () => {
                   </Stack>
                 ) : (
                   <UserProfileEditor
+                    key={user.userId}
                     user={user}
                     onSubmit={handleProfileSubmit}
                     onCancel={() => setIsEditingProfile(false)}

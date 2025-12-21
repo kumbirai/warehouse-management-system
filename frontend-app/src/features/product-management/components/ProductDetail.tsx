@@ -1,131 +1,125 @@
-import { Box, Card, CardContent, CircularProgress, Grid, Paper, Typography } from '@mui/material';
+import { Box, Chip, Divider, Grid, Paper, Stack, Typography } from '@mui/material';
 import { Product } from '../types/product';
+import { formatDateTime } from '../../../utils/dateUtils';
 
 interface ProductDetailProps {
   product: Product | null;
-  isLoading: boolean;
-  error: Error | null;
+  onUpdate?: () => void;
 }
 
-export const ProductDetail = ({ product, isLoading, error }: ProductDetailProps) => {
-  if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Paper sx={{ p: 3 }}>
-        <Typography color="error">Error loading product: {error.message}</Typography>
-      </Paper>
-    );
-  }
-
+export const ProductDetail = ({ product }: ProductDetailProps) => {
   if (!product) {
-    return (
-      <Paper sx={{ p: 3 }}>
-        <Typography>Product not found</Typography>
-      </Paper>
-    );
+    return null;
   }
 
   return (
     <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <Card>
-          <CardContent>
-            <Typography variant="h5" gutterBottom>
-              Product Details
-            </Typography>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Product ID
+      {/* Basic Information */}
+      <Grid item xs={12} md={6}>
+        <Paper elevation={1} sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Basic Information
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+
+          <Stack spacing={2}>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Product Code
+              </Typography>
+              <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                {product.productCode}
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Description
+              </Typography>
+              <Typography variant="body1">{product.description}</Typography>
+            </Box>
+
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Primary Barcode
+              </Typography>
+              <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                {product.primaryBarcode}
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Unit of Measure
+              </Typography>
+              <Typography variant="body1">{product.unitOfMeasure}</Typography>
+            </Box>
+          </Stack>
+        </Paper>
+      </Grid>
+
+      {/* Additional Information */}
+      <Grid item xs={12} md={6}>
+        <Paper elevation={1} sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Additional Information
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+
+          <Stack spacing={2}>
+            {product.category && (
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Category
                 </Typography>
-                <Typography variant="body1">{product.productId}</Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Product Code
+                <Typography variant="body1">{product.category}</Typography>
+              </Box>
+            )}
+
+            {product.brand && (
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Brand
                 </Typography>
-                <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                  {product.productCode}
+                <Typography variant="body1">{product.brand}</Typography>
+              </Box>
+            )}
+
+            {product.secondaryBarcodes && product.secondaryBarcodes.length > 0 && (
+              <Box>
+                <Typography variant="caption" color="text.secondary" gutterBottom>
+                  Secondary Barcodes
                 </Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="body2" color="text.secondary">
-                  Description
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  {product.secondaryBarcodes.map((barcode, index) => (
+                    <Chip
+                      key={index}
+                      label={barcode}
+                      size="small"
+                      sx={{ fontFamily: 'monospace' }}
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            )}
+
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Created At
+              </Typography>
+              <Typography variant="body1">{formatDateTime(product.createdAt)}</Typography>
+            </Box>
+
+            {product.lastModifiedAt && (
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Last Modified
                 </Typography>
-                <Typography variant="body1">{product.description}</Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Primary Barcode
-                </Typography>
-                <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                  {product.primaryBarcode}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Unit of Measure
-                </Typography>
-                <Typography variant="body1">{product.unitOfMeasure}</Typography>
-              </Grid>
-              {product.category && (
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Category
-                  </Typography>
-                  <Typography variant="body1">{product.category}</Typography>
-                </Grid>
-              )}
-              {product.brand && (
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Brand
-                  </Typography>
-                  <Typography variant="body1">{product.brand}</Typography>
-                </Grid>
-              )}
-              {product.secondaryBarcodes && product.secondaryBarcodes.length > 0 && (
-                <Grid item xs={12}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Secondary Barcodes
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                    {product.secondaryBarcodes.map((barcode, index) => (
-                      <Typography key={index} variant="body1" sx={{ fontFamily: 'monospace' }}>
-                        {barcode}
-                      </Typography>
-                    ))}
-                  </Box>
-                </Grid>
-              )}
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Created At
-                </Typography>
-                <Typography variant="body1">
-                  {new Date(product.createdAt).toLocaleString()}
-                </Typography>
-              </Grid>
-              {product.lastModifiedAt && (
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Last Modified
-                  </Typography>
-                  <Typography variant="body1">
-                    {new Date(product.lastModifiedAt).toLocaleString()}
-                  </Typography>
-                </Grid>
-              )}
-            </Grid>
-          </CardContent>
-        </Card>
+                <Typography variant="body1">{formatDateTime(product.lastModifiedAt)}</Typography>
+              </Box>
+            )}
+          </Stack>
+        </Paper>
       </Grid>
     </Grid>
   );

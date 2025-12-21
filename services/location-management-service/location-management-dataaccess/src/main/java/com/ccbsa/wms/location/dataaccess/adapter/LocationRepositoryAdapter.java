@@ -286,6 +286,39 @@ public class LocationRepositoryAdapter implements LocationRepository {
     }
 
     @Override
+    public Optional<Location> findByBarcodeAndTenantId(LocationBarcode barcode, TenantId tenantId) {
+        // Verify TenantContext is set (critical for schema resolution)
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when querying location by barcode! Cannot resolve schema.");
+            throw new IllegalStateException("TenantContext must be set before querying location by barcode");
+        }
+
+        // Verify tenantId matches TenantContext
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
+        }
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Now query using JPA repository (will use the schema set in search_path)
+        return jpaRepository.findByTenantIdAndBarcode(tenantId.getValue(), barcode.getValue()).map(mapper::toDomain);
+    }
+
+    @Override
     public boolean existsByCodeAndTenantId(String code, TenantId tenantId) {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();

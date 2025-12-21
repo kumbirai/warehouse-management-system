@@ -1,4 +1,5 @@
 import { Button } from '@mui/material';
+import { Edit as EditIcon } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { DetailPageLayout } from '../../../components/layouts';
@@ -38,14 +39,29 @@ export const LocationDetailPage = () => {
     );
   }
 
+  const canEdit = user?.roles?.some(role =>
+    ['SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER'].includes(role)
+  ) ?? false;
+
   return (
     <DetailPageLayout
       breadcrumbs={getBreadcrumbs.locationDetail(location?.code || '...')}
       title={location?.code || 'Loading...'}
       actions={
-        <Button variant="outlined" onClick={() => navigate(Routes.locations)}>
-          Back to List
-        </Button>
+        <>
+          <Button variant="outlined" onClick={() => navigate(Routes.locations)}>
+            Back to List
+          </Button>
+          {canEdit && locationId && (
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={() => navigate(Routes.locationEdit(locationId))}
+            >
+              Edit
+            </Button>
+          )}
+        </>
       }
       isLoading={isLoading}
       error={error?.message || null}

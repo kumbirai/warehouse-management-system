@@ -1,6 +1,7 @@
 package com.ccbsa.wms.location.application.dto.mapper;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.location.application.dto.command.CreateLocationCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.CreateLocationResultDTO;
+import com.ccbsa.wms.location.application.dto.command.UpdateLocationCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationStatusCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationStatusResultDTO;
 import com.ccbsa.wms.location.application.dto.query.ListLocationsQueryResultDTO;
@@ -16,6 +18,7 @@ import com.ccbsa.wms.location.application.dto.query.LocationCapacityDTO;
 import com.ccbsa.wms.location.application.dto.query.LocationQueryResultDTO;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationCommand;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationResult;
+import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationCommand;
 import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationStatusCommand;
 import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationStatusResult;
 import com.ccbsa.wms.location.application.service.query.dto.GetLocationQuery;
@@ -96,7 +99,7 @@ public class LocationDTOMapper {
      * @return LocationCoordinates
      */
     private LocationCoordinates generateCoordinatesFromHierarchy(CreateLocationCommandDTO dto) {
-        String type = dto.getType() != null ? dto.getType().toUpperCase() : "";
+        String type = dto.getType() != null ? dto.getType().toUpperCase(Locale.ROOT) : "";
         String code = dto.getCode() != null ? dto.getCode() : "";
 
         // Sanitize code to remove hyphens and other non-alphanumeric characters
@@ -161,7 +164,7 @@ public class LocationDTOMapper {
             return "";
         }
         // Remove all non-alphanumeric characters and convert to uppercase
-        return value.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+        return value.replaceAll("[^A-Za-z0-9]", "").toUpperCase(Locale.ROOT);
     }
 
     /**
@@ -317,7 +320,7 @@ public class LocationDTOMapper {
     public UpdateLocationStatusCommand toUpdateStatusCommand(UpdateLocationStatusCommandDTO dto, String locationId, String tenantId) {
         LocationStatus status;
         try {
-            status = LocationStatus.valueOf(dto.getStatus().toUpperCase());
+            status = LocationStatus.valueOf(dto.getStatus().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(String.format("Invalid location status: %s", dto.getStatus()));
         }
@@ -338,6 +341,36 @@ public class LocationDTOMapper {
         dto.setStatus(result.getStatus());
         dto.setLastModifiedAt(result.getLastModifiedAt());
         return dto;
+    }
+
+    /**
+     * Converts UpdateLocationCommandDTO to UpdateLocationCommand.
+     *
+     * @param dto        Command DTO
+     * @param locationId Location ID string
+     * @param tenantId   Tenant identifier string
+     * @return UpdateLocationCommand
+     */
+    public UpdateLocationCommand toUpdateLocationCommand(UpdateLocationCommandDTO dto, String locationId, String tenantId) {
+        UpdateLocationCommand.Builder builder = UpdateLocationCommand.builder().locationId(LocationId.of(UUID.fromString(locationId))).tenantId(TenantId.of(tenantId));
+
+        // Build coordinates from DTO
+        LocationCoordinates coordinates = LocationCoordinates.of(dto.getZone() != null && !dto.getZone().trim().isEmpty() ? dto.getZone() : "00",
+                dto.getAisle() != null && !dto.getAisle().trim().isEmpty() ? dto.getAisle() : "00", dto.getRack() != null && !dto.getRack().trim().isEmpty() ? dto.getRack() : "00",
+                dto.getLevel() != null && !dto.getLevel().trim().isEmpty() ? dto.getLevel() : "00");
+        builder.coordinates(coordinates);
+
+        // Set barcode if provided
+        if (dto.getBarcode() != null && !dto.getBarcode().trim().isEmpty()) {
+            builder.barcode(LocationBarcode.of(dto.getBarcode()));
+        }
+
+        // Set description if provided
+        if (dto.getDescription() != null && !dto.getDescription().trim().isEmpty()) {
+            builder.description(dto.getDescription());
+        }
+
+        return builder.build();
     }
 }
 

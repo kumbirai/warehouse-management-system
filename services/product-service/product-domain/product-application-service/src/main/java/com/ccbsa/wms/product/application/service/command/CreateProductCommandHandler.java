@@ -11,6 +11,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.ccbsa.common.domain.DomainEvent;
+import com.ccbsa.common.domain.valueobject.Description;
 import com.ccbsa.wms.product.application.service.command.dto.CreateProductCommand;
 import com.ccbsa.wms.product.application.service.command.dto.CreateProductResult;
 import com.ccbsa.wms.product.application.service.port.messaging.ProductEventPublisher;
@@ -60,9 +61,8 @@ public class CreateProductCommandHandler {
         }
 
         // 5. Create aggregate using builder
-        Product.Builder builder =
-                Product.builder().productId(ProductId.generate()).tenantId(command.getTenantId()).productCode(command.getProductCode()).description(command.getDescription())
-                        .primaryBarcode(command.getPrimaryBarcode()).unitOfMeasure(command.getUnitOfMeasure());
+        Product.Builder builder = Product.builder().productId(ProductId.generate()).tenantId(command.getTenantId()).productCode(command.getProductCode())
+                .description(Description.of(command.getDescription())).primaryBarcode(command.getPrimaryBarcode()).unitOfMeasure(command.getUnitOfMeasure());
 
         // Add secondary barcodes if provided
         if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
@@ -93,7 +93,7 @@ public class CreateProductCommandHandler {
         }
 
         // 9. Return result (use savedProduct which has updated version from DB)
-        return CreateProductResult.builder().productId(savedProduct.getId()).productCode(savedProduct.getProductCode()).description(savedProduct.getDescription())
+        return CreateProductResult.builder().productId(savedProduct.getId()).productCode(savedProduct.getProductCode()).description(savedProduct.getDescription().getValue())
                 .primaryBarcode(savedProduct.getPrimaryBarcode()).createdAt(savedProduct.getCreatedAt()).build();
     }
 
@@ -115,6 +115,10 @@ public class CreateProductCommandHandler {
         }
         if (command.getDescription() == null || command.getDescription().trim().isEmpty()) {
             throw new IllegalArgumentException("Description is required");
+        }
+        // Validate description length (Description value object will validate, but we validate here for better error messages)
+        if (command.getDescription().length() > 500) {
+            throw new IllegalArgumentException("Description cannot exceed 500 characters");
         }
         if (command.getPrimaryBarcode() == null) {
             throw new IllegalArgumentException("PrimaryBarcode is required");

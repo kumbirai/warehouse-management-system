@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.ccbsa.common.domain.TenantAwareAggregateRoot;
+import com.ccbsa.common.domain.valueobject.Description;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.product.domain.core.event.ProductCreatedEvent;
 import com.ccbsa.wms.product.domain.core.event.ProductUpdatedEvent;
@@ -33,8 +34,10 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
     // Collections
     private List<ProductBarcode> secondaryBarcodes;
 
+    // Value Objects
+    private Description description;
+
     // Primitives
-    private String description;
     private String category;
     private String brand;
     private LocalDateTime createdAt;
@@ -64,21 +67,17 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
      * @param newDescription New description value
      * @throws IllegalArgumentException if newDescription is invalid
      */
-    public void updateDescription(String newDescription) {
-        if (newDescription == null || newDescription.trim().isEmpty()) {
-            throw new IllegalArgumentException("Description cannot be null or empty");
-        }
-        if (newDescription.length() > 500) {
-            throw new IllegalArgumentException("Description cannot exceed 500 characters");
+    public void updateDescription(Description newDescription) {
+        if (newDescription == null) {
+            throw new IllegalArgumentException("Description cannot be null");
         }
 
-        this.description = newDescription.trim();
+        this.description = newDescription;
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish update event
-        addDomainEvent(
-                new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description, this.primaryBarcode, this.secondaryBarcodes, this.unitOfMeasure,
-                        this.category, this.brand));
+        addDomainEvent(new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description.getValue(), this.primaryBarcode, this.secondaryBarcodes,
+                this.unitOfMeasure, this.category, this.brand));
     }
 
     /**
@@ -102,9 +101,8 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish update event
-        addDomainEvent(
-                new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description, this.primaryBarcode, this.secondaryBarcodes, this.unitOfMeasure,
-                        this.category, this.brand));
+        addDomainEvent(new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description.getValue(), this.primaryBarcode, this.secondaryBarcodes,
+                this.unitOfMeasure, this.category, this.brand));
     }
 
     /**
@@ -152,9 +150,8 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish update event
-        addDomainEvent(
-                new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description, this.primaryBarcode, this.secondaryBarcodes, this.unitOfMeasure,
-                        this.category, this.brand));
+        addDomainEvent(new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description.getValue(), this.primaryBarcode, this.secondaryBarcodes,
+                this.unitOfMeasure, this.category, this.brand));
     }
 
     /**
@@ -176,9 +173,8 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish update event
-        addDomainEvent(
-                new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description, this.primaryBarcode, this.secondaryBarcodes, this.unitOfMeasure,
-                        this.category, this.brand));
+        addDomainEvent(new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description.getValue(), this.primaryBarcode, this.secondaryBarcodes,
+                this.unitOfMeasure, this.category, this.brand));
     }
 
     /**
@@ -196,9 +192,8 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish update event
-        addDomainEvent(
-                new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description, this.primaryBarcode, this.secondaryBarcodes, this.unitOfMeasure,
-                        this.category, this.brand));
+        addDomainEvent(new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description.getValue(), this.primaryBarcode, this.secondaryBarcodes,
+                this.unitOfMeasure, this.category, this.brand));
     }
 
     /**
@@ -213,9 +208,8 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish update event
-        addDomainEvent(
-                new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description, this.primaryBarcode, this.secondaryBarcodes, this.unitOfMeasure,
-                        this.category, this.brand));
+        addDomainEvent(new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description.getValue(), this.primaryBarcode, this.secondaryBarcodes,
+                this.unitOfMeasure, this.category, this.brand));
     }
 
     /**
@@ -250,7 +244,7 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
         return unitOfMeasure;
     }
 
-    public String getDescription() {
+    public Description getDescription() {
         return description;
     }
 
@@ -291,7 +285,7 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
             return this;
         }
 
-        public Builder description(String description) {
+        public Builder description(Description description) {
             product.description = description;
             return this;
         }
@@ -398,9 +392,8 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
 
             // Publish creation event only if this is a new product (no version set)
             if (product.getVersion() == 0) {
-                product.addDomainEvent(
-                        new ProductCreatedEvent(product.getId(), product.getTenantId(), product.productCode, product.description, product.primaryBarcode, product.secondaryBarcodes,
-                                product.unitOfMeasure, product.category, product.brand));
+                product.addDomainEvent(new ProductCreatedEvent(product.getId(), product.getTenantId(), product.productCode, product.description.getValue(), product.primaryBarcode,
+                        product.secondaryBarcodes, product.unitOfMeasure, product.category, product.brand));
             }
 
             return consumeProduct();
@@ -421,11 +414,8 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
             if (product.productCode == null) {
                 throw new IllegalArgumentException("ProductCode is required");
             }
-            if (product.description == null || product.description.trim().isEmpty()) {
+            if (product.description == null) {
                 throw new IllegalArgumentException("Description is required");
-            }
-            if (product.description.length() > 500) {
-                throw new IllegalArgumentException("Description cannot exceed 500 characters");
             }
             if (product.primaryBarcode == null) {
                 throw new IllegalArgumentException("PrimaryBarcode is required");

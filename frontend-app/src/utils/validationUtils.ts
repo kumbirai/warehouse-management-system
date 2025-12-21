@@ -1,4 +1,6 @@
-import {z} from 'zod';
+import {z} from 'zod'; /**
+ * Common validation schemas and utilities for forms across the application.
+ */
 
 /**
  * Common validation schemas and utilities for forms across the application.

@@ -20,5 +20,7 @@ public class LocationResponse {
     private Integer capacity;
     private String status;
     private LocationDimensions dimensions;
+    private String barcode;
+    private LocationCoordinates coordinates;
 }
 

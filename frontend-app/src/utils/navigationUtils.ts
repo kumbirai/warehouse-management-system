@@ -91,6 +91,11 @@ export const getBreadcrumbs = {
     { label: 'Locations', href: Routes.locations },
     { label: 'Create Location' },
   ],
+  locationEdit: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Locations', href: Routes.locations },
+    { label: 'Edit Location' },
+  ],
 
   // Product Management
   productList: () => [{ label: 'Dashboard', href: Routes.dashboard }, { label: 'Products' }],
@@ -103,6 +108,11 @@ export const getBreadcrumbs = {
     { label: 'Dashboard', href: Routes.dashboard },
     { label: 'Products', href: Routes.products },
     { label: 'Create Product' },
+  ],
+  productEdit: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Products', href: Routes.products },
+    { label: 'Edit Product' },
   ],
 
   // Consignment Management

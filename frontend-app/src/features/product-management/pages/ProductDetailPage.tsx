@@ -1,5 +1,8 @@
-import { Container } from '@mui/material';
+import { Button } from '@mui/material';
+import { Edit as EditIcon } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
+import { DetailPageLayout } from '../../../components/layouts';
+import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 import { ProductDetail } from '../components/ProductDetail';
 import { useProduct } from '../hooks/useProduct';
 import { useAuth } from '../../../hooks/useAuth';
@@ -10,20 +13,56 @@ export const ProductDetailPage = () => {
   const { user } = useAuth();
 
   // Call hooks unconditionally before any early returns
-  const { product, isLoading, error } = useProduct(productId || '', user?.tenantId || '');
+  const { product, isLoading, error, refetch } = useProduct(productId || '', user?.tenantId || '');
 
   if (!productId) {
-    navigate('/products');
+    navigate(Routes.products);
     return null;
   }
 
   if (!user?.tenantId) {
-    return <div>Tenant ID is required</div>;
+    return (
+      <DetailPageLayout
+        breadcrumbs={getBreadcrumbs.productList()}
+        title="Product Details"
+        isLoading={false}
+        error="Tenant ID is required to view product details"
+      >
+        <div />
+      </DetailPageLayout>
+    );
   }
 
+  const canEdit =
+    user?.roles?.some(role =>
+      ['SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER'].includes(role)
+    ) ?? false;
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <ProductDetail product={product} isLoading={isLoading} error={error} />
-    </Container>
+    <DetailPageLayout
+      breadcrumbs={getBreadcrumbs.productDetail(product?.productCode || '...')}
+      title={product?.productCode || 'Loading...'}
+      actions={
+        <>
+          <Button variant="outlined" onClick={() => navigate(Routes.products)}>
+            Back to List
+          </Button>
+          {canEdit && (
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={() => navigate(Routes.productEdit(productId))}
+            >
+              Edit
+            </Button>
+          )}
+        </>
+      }
+      isLoading={isLoading}
+      error={error?.message || null}
+      maxWidth="lg"
+    >
+      <ProductDetail product={product} onUpdate={refetch} />
+    </DetailPageLayout>
   );
 };

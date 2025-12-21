@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { Add as AddIcon, Search as SearchIcon } from '@mui/icons-material';
 
 import { ListPageLayout } from '../../../components/layouts';
-import { FilterBar, EmptyState } from '../../../components/common';
+import { FilterBar, EmptyState, BarcodeInput } from '../../../components/common';
 import { Routes, getBreadcrumbs } from '../../../utils/navigationUtils';
 import { LocationList } from '../components/LocationList';
 import { useLocations } from '../hooks/useLocations';
@@ -82,12 +82,16 @@ export const LocationListPage = () => {
       <FilterBar onClearFilters={handleClearFilters} hasActiveFilters={hasActiveFilters}>
         <Grid container spacing={2} sx={{ flex: 1 }}>
           <Grid item xs={12} sm={4}>
-            <TextField
+            <BarcodeInput
               fullWidth
               label="Search"
               placeholder="Search by code, barcode..."
               value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
+              onChange={handleSearchChange}
+              onScan={(barcode) => {
+                handleSearchChange(barcode);
+              }}
+              autoSubmitOnEnter={true}
               InputProps={{
                 startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
               }}

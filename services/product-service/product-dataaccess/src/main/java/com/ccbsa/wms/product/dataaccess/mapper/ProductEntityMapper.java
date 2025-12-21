@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
+import com.ccbsa.common.domain.valueobject.Description;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.product.dataaccess.entity.ProductBarcodeEntity;
 import com.ccbsa.wms.product.dataaccess.entity.ProductEntity;
@@ -40,7 +41,7 @@ public class ProductEntityMapper {
         entity.setId(product.getId().getValue());
         entity.setTenantId(product.getTenantId().getValue());
         entity.setProductCode(product.getProductCode().getValue());
-        entity.setDescription(product.getDescription());
+        entity.setDescription(product.getDescription().getValue());
         entity.setPrimaryBarcode(product.getPrimaryBarcode().getValue());
         entity.setPrimaryBarcodeType(product.getPrimaryBarcode().getType());
         entity.setUnitOfMeasure(product.getUnitOfMeasure());
@@ -87,7 +88,7 @@ public class ProductEntityMapper {
 
         Product.Builder builder =
                 Product.builder().productId(ProductId.of(entity.getId())).tenantId(TenantId.of(entity.getTenantId())).productCode(ProductCode.of(entity.getProductCode()))
-                        .description(entity.getDescription()).primaryBarcode(ProductBarcode.of(entity.getPrimaryBarcode(), entity.getPrimaryBarcodeType()))
+                        .description(Description.of(entity.getDescription())).primaryBarcode(ProductBarcode.of(entity.getPrimaryBarcode(), entity.getPrimaryBarcodeType()))
                         .unitOfMeasure(entity.getUnitOfMeasure()).createdAt(entity.getCreatedAt()).lastModifiedAt(entity.getLastModifiedAt()).version(entity.getVersion());
 
         // Map secondary barcodes

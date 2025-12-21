@@ -12,6 +12,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.ccbsa.common.domain.DomainEvent;
+import com.ccbsa.common.domain.valueobject.Description;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.product.application.service.command.dto.ProductCsvError;
 import com.ccbsa.wms.product.application.service.command.dto.ProductCsvRow;
@@ -176,8 +177,9 @@ public class UploadProductCsvCommandHandler {
      */
     private void updateProductFromRow(Product product, ProductCsvRow row, TenantId tenantId) {
         // Update description
-        if (!product.getDescription().equals(row.getDescription())) {
-            product.updateDescription(row.getDescription());
+        Description newDescription = Description.of(row.getDescription());
+        if (!product.getDescription().equals(newDescription)) {
+            product.updateDescription(newDescription);
         }
 
         // Update primary barcode if changed
@@ -241,9 +243,8 @@ public class UploadProductCsvCommandHandler {
             secondaryBarcodes.add(secondaryBarcode);
         }
 
-        Product.Builder builder =
-                Product.builder().productId(ProductId.generate()).tenantId(tenantId).productCode(ProductCode.of(row.getProductCode())).description(row.getDescription())
-                        .primaryBarcode(primaryBarcode).unitOfMeasure(UnitOfMeasure.valueOf(row.getUnitOfMeasure()));
+        Product.Builder builder = Product.builder().productId(ProductId.generate()).tenantId(tenantId).productCode(ProductCode.of(row.getProductCode()))
+                .description(Description.of(row.getDescription())).primaryBarcode(primaryBarcode).unitOfMeasure(UnitOfMeasure.valueOf(row.getUnitOfMeasure()));
 
         if (!secondaryBarcodes.isEmpty()) {
             builder.secondaryBarcodes(secondaryBarcodes);

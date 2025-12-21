@@ -65,6 +65,11 @@ public final class ProductBarcode {
 
     /**
      * Detects barcode type from the barcode value format.
+     * <p>
+     * Business Rules:
+     * - Numeric-only barcodes must match specific numeric formats (EAN-13, UPC-A, ITF-14)
+     * - Alphanumeric barcodes can be CODE_128 or CODE_39
+     * - Invalid formats are rejected with IllegalArgumentException
      *
      * @param value Barcode value
      * @return Detected BarcodeType
@@ -77,21 +82,33 @@ public final class ProductBarcode {
 
         String trimmedValue = value.trim();
 
+        // Check numeric-only formats first (strict validation)
         if (EAN_13_PATTERN.matcher(trimmedValue).matches()) {
             return BarcodeType.EAN_13;
         } else if (UPC_A_PATTERN.matcher(trimmedValue).matches()) {
             return BarcodeType.UPC_A;
         } else if (ITF_14_PATTERN.matcher(trimmedValue).matches()) {
             return BarcodeType.ITF_14;
-        } else if (CODE_128_PATTERN.matcher(trimmedValue).matches()) {
+        }
+
+        // Check if value is numeric-only but doesn't match any numeric format
+        if (trimmedValue.matches("^[0-9]+$")) {
+            throw new IllegalArgumentException(
+                    String.format("Invalid barcode format: '%s'. Numeric-only barcodes must be 12 digits (UPC-A), 13 digits (EAN-13), or 14 digits (ITF-14)", trimmedValue));
+        }
+
+        // Check alphanumeric formats
+        if (CODE_128_PATTERN.matcher(trimmedValue).matches()) {
             return BarcodeType.CODE_128;
         } else if (CODE_39_PATTERN.matcher(trimmedValue).matches()) {
             return BarcodeType.CODE_39;
-        } else {
-            // Default to CODE_128 for unrecognized formats (most flexible)
-            // This allows for custom barcode formats while maintaining validation
-            return BarcodeType.CODE_128;
         }
+
+        // Reject unrecognized formats
+        throw new IllegalArgumentException(String.format(
+                "Invalid barcode format: '%s'. Barcode must match one of: EAN-13 (13 digits), UPC-A (12 digits), ITF-14 (14 digits), CODE_128 (alphanumeric 1-48 chars), or "
+                        + "CODE_39 (alphanumeric with specific characters)",
+                trimmedValue));
     }
 
     /**

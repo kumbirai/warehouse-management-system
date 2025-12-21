@@ -11,6 +11,7 @@ import {
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMemo } from 'react';
 import { TenantSelector } from './TenantSelector';
 import { useAuth } from '../../../hooks/useAuth';
 import { ALL_ROLES, USER } from '../../../constants/roles';
@@ -64,6 +65,22 @@ export const UserForm = ({
   isSubmitting = false,
 }: UserFormProps) => {
   const { isSystemAdmin, user: currentUser } = useAuth();
+
+  // Memoize form default values to prevent unnecessary re-renders
+  const formDefaultValues = useMemo(
+    () => ({
+      tenantId: defaultValues?.tenantId || currentUser?.tenantId || '',
+      username: defaultValues?.username || '',
+      emailAddress: defaultValues?.emailAddress || '',
+      firstName: defaultValues?.firstName || '',
+      lastName: defaultValues?.lastName || '',
+      password: defaultValues?.password || '',
+      confirmPassword: defaultValues?.confirmPassword || '',
+      roles: defaultValues?.roles || [USER],
+    }),
+    [defaultValues, currentUser?.tenantId]
+  );
+
   const {
     register,
     handleSubmit,
@@ -72,17 +89,7 @@ export const UserForm = ({
     formState: { errors },
   } = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
-    defaultValues: {
-      tenantId: defaultValues?.tenantId || currentUser?.tenantId || '',
-      username: '',
-      emailAddress: '',
-      firstName: '',
-      lastName: '',
-      password: '',
-      confirmPassword: '',
-      roles: defaultValues?.roles || [USER],
-      ...defaultValues,
-    },
+    defaultValues: formDefaultValues,
   });
 
   const selectedRoles = watch('roles') || [];

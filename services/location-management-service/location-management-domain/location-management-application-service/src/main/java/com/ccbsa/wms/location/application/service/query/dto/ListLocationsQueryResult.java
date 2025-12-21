@@ -47,7 +47,7 @@ public final class ListLocationsQueryResult {
         private Integer size;
 
         public Builder locations(List<LocationQueryResult> locations) {
-            this.locations = locations;
+            this.locations = locations != null ? List.copyOf(locations) : null;
             return this;
         }
 

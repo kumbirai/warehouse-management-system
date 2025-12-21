@@ -11,6 +11,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.ccbsa.common.domain.DomainEvent;
+import com.ccbsa.common.domain.valueobject.Description;
 import com.ccbsa.wms.product.application.service.command.dto.UpdateProductCommand;
 import com.ccbsa.wms.product.application.service.command.dto.UpdateProductResult;
 import com.ccbsa.wms.product.application.service.port.messaging.ProductEventPublisher;
@@ -51,13 +52,14 @@ public class UpdateProductCommandHandler {
 
         // 3. Validate primary barcode uniqueness if changed
         if (!product.getPrimaryBarcode().getValue().equals(command.getPrimaryBarcode().getValue())) {
-            validateBarcodeUniqueness(command.getPrimaryBarcode(), command.getTenantId());
+            validateBarcodeUniquenessExcludingProduct(command.getPrimaryBarcode(), command.getTenantId(), command.getProductId());
             product.updatePrimaryBarcode(command.getPrimaryBarcode());
         }
 
         // 4. Update description if changed
-        if (!product.getDescription().equals(command.getDescription())) {
-            product.updateDescription(command.getDescription());
+        Description newDescription = Description.of(command.getDescription());
+        if (!product.getDescription().equals(newDescription)) {
+            product.updateDescription(newDescription);
         }
 
         // 5. Update unit of measure if changed
@@ -66,16 +68,34 @@ public class UpdateProductCommandHandler {
         }
 
         // 6. Update secondary barcodes
-        // Remove all existing secondary barcodes and add new ones
+        // Strategy: Remove all existing secondary barcodes first, then add new ones
+        // This ensures we don't have duplicate barcodes in the list
         List<ProductBarcode> existingSecondaryBarcodes = new ArrayList<>(product.getSecondaryBarcodes());
-        for (ProductBarcode existingBarcode : existingSecondaryBarcodes) {
-            product.removeSecondaryBarcode(existingBarcode);
-        }
+
+        // Collect barcode values that are being kept (present in both existing and new lists)
+        List<String> barcodesToKeep = new ArrayList<>();
         if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
             for (ProductBarcode newBarcode : command.getSecondaryBarcodes()) {
-                // Validate uniqueness before adding
-                validateBarcodeUniqueness(newBarcode, command.getTenantId());
-                product.addSecondaryBarcode(newBarcode);
+                barcodesToKeep.add(newBarcode.getValue());
+            }
+        }
+
+        // Remove existing secondary barcodes that are not in the new list
+        for (ProductBarcode existingBarcode : existingSecondaryBarcodes) {
+            if (!barcodesToKeep.contains(existingBarcode.getValue())) {
+                product.removeSecondaryBarcode(existingBarcode);
+            }
+        }
+
+        // Add new secondary barcodes (only those not already present)
+        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
+            for (ProductBarcode newBarcode : command.getSecondaryBarcodes()) {
+                // Only validate and add if not already present (avoid duplicate adds)
+                if (!product.hasBarcode(newBarcode.getValue())) {
+                    // Validate uniqueness before adding (checks against other products, excluding current product)
+                    validateBarcodeUniquenessExcludingProduct(newBarcode, command.getTenantId(), command.getProductId());
+                    product.addSecondaryBarcode(newBarcode);
+                }
             }
         }
 
@@ -117,6 +137,10 @@ public class UpdateProductCommandHandler {
         if (command.getDescription() == null || command.getDescription().trim().isEmpty()) {
             throw new IllegalArgumentException("Description is required");
         }
+        // Validate description length (Description value object will validate, but we validate here for better error messages)
+        if (command.getDescription().length() > 500) {
+            throw new IllegalArgumentException("Description cannot exceed 500 characters");
+        }
         if (command.getPrimaryBarcode() == null) {
             throw new IllegalArgumentException("PrimaryBarcode is required");
         }
@@ -126,14 +150,18 @@ public class UpdateProductCommandHandler {
     }
 
     /**
-     * Validates that the barcode is unique for the tenant.
+     * Validates that the barcode is unique for the tenant, excluding a specific product.
+     * <p>
+     * Used when updating a product to allow the same barcode if it belongs to the product being updated.
      *
-     * @param barcode  Barcode to validate
-     * @param tenantId Tenant identifier
-     * @throws BarcodeAlreadyExistsException if barcode already exists
+     * @param barcode          Barcode to validate
+     * @param tenantId         Tenant identifier
+     * @param excludeProductId Product ID to exclude from the check
+     * @throws BarcodeAlreadyExistsException if barcode already exists (excluding the specified product)
      */
-    private void validateBarcodeUniqueness(ProductBarcode barcode, com.ccbsa.common.domain.valueobject.TenantId tenantId) {
-        if (repository.existsByBarcodeAndTenantId(barcode, tenantId)) {
+    private void validateBarcodeUniquenessExcludingProduct(ProductBarcode barcode, com.ccbsa.common.domain.valueobject.TenantId tenantId,
+                                                           com.ccbsa.wms.product.domain.core.valueobject.ProductId excludeProductId) {
+        if (repository.existsByBarcodeAndTenantIdExcludingProduct(barcode, tenantId, excludeProductId)) {
             throw new BarcodeAlreadyExistsException(String.format("Product barcode already exists: %s", barcode.getValue()));
         }
     }

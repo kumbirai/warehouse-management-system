@@ -11,13 +11,14 @@ import {
   Typography,
 } from '@mui/material';
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CreateProductRequest } from '../types/product';
+import { CreateProductRequest, UpdateProductRequest } from '../types/product';
 import { useCheckProductCodeUniqueness } from '../hooks/useCheckProductCodeUniqueness';
 import { useAuth } from '../../../hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { useDebounce } from '../../../hooks/useDebounce';
+import { BarcodeInput, FormActions } from '../../../components/common';
 
 const productSchema = z.object({
   productCode: z
@@ -40,7 +41,7 @@ export type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
   defaultValues?: Partial<ProductFormValues>;
-  onSubmit: (values: CreateProductRequest) => Promise<void> | void;
+  onSubmit: (values: CreateProductRequest | UpdateProductRequest) => Promise<void> | void;
   onCancel: () => void;
   isSubmitting?: boolean;
   isUpdate?: boolean;
@@ -63,18 +64,18 @@ export const ProductForm = ({
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      productCode: '',
-      description: '',
-      primaryBarcode: '',
-      unitOfMeasure: 'EA',
-      secondaryBarcodes: [],
-      category: '',
-      brand: '',
-      ...defaultValues,
+      productCode: defaultValues?.productCode || '',
+      description: defaultValues?.description || '',
+      primaryBarcode: defaultValues?.primaryBarcode || '',
+      unitOfMeasure: defaultValues?.unitOfMeasure || 'EA',
+      secondaryBarcodes: defaultValues?.secondaryBarcodes || [],
+      category: defaultValues?.category || '',
+      brand: defaultValues?.brand || '',
     },
   });
 
@@ -124,7 +125,17 @@ export const ProductForm = ({
       <Typography variant="h6" gutterBottom>
         {isUpdate ? 'Update Product' : 'Create Product'}
       </Typography>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form
+        onSubmit={handleSubmit(values => {
+          if (isUpdate) {
+            // For updates, exclude productCode (it can't be changed)
+            const { productCode, ...updateValues } = values;
+            onSubmit(updateValues as UpdateProductRequest);
+          } else {
+            onSubmit(values as CreateProductRequest);
+          }
+        })}
+      >
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
             <TextField
@@ -142,19 +153,26 @@ export const ProductForm = ({
             />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required>
+            <FormControl fullWidth required error={!!errors.unitOfMeasure}>
               <InputLabel>Unit of Measure</InputLabel>
-              <Select
-                {...register('unitOfMeasure')}
-                label="Unit of Measure"
-                defaultValue={defaultValues?.unitOfMeasure || 'EA'}
-              >
-                <MenuItem value="EA">Each (EA)</MenuItem>
-                <MenuItem value="CS">Case (CS)</MenuItem>
-                <MenuItem value="PK">Pack (PK)</MenuItem>
-                <MenuItem value="BOX">Box (BOX)</MenuItem>
-                <MenuItem value="PAL">Pallet (PAL)</MenuItem>
-              </Select>
+              <Controller
+                name="unitOfMeasure"
+                control={control}
+                render={({ field }) => (
+                  <Select {...field} label="Unit of Measure">
+                    <MenuItem value="EA">Each (EA)</MenuItem>
+                    <MenuItem value="CS">Case (CS)</MenuItem>
+                    <MenuItem value="PK">Pack (PK)</MenuItem>
+                    <MenuItem value="BOX">Box (BOX)</MenuItem>
+                    <MenuItem value="PAL">Pallet (PAL)</MenuItem>
+                  </Select>
+                )}
+              />
+              {errors.unitOfMeasure && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                  {errors.unitOfMeasure.message}
+                </Typography>
+              )}
             </FormControl>
           </Grid>
           <Grid item xs={12}>
@@ -170,13 +188,21 @@ export const ProductForm = ({
             />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField
-              {...register('primaryBarcode')}
-              label="Primary Barcode"
-              fullWidth
-              required
-              error={!!errors.primaryBarcode}
-              helperText={errors.primaryBarcode?.message}
+            <Controller
+              name="primaryBarcode"
+              control={control}
+              render={({ field }) => (
+                <BarcodeInput
+                  {...field}
+                  label="Primary Barcode"
+                  fullWidth
+                  required
+                  error={!!errors.primaryBarcode}
+                  helperText={errors.primaryBarcode?.message || 'Scan or enter barcode'}
+                  value={field.value || ''}
+                  onChange={value => field.onChange(value)}
+                />
+              )}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -202,17 +228,23 @@ export const ProductForm = ({
               Secondary Barcodes (Optional)
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <TextField
+              <BarcodeInput
                 value={newSecondaryBarcode}
-                onChange={e => setNewSecondaryBarcode(e.target.value)}
+                onChange={setNewSecondaryBarcode}
                 label="Add Secondary Barcode"
                 size="small"
-                onKeyPress={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddSecondaryBarcode();
-                  }
+                onScan={barcode => {
+                  setNewSecondaryBarcode(barcode);
+                  // Auto-add after a short delay to allow the value to be set
+                  setTimeout(() => {
+                    if (barcode.trim()) {
+                      setValue('secondaryBarcodes', [...secondaryBarcodes, barcode.trim()]);
+                      setNewSecondaryBarcode('');
+                    }
+                  }, 100);
                 }}
+                autoSubmitOnEnter={true}
+                sx={{ flex: 1 }}
               />
               <Button variant="outlined" onClick={handleAddSecondaryBarcode}>
                 Add
@@ -237,24 +269,13 @@ export const ProductForm = ({
             )}
           </Grid>
           <Grid item xs={12}>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-              <Button variant="outlined" onClick={onCancel} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={isSubmitting || !!productCodeError || isCheckingUniqueness}
-              >
-                {isSubmitting
-                  ? isUpdate
-                    ? 'Updating...'
-                    : 'Creating...'
-                  : isUpdate
-                    ? 'Update Product'
-                    : 'Create Product'}
-              </Button>
-            </Box>
+            <FormActions
+              onCancel={onCancel}
+              isSubmitting={isSubmitting}
+              submitLabel={isUpdate ? 'Update Product' : 'Create Product'}
+              cancelLabel="Cancel"
+              submitDisabled={!!productCodeError || isCheckingUniqueness}
+            />
           </Grid>
         </Grid>
       </form>

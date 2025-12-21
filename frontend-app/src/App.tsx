@@ -18,9 +18,11 @@ import { ConsignmentDetailPage } from './features/stock-management/pages/Consign
 import { LocationListPage } from './features/location-management/pages/LocationListPage';
 import { LocationCreatePage } from './features/location-management/pages/LocationCreatePage';
 import { LocationDetailPage } from './features/location-management/pages/LocationDetailPage';
+import { LocationEditPage } from './features/location-management/pages/LocationEditPage';
 import { ProductListPage } from './features/product-management/pages/ProductListPage';
 import { ProductCreatePage } from './features/product-management/pages/ProductCreatePage';
 import { ProductDetailPage } from './features/product-management/pages/ProductDetailPage';
+import { ProductEditPage } from './features/product-management/pages/ProductEditPage';
 import {
   LOCATION_MANAGER,
   OPERATOR,
@@ -177,6 +179,16 @@ function App() {
         }
       />
       <Route
+        path="/locations/:locationId/edit"
+        element={
+          <ProtectedRoute
+            requiredRoles={[SYSTEM_ADMIN, TENANT_ADMIN, WAREHOUSE_MANAGER, LOCATION_MANAGER]}
+          >
+            <LocationEditPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/locations/:locationId"
         element={
           <ProtectedRoute
@@ -237,6 +249,14 @@ function App() {
             ]}
           >
             <ProductDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/products/:productId/edit"
+        element={
+          <ProtectedRoute requiredRoles={[SYSTEM_ADMIN, TENANT_ADMIN, WAREHOUSE_MANAGER]}>
+            <ProductEditPage />
           </ProtectedRoute>
         }
       />

@@ -1,5 +1,6 @@
 package com.ccbsa.wms.gateway.filter;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 
@@ -96,7 +97,7 @@ public class SafeRequestRateLimiterGatewayFilterFactory extends org.springframew
                                 httpResponse.getHeaders().add("Content-Type", "application/json");
 
                                 String errorBody = String.format("{\"error\":{\"code\":\"RATE_LIMIT_EXCEEDED\",\"message\":\"Rate limit exceeded\",\"route\":\"%s\"}}", routeId);
-                                byte[] errorBytes = errorBody.getBytes();
+                                byte[] errorBytes = errorBody.getBytes(StandardCharsets.UTF_8);
                                 DataBuffer buffer = httpResponse.bufferFactory().wrap(errorBytes);
                                 return httpResponse.writeWith(Mono.just(buffer));
                             } catch (UnsupportedOperationException e) {

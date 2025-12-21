@@ -1,5 +1,6 @@
 package com.ccbsa.wms.user.messaging.adapter;
 
+import java.util.Locale;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -229,7 +230,7 @@ public class TenantServiceAdapter implements TenantServicePort {
             return TenantServicePort.TenantInfo.TenantStatus.PENDING;
         }
         try {
-            return TenantServicePort.TenantInfo.TenantStatus.valueOf(status.toUpperCase());
+            return TenantServicePort.TenantInfo.TenantStatus.valueOf(status.toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             logger.warn("Unknown tenant status: {}, defaulting to PENDING", status);
             return TenantServicePort.TenantInfo.TenantStatus.PENDING;

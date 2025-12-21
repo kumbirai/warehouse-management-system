@@ -47,6 +47,8 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
     private static final String SYSTEM_ADMIN_ROLE = "SYSTEM_ADMIN";
     private static final String ADMIN_ROLE = "ADMIN";
     private static final String TENANTS_LIST_PATH = "/api/v1/tenants";
+    private static final java.util.Set<String> PUBLIC_ENDPOINTS =
+            java.util.Set.of("/actuator/health", "/actuator/info", "/api/v1/bff/auth/login", "/api/v1/bff/auth/refresh", "/api/v1/bff/auth/logout");
 
     public TenantValidationFilter() {
         super(Config.class);
@@ -121,9 +123,15 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
                 .switchIfEmpty(Mono.defer(() -> {
                     String path = exchange.getRequest().getPath().value();
                     String method = exchange.getRequest().getMethod().name();
-                    logger.warn("No JWT authentication found in SecurityContext for {} {} - this should not happen if OAuth2 Resource Server is configured correctly", method,
-                            path);
-                    // Log warning but allow request to proceed - OAuth2 Resource Server should have handled this
+                    // Check if this is a public endpoint - if so, no authentication is expected
+                    boolean isPublicEndpoint = PUBLIC_ENDPOINTS.stream().anyMatch(path::startsWith);
+                    if (!isPublicEndpoint) {
+                        // Only log at DEBUG level for protected endpoints since OAuth2 Resource Server
+                        // should have already validated authentication. If authentication is truly missing,
+                        // the downstream service will reject it with a proper error response.
+                        logger.debug("No JWT authentication found in SecurityContext for {} {} - OAuth2 Resource Server should have validated this", method, path);
+                    }
+                    // Allow request to proceed - OAuth2 Resource Server should have handled authentication
                     // If authentication is truly missing, the downstream service will reject it
                     return chain.filter(exchange);
                 }));

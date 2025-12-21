@@ -1,91 +1,86 @@
-import {
-  Box,
-  CircularProgress,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material';
-import { Product } from '../types/product';
+import { Button, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { Product } from '../types/product';
+import { Column, ResponsiveTable } from '../../../components/common';
+import { Routes } from '../../../utils/navigationUtils';
 
 interface ProductListProps {
   products: Product[];
-  isLoading: boolean;
   error: Error | null;
 }
 
-export const ProductList = ({ products, isLoading, error }: ProductListProps) => {
+export const ProductList = ({ products, error }: ProductListProps) => {
   const navigate = useNavigate();
 
-  if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   if (error) {
-    return (
-      <Paper sx={{ p: 3 }}>
-        <Typography color="error">Error loading products: {error.message}</Typography>
-      </Paper>
-    );
+    return <Typography color="error">Error loading products: {error.message}</Typography>;
   }
 
   // Defensive check: ensure products is an array
   if (!Array.isArray(products)) {
-    return (
-      <Paper sx={{ p: 3 }}>
-        <Typography color="error">Invalid data format: products is not an array</Typography>
-      </Paper>
-    );
+    return <Typography color="error">Invalid data format: products is not an array</Typography>;
   }
 
-  if (products.length === 0) {
-    return (
-      <Paper sx={{ p: 3 }}>
-        <Typography>No products found</Typography>
-      </Paper>
-    );
-  }
+  const columns: Column<Product>[] = [
+    {
+      key: 'productCode',
+      label: 'Product Code',
+      render: product => (
+        <Typography sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+          {product.productCode}
+        </Typography>
+      ),
+    },
+    {
+      key: 'description',
+      label: 'Description',
+      render: product => <Typography>{product.description}</Typography>,
+    },
+    {
+      key: 'primaryBarcode',
+      label: 'Primary Barcode',
+      hideOnMobile: true,
+      render: product => (
+        <Typography sx={{ fontFamily: 'monospace' }}>{product.primaryBarcode}</Typography>
+      ),
+    },
+    {
+      key: 'unitOfMeasure',
+      label: 'Unit of Measure',
+      hideOnMobile: true,
+      render: product => <Typography>{product.unitOfMeasure}</Typography>,
+    },
+    {
+      key: 'category',
+      label: 'Category',
+      hideOnMobile: true,
+      render: product => <Typography>{product.category || '-'}</Typography>,
+    },
+    {
+      key: 'brand',
+      label: 'Brand',
+      hideOnMobile: true,
+      render: product => <Typography>{product.brand || '-'}</Typography>,
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      hideOnMobile: true,
+      render: product => (
+        <Button size="small" onClick={() => navigate(Routes.productDetail(product.productId))}>
+          View
+        </Button>
+      ),
+    },
+  ];
 
   return (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Product Code</TableCell>
-            <TableCell>Description</TableCell>
-            <TableCell>Primary Barcode</TableCell>
-            <TableCell>Unit of Measure</TableCell>
-            <TableCell>Category</TableCell>
-            <TableCell>Brand</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {products.map(product => (
-            <TableRow
-              key={product.productId}
-              hover
-              sx={{ cursor: 'pointer' }}
-              onClick={() => navigate(`/products/${product.productId}`)}
-            >
-              <TableCell>{product.productCode}</TableCell>
-              <TableCell>{product.description}</TableCell>
-              <TableCell sx={{ fontFamily: 'monospace' }}>{product.primaryBarcode}</TableCell>
-              <TableCell>{product.unitOfMeasure}</TableCell>
-              <TableCell>{product.category || '-'}</TableCell>
-              <TableCell>{product.brand || '-'}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <ResponsiveTable
+      data={products}
+      columns={columns}
+      getRowKey={product => product.productId}
+      onRowClick={product => navigate(Routes.productDetail(product.productId))}
+      emptyMessage="No products found"
+    />
   );
 };

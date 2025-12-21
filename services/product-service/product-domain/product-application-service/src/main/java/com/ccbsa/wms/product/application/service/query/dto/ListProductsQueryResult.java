@@ -47,7 +47,7 @@ public final class ListProductsQueryResult {
         private Integer size;
 
         public Builder products(List<ProductQueryResult> products) {
-            this.products = products;
+            this.products = products != null ? List.copyOf(products) : null;
             return this;
         }
 

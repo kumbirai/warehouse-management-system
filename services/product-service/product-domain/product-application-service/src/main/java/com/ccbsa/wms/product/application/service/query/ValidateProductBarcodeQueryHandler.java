@@ -81,7 +81,8 @@ public class ValidateProductBarcodeQueryHandler {
                     product.getSecondaryBarcodes().stream().filter(b -> b.getValue().equals(barcode)).findFirst().orElse(product.getPrimaryBarcode()); // Fallback to primary
         }
 
-        return ProductInfo.builder().productId(product.getId()).productCode(product.getProductCode()).description(product.getDescription()).barcode(matchingBarcode).build();
+        return ProductInfo.builder().productId(product.getId()).productCode(product.getProductCode()).description(product.getDescription().getValue()).barcode(matchingBarcode)
+                .build();
     }
 }
 
