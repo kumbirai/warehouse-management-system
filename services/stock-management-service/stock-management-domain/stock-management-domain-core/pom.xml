@@ -30,6 +30,12 @@
             <artifactId>product-domain-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.ccbsa.wms</groupId>
+            <artifactId>location-management-domain-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

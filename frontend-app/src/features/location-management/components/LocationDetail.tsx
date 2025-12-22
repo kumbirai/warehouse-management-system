@@ -1,6 +1,6 @@
-import { Box, Grid, Paper, Typography, Divider, Stack } from '@mui/material';
+import { Box, Divider, Grid, Paper, Stack, Typography } from '@mui/material';
 
-import { StatusBadge, getStatusVariant } from '../../../components/common';
+import { getStatusVariant, StatusBadge } from '../../../components/common';
 import { formatDateTime } from '../../../utils/dateUtils';
 import { Location } from '../types/location';
 import { LocationActions } from './LocationActions';
@@ -65,10 +65,7 @@ export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps
                 Status
               </Typography>
               <Box mt={0.5}>
-                <StatusBadge
-                  label={location.status}
-                  variant={getStatusVariant(location.status)}
-                />
+                <StatusBadge label={location.status} variant={getStatusVariant(location.status)} />
               </Box>
             </Box>
 
@@ -138,18 +135,14 @@ export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps
                 <Typography variant="caption" color="text.secondary">
                   Current Quantity
                 </Typography>
-                <Typography variant="body1">
-                  {location.capacity.currentQuantity || 0}
-                </Typography>
+                <Typography variant="body1">{location.capacity.currentQuantity || 0}</Typography>
               </Box>
 
               <Box>
                 <Typography variant="caption" color="text.secondary">
                   Maximum Quantity
                 </Typography>
-                <Typography variant="body1">
-                  {location.capacity.maximumQuantity || 0}
-                </Typography>
+                <Typography variant="body1">{location.capacity.maximumQuantity || 0}</Typography>
               </Box>
 
               <Box>
@@ -191,9 +184,7 @@ export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps
                 <Typography variant="caption" color="text.secondary">
                   Last Modified
                 </Typography>
-                <Typography variant="body1">
-                  {formatDateTime(location.lastModifiedAt)}
-                </Typography>
+                <Typography variant="body1">{formatDateTime(location.lastModifiedAt)}</Typography>
               </Box>
             )}
           </Stack>

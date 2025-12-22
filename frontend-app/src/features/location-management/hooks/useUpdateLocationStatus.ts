@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { locationService } from '../services/locationService';
-import { UpdateLocationStatusRequest, LocationStatus } from '../types/location';
+import { LocationStatus, UpdateLocationStatusRequest } from '../types/location';
 import { logger } from '../../../utils/logger';
 
 export interface UseUpdateLocationStatusResult {
@@ -56,4 +56,3 @@ export const useUpdateLocationStatus = (): UseUpdateLocationStatusResult => {
 
   return { updateStatus, isLoading, error };
 };
-

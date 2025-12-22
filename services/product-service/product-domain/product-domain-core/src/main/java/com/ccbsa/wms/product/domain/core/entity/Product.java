@@ -11,6 +11,8 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.product.domain.core.event.ProductCreatedEvent;
 import com.ccbsa.wms.product.domain.core.event.ProductUpdatedEvent;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductBarcode;
+import com.ccbsa.wms.product.domain.core.valueobject.ProductBrand;
+import com.ccbsa.wms.product.domain.core.valueobject.ProductCategory;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 import com.ccbsa.wms.product.domain.core.valueobject.UnitOfMeasure;
@@ -36,10 +38,8 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
 
     // Value Objects
     private Description description;
-
-    // Primitives
-    private String category;
-    private String brand;
+    private ProductCategory category;
+    private ProductBrand brand;
     private LocalDateTime createdAt;
     private LocalDateTime lastModifiedAt;
 
@@ -77,7 +77,7 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
 
         // Publish update event
         addDomainEvent(new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description.getValue(), this.primaryBarcode, this.secondaryBarcodes,
-                this.unitOfMeasure, this.category, this.brand));
+                this.unitOfMeasure, this.category != null ? this.category.getValue() : null, this.brand != null ? this.brand.getValue() : null));
     }
 
     /**
@@ -102,7 +102,7 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
 
         // Publish update event
         addDomainEvent(new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description.getValue(), this.primaryBarcode, this.secondaryBarcodes,
-                this.unitOfMeasure, this.category, this.brand));
+                this.unitOfMeasure, this.category != null ? this.category.getValue() : null, this.brand != null ? this.brand.getValue() : null));
     }
 
     /**
@@ -151,7 +151,7 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
 
         // Publish update event
         addDomainEvent(new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description.getValue(), this.primaryBarcode, this.secondaryBarcodes,
-                this.unitOfMeasure, this.category, this.brand));
+                this.unitOfMeasure, this.category != null ? this.category.getValue() : null, this.brand != null ? this.brand.getValue() : null));
     }
 
     /**
@@ -174,7 +174,7 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
 
         // Publish update event
         addDomainEvent(new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description.getValue(), this.primaryBarcode, this.secondaryBarcodes,
-                this.unitOfMeasure, this.category, this.brand));
+                this.unitOfMeasure, this.category != null ? this.category.getValue() : null, this.brand != null ? this.brand.getValue() : null));
     }
 
     /**
@@ -193,7 +193,7 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
 
         // Publish update event
         addDomainEvent(new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description.getValue(), this.primaryBarcode, this.secondaryBarcodes,
-                this.unitOfMeasure, this.category, this.brand));
+                this.unitOfMeasure, this.category != null ? this.category.getValue() : null, this.brand != null ? this.brand.getValue() : null));
     }
 
     /**
@@ -202,14 +202,30 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
      * @param category New category (can be null)
      * @param brand    New brand (can be null)
      */
-    public void updateOptionalFields(String category, String brand) {
-        this.category = category != null ? category.trim() : null;
-        this.brand = brand != null ? brand.trim() : null;
+    public void updateOptionalFields(ProductCategory category, ProductBrand brand) {
+        this.category = category;
+        this.brand = brand;
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish update event
         addDomainEvent(new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description.getValue(), this.primaryBarcode, this.secondaryBarcodes,
-                this.unitOfMeasure, this.category, this.brand));
+                this.unitOfMeasure, this.category != null ? this.category.getValue() : null, this.brand != null ? this.brand.getValue() : null));
+    }
+
+    /**
+     * Business logic method: Updates optional fields (category, brand) from String values.
+     *
+     * @param category New category (can be null)
+     * @param brand    New brand (can be null)
+     */
+    public void updateOptionalFields(String category, String brand) {
+        this.category = ProductCategory.ofNullable(category);
+        this.brand = ProductBrand.ofNullable(brand);
+        this.lastModifiedAt = LocalDateTime.now();
+
+        // Publish update event
+        addDomainEvent(new ProductUpdatedEvent(this.getId(), this.getTenantId(), this.productCode, this.description.getValue(), this.primaryBarcode, this.secondaryBarcodes,
+                this.unitOfMeasure, this.category != null ? this.category.getValue() : null, this.brand != null ? this.brand.getValue() : null));
     }
 
     /**
@@ -248,11 +264,11 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
         return description;
     }
 
-    public String getCategory() {
+    public ProductCategory getCategory() {
         return category;
     }
 
-    public String getBrand() {
+    public ProductBrand getBrand() {
         return brand;
     }
 
@@ -318,13 +334,23 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
             return this;
         }
 
-        public Builder category(String category) {
+        public Builder category(ProductCategory category) {
             product.category = category;
             return this;
         }
 
-        public Builder brand(String brand) {
+        public Builder category(String category) {
+            product.category = ProductCategory.ofNullable(category);
+            return this;
+        }
+
+        public Builder brand(ProductBrand brand) {
             product.brand = brand;
+            return this;
+        }
+
+        public Builder brand(String brand) {
+            product.brand = ProductBrand.ofNullable(brand);
             return this;
         }
 
@@ -393,7 +419,8 @@ public class Product extends TenantAwareAggregateRoot<ProductId> {
             // Publish creation event only if this is a new product (no version set)
             if (product.getVersion() == 0) {
                 product.addDomainEvent(new ProductCreatedEvent(product.getId(), product.getTenantId(), product.productCode, product.description.getValue(), product.primaryBarcode,
-                        product.secondaryBarcodes, product.unitOfMeasure, product.category, product.brand));
+                        product.secondaryBarcodes, product.unitOfMeasure, product.category != null ? product.category.getValue() : null,
+                        product.brand != null ? product.brand.getValue() : null));
             }
 
             return consumeProduct();

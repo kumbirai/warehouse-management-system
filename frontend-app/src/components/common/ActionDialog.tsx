@@ -1,11 +1,11 @@
 import React, { ReactNode } from 'react';
 import {
+  Button,
   Dialog,
-  DialogTitle,
+  DialogActions,
   DialogContent,
   DialogContentText,
-  DialogActions,
-  Button,
+  DialogTitle,
 } from '@mui/material';
 
 interface ActionDialogProps {

@@ -118,7 +118,8 @@ public class CreateLocationCommandHandler {
 
         // 7. Return result (use savedLocation which has updated version from DB)
         return CreateLocationResult.builder().locationId(savedLocation.getId()).barcode(savedLocation.getBarcode()).coordinates(savedLocation.getCoordinates())
-                .status(savedLocation.getStatus()).createdAt(savedLocation.getCreatedAt()).code(savedLocation.getCode()).name(savedLocation.getName()).type(savedLocation.getType())
+                .status(savedLocation.getStatus()).createdAt(savedLocation.getCreatedAt()).code(savedLocation.getCode() != null ? savedLocation.getCode().getValue() : null)
+                .name(savedLocation.getName() != null ? savedLocation.getName().getValue() : null).type(savedLocation.getType() != null ? savedLocation.getType().getValue() : null)
                 .path(generatePath(savedLocation, command)).build();
     }
 
@@ -235,7 +236,7 @@ public class CreateLocationCommandHandler {
      * @return Path string with full hierarchy
      */
     private String generatePath(Location location, CreateLocationCommand command) {
-        String locationCode = location.getCode();
+        String locationCode = location.getCode() != null ? location.getCode().getValue() : null;
         if (locationCode == null || locationCode.trim().isEmpty()) {
             locationCode = location.getBarcode().getValue();
         }
@@ -274,13 +275,13 @@ public class CreateLocationCommandHandler {
         Location parentLocation = repository.findByIdAndTenantId(parentLocationId, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException(String.format("Parent location not found during path generation: %s", parentLocationId.getValueAsString())));
 
-        String locationCode = parentLocation.getCode();
+        String locationCode = parentLocation.getCode() != null ? parentLocation.getCode().getValue() : null;
         if (locationCode == null || locationCode.trim().isEmpty()) {
             locationCode = parentLocation.getBarcode().getValue();
         }
 
         // If this is a warehouse (type is WAREHOUSE or no parent), return "/{code}"
-        String locationType = parentLocation.getType();
+        String locationType = parentLocation.getType() != null ? parentLocation.getType().getValue() : null;
         if (locationType != null && "WAREHOUSE".equalsIgnoreCase(locationType.trim()) || parentLocation.getParentLocationId() == null) {
             return String.format("/%s", locationCode);
         }

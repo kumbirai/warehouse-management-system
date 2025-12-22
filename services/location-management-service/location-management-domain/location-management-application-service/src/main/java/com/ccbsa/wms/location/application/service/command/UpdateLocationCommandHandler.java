@@ -19,6 +19,7 @@ import com.ccbsa.wms.location.domain.core.entity.Location;
 import com.ccbsa.wms.location.domain.core.exception.BarcodeAlreadyExistsException;
 import com.ccbsa.wms.location.domain.core.exception.LocationNotFoundException;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationBarcode;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationDescription;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 
 /**
@@ -63,7 +64,7 @@ public class UpdateLocationCommandHandler {
         }
 
         if (command.getDescription() != null) {
-            location.updateDescription(command.getDescription());
+            location.updateDescription(LocationDescription.ofNullable(command.getDescription()));
         }
 
         // 5. Get domain events BEFORE saving
@@ -80,7 +81,8 @@ public class UpdateLocationCommandHandler {
 
         // 8. Return result
         return UpdateLocationResult.builder().locationId(savedLocation.getId()).barcode(savedLocation.getBarcode()).coordinates(savedLocation.getCoordinates())
-                .status(savedLocation.getStatus()).description(savedLocation.getDescription()).lastModifiedAt(savedLocation.getLastModifiedAt()).build();
+                .status(savedLocation.getStatus()).description(savedLocation.getDescription() != null ? savedLocation.getDescription().getValue() : null)
+                .lastModifiedAt(savedLocation.getLastModifiedAt()).build();
     }
 
     /**

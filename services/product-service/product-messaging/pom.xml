@@ -85,6 +85,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.ccbsa.wms</groupId>
+            <artifactId>common-cache</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-annotations</artifactId>
             <version>${spotbugs.tool.version}</version>

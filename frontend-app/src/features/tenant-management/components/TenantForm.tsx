@@ -1,17 +1,9 @@
-import {
-  Box,
-  Button,
-  FormControlLabel,
-  Grid,
-  Paper,
-  Switch,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, FormControlLabel, Grid, Paper, Switch, TextField, Typography } from '@mui/material';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo } from 'react';
+import { FormActions } from '../../../components/common';
 
 const tenantSchema = z.object({
   tenantId: z
@@ -153,14 +145,12 @@ export const TenantForm = ({
           </Grid>
         </Grid>
 
-        <Box display="flex" justifyContent="flex-end" gap={2} mt={3}>
-          <Button variant="outlined" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button variant="contained" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Submitting...' : 'Create Tenant'}
-          </Button>
-        </Box>
+        <FormActions
+          onCancel={onCancel}
+          isSubmitting={isSubmitting}
+          submitLabel="Create Tenant"
+          cancelLabel="Cancel"
+        />
       </Box>
     </Paper>
   );

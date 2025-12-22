@@ -43,7 +43,12 @@ const statusToAction: Record<LocationStatus, ActionType[]> = {
   BLOCKED: ['unblock'],
 };
 
-export const LocationActions = ({ locationId, status, tenantId, onCompleted }: LocationActionsProps) => {
+export const LocationActions = ({
+  locationId,
+  status,
+  tenantId,
+  onCompleted,
+}: LocationActionsProps) => {
   const { updateStatus, isLoading } = useUpdateLocationStatus();
   const [dialogAction, setDialogAction] = useState<ActionType | null>(null);
   const [reason, setReason] = useState('');
@@ -166,4 +171,3 @@ export const LocationActions = ({ locationId, status, tenantId, onCompleted }: L
     </>
   );
 };
-

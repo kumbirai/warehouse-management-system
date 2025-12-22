@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { locationService } from '../services/locationService';
 import { Location, LocationListFilters } from '../types/location';
 import { logger } from '../../../utils/logger';
@@ -110,7 +110,7 @@ export const useLocations = (filters: LocationListFilters): UseLocationsResult =
       // Backend returns ApiResponse<LocationListQueryResult> where LocationListQueryResult has a 'locations' property
       // Handle both direct array and nested structure
       let locationsArray: Location[] = [];
-      
+
       if (response.data) {
         if (Array.isArray(response.data.locations)) {
           locationsArray = response.data.locations;
@@ -141,7 +141,11 @@ export const useLocations = (filters: LocationListFilters): UseLocationsResult =
       }
 
       // Validate that we have locations or log a warning
-      if (locationsArray.length === 0 && response.data?.totalCount && response.data.totalCount > 0) {
+      if (
+        locationsArray.length === 0 &&
+        response.data?.totalCount &&
+        response.data.totalCount > 0
+      ) {
         logger.warn('Total count indicates locations exist but array is empty', {
           totalCount: response.data.totalCount,
           responseData: response.data,
@@ -164,11 +168,14 @@ export const useLocations = (filters: LocationListFilters): UseLocationsResult =
         errorStack: error.stack,
         errorName: error.name,
         filters,
-        errorDetails: err instanceof Error ? {
-          name: err.name,
-          message: err.message,
-          stack: err.stack,
-        } : String(err),
+        errorDetails:
+          err instanceof Error
+            ? {
+                name: err.name,
+                message: err.message,
+                stack: err.stack,
+              }
+            : String(err),
       });
       setError(error);
       setLocations([]); // Reset locations on error

@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import { Inbox as InboxIcon } from '@mui/icons-material';
 
 interface EmptyStateProps {
@@ -12,12 +12,7 @@ interface EmptyStateProps {
   };
 }
 
-export const EmptyState: React.FC<EmptyStateProps> = ({
-  title,
-  description,
-  icon,
-  action,
-}) => {
+export const EmptyState: React.FC<EmptyStateProps> = ({ title, description, icon, action }) => {
   return (
     <Box
       display="flex"

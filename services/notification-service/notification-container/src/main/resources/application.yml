@@ -86,6 +86,15 @@ spring:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:7080/realms/wms-realm}
           jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:7080/realms/wms-realm/protocol/openid-connect/certs}
+  
+  # Cache Configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 1800000    # Default TTL: 30 minutes (in milliseconds)
+      cache-null-values: false
+      use-key-prefix: true
+      key-prefix: "wms:"
 
   # Mail Configuration (for JavaMailSender)
   mail:
@@ -145,6 +154,20 @@ user:
 tenant:
   service:
     url: ${TENANT_SERVICE_URL:http://tenant-service:8080}
+
+# Cache Configuration
+wms:
+  cache:
+    enabled: true
+    default-ttl-minutes: 30
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+    cache-configs:
+      notifications:
+        ttl-minutes: 30        # Notification entities cached for 30 minutes
 
 # Logging
 logging:

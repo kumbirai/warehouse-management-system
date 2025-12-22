@@ -49,10 +49,10 @@ public class LocationEntityMapper {
             entity.setMaximumQuantity(capacity.getMaximumQuantity());
         }
 
-        entity.setCode(location.getCode());
-        entity.setName(location.getName());
-        entity.setType(location.getType());
-        entity.setDescription(location.getDescription());
+        entity.setCode(location.getCode() != null ? location.getCode().getValue() : null);
+        entity.setName(location.getName() != null ? location.getName().getValue() : null);
+        entity.setType(location.getType() != null ? location.getType().getValue() : null);
+        entity.setDescription(location.getDescription() != null ? location.getDescription().getValue() : null);
         entity.setCreatedAt(location.getCreatedAt());
         entity.setLastModifiedAt(location.getLastModifiedAt());
 

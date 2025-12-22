@@ -8,6 +8,7 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.WarehouseId;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentLineItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentReference;
+import com.ccbsa.wms.stock.domain.core.valueobject.ReceivedBy;
 
 /**
  * Command DTO: CreateConsignmentCommand
@@ -19,7 +20,7 @@ public final class CreateConsignmentCommand {
     private final ConsignmentReference consignmentReference;
     private final WarehouseId warehouseId;
     private final LocalDateTime receivedAt;
-    private final String receivedBy;
+    private final ReceivedBy receivedBy;
     private final List<ConsignmentLineItem> lineItems;
 
     private CreateConsignmentCommand(Builder builder) {
@@ -51,7 +52,7 @@ public final class CreateConsignmentCommand {
         return receivedAt;
     }
 
-    public String getReceivedBy() {
+    public ReceivedBy getReceivedBy() {
         return receivedBy;
     }
 
@@ -64,7 +65,7 @@ public final class CreateConsignmentCommand {
         private ConsignmentReference consignmentReference;
         private WarehouseId warehouseId;
         private LocalDateTime receivedAt;
-        private String receivedBy;
+        private ReceivedBy receivedBy;
         private List<ConsignmentLineItem> lineItems;
 
         public Builder tenantId(TenantId tenantId) {
@@ -87,7 +88,7 @@ public final class CreateConsignmentCommand {
             return this;
         }
 
-        public Builder receivedBy(String receivedBy) {
+        public Builder receivedBy(ReceivedBy receivedBy) {
             this.receivedBy = receivedBy;
             return this;
         }

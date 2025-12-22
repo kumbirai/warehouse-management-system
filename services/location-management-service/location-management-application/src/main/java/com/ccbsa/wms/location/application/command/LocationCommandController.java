@@ -12,15 +12,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.application.api.ApiResponseBuilder;
+import com.ccbsa.wms.location.application.dto.command.AssignLocationsFEFOCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.CreateLocationCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.CreateLocationResultDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationStatusCommandDTO;
 import com.ccbsa.wms.location.application.dto.mapper.LocationDTOMapper;
 import com.ccbsa.wms.location.application.dto.query.LocationQueryResultDTO;
+import com.ccbsa.wms.location.application.service.command.AssignLocationsFEFOCommandHandler;
 import com.ccbsa.wms.location.application.service.command.CreateLocationCommandHandler;
 import com.ccbsa.wms.location.application.service.command.UpdateLocationCommandHandler;
 import com.ccbsa.wms.location.application.service.command.UpdateLocationStatusCommandHandler;
+import com.ccbsa.wms.location.application.service.command.dto.AssignLocationsFEFOCommand;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationCommand;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationResult;
 import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationCommand;
@@ -47,14 +50,17 @@ public class LocationCommandController {
     private final CreateLocationCommandHandler createCommandHandler;
     private final UpdateLocationCommandHandler updateCommandHandler;
     private final UpdateLocationStatusCommandHandler updateStatusCommandHandler;
+    private final AssignLocationsFEFOCommandHandler fefoCommandHandler;
     private final GetLocationQueryHandler getLocationQueryHandler;
     private final LocationDTOMapper mapper;
 
     public LocationCommandController(CreateLocationCommandHandler createCommandHandler, UpdateLocationCommandHandler updateCommandHandler,
-                                     UpdateLocationStatusCommandHandler updateStatusCommandHandler, GetLocationQueryHandler getLocationQueryHandler, LocationDTOMapper mapper) {
+                                     UpdateLocationStatusCommandHandler updateStatusCommandHandler, AssignLocationsFEFOCommandHandler fefoCommandHandler,
+                                     GetLocationQueryHandler getLocationQueryHandler, LocationDTOMapper mapper) {
         this.createCommandHandler = createCommandHandler;
         this.updateCommandHandler = updateCommandHandler;
         this.updateStatusCommandHandler = updateStatusCommandHandler;
+        this.fefoCommandHandler = fefoCommandHandler;
         this.getLocationQueryHandler = getLocationQueryHandler;
         this.mapper = mapper;
     }
@@ -116,6 +122,19 @@ public class LocationCommandController {
         LocationQueryResultDTO resultDTO = mapper.toQueryResultDTO(result);
 
         return ApiResponseBuilder.ok(resultDTO);
+    }
+
+    @PostMapping("/assign-fefo")
+    @Operation(summary = "Assign Locations FEFO", description = "Assigns locations to stock items based on FEFO principles")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'STOCK_MANAGER')")
+    public ResponseEntity<ApiResponse<Void>> assignLocationsFEFO(@RequestHeader("X-Tenant-Id") String tenantId, @Valid @RequestBody AssignLocationsFEFOCommandDTO commandDTO) {
+        // Map DTO to command
+        AssignLocationsFEFOCommand command = mapper.toAssignLocationsFEFOCommand(commandDTO, tenantId);
+
+        // Execute command
+        fefoCommandHandler.handle(command);
+
+        return ApiResponseBuilder.ok(null);
     }
 }
 

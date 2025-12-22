@@ -1,9 +1,14 @@
-import { Alert, Box, CircularProgress, Container, Typography } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { Button } from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
+
+import { DetailPageLayout } from '../../../components/layouts';
+import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 import { ConsignmentDetail } from '../components/ConsignmentDetail';
 import { useConsignment } from '../hooks/useConsignment';
 import { useValidateConsignment } from '../hooks/useValidateConsignment';
+import { ConfirmConsignmentDialog } from '../components/ConfirmConsignmentDialog';
 import { useAuth } from '../../../hooks/useAuth';
+import { useState } from 'react';
 import {
   OPERATOR,
   STOCK_CLERK,
@@ -15,9 +20,17 @@ import {
 
 export const ConsignmentDetailPage = () => {
   const { consignmentId } = useParams<{ consignmentId: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { consignment, isLoading, error, refetch } = useConsignment(consignmentId);
   const validateConsignment = useValidateConsignment();
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+
+  // Handle missing consignment ID
+  if (!consignmentId) {
+    navigate(Routes.consignments);
+    return null;
+  }
 
   const handleValidate = async () => {
     if (!consignmentId) {
@@ -34,6 +47,15 @@ export const ConsignmentDetailPage = () => {
     }
   };
 
+  const handleConfirm = () => {
+    setConfirmDialogOpen(true);
+  };
+
+  const handleConfirmSuccess = async () => {
+    setConfirmDialogOpen(false);
+    await refetch();
+  };
+
   const canValidate =
     user?.roles?.some(role =>
       [
@@ -46,46 +68,44 @@ export const ConsignmentDetailPage = () => {
       ].includes(role)
     ) ?? false;
 
-  if (isLoading) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-          <CircularProgress />
-        </Box>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error">
-          {error instanceof Error ? error.message : 'Failed to load consignment'}
-        </Alert>
-      </Container>
-    );
-  }
-
-  if (!consignment) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="warning">Consignment not found</Alert>
-      </Container>
-    );
-  }
+  const canConfirm =
+    user?.roles?.some(role =>
+      [
+        SYSTEM_ADMIN,
+        TENANT_ADMIN,
+        WAREHOUSE_MANAGER,
+        STOCK_MANAGER,
+        OPERATOR,
+        STOCK_CLERK,
+      ].includes(role)
+    ) ?? false;
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Consignment Details
-      </Typography>
-
+    <DetailPageLayout
+      breadcrumbs={getBreadcrumbs.consignmentDetail(consignment?.consignmentReference || '...')}
+      title={consignment?.consignmentReference || 'Loading...'}
+      actions={
+        <Button variant="outlined" onClick={() => navigate(Routes.consignments)}>
+          Back to List
+        </Button>
+      }
+      isLoading={isLoading}
+      error={error?.message || null}
+    >
       <ConsignmentDetail
         consignment={consignment}
         onValidate={handleValidate}
         isValidating={validateConsignment.isLoading}
         canValidate={canValidate}
+        onConfirm={handleConfirm}
+        canConfirm={canConfirm && consignment?.status === 'RECEIVED'}
       />
-    </Container>
+      <ConfirmConsignmentDialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        consignment={consignment}
+        onSuccess={handleConfirmSuccess}
+      />
+    </DetailPageLayout>
   );
 };

@@ -3,7 +3,7 @@ import { Edit as EditIcon } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { DetailPageLayout } from '../../../components/layouts';
-import { Routes, getBreadcrumbs } from '../../../utils/navigationUtils';
+import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 import { LocationDetail } from '../components/LocationDetail';
 import { useLocation } from '../hooks/useLocation';
 import { useAuth } from '../../../hooks/useAuth';
@@ -39,9 +39,10 @@ export const LocationDetailPage = () => {
     );
   }
 
-  const canEdit = user?.roles?.some(role =>
-    ['SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER'].includes(role)
-  ) ?? false;
+  const canEdit =
+    user?.roles?.some(role =>
+      ['SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER'].includes(role)
+    ) ?? false;
 
   return (
     <DetailPageLayout

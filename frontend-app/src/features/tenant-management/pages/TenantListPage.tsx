@@ -1,23 +1,12 @@
-import {
-  Alert,
-  Box,
-  Breadcrumbs,
-  Button,
-  Container,
-  Link,
-  MenuItem,
-  Pagination,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, Button, MenuItem, Pagination, Stack, TextField } from '@mui/material';
 import { ChangeEvent, useEffect, useState } from 'react';
-import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
-import { Header } from '../../../components/layout/Header';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTenants } from '../hooks/useTenants';
 import { Tenant } from '../types/tenant';
 import { TenantList } from '../components/TenantList';
+import { ListPageLayout } from '../../../components/layouts';
+import { FilterBar } from '../../../components/common';
+import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 
 const statusOptions: (Tenant['status'] | 'ALL')[] = [
   'ALL',
@@ -68,82 +57,71 @@ export const TenantListPage = () => {
     updateStatus(next === 'ALL' ? undefined : next);
   };
 
+  const hasActiveFilters = Boolean(searchValue || (statusValue && statusValue !== 'ALL'));
+
+  const handleClearFilters = () => {
+    setSearchValue('');
+    setStatusValue('ALL');
+    updateSearch(undefined);
+    updateStatus(undefined);
+  };
+
   return (
-    <>
-      <Header />
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Breadcrumbs sx={{ mb: 2 }}>
-          <Link component={RouterLink} to="/dashboard">
-            Dashboard
-          </Link>
-          <Typography color="text.primary">Tenants</Typography>
-        </Breadcrumbs>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          justifyContent="space-between"
-          alignItems="flex-start"
-          mb={3}
-        >
-          <Box>
-            <Typography variant="h4" gutterBottom>
-              Tenant Management
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Create, activate, and manage Local Distribution Partner tenants.
-            </Typography>
-          </Box>
-          <Button variant="contained" onClick={() => navigate('/admin/tenants/create')}>
-            Create Tenant
-          </Button>
+    <ListPageLayout
+      breadcrumbs={getBreadcrumbs.tenantList()}
+      title="Tenant Management"
+      description="Create, activate, and manage Local Distribution Partner tenants."
+      actions={
+        <Button variant="contained" onClick={() => navigate(Routes.admin.tenantCreate)}>
+          Create Tenant
+        </Button>
+      }
+      isLoading={isLoading}
+      error={error}
+      maxWidth="lg"
+    >
+      <FilterBar onClearFilters={handleClearFilters} hasActiveFilters={hasActiveFilters}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ flex: 1 }}>
+          <TextField
+            label="Search"
+            placeholder="Search by ID or name"
+            value={searchValue}
+            onChange={handleSearchChange}
+            fullWidth
+          />
+          <TextField
+            select
+            label="Status"
+            value={statusValue}
+            onChange={handleStatusChange}
+            sx={{ minWidth: 180 }}
+          >
+            {statusOptions.map(status => (
+              <MenuItem key={status} value={status}>
+                {status}
+              </MenuItem>
+            ))}
+          </TextField>
         </Stack>
+      </FilterBar>
 
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <TextField
-              label="Search"
-              placeholder="Search by ID or name"
-              value={searchValue}
-              onChange={handleSearchChange}
-              fullWidth
-            />
-            <TextField
-              select
-              label="Status"
-              value={statusValue}
-              onChange={handleStatusChange}
-              sx={{ minWidth: 180 }}
-            >
-              {statusOptions.map(status => (
-                <MenuItem key={status} value={status}>
-                  {status}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Stack>
-        </Paper>
+      <TenantList
+        tenants={tenants}
+        isLoading={isLoading}
+        onOpenTenant={id => navigate(Routes.admin.tenantDetail(id))}
+        onActionCompleted={refetch}
+      />
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        <TenantList
-          tenants={tenants}
-          isLoading={isLoading}
-          onOpenTenant={id => navigate(`/admin/tenants/${id}`)}
-          onActionCompleted={refetch}
-        />
-
+      {pagination && pagination.totalPages > 1 && (
         <Box display="flex" justifyContent="center" mt={3}>
           <Pagination
-            count={pagination?.totalPages || 1}
-            page={pagination?.page || 1}
+            count={pagination.totalPages}
+            page={pagination.page}
             onChange={(_, page) => updatePage(page)}
             color="primary"
           />
         </Box>
-      </Container>
-    </>
+      )}
+    </ListPageLayout>
   );
 };

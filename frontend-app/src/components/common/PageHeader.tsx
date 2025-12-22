@@ -7,11 +7,7 @@ interface PageHeaderProps {
   actions?: ReactNode;
 }
 
-export const PageHeader: React.FC<PageHeaderProps> = ({
-  title,
-  description,
-  actions,
-}) => {
+export const PageHeader: React.FC<PageHeaderProps> = ({ title, description, actions }) => {
   return (
     <Stack
       direction={{ xs: 'column', md: 'row' }}
@@ -30,7 +26,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           </Typography>
         )}
       </Stack>
-      {actions && <Stack direction="row" spacing={2}>{actions}</Stack>}
+      {actions && (
+        <Stack direction="row" spacing={2}>
+          {actions}
+        </Stack>
+      )}
     </Stack>
   );
 };

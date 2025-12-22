@@ -5,12 +5,18 @@ import java.time.LocalDateTime;
 
 import com.ccbsa.common.domain.TenantAwareAggregateRoot;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.wms.location.domain.core.event.LocationAssignedEvent;
 import com.ccbsa.wms.location.domain.core.event.LocationCreatedEvent;
+import com.ccbsa.wms.location.domain.core.event.LocationStatusChangedEvent;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationBarcode;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationCapacity;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationCode;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationCoordinates;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationDescription;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationName;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationType;
 
 /**
  * Aggregate Root: Location
@@ -28,12 +34,10 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
     private LocationCoordinates coordinates;
     private LocationStatus status;
     private LocationCapacity capacity;
-
-    // Primitives
-    private String code; // Original location code (e.g., "WH-53")
-    private String name; // Location name
-    private String type; // Location type (WAREHOUSE, ZONE, AISLE, RACK, BIN)
-    private String description;
+    private LocationCode code; // Original location code (e.g., "WH-53")
+    private LocationName name; // Location name
+    private LocationType type; // Location type (WAREHOUSE, ZONE, AISLE, RACK, BIN)
+    private LocationDescription description;
     private LocationId parentLocationId; // Parent location ID for hierarchical relationships (null for warehouses)
     private LocalDateTime createdAt;
     private LocalDateTime lastModifiedAt;
@@ -166,7 +170,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
      *
      * @param newDescription New description value (can be null)
      */
-    public void updateDescription(String newDescription) {
+    public void updateDescription(LocationDescription newDescription) {
         this.description = newDescription;
         this.lastModifiedAt = LocalDateTime.now();
     }
@@ -200,18 +204,6 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
     }
 
     /**
-     * Query method: Checks if location is at full capacity.
-     *
-     * @return true if location is at full capacity
-     */
-    public boolean isFull() {
-        if (capacity == null) {
-            return false; // Unlimited capacity
-        }
-        return capacity.isFull();
-    }
-
-    /**
      * Query method: Checks if location is empty.
      *
      * @return true if location has no current quantity
@@ -221,6 +213,102 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
             return true; // No quantity tracked
         }
         return capacity.isEmpty();
+    }
+
+    /**
+     * Business logic method: Assigns stock to location.
+     * <p>
+     * Business Rules:
+     * - Location must be available
+     * - Location must have sufficient capacity
+     * - Updates location status and capacity
+     * - Publishes LocationStatusChangedEvent if status changes
+     *
+     * @param stockItemId Stock item identifier (as String, cross-service reference)
+     * @param quantity    Quantity to assign
+     * @throws IllegalStateException    if location is not available or cannot accommodate quantity
+     * @throws IllegalArgumentException if stockItemId or quantity is null/invalid
+     */
+    public void assignStock(String stockItemId, BigDecimal quantity) {
+        if (stockItemId == null || stockItemId.trim().isEmpty()) {
+            throw new IllegalArgumentException("StockItemId cannot be null or empty");
+        }
+        if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+
+        // Validate location is available
+        if (this.status != LocationStatus.AVAILABLE) {
+            throw new IllegalStateException(String.format("Cannot assign stock to location in status: %s", this.status));
+        }
+
+        // Validate capacity
+        if (!hasCapacity(quantity)) {
+            BigDecimal available = getAvailableCapacity();
+            throw new IllegalStateException(
+                    String.format("Location does not have sufficient capacity. Required: %s, Available: %s", quantity, available != null ? available : "unlimited"));
+        }
+
+        // Update capacity
+        BigDecimal newCurrentQuantity = this.capacity.getCurrentQuantity().add(quantity);
+        LocationCapacity newCapacity = LocationCapacity.of(newCurrentQuantity, this.capacity.getMaximumQuantity());
+        this.capacity = newCapacity;
+
+        // Update status if location is now full
+        LocationStatus oldStatus = this.status;
+        if (isFull()) {
+            this.status = LocationStatus.OCCUPIED;
+        }
+
+        this.lastModifiedAt = LocalDateTime.now();
+
+        // Publish domain events
+        addDomainEvent(new LocationAssignedEvent(this.getId(), this.getTenantId(), stockItemId, quantity));
+
+        if (oldStatus != this.status) {
+            addDomainEvent(new LocationStatusChangedEvent(this.getId(), this.getTenantId(), oldStatus, this.status));
+        }
+    }
+
+    /**
+     * Business logic method: Checks if location has sufficient capacity for the given quantity.
+     *
+     * @param quantity Required quantity
+     * @return true if location has sufficient capacity
+     * @throws IllegalArgumentException if quantity is null or non-positive
+     */
+    public boolean hasCapacity(BigDecimal quantity) {
+        if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+        if (this.capacity == null) {
+            return true; // No capacity limit
+        }
+        return this.capacity.canAccommodate(quantity);
+    }
+
+    /**
+     * Business logic method: Gets available capacity.
+     *
+     * @return Available capacity, or null if unlimited
+     */
+    public BigDecimal getAvailableCapacity() {
+        if (this.capacity == null) {
+            return null; // Unlimited capacity
+        }
+        return this.capacity.getAvailableCapacity();
+    }
+
+    /**
+     * Query method: Checks if location is at full capacity.
+     *
+     * @return true if location is at full capacity
+     */
+    public boolean isFull() {
+        if (capacity == null) {
+            return false; // Unlimited capacity
+        }
+        return capacity.isFull();
     }
 
     // Getters (read-only access)
@@ -241,19 +329,19 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
         return capacity;
     }
 
-    public String getCode() {
+    public LocationCode getCode() {
         return code;
     }
 
-    public String getName() {
+    public LocationName getName() {
         return name;
     }
 
-    public String getType() {
+    public LocationType getType() {
         return type;
     }
 
-    public String getDescription() {
+    public LocationDescription getDescription() {
         return description;
     }
 
@@ -305,23 +393,43 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
             return this;
         }
 
-        public Builder code(String code) {
+        public Builder code(LocationCode code) {
             location.code = code;
             return this;
         }
 
-        public Builder name(String name) {
+        public Builder code(String code) {
+            location.code = LocationCode.ofNullable(code);
+            return this;
+        }
+
+        public Builder name(LocationName name) {
             location.name = name;
             return this;
         }
 
-        public Builder type(String type) {
+        public Builder name(String name) {
+            location.name = LocationName.ofNullable(name);
+            return this;
+        }
+
+        public Builder type(LocationType type) {
             location.type = type;
             return this;
         }
 
-        public Builder description(String description) {
+        public Builder type(String type) {
+            location.type = LocationType.ofNullable(type);
+            return this;
+        }
+
+        public Builder description(LocationDescription description) {
             location.description = description;
+            return this;
+        }
+
+        public Builder description(String description) {
+            location.description = LocationDescription.ofNullable(description);
             return this;
         }
 

@@ -1,25 +1,14 @@
-import {
-  Alert,
-  Box,
-  Breadcrumbs,
-  Button,
-  Container,
-  Link,
-  MenuItem,
-  Pagination,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, Button, MenuItem, Pagination, Stack, TextField } from '@mui/material';
 import { ChangeEvent, useEffect, useState } from 'react';
-import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
-import { Header } from '../../../components/layout/Header';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useUsers } from '../hooks/useUsers';
 import { UserStatus } from '../types/user';
 import { UserList } from '../components/UserList';
 import { TenantSelector } from '../components/TenantSelector';
 import { useAuth } from '../../../hooks/useAuth';
+import { ListPageLayout } from '../../../components/layouts';
+import { FilterBar } from '../../../components/common';
+import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 
 const statusOptions: (UserStatus | 'ALL')[] = ['ALL', 'ACTIVE', 'INACTIVE', 'SUSPENDED'];
 
@@ -83,94 +72,83 @@ export const UserListPage = () => {
     updateTenantId(normalizedTenantId);
   };
 
+  const hasActiveFilters = Boolean(
+    searchValue || (statusValue && statusValue !== 'ALL') || (isSystemAdmin() && tenantValue)
+  );
+
+  const handleClearFilters = () => {
+    setSearchValue('');
+    setStatusValue('ALL');
+    const defaultTenantId = isSystemAdmin() ? undefined : currentTenantId;
+    setTenantValue(defaultTenantId);
+    updateSearch(undefined);
+    updateStatus(undefined);
+    updateTenantId(defaultTenantId);
+  };
+
   return (
-    <>
-      <Header />
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 3 }}>
-          <Link component={RouterLink} to="/dashboard" color="inherit">
-            Dashboard
-          </Link>
-          <Typography color="text.primary">User Management</Typography>
-        </Breadcrumbs>
-
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          justifyContent="space-between"
-          alignItems="flex-start"
-          mb={3}
-        >
-          <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
-              User Management
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Manage user accounts, roles, and permissions across tenants.
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            onClick={() => navigate('/admin/users/create')}
-            sx={{ mt: { xs: 2, md: 0 } }}
-          >
-            Create User
-          </Button>
-        </Stack>
-
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <TextField
-              label="Search"
-              placeholder="Search by username or email"
-              value={searchValue}
-              onChange={handleSearchChange}
-              fullWidth
+    <ListPageLayout
+      breadcrumbs={getBreadcrumbs.userList()}
+      title="User Management"
+      description="Manage user accounts, roles, and permissions across tenants."
+      actions={
+        <Button variant="contained" onClick={() => navigate(Routes.admin.userCreate)}>
+          Create User
+        </Button>
+      }
+      isLoading={isLoading}
+      error={error}
+      maxWidth="lg"
+    >
+      <FilterBar onClearFilters={handleClearFilters} hasActiveFilters={hasActiveFilters}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ flex: 1 }}>
+          <TextField
+            label="Search"
+            placeholder="Search by username or email"
+            value={searchValue}
+            onChange={handleSearchChange}
+            fullWidth
+          />
+          {isSystemAdmin() && (
+            <TenantSelector
+              value={tenantValue}
+              onChange={handleTenantChange}
+              label="Filter by Tenant"
             />
-            {isSystemAdmin() && (
-              <TenantSelector
-                value={tenantValue}
-                onChange={handleTenantChange}
-                label="Filter by Tenant"
-              />
-            )}
-            <TextField
-              select
-              label="Status"
-              value={statusValue}
-              onChange={handleStatusChange}
-              sx={{ minWidth: 180 }}
-            >
-              {statusOptions.map(status => (
-                <MenuItem key={status} value={status}>
-                  {status}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Stack>
-        </Paper>
+          )}
+          <TextField
+            select
+            label="Status"
+            value={statusValue}
+            onChange={handleStatusChange}
+            sx={{ minWidth: 180 }}
+          >
+            {statusOptions.map(status => (
+              <MenuItem key={status} value={status}>
+                {status}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Stack>
+      </FilterBar>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+      <UserList
+        users={users}
+        isLoading={isLoading}
+        onOpenUser={id => navigate(Routes.admin.userDetail(id))}
+        onActionCompleted={refetch}
+      />
 
-        <UserList
-          users={users}
-          isLoading={isLoading}
-          onOpenUser={id => navigate(`/admin/users/${id}`)}
-          onActionCompleted={refetch}
-        />
-
+      {pagination && pagination.totalPages > 1 && (
         <Box display="flex" justifyContent="center" mt={3}>
           <Pagination
-            count={pagination?.totalPages || 1}
-            page={pagination?.page || 1}
+            count={pagination.totalPages}
+            page={pagination.page}
             onChange={(_, page) => updatePage(page)}
             color="primary"
           />
         </Box>
-      </Container>
-    </>
+      )}
+    </ListPageLayout>
   );
 };

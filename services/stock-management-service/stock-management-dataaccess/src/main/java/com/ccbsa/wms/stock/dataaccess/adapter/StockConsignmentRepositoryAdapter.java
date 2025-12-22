@@ -154,7 +154,7 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
         entity.setStatus(consignment.getStatus());
         entity.setReceivedAt(consignment.getReceivedAt());
         entity.setConfirmedAt(consignment.getConfirmedAt());
-        entity.setReceivedBy(consignment.getReceivedBy());
+        entity.setReceivedBy(consignment.getReceivedBy() != null ? consignment.getReceivedBy().getValue() : null);
         entity.setLastModifiedAt(consignment.getLastModifiedAt());
 
         // Update line items - remove all existing and add new ones

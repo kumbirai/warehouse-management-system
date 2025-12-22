@@ -107,8 +107,7 @@ public final class ProductBarcode {
         // Reject unrecognized formats
         throw new IllegalArgumentException(String.format(
                 "Invalid barcode format: '%s'. Barcode must match one of: EAN-13 (13 digits), UPC-A (12 digits), ITF-14 (14 digits), CODE_128 (alphanumeric 1-48 chars), or "
-                        + "CODE_39 (alphanumeric with specific characters)",
-                trimmedValue));
+                        + "CODE_39 (alphanumeric with specific characters)", trimmedValue));
     }
 
     /**

@@ -23,12 +23,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   size = 'small',
 }) => {
   return (
-    <Chip
-      label={label}
-      color={variantColorMap[variant]}
-      size={size}
-      sx={{ fontWeight: 500 }}
-    />
+    <Chip label={label} color={variantColorMap[variant]} size={size} sx={{ fontWeight: 500 }} />
   );
 };
 
@@ -43,7 +38,12 @@ export const getStatusVariant = (status: string): StatusVariant => {
     return 'warning';
   }
 
-  if (statusLower === 'inactive' || statusLower === 'suspended' || statusLower === 'unavailable' || statusLower === 'blocked') {
+  if (
+    statusLower === 'inactive' ||
+    statusLower === 'suspended' ||
+    statusLower === 'unavailable' ||
+    statusLower === 'blocked'
+  ) {
     return 'error';
   }
 

@@ -3,6 +3,7 @@ package com.ccbsa.wms.stock.application.service.command.dto;
 import java.io.InputStream;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.wms.stock.domain.core.valueobject.ReceivedBy;
 
 /**
  * Command DTO: UploadConsignmentCsvCommand
@@ -12,7 +13,7 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 public final class UploadConsignmentCsvCommand {
     private final TenantId tenantId;
     private final InputStream csvInputStream;
-    private final String receivedBy;
+    private final ReceivedBy receivedBy;
 
     private UploadConsignmentCsvCommand(Builder builder) {
         this.tenantId = builder.tenantId;
@@ -32,14 +33,14 @@ public final class UploadConsignmentCsvCommand {
         return csvInputStream;
     }
 
-    public String getReceivedBy() {
+    public ReceivedBy getReceivedBy() {
         return receivedBy;
     }
 
     public static class Builder {
         private TenantId tenantId;
         private InputStream csvInputStream;
-        private String receivedBy;
+        private ReceivedBy receivedBy;
 
         public Builder tenantId(TenantId tenantId) {
             this.tenantId = tenantId;
@@ -51,7 +52,7 @@ public final class UploadConsignmentCsvCommand {
             return this;
         }
 
-        public Builder receivedBy(String receivedBy) {
+        public Builder receivedBy(ReceivedBy receivedBy) {
             this.receivedBy = receivedBy;
             return this;
         }

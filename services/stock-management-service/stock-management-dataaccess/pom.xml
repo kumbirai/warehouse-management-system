@@ -74,12 +74,25 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.ccbsa.wms</groupId>
+            <artifactId>common-cache</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- SpotBugs Annotations for suppressing false positives -->
         <dependency>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-annotations</artifactId>
             <version>${spotbugs.annotations.version}</version>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- Resilience4j for Circuit Breaker -->
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-spring-boot3</artifactId>
+            <version>${resilience4j.version}</version>
         </dependency>
     </dependencies>
     <build>

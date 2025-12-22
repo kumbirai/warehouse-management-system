@@ -24,7 +24,16 @@ export const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+    <Box
+      sx={{
+        mt: 3,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 2,
+      }}
+    >
       <Typography variant="body2" color="text.secondary">
         Showing {startItem}-{endItem} of {totalItems}
       </Typography>

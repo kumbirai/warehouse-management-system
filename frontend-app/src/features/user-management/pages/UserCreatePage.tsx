@@ -1,10 +1,11 @@
-import { Alert, Breadcrumbs, Container, Link, Snackbar, Stack, Typography } from '@mui/material';
+import { Snackbar } from '@mui/material';
 import { useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Header } from '../../../components/layout/Header';
+import { useNavigate } from 'react-router-dom';
 import { UserForm, UserFormValues } from '../components/UserForm';
 import { useCreateUser } from '../hooks/useCreateUser';
 import { CreateUserRequest } from '../types/user';
+import { FormPageLayout } from '../../../components/layouts';
+import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 
 export const UserCreatePage = () => {
   const navigate = useNavigate();
@@ -32,37 +33,19 @@ export const UserCreatePage = () => {
 
   return (
     <>
-      <Header />
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Breadcrumbs sx={{ mb: 2 }}>
-          <Link component={RouterLink} to="/dashboard">
-            Dashboard
-          </Link>
-          <Link component={RouterLink} to="/admin/users">
-            Users
-          </Link>
-          <Typography color="text.primary">Create User</Typography>
-        </Breadcrumbs>
-        <Stack spacing={2} mb={3}>
-          <Typography variant="h4">Create User</Typography>
-          <Typography variant="body1" color="text.secondary">
-            Create a new user account. The user will be created in Keycloak with the specified
-            tenant and roles.
-          </Typography>
-        </Stack>
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error.message}
-          </Alert>
-        )}
-
+      <FormPageLayout
+        breadcrumbs={getBreadcrumbs.userCreate()}
+        title="Create User"
+        description="Create a new user account. The user will be created in Keycloak with the specified tenant and roles."
+        error={error?.message || null}
+        maxWidth="md"
+      >
         <UserForm
           onSubmit={handleSubmit}
-          onCancel={() => navigate('/admin/users')}
+          onCancel={() => navigate(Routes.admin.users)}
           isSubmitting={isLoading}
         />
-      </Container>
+      </FormPageLayout>
 
       <Snackbar
         open={!!snackbarMessage}

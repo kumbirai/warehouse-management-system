@@ -11,6 +11,7 @@ import {
 import { CreateConsignmentRequest } from '../types/stockManagement';
 import { BarcodeScanner } from './BarcodeScanner';
 import { useValidateBarcode } from '../hooks/useValidateBarcode';
+import { FormActions } from '../../../components/common';
 
 const consignmentSchema = z.object({
   consignmentReference: z
@@ -291,14 +292,12 @@ export const ConsignmentForm = ({
             )}
 
             <Grid item xs={12}>
-              <Box display="flex" gap={2} justifyContent="flex-end">
-                <Button variant="outlined" onClick={onCancel} disabled={isSubmitting}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="contained" disabled={isSubmitting}>
-                  {isSubmitting ? 'Creating...' : 'Create Consignment'}
-                </Button>
-              </Box>
+              <FormActions
+                onCancel={onCancel}
+                isSubmitting={isSubmitting}
+                submitLabel="Create Consignment"
+                cancelLabel="Cancel"
+              />
             </Grid>
           </Grid>
         </form>

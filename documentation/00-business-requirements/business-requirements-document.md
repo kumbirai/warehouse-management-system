@@ -296,14 +296,18 @@ capability to:
 
 ### FR-4: Product Identification
 
-#### FR-4.1: Product Barcode Support
+#### FR-4.1: Product Barcode Support (Barcode-First Principle)
 
-- **Requirement**: ALL stock items MUST have product barcodes for easy identification.
+- **Requirement**: ALL stock items MUST have product barcodes for easy identification. **Barcode scanning is the primary input method** - manual entry is provided as a fallback when scanning fails or is unavailable.
 - **Details**:
-    - System must support scanning product barcodes for identification
+    - **Primary Method:** System must support scanning product barcodes for identification (handheld scanner or camera)
+    - **Fallback Method:** Manual keyboard input when scanning fails or is unavailable
     - Product barcodes must be validated against master data
-    - System must handle multiple barcode formats (EAN-13, Code 128, etc.)
-    - Barcode scanning must work in all relevant processes (receiving, picking, returns)
+    - System must handle multiple barcode formats (EAN-13, Code 128, UPC-A, QR Code, etc.)
+    - Barcode scanning must work in all relevant processes (receiving, picking, returns, stock count, location assignment)
+    - All identifier input fields must use BarcodeInput component (scan first, manual input as fallback)
+    - Auto-focus barcode fields for optimal handheld scanner workflow
+    - Clear helper text guides users: "Scan barcode first, or enter manually if scanning fails"
 
 #### FR-4.2: Product Master Data Synchronization
 
@@ -440,14 +444,17 @@ capability to:
     - System must support cycle counting (counting subsets of locations daily)
     - System must support full physical inventory counts
     - System must provide a digital workflow where users can:
-        - Scan location barcodes to identify the location being counted
-        - Scan product barcodes to identify products at that location
+        - **Primary:** Scan location barcodes to identify the location being counted (handheld scanner or camera)
+        - **Fallback:** Enter location code manually if scanning fails
+        - **Primary:** Scan product barcodes to identify products at that location (handheld scanner or camera)
+        - **Fallback:** Enter product code manually if scanning fails
         - Enter product quantities directly into the electronic worksheet
         - Complete counts entirely within the system without paper transcription
     - System must validate scanned barcodes against master data (locations and products)
     - System must prevent duplicate counting of the same location/product combination
-    - System must allow manual count entry for products without barcodes or when scanning is unavailable
-    - System must support barcode scanning using handheld scanners and mobile device cameras
+    - System must allow manual count entry for products without barcodes or when scanning is unavailable (fallback method)
+    - System must support barcode scanning using handheld scanners (primary) and mobile device cameras (secondary)
+    - **Barcode-First Principle:** All identifier fields must prioritize scanning over manual input
     - System must save count progress automatically to prevent data loss
     - System must allow users to resume incomplete stock counts
 
@@ -590,14 +597,20 @@ capability to:
     - Accessibility compliance (WCAG 2.1 Level AA)
     - Multi-language support (English, Afrikaans, Zulu)
 
-#### NFR-4.2: Barcode Scanning
+#### NFR-4.2: Barcode Scanning (Barcode-First Principle)
 
-- **Requirement**: System MUST support efficient barcode scanning workflows.
+- **Requirement**: System MUST support efficient barcode scanning workflows. **Barcode scanning is the primary input method** - manual entry is provided as a fallback.
 - **Details**:
-    - Support for handheld scanners
-    - Mobile device camera scanning
+    - **Primary Method:** Support for handheld scanners (USB/Bluetooth - acts as keyboard)
+    - **Secondary Method:** Mobile device camera scanning (ZXing library)
+    - **Fallback Method:** Manual keyboard input when scanning fails or is unavailable
     - Batch scanning capabilities
     - Offline scanning with sync when online
+    - Auto-focus on barcode fields for optimal scanner workflow
+    - Clear UI guidance: "Scan barcode first, or enter manually if scanning fails"
+    - All identifier fields (product codes, location codes, barcodes) must use BarcodeInput component
+    - Immediate validation of scanned barcodes
+    - Auto-population of related fields when barcode is validated
 
 #### NFR-4.3: Offline Support and Data Synchronization
 

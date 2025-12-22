@@ -155,9 +155,9 @@ public class LocationRepositoryAdapter implements LocationRepository {
      */
     private void updateEntityFromDomain(LocationEntity entity, Location location) {
         entity.setBarcode(location.getBarcode().getValue());
-        entity.setCode(location.getCode());
-        entity.setName(location.getName());
-        entity.setType(location.getType());
+        entity.setCode(location.getCode() != null ? location.getCode().getValue() : null);
+        entity.setName(location.getName() != null ? location.getName().getValue() : null);
+        entity.setType(location.getType() != null ? location.getType().getValue() : null);
         entity.setZone(location.getCoordinates().getZone());
         entity.setAisle(location.getCoordinates().getAisle());
         entity.setRack(location.getCoordinates().getRack());
@@ -171,7 +171,7 @@ public class LocationRepositoryAdapter implements LocationRepository {
             entity.setMaximumQuantity(capacity.getMaximumQuantity());
         }
 
-        entity.setDescription(location.getDescription());
+        entity.setDescription(location.getDescription() != null ? location.getDescription().getValue() : null);
         entity.setLastModifiedAt(location.getLastModifiedAt());
 
         // Update parent location ID
@@ -387,6 +387,43 @@ public class LocationRepositoryAdapter implements LocationRepository {
 
         // Now query using JPA repository (will use the schema set in search_path)
         return jpaRepository.findByTenantId(tenantId.getValue()).stream().map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Location> findAvailableLocations(TenantId tenantId) {
+        // Verify TenantContext is set (critical for schema resolution)
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when querying available locations! Cannot resolve schema.");
+            throw new IllegalStateException("TenantContext must be set before querying available locations");
+        }
+
+        // Verify tenantId matches TenantContext
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
+        }
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Query for available locations (AVAILABLE or RESERVED status)
+        List<com.ccbsa.wms.location.domain.core.valueobject.LocationStatus> availableStatuses =
+                List.of(com.ccbsa.wms.location.domain.core.valueobject.LocationStatus.AVAILABLE, com.ccbsa.wms.location.domain.core.valueobject.LocationStatus.RESERVED);
+
+        // Now query using JPA repository (will use the schema set in search_path)
+        return jpaRepository.findByTenantIdAndStatusIn(tenantId.getValue(), availableStatuses).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 }
 

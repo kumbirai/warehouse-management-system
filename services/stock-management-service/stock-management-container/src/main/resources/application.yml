@@ -84,6 +84,31 @@ spring:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:7080/realms/wms-realm}
           jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:7080/realms/wms-realm/protocol/openid-connect/certs}
+  
+  # Cache Configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 1800000    # Default TTL: 30 minutes (in milliseconds)
+      cache-null-values: false
+      use-key-prefix: true
+      key-prefix: "wms:"
+
+# Cache Configuration
+wms:
+  cache:
+    enabled: true
+    default-ttl-minutes: 30
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+    cache-configs:
+      stock-consignments:
+        ttl-minutes: 30        # Stock consignment entities cached for 30 minutes
+      stock-items:
+        ttl-minutes: 30        # Stock item entities cached for 30 minutes
 
 # Eureka Client Configuration
 eureka:
@@ -103,10 +128,36 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,circuitbreakers
   endpoint:
     health:
       show-details: always
+
+# Resilience4j Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      locationService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        slowCallRateThreshold: 100
+        slowCallDurationThreshold: 2s
+  retry:
+    instances:
+      locationService:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - java.net.ConnectException
+          - java.net.SocketTimeoutException
 
 # Logging
 logging:

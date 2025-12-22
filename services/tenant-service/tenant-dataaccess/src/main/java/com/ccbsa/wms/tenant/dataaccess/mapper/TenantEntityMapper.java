@@ -16,12 +16,33 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantName;
  */
 @Component
 public class TenantEntityMapper {
+    /**
+     * Converts Tenant domain entity to TenantEntity JPA entity.
+     * <p>
+     * For new entities (version == 0), version is not set to let Hibernate manage it. For existing entities (version > 0), version is set to enable optimistic locking.
+     *
+     * @param tenant Tenant domain entity
+     * @return TenantEntity JPA entity
+     * @throws IllegalArgumentException if tenant is null
+     */
     public TenantEntity toEntity(Tenant tenant) {
+        if (tenant == null) {
+            throw new IllegalArgumentException("Tenant cannot be null");
+        }
+
         TenantEntity entity = new TenantEntity();
         entity.setTenantId(tenant.getId().getValue());
         entity.setName(tenant.getName().getValue());
         entity.setStatus(tenant.getStatus());
-        entity.setVersion(tenant.getVersion());
+
+        // For new entities, version will be set by Hibernate when persisting
+        // For existing entities loaded from DB, version is already set
+        // We only set version when mapping from domain if it's > 0 (existing entity)
+        int domainVersion = tenant.getVersion();
+        if (domainVersion > 0) {
+            entity.setVersion(domainVersion);
+        }
+        // For new entities (version == 0), don't set version - let Hibernate manage it
 
         // Contact information - always set fields explicitly (even if null) to ensure proper persistence
         if (tenant.getContactInformation() != null) {

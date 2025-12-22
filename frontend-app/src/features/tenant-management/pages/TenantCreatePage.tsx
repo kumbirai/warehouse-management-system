@@ -1,10 +1,11 @@
-import { Alert, Breadcrumbs, Container, Link, Snackbar, Stack, Typography } from '@mui/material';
+import { Snackbar } from '@mui/material';
 import { useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Header } from '../../../components/layout/Header';
+import { useNavigate } from 'react-router-dom';
 import { TenantForm, TenantFormValues } from '../components/TenantForm';
 import { useCreateTenant } from '../hooks/useCreateTenant';
 import { CreateTenantRequest } from '../types/tenant';
+import { FormPageLayout } from '../../../components/layouts';
+import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 
 export const TenantCreatePage = () => {
   const navigate = useNavigate();
@@ -33,36 +34,19 @@ export const TenantCreatePage = () => {
 
   return (
     <>
-      <Header />
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Breadcrumbs sx={{ mb: 2 }}>
-          <Link component={RouterLink} to="/dashboard">
-            Dashboard
-          </Link>
-          <Link component={RouterLink} to="/admin/tenants">
-            Tenants
-          </Link>
-          <Typography color="text.primary">Create Tenant</Typography>
-        </Breadcrumbs>
-        <Stack spacing={2} mb={3}>
-          <Typography variant="h4">Create Tenant</Typography>
-          <Typography variant="body1" color="text.secondary">
-            Provide tenant onboarding information. Validation is applied automatically.
-          </Typography>
-        </Stack>
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
+      <FormPageLayout
+        breadcrumbs={getBreadcrumbs.tenantCreate()}
+        title="Create Tenant"
+        description="Provide tenant onboarding information. Validation is applied automatically."
+        error={error}
+        maxWidth="md"
+      >
         <TenantForm
           onSubmit={handleSubmit}
-          onCancel={() => navigate('/admin/tenants')}
+          onCancel={() => navigate(Routes.admin.tenants)}
           isSubmitting={isSubmitting}
         />
-      </Container>
+      </FormPageLayout>
 
       <Snackbar
         open={!!snackbarMessage}

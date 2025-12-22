@@ -1,0 +1,158 @@
+package com.ccbsa.wms.stock.dataaccess.entity;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import com.ccbsa.common.domain.valueobject.StockClassification;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
+
+/**
+ * JPA Entity: StockItemEntity
+ * <p>
+ * JPA representation of StockItem aggregate. Uses tenant schema resolver for multi-tenant isolation (schema-per-tenant strategy).
+ * <p>
+ * This entity maps to the StockItem domain aggregate and uses domain enums directly to maintain consistency between domain and persistence layers.
+ * <p>
+ * The schema "tenant_schema" is a placeholder that will be dynamically replaced with the actual tenant schema at runtime by TenantAwarePhysicalNamingStrategy.
+ */
+@Entity
+@Table(name = "stock_items", schema = "tenant_schema")
+public class StockItemEntity {
+    @Id
+    @Column(name = "id", nullable = false)
+    private UUID id;
+
+    @Column(name = "tenant_id", length = 255, nullable = false)
+    private String tenantId;
+
+    @Column(name = "product_id", nullable = false)
+    private UUID productId;
+
+    @Column(name = "location_id")
+    private UUID locationId; // May be null initially
+
+    @Column(name = "quantity", nullable = false)
+    private Integer quantity;
+
+    @Column(name = "expiration_date")
+    private LocalDate expirationDate; // May be null for non-perishable
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "classification", length = 50, nullable = false)
+    private StockClassification classification;
+
+    @Column(name = "consignment_id")
+    private UUID consignmentId; // Reference to source consignment
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "last_modified_at", nullable = false)
+    private LocalDateTime lastModifiedAt;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
+    // JPA requires no-arg constructor
+    public StockItemEntity() {
+    }
+
+    // Getters and setters
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    public UUID getProductId() {
+        return productId;
+    }
+
+    public void setProductId(UUID productId) {
+        this.productId = productId;
+    }
+
+    public UUID getLocationId() {
+        return locationId;
+    }
+
+    public void setLocationId(UUID locationId) {
+        this.locationId = locationId;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public LocalDate getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(LocalDate expirationDate) {
+        this.expirationDate = expirationDate;
+    }
+
+    public StockClassification getClassification() {
+        return classification;
+    }
+
+    public void setClassification(StockClassification classification) {
+        this.classification = classification;
+    }
+
+    public UUID getConsignmentId() {
+        return consignmentId;
+    }
+
+    public void setConsignmentId(UUID consignmentId) {
+        this.consignmentId = consignmentId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getLastModifiedAt() {
+        return lastModifiedAt;
+    }
+
+    public void setLastModifiedAt(LocalDateTime lastModifiedAt) {
+        this.lastModifiedAt = lastModifiedAt;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+}
+

@@ -68,7 +68,7 @@
 - **Received Date** (required, datetime picker, default: now)
 - **Received By** (optional, text input)
 - **Line Items** (required, dynamic list):
-    - Product Code or Barcode (required, with barcode scanner)
+    - Product Code or Barcode (required, **BarcodeInput component - scan first, manual input as fallback**)
     - Quantity (required, number input, must be positive)
     - Expiration Date (optional, date picker)
     - Batch Number (optional, text input)
@@ -98,7 +98,8 @@
 3. User enters consignment reference (system checks uniqueness in real-time)
 4. User selects warehouse ID
 5. User adds line items:
-    - Scans product barcode or enters product code
+    - **Primary:** Scans product barcode (handheld scanner or camera)
+    - **Fallback:** Enters product code manually if scanning fails
     - System validates product exists and displays product name
     - User enters quantity
     - User optionally enters expiration date and batch number
@@ -109,17 +110,24 @@
 10. Success message displayed
 11. User redirected to consignment detail page
 
-### Barcode Scanner Integration
+### Barcode Scanner Integration (Barcode-First Principle)
 
-**Component:** `ProductBarcodeScanner.tsx`
+**Component:** `BarcodeInput` (from `@/components/common`)
 
-**Features:**
+**Barcode-First Implementation:**
 
-- Camera-based barcode scanning (ZXing library)
-- Keyboard input support (handheld scanners)
-- Product lookup by barcode
-- Product information display
-- Error handling for invalid barcodes
+- **Primary Method:** Barcode scanning
+  - Handheld scanner support (USB/Bluetooth - acts as keyboard)
+  - Camera-based scanning (ZXing library via camera button)
+  - Auto-focus on barcode fields for optimal scanner UX
+- **Fallback Method:** Manual keyboard input
+  - Full keyboard support when scanning fails
+  - Clear helper text: "Scan barcode first, or enter manually if scanning fails"
+- **Features:**
+  - Product lookup by barcode
+  - Product information display
+  - Error handling for invalid barcodes
+  - Auto-population of product details when barcode is validated
 
 ---
 
@@ -239,16 +247,24 @@ export const ConsignmentCreationForm: React.FC = () => {
     setLineItems(lineItems.filter((_, i) => i !== index));
   };
 
-  const handleScanBarcode = async (index: number) => {
+  // Barcode-First: Handle barcode scan (primary method)
+  const handleBarcodeScan = async (index: number, scannedBarcode: string) => {
     try {
-      const barcode = await scanBarcode();
-      const product = await validateProductBarcode(barcode);
+      const product = await validateProductBarcode(scannedBarcode);
       const updatedLineItems = [...lineItems];
       updatedLineItems[index].productCode = product.productCode;
       setLineItems(updatedLineItems);
     } catch (error) {
-      // Show error message
+      // Show error message - user can enter manually as fallback
+      console.error('Barcode validation failed:', error);
     }
+  };
+
+  // Fallback: Handle manual product code input
+  const handleProductCodeChange = (index: number, productCode: string) => {
+    const updatedLineItems = [...lineItems];
+    updatedLineItems[index].productCode = productCode;
+    setLineItems(updatedLineItems);
   };
 
   const handleSaveDraft = () => {
@@ -332,7 +348,8 @@ export const ConsignmentCreationForm: React.FC = () => {
                   setLineItems(updated);
                 }}
                 onRemove={() => handleRemoveLineItem(index)}
-                onScanBarcode={() => handleScanBarcode(index)}
+                onBarcodeScan={(barcode) => handleBarcodeScan(index, barcode)}
+                onProductCodeChange={(code) => handleProductCodeChange(index, code)}
               />
             ))}
             
@@ -366,6 +383,106 @@ export const ConsignmentCreationForm: React.FC = () => {
   );
 };
 ```
+
+### Line Item Row Component (Barcode-First Implementation)
+
+**File:** `src/features/consignment-management/components/LineItemRow.tsx`
+
+```typescript
+import { BarcodeInput } from '@/components/common';
+import { TextField, IconButton, Grid } from '@mui/material';
+import { Delete as DeleteIcon } from '@mui/icons-material';
+
+interface LineItemRowProps {
+  item: LineItemFormData;
+  index: number;
+  onUpdate: (item: LineItemFormData) => void;
+  onRemove: () => void;
+  onBarcodeScan: (barcode: string) => void;
+  onProductCodeChange: (code: string) => void;
+}
+
+export const LineItemRow: React.FC<LineItemRowProps> = ({
+  item,
+  index,
+  onUpdate,
+  onRemove,
+  onBarcodeScan,
+  onProductCodeChange,
+}) => {
+  // Primary: Handle barcode scan
+  const handleBarcodeScan = async (scannedBarcode: string) => {
+    onBarcodeScan(scannedBarcode);
+  };
+
+  // Fallback: Handle manual product code input
+  const handleProductCodeChange = (value: string) => {
+    onProductCodeChange(value);
+    onUpdate({ ...item, productCode: value });
+  };
+
+  return (
+    <Grid container spacing={2} sx={{ mb: 2 }}>
+      <Grid item xs={12} md={4}>
+        <BarcodeInput
+          label="Product Code or Barcode"
+          value={item.productCode}
+          onChange={handleProductCodeChange}
+          onScan={handleBarcodeScan}
+          helperText="Scan barcode first, or enter product code manually if scanning fails"
+          autoFocus={index === 0}
+          required
+          fullWidth
+        />
+      </Grid>
+      
+      <Grid item xs={12} md={2}>
+        <TextField
+          label="Quantity"
+          type="number"
+          value={item.quantity}
+          onChange={(e) => onUpdate({ ...item, quantity: Number(e.target.value) })}
+          inputProps={{ min: 1 }}
+          required
+          fullWidth
+        />
+      </Grid>
+      
+      <Grid item xs={12} md={2}>
+        <TextField
+          label="Expiration Date"
+          type="date"
+          value={item.expirationDate || ''}
+          onChange={(e) => onUpdate({ ...item, expirationDate: e.target.value || null })}
+          InputLabelProps={{ shrink: true }}
+          fullWidth
+        />
+      </Grid>
+      
+      <Grid item xs={12} md={3}>
+        <TextField
+          label="Batch Number"
+          value={item.batchNumber}
+          onChange={(e) => onUpdate({ ...item, batchNumber: e.target.value })}
+          fullWidth
+        />
+      </Grid>
+      
+      <Grid item xs={12} md={1}>
+        <IconButton onClick={onRemove} color="error">
+          <DeleteIcon />
+        </IconButton>
+      </Grid>
+    </Grid>
+  );
+};
+```
+
+**Key Features:**
+- **BarcodeInput for product code:** Primary scanning, manual input as fallback
+- **Auto-focus:** First line item auto-focuses for scanner workflow
+- **Clear helper text:** Guides users to scan first
+- **Immediate validation:** Validates barcode and populates product details
 
 ---
 

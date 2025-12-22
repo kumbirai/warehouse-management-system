@@ -69,5 +69,13 @@ public interface LocationRepository {
      * @return List of locations for the tenant
      */
     List<Location> findByTenantId(TenantId tenantId);
+
+    /**
+     * Finds available locations for a tenant (status = AVAILABLE or RESERVED).
+     *
+     * @param tenantId Tenant identifier
+     * @return List of available locations
+     */
+    List<Location> findAvailableLocations(TenantId tenantId);
 }
 

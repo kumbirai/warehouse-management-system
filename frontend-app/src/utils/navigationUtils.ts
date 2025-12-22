@@ -37,9 +37,14 @@ export const Routes = {
   productCreate: '/products/create',
   productEdit: (id: string) => `/products/${id}/edit`,
 
-  consignments: '/consignments',
-  consignmentDetail: (id: string) => `/consignments/${id}`,
-  consignmentCreate: '/consignments/create',
+  consignments: '/stock-management/consignments',
+  consignmentDetail: (id: string) => `/stock-management/consignments/${id}`,
+  consignmentCreate: '/stock-management/consignments/create',
+  consignmentUploadCsv: '/stock-management/consignments/upload-csv',
+
+  // Stock Items
+  stockItems: '/stock-management/stock-items',
+  stockItemDetail: (id: string) => `/stock-management/stock-items/${id}`,
 
   // Future routes (placeholder)
   inventory: '/inventory',
@@ -130,6 +135,19 @@ export const getBreadcrumbs = {
     { label: 'Consignments', href: Routes.consignments },
     { label: 'Create Consignment' },
   ],
+  consignmentUploadCsv: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Consignments', href: Routes.consignments },
+    { label: 'Upload CSV' },
+  ],
+
+  // Stock Item Management
+  stockItemList: () => [{ label: 'Dashboard', href: Routes.dashboard }, { label: 'Stock Items' }],
+  stockItemDetail: (stockItemId: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Stock Items', href: Routes.stockItems },
+    { label: stockItemId.substring(0, 8) + '...' },
+  ],
 };
 
 /**
@@ -155,6 +173,12 @@ export const getListPageRoute = (currentPath: string): string => {
   if (currentPath.includes('/admin/users')) return Routes.admin.users;
   if (currentPath.includes('/locations')) return Routes.locations;
   if (currentPath.includes('/products')) return Routes.products;
-  if (currentPath.includes('/consignments')) return Routes.consignments;
+  if (
+    currentPath.includes('/stock-management/consignments') ||
+    currentPath.includes('/consignments')
+  )
+    return Routes.consignments;
+  if (currentPath.includes('/stock-management/stock-items') || currentPath.includes('/stock-items'))
+    return Routes.stockItems;
   return Routes.dashboard;
 };

@@ -16,6 +16,7 @@ import com.ccbsa.wms.stock.domain.core.entity.StockConsignment;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentLineItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentReference;
+import com.ccbsa.wms.stock.domain.core.valueobject.ReceivedBy;
 
 /**
  * Mapper: StockConsignmentEntityMapper
@@ -45,7 +46,7 @@ public class StockConsignmentEntityMapper {
         entity.setStatus(consignment.getStatus());
         entity.setReceivedAt(consignment.getReceivedAt());
         entity.setConfirmedAt(consignment.getConfirmedAt());
-        entity.setReceivedBy(consignment.getReceivedBy());
+        entity.setReceivedBy(consignment.getReceivedBy() != null ? consignment.getReceivedBy().getValue() : null);
         entity.setCreatedAt(consignment.getCreatedAt());
         entity.setLastModifiedAt(consignment.getLastModifiedAt());
 
@@ -97,9 +98,9 @@ public class StockConsignmentEntityMapper {
         // Build domain entity using builder
         StockConsignment consignment = StockConsignment.builder().consignmentId(ConsignmentId.of(entity.getId())).tenantId(TenantId.of(entity.getTenantId()))
                 .consignmentReference(ConsignmentReference.of(entity.getConsignmentReference())).warehouseId(WarehouseId.of(entity.getWarehouseId()))
-                .receivedAt(entity.getReceivedAt()).receivedBy(entity.getReceivedBy()).lineItems(lineItems).status(entity.getStatus()).confirmedAt(entity.getConfirmedAt())
-                .createdAt(entity.getCreatedAt()).lastModifiedAt(entity.getLastModifiedAt()).version(entity.getVersion() != null ? entity.getVersion().intValue() : 0)
-                .buildWithoutEvents();
+                .receivedAt(entity.getReceivedAt()).receivedBy(ReceivedBy.of(entity.getReceivedBy())).lineItems(lineItems).status(entity.getStatus())
+                .confirmedAt(entity.getConfirmedAt()).createdAt(entity.getCreatedAt()).lastModifiedAt(entity.getLastModifiedAt())
+                .version(entity.getVersion() != null ? entity.getVersion().intValue() : 0).buildWithoutEvents();
 
         return consignment;
     }

@@ -76,5 +76,13 @@ public interface LocationJpaRepository extends JpaRepository<LocationEntity, UUI
      * @return List of LocationEntity matching the criteria
      */
     List<LocationEntity> findByTenantIdAndZone(String tenantId, String zone);
+
+    /**
+     * Finds available locations for a tenant (status = AVAILABLE or RESERVED).
+     *
+     * @param tenantId Tenant identifier
+     * @return List of available LocationEntity
+     */
+    List<LocationEntity> findByTenantIdAndStatusIn(String tenantId, List<LocationStatus> statuses);
 }
 

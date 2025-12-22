@@ -26,7 +26,7 @@ public enum CacheNamespace {
     PRODUCTS("products"), PRODUCT_CATEGORIES("product-categories"),
 
     // Stock Management Service
-    STOCK_CONSIGNMENTS("stock-consignments"), STOCK_LEVELS("stock-levels"),
+    STOCK_CONSIGNMENTS("stock-consignments"), STOCK_ITEMS("stock-items"), STOCK_LEVELS("stock-levels"),
 
     // Location Management Service
     LOCATIONS("locations"), ZONES("zones"),

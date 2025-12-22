@@ -2,11 +2,10 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
-  Chip,
+  Divider,
   Grid,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -17,12 +16,16 @@ import {
 } from '@mui/material';
 import { Consignment } from '../types/stockManagement';
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
+import { getStatusVariant, StatusBadge } from '../../../components/common';
+import { formatDateTime } from '../../../utils/dateUtils';
 
 interface ConsignmentDetailProps {
-  consignment: Consignment;
+  consignment: Consignment | null;
   onValidate?: () => void;
   isValidating?: boolean;
   canValidate?: boolean;
+  onConfirm?: () => void;
+  canConfirm?: boolean;
 }
 
 export const ConsignmentDetail = ({
@@ -30,104 +33,132 @@ export const ConsignmentDetail = ({
   onValidate,
   isValidating = false,
   canValidate = false,
+  onConfirm,
+  canConfirm = false,
 }: ConsignmentDetailProps) => {
-  const getStatusColor = (status: string): 'default' | 'primary' | 'success' | 'error' => {
-    switch (status) {
-      case 'CONFIRMED':
-        return 'success';
-      case 'RECEIVED':
-        return 'primary';
-      case 'CANCELLED':
-      case 'REJECTED':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
+  if (!consignment) {
+    return (
+      <Paper sx={{ p: 3 }}>
+        <Typography>Consignment not found</Typography>
+      </Paper>
+    );
+  }
 
   return (
-    <Box>
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h5">Consignment Details</Typography>
-            <Chip
-              label={consignment.status}
-              color={getStatusColor(consignment.status)}
-              size="small"
-            />
-          </Box>
+    <Grid container spacing={3}>
+      {/* Basic Information */}
+      <Grid item xs={12} md={6}>
+        <Paper elevation={1} sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Basic Information
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
 
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="text.secondary">
+          <Stack spacing={2}>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
                 Consignment ID
               </Typography>
-              <Typography variant="body1">{consignment.consignmentId}</Typography>
-            </Grid>
+              <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                {consignment.consignmentId}
+              </Typography>
+            </Box>
 
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="text.secondary">
+            <Box>
+              <Typography variant="caption" color="text.secondary">
                 Consignment Reference
               </Typography>
-              <Typography variant="body1">{consignment.consignmentReference}</Typography>
-            </Grid>
+              <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                {consignment.consignmentReference}
+              </Typography>
+            </Box>
 
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="text.secondary">
+            <Box>
+              <Typography variant="caption" color="text.secondary">
                 Warehouse ID
               </Typography>
               <Typography variant="body1">{consignment.warehouseId}</Typography>
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="text.secondary">
-                Received At
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Status
               </Typography>
-              <Typography variant="body1">
-                {new Date(consignment.receivedAt).toLocaleString()}
-              </Typography>
-            </Grid>
-
-            {consignment.confirmedAt && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Confirmed At
-                </Typography>
-                <Typography variant="body1">
-                  {new Date(consignment.confirmedAt).toLocaleString()}
-                </Typography>
-              </Grid>
-            )}
+              <Box mt={0.5}>
+                <StatusBadge
+                  label={consignment.status}
+                  variant={getStatusVariant(consignment.status)}
+                />
+              </Box>
+            </Box>
 
             {consignment.receivedBy && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
+              <Box>
+                <Typography variant="caption" color="text.secondary">
                   Received By
                 </Typography>
                 <Typography variant="body1">{consignment.receivedBy}</Typography>
-              </Grid>
+              </Box>
+            )}
+          </Stack>
+        </Paper>
+      </Grid>
+
+      {/* Dates and Timeline */}
+      <Grid item xs={12} md={6}>
+        <Paper elevation={1} sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Timeline
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+
+          <Stack spacing={2}>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Received At
+              </Typography>
+              <Typography variant="body1">{formatDateTime(consignment.receivedAt)}</Typography>
+            </Box>
+
+            {consignment.confirmedAt && (
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Confirmed At
+                </Typography>
+                <Typography variant="body1">{formatDateTime(consignment.confirmedAt)}</Typography>
+              </Box>
             )}
 
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="text.secondary">
+            <Box>
+              <Typography variant="caption" color="text.secondary">
                 Created At
               </Typography>
-              <Typography variant="body1">
-                {new Date(consignment.createdAt).toLocaleString()}
-              </Typography>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+              <Typography variant="body1">{formatDateTime(consignment.createdAt)}</Typography>
+            </Box>
 
-      <Card>
-        <CardContent>
+            {consignment.lastModifiedAt && (
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Last Modified
+                </Typography>
+                <Typography variant="body1">
+                  {formatDateTime(consignment.lastModifiedAt)}
+                </Typography>
+              </Box>
+            )}
+          </Stack>
+        </Paper>
+      </Grid>
+
+      {/* Line Items */}
+      <Grid item xs={12}>
+        <Paper elevation={1} sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
             Line Items ({consignment.lineItems.length})
           </Typography>
+          <Divider sx={{ mb: 2 }} />
 
-          <TableContainer component={Paper} variant="outlined">
+          <TableContainer>
             <Table>
               <TableHead>
                 <TableRow>
@@ -138,48 +169,78 @@ export const ConsignmentDetail = ({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {consignment.lineItems.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{item.productCode}</TableCell>
-                    <TableCell align="right">{item.quantity}</TableCell>
-                    <TableCell>
-                      {item.expirationDate
-                        ? new Date(item.expirationDate).toLocaleDateString()
-                        : '-'}
+                {consignment.lineItems.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">
+                      <Typography variant="body2" color="text.secondary">
+                        No line items
+                      </Typography>
                     </TableCell>
-                    <TableCell>{item.batchNumber || '-'}</TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  consignment.lineItems.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{item.productCode}</TableCell>
+                      <TableCell align="right">{item.quantity}</TableCell>
+                      <TableCell>
+                        {item.expirationDate ? formatDateTime(item.expirationDate) : '—'}
+                      </TableCell>
+                      <TableCell>{item.batchNumber || '—'}</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>
-        </CardContent>
-      </Card>
+        </Paper>
+      </Grid>
 
-      {canValidate && consignment.status === 'RECEIVED' && (
-        <Box sx={{ mt: 3 }}>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            This consignment is in RECEIVED status and can be validated (confirmed).
-          </Alert>
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<CheckCircleIcon />}
-            onClick={onValidate}
-            disabled={isValidating}
-          >
-            {isValidating ? 'Validating...' : 'Validate Consignment'}
-          </Button>
-        </Box>
+      {/* Actions Section */}
+      {consignment.status === 'RECEIVED' && (canValidate || canConfirm) && (
+        <Grid item xs={12}>
+          <Paper elevation={1} sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Actions
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+
+            <Alert severity="info" sx={{ mb: 2 }}>
+              This consignment is in RECEIVED status. Confirm it to create stock items and update
+              inventory.
+            </Alert>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              {canConfirm && onConfirm && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<CheckCircleIcon />}
+                  onClick={onConfirm}
+                >
+                  Confirm Consignment
+                </Button>
+              )}
+              {canValidate && (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={onValidate}
+                  disabled={isValidating}
+                >
+                  {isValidating ? 'Validating...' : 'Validate Consignment'}
+                </Button>
+              )}
+            </Box>
+          </Paper>
+        </Grid>
       )}
 
       {consignment.status === 'CONFIRMED' && (
-        <Box sx={{ mt: 3 }}>
+        <Grid item xs={12}>
           <Alert severity="success">
             This consignment has been confirmed and stock has been updated.
           </Alert>
-        </Box>
+        </Grid>
       )}
-    </Box>
+    </Grid>
   );
 };

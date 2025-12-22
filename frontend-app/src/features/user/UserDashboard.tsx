@@ -124,9 +124,40 @@ export const UserDashboard = () => {
                     size="small"
                     variant="outlined"
                     component={RouterLink}
+                    to="/stock-management/consignments"
+                  >
+                    View Consignments
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    component={RouterLink}
                     to="/stock-management/consignments/upload-csv"
                   >
                     Upload CSV
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Stock Items
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  View stock items with classification and location information. Filter by
+                  classification to manage inventory effectively.
+                </Typography>
+                <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    component={RouterLink}
+                    to="/stock-management/stock-items"
+                  >
+                    View Stock Items
                   </Button>
                 </Box>
               </CardContent>

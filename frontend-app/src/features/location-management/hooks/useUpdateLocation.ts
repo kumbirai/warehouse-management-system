@@ -49,4 +49,3 @@ export const useUpdateLocation = (): UseUpdateLocationResult => {
 
   return { updateLocation, isLoading, error };
 };
-

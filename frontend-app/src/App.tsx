@@ -12,9 +12,12 @@ import { TenantDetailPage } from './features/tenant-management/pages/TenantDetai
 import { UserListPage } from './features/user-management/pages/UserListPage';
 import { UserCreatePage } from './features/user-management/pages/UserCreatePage';
 import { UserDetailPage } from './features/user-management/pages/UserDetailPage';
+import { ConsignmentListPage } from './features/stock-management/pages/ConsignmentListPage';
 import { CreateConsignmentPage } from './features/stock-management/pages/CreateConsignmentPage';
 import { ConsignmentCsvUploadPage } from './features/stock-management/pages/ConsignmentCsvUploadPage';
 import { ConsignmentDetailPage } from './features/stock-management/pages/ConsignmentDetailPage';
+import { StockItemListPage } from './features/stock-management/pages/StockItemListPage';
+import { StockItemDetailPage } from './features/stock-management/pages/StockItemDetailPage';
 import { LocationListPage } from './features/location-management/pages/LocationListPage';
 import { LocationCreatePage } from './features/location-management/pages/LocationCreatePage';
 import { LocationDetailPage } from './features/location-management/pages/LocationDetailPage';
@@ -96,6 +99,24 @@ function App() {
         element={
           <ProtectedRoute requiredRoles={[SYSTEM_ADMIN, TENANT_ADMIN, USER]}>
             <UserDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/consignments"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+              VIEWER,
+            ]}
+          >
+            <ConsignmentListPage />
           </ProtectedRoute>
         }
       />
@@ -257,6 +278,44 @@ function App() {
         element={
           <ProtectedRoute requiredRoles={[SYSTEM_ADMIN, TENANT_ADMIN, WAREHOUSE_MANAGER]}>
             <ProductEditPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/stock-items"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              LOCATION_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+              VIEWER,
+            ]}
+          >
+            <StockItemListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/stock-items/:stockItemId"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              LOCATION_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+              VIEWER,
+            ]}
+          >
+            <StockItemDetailPage />
           </ProtectedRoute>
         }
       />

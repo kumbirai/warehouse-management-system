@@ -50,6 +50,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.ccbsa.wms</groupId>
+            <artifactId>common-cache</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- External event dependencies for typed deserialization -->
         <!-- Events are immutable DTOs, acceptable for cross-service dependencies -->
         <dependency>

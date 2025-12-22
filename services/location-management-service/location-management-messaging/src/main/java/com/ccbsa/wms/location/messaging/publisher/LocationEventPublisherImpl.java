@@ -12,8 +12,10 @@ import com.ccbsa.common.domain.DomainEvent;
 import com.ccbsa.common.domain.EventMetadata;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.location.application.service.port.messaging.LocationEventPublisher;
+import com.ccbsa.wms.location.domain.core.event.LocationAssignedEvent;
 import com.ccbsa.wms.location.domain.core.event.LocationCreatedEvent;
 import com.ccbsa.wms.location.domain.core.event.LocationManagementEvent;
+import com.ccbsa.wms.location.domain.core.event.LocationStatusChangedEvent;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -91,6 +93,18 @@ public class LocationEventPublisherImpl implements LocationEventPublisher {
             LocationCreatedEvent locationCreatedEvent = (LocationCreatedEvent) event;
             return new LocationCreatedEvent(locationId, locationCreatedEvent.getTenantId(), locationCreatedEvent.getBarcode(), locationCreatedEvent.getCoordinates(),
                     locationCreatedEvent.getStatus(), metadata);
+        }
+
+        if (event instanceof LocationAssignedEvent) {
+            LocationAssignedEvent locationAssignedEvent = (LocationAssignedEvent) event;
+            return new LocationAssignedEvent(locationId, locationAssignedEvent.getTenantId(), locationAssignedEvent.getStockItemId(), locationAssignedEvent.getQuantity(),
+                    metadata);
+        }
+
+        if (event instanceof LocationStatusChangedEvent) {
+            LocationStatusChangedEvent locationStatusChangedEvent = (LocationStatusChangedEvent) event;
+            return new LocationStatusChangedEvent(locationId, locationStatusChangedEvent.getTenantId(), locationStatusChangedEvent.getOldStatus(),
+                    locationStatusChangedEvent.getNewStatus(), metadata);
         }
 
         // Unknown event type, return original

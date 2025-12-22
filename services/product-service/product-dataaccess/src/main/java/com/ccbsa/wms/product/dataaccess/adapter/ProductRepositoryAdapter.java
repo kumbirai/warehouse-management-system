@@ -166,8 +166,8 @@ public class ProductRepositoryAdapter implements ProductRepository {
         entity.setPrimaryBarcode(product.getPrimaryBarcode().getValue());
         entity.setPrimaryBarcodeType(product.getPrimaryBarcode().getType());
         entity.setUnitOfMeasure(product.getUnitOfMeasure());
-        entity.setCategory(product.getCategory());
-        entity.setBrand(product.getBrand());
+        entity.setCategory(product.getCategory() != null ? product.getCategory().getValue() : null);
+        entity.setBrand(product.getBrand() != null ? product.getBrand().getValue() : null);
         entity.setLastModifiedAt(product.getLastModifiedAt());
 
         // Update secondary barcodes - remove all existing and add new ones

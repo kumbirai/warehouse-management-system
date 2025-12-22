@@ -1,15 +1,15 @@
-import { Button, TextField, MenuItem, FormControl, InputLabel, Select, Grid } from '@mui/material';
+import { Button, FormControl, Grid, InputLabel, MenuItem, Select, TextField } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Add as AddIcon, Search as SearchIcon } from '@mui/icons-material';
 
 import { ListPageLayout } from '../../../components/layouts';
-import { FilterBar, EmptyState, BarcodeInput } from '../../../components/common';
-import { Routes, getBreadcrumbs } from '../../../utils/navigationUtils';
+import { BarcodeInput, EmptyState, FilterBar } from '../../../components/common';
+import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 import { LocationList } from '../components/LocationList';
 import { useLocations } from '../hooks/useLocations';
 import { useAuth } from '../../../hooks/useAuth';
-import { LocationStatus, LocationListFilters } from '../types/location';
+import { LocationListFilters, LocationStatus } from '../types/location';
 
 export const LocationListPage = () => {
   const navigate = useNavigate();
@@ -88,7 +88,7 @@ export const LocationListPage = () => {
               placeholder="Search by code, barcode..."
               value={searchQuery}
               onChange={handleSearchChange}
-              onScan={(barcode) => {
+              onScan={barcode => {
                 handleSearchChange(barcode);
               }}
               autoSubmitOnEnter={true}
@@ -103,7 +103,7 @@ export const LocationListPage = () => {
               <Select
                 value={statusFilter}
                 label="Status"
-                onChange={(e) => handleStatusChange(e.target.value as LocationStatus | '')}
+                onChange={e => handleStatusChange(e.target.value as LocationStatus | '')}
               >
                 <MenuItem value="">All</MenuItem>
                 <MenuItem value="AVAILABLE">Available</MenuItem>
@@ -119,7 +119,7 @@ export const LocationListPage = () => {
               label="Zone"
               placeholder="Filter by zone"
               value={zoneFilter}
-              onChange={(e) => handleZoneChange(e.target.value)}
+              onChange={e => handleZoneChange(e.target.value)}
             />
           </Grid>
         </Grid>

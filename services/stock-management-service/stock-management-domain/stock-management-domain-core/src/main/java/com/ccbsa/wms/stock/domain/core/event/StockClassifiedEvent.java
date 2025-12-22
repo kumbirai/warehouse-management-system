@@ -1,0 +1,60 @@
+package com.ccbsa.wms.stock.domain.core.event;
+
+import java.time.LocalDate;
+
+import com.ccbsa.common.domain.valueobject.StockClassification;
+import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
+import com.ccbsa.wms.stock.domain.core.entity.StockItem;
+
+/**
+ * Domain Event: StockClassifiedEvent
+ * <p>
+ * Published when stock item classification changes.
+ * <p>
+ * This event indicates that:
+ * - Stock item has been classified or reclassified
+ * - Classification changed from old to new value
+ * - Triggers FEFO location assignment in Location Management Service
+ */
+public class StockClassifiedEvent extends StockManagementEvent<StockItem> {
+    private static final String AGGREGATE_TYPE = "StockItem";
+
+    private final ProductId productId;
+    private final StockClassification oldClassification;
+    private final StockClassification newClassification;
+    private final LocalDate expirationDate;
+
+    /**
+     * Constructor for StockClassifiedEvent.
+     *
+     * @param aggregateId       Stock item ID (as String)
+     * @param productId         Product identifier
+     * @param oldClassification Previous classification (may be null for initial classification)
+     * @param newClassification New classification
+     * @param expirationDate    Expiration date (may be null for non-perishable)
+     */
+    public StockClassifiedEvent(String aggregateId, ProductId productId, StockClassification oldClassification, StockClassification newClassification, LocalDate expirationDate) {
+        super(aggregateId, AGGREGATE_TYPE);
+        this.productId = productId;
+        this.oldClassification = oldClassification;
+        this.newClassification = newClassification;
+        this.expirationDate = expirationDate;
+    }
+
+    public ProductId getProductId() {
+        return productId;
+    }
+
+    public StockClassification getOldClassification() {
+        return oldClassification;
+    }
+
+    public StockClassification getNewClassification() {
+        return newClassification;
+    }
+
+    public LocalDate getExpirationDate() {
+        return expirationDate;
+    }
+}
+

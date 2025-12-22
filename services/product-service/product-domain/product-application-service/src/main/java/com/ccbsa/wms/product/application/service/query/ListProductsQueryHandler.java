@@ -55,7 +55,8 @@ public class ListProductsQueryHandler {
     private ProductQueryResult toProductQueryResult(Product product) {
         return ProductQueryResult.builder().productId(product.getId()).productCode(product.getProductCode()).description(product.getDescription().getValue())
                 .primaryBarcode(product.getPrimaryBarcode()).secondaryBarcodes(product.getSecondaryBarcodes()).unitOfMeasure(product.getUnitOfMeasure())
-                .category(product.getCategory()).brand(product.getBrand()).createdAt(product.getCreatedAt()).lastModifiedAt(product.getLastModifiedAt()).build();
+                .category(product.getCategory() != null ? product.getCategory().getValue() : null).brand(product.getBrand() != null ? product.getBrand().getValue() : null)
+                .createdAt(product.getCreatedAt()).lastModifiedAt(product.getLastModifiedAt()).build();
     }
 }
 

@@ -530,6 +530,102 @@ import { Pagination } from '@/components/common';
 
 ---
 
+### BarcodeInput
+
+Universal barcode input component that supports both scanning and manual entry. **Barcode scanning is the primary input method** - manual entry is provided as a fallback when scanning fails or is unavailable.
+
+**Barcode-First Principle:**
+- **Primary:** Barcode scanning (handheld scanner or camera)
+- **Fallback:** Manual keyboard input
+- Always provide both options for maximum flexibility
+
+**Usage:**
+\`\`\`typescript
+import { BarcodeInput } from '@/components/common';
+
+<BarcodeInput
+  label="Product Barcode"
+  value={barcode}
+  onChange={setBarcode}
+  onScan={handleBarcodeScan}
+  placeholder="Scan or enter barcode"
+  autoFocus
+  helperText="Scan barcode first, or enter manually if scanning fails"
+/>
+\`\`\`
+
+**Props:**
+- `value: string` - Current barcode value
+- `onChange: (value: string) => void` - Value change handler (for manual input)
+- `onScan?: (barcode: string) => void` - Barcode scan handler (called when barcode is scanned)
+- `enableCamera?: boolean` - Enable camera scanning button (default: true)
+- `autoSubmitOnEnter?: boolean` - Auto-submit on Enter key (default: false)
+- All standard `TextField` props are supported
+
+**Features:**
+- **Handheld Scanner Support:** Automatically captures input from USB/Bluetooth scanners (acts as keyboard)
+- **Camera Scanning:** Built-in camera button opens barcode scanner dialog
+- **Manual Entry:** Full keyboard input support as fallback
+- **Auto-Focus:** Optional auto-focus for better scanner UX
+- **Enter Key Handling:** Supports Enter key submission for handheld scanners
+
+**Implementation Pattern:**
+\`\`\`typescript
+const ProductForm = () => {
+  const [barcode, setBarcode] = useState('');
+  const [barcodeError, setBarcodeError] = useState<string | null>(null);
+
+  // Handle barcode scan (primary method)
+  const handleBarcodeScan = async (scannedBarcode: string) => {
+    setBarcode(scannedBarcode);
+    setBarcodeError(null);
+    
+    // Validate barcode
+    try {
+      const product = await validateBarcode(scannedBarcode);
+      // Auto-fill product information
+      setProductCode(product.code);
+    } catch (error) {
+      setBarcodeError('Barcode not found or invalid');
+    }
+  };
+
+  // Handle manual input (fallback)
+  const handleBarcodeChange = (value: string) => {
+    setBarcode(value);
+    setBarcodeError(null);
+  };
+
+  return (
+    <BarcodeInput
+      label="Product Barcode"
+      value={barcode}
+      onChange={handleBarcodeChange}
+      onScan={handleBarcodeScan}
+      error={!!barcodeError}
+      helperText={barcodeError || 'Scan barcode first, or enter manually'}
+      autoFocus
+    />
+  );
+};
+\`\`\`
+
+**When to Use:**
+- **Product Barcodes:** Product forms, consignment entry, stock count
+- **Location Barcodes:** Location assignment, stock movement, picking
+- **Search Fields:** Product search, location search, consignment search
+- **Any Identifier Input:** Any field that can be scanned should use BarcodeInput
+
+**Standard Spacing:** `sx={{ mb: 2 }}` (when used in forms)
+
+**Accessibility:**
+- Auto-focus on mount for handheld scanners
+- Clear labels and helper text
+- Error messages for invalid barcodes
+- Keyboard navigation support
+
+---
+
 ## Page Layout Templates
 
 All pages must use layout components from `src/components/layouts/`.
@@ -906,7 +1002,49 @@ const ProductForm = ({ onSubmit, onCancel, isSubmitting }) => {
 />
 ```
 
+**Barcode Fields (Barcode-First Principle):**
+\`\`\`typescript
+import { BarcodeInput } from '@/components/common';
+import { Controller } from 'react-hook-form';
+
+// In form component
+<Controller
+  name="barcode"
+  control={control}
+  render={({ field }) => (
+    <BarcodeInput
+      {...field}
+      label="Barcode"
+      fullWidth
+      required
+      error={!!errors.barcode}
+      helperText={errors.barcode?.message || 'Scan barcode first, or enter manually if scanning fails'}
+      onScan={async (scannedBarcode) => {
+        field.onChange(scannedBarcode);
+        // Validate and auto-fill related fields
+        try {
+          const product = await validateBarcode(scannedBarcode);
+          setValue('productCode', product.code);
+          setValue('productName', product.name);
+        } catch (error) {
+          setError('barcode', { message: 'Barcode not found' });
+        }
+      }}
+      autoFocus
+    />
+  )}
+/>
+\`\`\`
+
+**Barcode Field Guidelines:**
+- **Always use BarcodeInput** for any field that can be scanned (product codes, location codes, barcodes)
+- **Scan first, manual input as fallback** - Helper text should guide users to scan first
+- **Auto-focus** barcode fields for better scanner UX
+- **Auto-validate** scanned barcodes and populate related fields when possible
+- **Clear error messages** when barcode validation fails
+
 ---
+
 
 ## List Page Patterns
 
@@ -1005,12 +1143,17 @@ export const EntityListPage = () => {
       error={error}
     >
       <FilterBar onClearFilters={handleClearFilters} hasActiveFilters={hasActiveFilters}>
-        <TextField
+        <BarcodeInput
           label="Search"
-          placeholder="Search by code or name..."
+          placeholder="Scan barcode or search by code, name..."
           value={filters.search}
-          onChange={(e) => updateSearch(e.target.value)}
+          onChange={(value) => updateSearch(value)}
+          onScan={(barcode) => {
+            updateSearch(barcode);
+            // Optionally trigger search immediately
+          }}
           fullWidth
+          autoSubmitOnEnter={true}
         />
         <TextField
           select

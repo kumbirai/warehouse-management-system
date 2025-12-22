@@ -9,6 +9,7 @@ import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentLineItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentReference;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentStatus;
+import com.ccbsa.wms.stock.domain.core.valueobject.ReceivedBy;
 
 /**
  * Query Result DTO: ConsignmentQueryResult
@@ -22,7 +23,7 @@ public final class ConsignmentQueryResult {
     private final ConsignmentStatus status;
     private final LocalDateTime receivedAt;
     private final LocalDateTime confirmedAt;
-    private final String receivedBy;
+    private final ReceivedBy receivedBy;
     private final List<ConsignmentLineItem> lineItems;
     private final LocalDateTime createdAt;
     private final LocalDateTime lastModifiedAt;
@@ -68,7 +69,7 @@ public final class ConsignmentQueryResult {
         return confirmedAt;
     }
 
-    public String getReceivedBy() {
+    public ReceivedBy getReceivedBy() {
         return receivedBy;
     }
 
@@ -91,7 +92,7 @@ public final class ConsignmentQueryResult {
         private ConsignmentStatus status;
         private LocalDateTime receivedAt;
         private LocalDateTime confirmedAt;
-        private String receivedBy;
+        private ReceivedBy receivedBy;
         private List<ConsignmentLineItem> lineItems;
         private LocalDateTime createdAt;
         private LocalDateTime lastModifiedAt;
@@ -126,7 +127,7 @@ public final class ConsignmentQueryResult {
             return this;
         }
 
-        public Builder receivedBy(String receivedBy) {
+        public Builder receivedBy(ReceivedBy receivedBy) {
             this.receivedBy = receivedBy;
             return this;
         }

@@ -7,28 +7,37 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.ccbsa.common.domain.valueobject.ExpirationDate;
+import com.ccbsa.common.domain.valueobject.StockClassification;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.location.application.dto.command.CreateLocationCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.CreateLocationResultDTO;
+import com.ccbsa.wms.location.application.dto.command.LocationCoordinatesDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationStatusCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationStatusResultDTO;
 import com.ccbsa.wms.location.application.dto.query.ListLocationsQueryResultDTO;
+import com.ccbsa.wms.location.application.dto.query.LocationAvailabilityQueryResultDTO;
 import com.ccbsa.wms.location.application.dto.query.LocationCapacityDTO;
 import com.ccbsa.wms.location.application.dto.query.LocationQueryResultDTO;
+import com.ccbsa.wms.location.application.service.command.dto.AssignLocationsFEFOCommand;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationCommand;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationResult;
 import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationCommand;
 import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationStatusCommand;
 import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationStatusResult;
+import com.ccbsa.wms.location.application.service.query.dto.CheckLocationAvailabilityQuery;
 import com.ccbsa.wms.location.application.service.query.dto.GetLocationQuery;
 import com.ccbsa.wms.location.application.service.query.dto.ListLocationsQuery;
 import com.ccbsa.wms.location.application.service.query.dto.ListLocationsQueryResult;
+import com.ccbsa.wms.location.application.service.query.dto.LocationAvailabilityResult;
 import com.ccbsa.wms.location.application.service.query.dto.LocationQueryResult;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationBarcode;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationCapacity;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationCoordinates;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
+import com.ccbsa.wms.location.domain.core.valueobject.StockItemAssignmentRequest;
 
 /**
  * DTO Mapper: LocationDTOMapper
@@ -182,6 +191,7 @@ public class LocationDTOMapper {
         dto.setCreatedAt(result.getCreatedAt());
 
         // Set code/name/type/path from result (path is already generated hierarchically in command handler)
+        // Note: result.getCode(), getName(), getType() already return String values from LocationQueryResult
         dto.setCode(result.getCode());
         dto.setName(result.getName());
         dto.setType(result.getType());
@@ -193,9 +203,8 @@ public class LocationDTOMapper {
     /**
      * Converts LocationCoordinates to command LocationCoordinatesDTO.
      */
-    private com.ccbsa.wms.location.application.dto.command.LocationCoordinatesDTO toCommandCoordinatesDTO(LocationCoordinates coordinates) {
-        return new com.ccbsa.wms.location.application.dto.command.LocationCoordinatesDTO(coordinates.getZone(), coordinates.getAisle(), coordinates.getRack(),
-                coordinates.getLevel());
+    private LocationCoordinatesDTO toCommandCoordinatesDTO(LocationCoordinates coordinates) {
+        return new LocationCoordinatesDTO(coordinates.getZone(), coordinates.getAisle(), coordinates.getRack(), coordinates.getLevel());
     }
 
     /**
@@ -280,6 +289,7 @@ public class LocationDTOMapper {
         dto.setCapacityDTO(capacityDTO);
 
         // Set code, name, type, path from query result (now stored in domain)
+        // Note: result.getCode(), getName(), getType(), getDescription() already return String values from LocationQueryResult
         dto.setCode(result.getCode());
         dto.setName(result.getName());
         dto.setType(result.getType());
@@ -302,7 +312,7 @@ public class LocationDTOMapper {
     /**
      * Converts LocationCapacity to LocationCapacityDTO.
      */
-    private LocationCapacityDTO toCapacityDTO(com.ccbsa.wms.location.domain.core.valueobject.LocationCapacity capacity) {
+    private LocationCapacityDTO toCapacityDTO(LocationCapacity capacity) {
         if (capacity == null) {
             return null;
         }
@@ -371,6 +381,51 @@ public class LocationDTOMapper {
         }
 
         return builder.build();
+    }
+
+    /**
+     * Converts AssignLocationsFEFOCommandDTO to AssignLocationsFEFOCommand.
+     *
+     * @param dto      Command DTO
+     * @param tenantId Tenant identifier string
+     * @return AssignLocationsFEFOCommand
+     */
+    public AssignLocationsFEFOCommand toAssignLocationsFEFOCommand(com.ccbsa.wms.location.application.dto.command.AssignLocationsFEFOCommandDTO dto, String tenantId) {
+        List<StockItemAssignmentRequest> stockItems = dto.getStockItems().stream()
+                .map(item -> StockItemAssignmentRequest.builder().stockItemId(item.getStockItemId()).quantity(item.getQuantity())
+                        .expirationDate(item.getExpirationDate() != null ? ExpirationDate.of(item.getExpirationDate()) : null)
+                        .classification(item.getClassification() != null ? StockClassification.valueOf(item.getClassification().toUpperCase(Locale.ROOT)) : null).build())
+                .collect(Collectors.toList());
+
+        return AssignLocationsFEFOCommand.builder().tenantId(TenantId.of(tenantId)).stockItems(stockItems).build();
+    }
+
+    /**
+     * Converts parameters to CheckLocationAvailabilityQuery.
+     *
+     * @param locationId       Location ID string
+     * @param tenantId         Tenant identifier string
+     * @param requiredQuantity Required quantity
+     * @return CheckLocationAvailabilityQuery
+     */
+    public CheckLocationAvailabilityQuery toCheckLocationAvailabilityQuery(String locationId, String tenantId, Integer requiredQuantity) {
+        return CheckLocationAvailabilityQuery.builder().locationId(LocationId.of(UUID.fromString(locationId))).tenantId(TenantId.of(tenantId))
+                .requiredQuantity(java.math.BigDecimal.valueOf(requiredQuantity)).build();
+    }
+
+    /**
+     * Converts LocationAvailabilityResult to LocationAvailabilityQueryResultDTO.
+     *
+     * @param result Query result
+     * @return LocationAvailabilityQueryResultDTO
+     */
+    public LocationAvailabilityQueryResultDTO toLocationAvailabilityQueryResultDTO(LocationAvailabilityResult result) {
+        LocationAvailabilityQueryResultDTO dto = new LocationAvailabilityQueryResultDTO();
+        dto.setAvailable(result.isAvailable());
+        dto.setHasCapacity(result.hasCapacity());
+        dto.setAvailableCapacity(result.getAvailableCapacity() != null ? result.getAvailableCapacity().intValue() : null);
+        dto.setReason(result.getReason());
+        return dto;
     }
 }
 

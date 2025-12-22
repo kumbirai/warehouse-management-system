@@ -45,8 +45,8 @@ public class ProductEntityMapper {
         entity.setPrimaryBarcode(product.getPrimaryBarcode().getValue());
         entity.setPrimaryBarcodeType(product.getPrimaryBarcode().getType());
         entity.setUnitOfMeasure(product.getUnitOfMeasure());
-        entity.setCategory(product.getCategory());
-        entity.setBrand(product.getBrand());
+        entity.setCategory(product.getCategory() != null ? product.getCategory().getValue() : null);
+        entity.setBrand(product.getBrand() != null ? product.getBrand().getValue() : null);
         entity.setCreatedAt(product.getCreatedAt());
         entity.setLastModifiedAt(product.getLastModifiedAt());
 

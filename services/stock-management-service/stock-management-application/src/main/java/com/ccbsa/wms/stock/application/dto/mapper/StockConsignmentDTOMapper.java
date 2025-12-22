@@ -29,6 +29,7 @@ import com.ccbsa.wms.stock.application.service.query.dto.GetConsignmentQuery;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentLineItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentReference;
+import com.ccbsa.wms.stock.domain.core.valueobject.ReceivedBy;
 
 /**
  * DTO Mapper: StockConsignmentDTOMapper
@@ -51,7 +52,7 @@ public class StockConsignmentDTOMapper {
                         .build()).collect(Collectors.toList());
 
         return CreateConsignmentCommand.builder().tenantId(TenantId.of(tenantId)).consignmentReference(ConsignmentReference.of(dto.getConsignmentReference()))
-                .warehouseId(WarehouseId.of(dto.getWarehouseId())).receivedAt(dto.getReceivedAt()).receivedBy(dto.getReceivedBy()).lineItems(lineItems).build();
+                .warehouseId(WarehouseId.of(dto.getWarehouseId())).receivedAt(dto.getReceivedAt()).receivedBy(ReceivedBy.of(dto.getReceivedBy())).lineItems(lineItems).build();
     }
 
     /**
@@ -79,7 +80,7 @@ public class StockConsignmentDTOMapper {
      */
     public UploadConsignmentCsvCommand toUploadCsvCommand(MultipartFile file, String tenantId, String receivedBy) throws IOException {
         InputStream inputStream = file.getInputStream();
-        return UploadConsignmentCsvCommand.builder().tenantId(TenantId.of(tenantId)).csvInputStream(inputStream).receivedBy(receivedBy).build();
+        return UploadConsignmentCsvCommand.builder().tenantId(TenantId.of(tenantId)).csvInputStream(inputStream).receivedBy(ReceivedBy.of(receivedBy)).build();
     }
 
     /**
@@ -170,7 +171,7 @@ public class StockConsignmentDTOMapper {
         dto.setStatus(result.getStatus().name());
         dto.setReceivedAt(result.getReceivedAt());
         dto.setConfirmedAt(result.getConfirmedAt());
-        dto.setReceivedBy(result.getReceivedBy());
+        dto.setReceivedBy(result.getReceivedBy() != null ? result.getReceivedBy().getValue() : null);
         dto.setCreatedAt(result.getCreatedAt());
         dto.setLastModifiedAt(result.getLastModifiedAt());
 

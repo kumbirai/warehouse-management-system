@@ -40,8 +40,10 @@ public class GetLocationQueryHandler {
 
         // 2. Map to query result
         return LocationQueryResult.builder().locationId(location.getId()).barcode(location.getBarcode()).coordinates(location.getCoordinates()).status(location.getStatus())
-                .capacity(location.getCapacity()).code(location.getCode()).name(location.getName()).type(location.getType()).path(generatePath(location))
-                .description(location.getDescription()).createdAt(location.getCreatedAt()).lastModifiedAt(location.getLastModifiedAt()).build();
+                .capacity(location.getCapacity()).code(location.getCode() != null ? location.getCode().getValue() : null)
+                .name(location.getName() != null ? location.getName().getValue() : null).type(location.getType() != null ? location.getType().getValue() : null)
+                .path(generatePath(location)).description(location.getDescription() != null ? location.getDescription().getValue() : null).createdAt(location.getCreatedAt())
+                .lastModifiedAt(location.getLastModifiedAt()).build();
     }
 
     /**
@@ -53,7 +55,7 @@ public class GetLocationQueryHandler {
      * @return Path string with full hierarchy
      */
     private String generatePath(Location location) {
-        String locationCode = location.getCode();
+        String locationCode = location.getCode() != null ? location.getCode().getValue() : null;
         if (locationCode == null || locationCode.trim().isEmpty()) {
             locationCode = location.getBarcode().getValue();
         }
@@ -92,13 +94,13 @@ public class GetLocationQueryHandler {
         Location parentLocation = repository.findByIdAndTenantId(parentLocationId, tenantId)
                 .orElseThrow(() -> new LocationNotFoundException(String.format("Parent location not found during path generation: %s", parentLocationId.getValueAsString())));
 
-        String locationCode = parentLocation.getCode();
+        String locationCode = parentLocation.getCode() != null ? parentLocation.getCode().getValue() : null;
         if (locationCode == null || locationCode.trim().isEmpty()) {
             locationCode = parentLocation.getBarcode().getValue();
         }
 
         // If this is a warehouse (type is WAREHOUSE or no parent), return "/{code}"
-        String locationType = parentLocation.getType();
+        String locationType = parentLocation.getType() != null ? parentLocation.getType().getValue() : null;
         if ((locationType != null && "WAREHOUSE".equalsIgnoreCase(locationType.trim())) || parentLocation.getParentLocationId() == null) {
             return String.format("/%s", locationCode);
         }

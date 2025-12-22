@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Paper, Stack, Button } from '@mui/material';
+import { Button, Paper, Stack } from '@mui/material';
 
 interface FilterBarProps {
   children: ReactNode;

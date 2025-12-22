@@ -6,7 +6,7 @@ import { useLocation } from '../hooks/useLocation';
 import { CreateLocationRequest, UpdateLocationRequest } from '../types/location';
 import { useAuth } from '../../../hooks/useAuth';
 import { FormPageLayout } from '../../../components/layouts';
-import { Routes, getBreadcrumbs } from '../../../utils/navigationUtils';
+import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 
 export const LocationEditPage = () => {
   const { locationId } = useParams<{ locationId: string }>();
@@ -86,4 +86,3 @@ export const LocationEditPage = () => {
     </FormPageLayout>
   );
 };
-

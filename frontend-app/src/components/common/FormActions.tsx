@@ -1,5 +1,5 @@
 import React from 'react';
-import { Stack, Button } from '@mui/material';
+import { Button, Stack } from '@mui/material';
 
 interface FormActionsProps {
   onCancel: () => void;
@@ -20,11 +20,7 @@ export const FormActions: React.FC<FormActionsProps> = ({
 }) => {
   return (
     <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 3 }}>
-      <Button
-        variant="outlined"
-        onClick={onCancel}
-        disabled={isSubmitting}
-      >
+      <Button variant="outlined" onClick={onCancel} disabled={isSubmitting}>
         {cancelLabel}
       </Button>
       <Button

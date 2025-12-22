@@ -222,6 +222,17 @@ public class ProductBarcodeCache {
 
 ## Frontend Implementation
 
+### Barcode-First Input Principle
+
+**Core Principle:** Barcode scanning is the **primary input method**. Manual keyboard input is provided as a **fallback** when scanning fails or is unavailable.
+
+**Implementation Requirements:**
+- Use `BarcodeInput` component (not `TextField`) for all barcode fields
+- Auto-focus barcode fields for handheld scanner compatibility
+- Provide clear helper text: "Scan barcode first, or enter manually if scanning fails"
+- Validate scanned barcodes immediately
+- Auto-populate related fields when barcode is validated
+
 ### Barcode Validation Hook
 
 **File:** `src/features/product-management/hooks/useProductBarcodeValidation.ts`
@@ -254,50 +265,97 @@ export const useProductBarcodeValidation = () => {
 };
 ```
 
-### Barcode Input Component
+### Barcode Input Component (Barcode-First Implementation)
+
+**File:** `src/features/product-management/components/ProductBarcodeInput.tsx`
 
 ```typescript
+import { BarcodeInput } from '@/components/common';
+import { useProductBarcodeValidation } from '../hooks/useProductBarcodeValidation';
+
 export const ProductBarcodeInput: React.FC<{
   onBarcodeValidated: (product: ProductInfo) => void;
-}> = ({ onBarcodeValidated }) => {
-  const [barcode, setBarcode] = useState('');
+  value?: string;
+  onChange?: (value: string) => void;
+}> = ({ onBarcodeValidated, value, onChange }) => {
+  const [barcode, setBarcode] = useState(value || '');
+  const [barcodeError, setBarcodeError] = useState<string | null>(null);
   const { validateBarcode, validating, validationResult } = useProductBarcodeValidation();
 
-  const handleBarcodeChange = async (value: string) => {
-    setBarcode(value);
-    if (value.length >= 8) { // Minimum barcode length
-      const result = await validateBarcode(value, getTenantId());
+  // Primary: Handle barcode scan
+  const handleBarcodeScan = async (scannedBarcode: string) => {
+    setBarcode(scannedBarcode);
+    setBarcodeError(null);
+    if (onChange) {
+      onChange(scannedBarcode);
+    }
+    
+    // Validate scanned barcode
+    const result = await validateBarcode(scannedBarcode, getTenantId());
+    if (result?.valid && result.productInfo) {
+      onBarcodeValidated(result.productInfo);
+    } else {
+      setBarcodeError(result?.errorMessage || 'Barcode not found. Please enter product code manually.');
+    }
+  };
+
+  // Fallback: Handle manual input
+  const handleBarcodeChange = async (inputValue: string) => {
+    setBarcode(inputValue);
+    setBarcodeError(null);
+    if (onChange) {
+      onChange(inputValue);
+    }
+    
+    // Auto-validate when minimum length reached
+    if (inputValue.length >= 8) {
+      const result = await validateBarcode(inputValue, getTenantId());
       if (result?.valid && result.productInfo) {
         onBarcodeValidated(result.productInfo);
+      } else if (inputValue.length >= 12) {
+        // Only show error for longer inputs to avoid premature errors
+        setBarcodeError(result?.errorMessage || 'Barcode not found');
       }
     }
   };
 
   return (
-    <TextField
+    <BarcodeInput
       label="Product Barcode"
       value={barcode}
-      onChange={(e) => handleBarcodeChange(e.target.value)}
+      onChange={handleBarcodeChange}
+      onScan={handleBarcodeScan}
+      error={!!barcodeError || (validationResult && !validationResult.valid)}
+      helperText={
+        barcodeError ||
+        validationResult?.errorMessage ||
+        'Scan barcode first, or enter manually if scanning fails'
+      }
+      autoFocus
+      required
       InputProps={{
-        endAdornment: (
+        endAdornment: validating ? (
           <InputAdornment position="end">
-            {validating && <CircularProgress size={20} />}
-            {validationResult && (
-              validationResult.valid ? (
-                <CheckCircleIcon color="success" />
-              ) : (
-                <ErrorIcon color="error" />
-              )
-            )}
+            <CircularProgress size={20} />
           </InputAdornment>
-        )
+        ) : validationResult && validationResult.valid ? (
+          <InputAdornment position="end">
+            <CheckCircleIcon color="success" />
+          </InputAdornment>
+        ) : undefined,
       }}
-      helperText={validationResult?.errorMessage}
-      error={validationResult && !validationResult.valid}
     />
   );
 };
 ```
+
+**Key Features:**
+- **Barcode scanning first:** Primary input method via handheld scanner or camera
+- **Manual input fallback:** Full keyboard support when scanning fails
+- **Auto-validation:** Validates barcodes immediately after scanning or manual entry
+- **Auto-population:** Fills related fields when barcode is validated
+- **Clear error messages:** Guides users when barcode is not found
+- **Auto-focus:** Optimized for handheld scanner workflow
 
 ---
 

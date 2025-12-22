@@ -1,13 +1,4 @@
-import {
-  Box,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  Grid,
-  Paper,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, Checkbox, FormControlLabel, Grid, Paper, TextField, Typography } from '@mui/material';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +6,7 @@ import { useMemo } from 'react';
 import { TenantSelector } from './TenantSelector';
 import { useAuth } from '../../../hooks/useAuth';
 import { ALL_ROLES, USER } from '../../../constants/roles';
+import { FormActions } from '../../../components/common';
 
 const userSchema = z
   .object({
@@ -223,14 +215,12 @@ export const UserForm = ({
           </Grid>
         </Box>
 
-        <Box display="flex" justifyContent="flex-end" gap={2} mt={3}>
-          <Button variant="outlined" onClick={onCancel} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button variant="contained" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating...' : 'Create User'}
-          </Button>
-        </Box>
+        <FormActions
+          onCancel={onCancel}
+          isSubmitting={isSubmitting}
+          submitLabel="Create User"
+          cancelLabel="Cancel"
+        />
       </Box>
     </Paper>
   );

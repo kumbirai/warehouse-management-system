@@ -87,12 +87,16 @@ public class ListLocationsQueryHandler {
         return (location.getBarcode() != null && location.getBarcode().getValue().toLowerCase(Locale.ROOT).contains(searchLower)) || (location.getCoordinates() != null
                 && location.getCoordinates().getZone() != null && location.getCoordinates().getZone().toLowerCase(Locale.ROOT).contains(searchLower)) || (
                 location.getCoordinates() != null && location.getCoordinates().getAisle() != null && location.getCoordinates().getAisle().toLowerCase(Locale.ROOT)
-                        .contains(searchLower)) || (location.getDescription() != null && location.getDescription().toLowerCase(Locale.ROOT).contains(searchLower));
+                        .contains(searchLower)) || (location.getDescription() != null && location.getDescription().getValue() != null && location.getDescription().getValue()
+                .toLowerCase(Locale.ROOT).contains(searchLower));
     }
 
     private LocationQueryResult toLocationQueryResult(Location location) {
         return LocationQueryResult.builder().locationId(location.getId()).barcode(location.getBarcode()).coordinates(location.getCoordinates()).status(location.getStatus())
-                .capacity(location.getCapacity()).description(location.getDescription()).createdAt(location.getCreatedAt()).lastModifiedAt(location.getLastModifiedAt()).build();
+                .capacity(location.getCapacity()).code(location.getCode() != null ? location.getCode().getValue() : null)
+                .name(location.getName() != null ? location.getName().getValue() : null).type(location.getType() != null ? location.getType().getValue() : null)
+                .description(location.getDescription() != null ? location.getDescription().getValue() : null).createdAt(location.getCreatedAt())
+                .lastModifiedAt(location.getLastModifiedAt()).build();
     }
 }
 

@@ -1166,100 +1166,149 @@ const syncSlice = createSlice({
 
 ## Barcode Scanning Integration
 
+### Barcode-First Input Principle
+
+**Core Principle:** Barcode scanning is the **primary input method** for all identifier fields. Manual keyboard input is provided as a **fallback** when scanning fails or is unavailable.
+
+**Rationale:**
+- Reduces manual input errors
+- Improves data entry speed
+- Enhances warehouse operational efficiency
+- Minimizes typing errors in identifier fields
+
+**Implementation Strategy:**
+1. **Primary:** Barcode scanning (handheld scanner or camera)
+2. **Fallback:** Manual keyboard input
+3. **Always provide both options** for maximum flexibility
+
 ### Barcode Scanning Architecture
 
-**Multiple Input Methods:**
+**Multiple Input Methods (Priority Order):**
 
-1. **Handheld Scanner (USB/Bluetooth)**
+1. **Handheld Scanner (USB/Bluetooth)** - **Primary Method**
     - Acts as keyboard input
     - No special integration needed
     - Capture via input field focus
+    - Auto-focus fields for optimal scanner UX
 
-2. **Mobile Device Camera**
+2. **Mobile Device Camera** - **Secondary Method**
     - ZXing library for scanning
     - Camera API access
     - Real-time scanning
+    - Accessible via camera button in BarcodeInput component
 
-3. **Native Barcode Scanner API (Chrome/Edge)**
-    - Browser-native API
-    - Better performance
-    - Fallback to ZXing
+3. **Manual Keyboard Input** - **Fallback Method**
+    - Full keyboard support
+    - Available when scanning fails
+    - Clear helper text guides users to scan first
 
 ### Implementation
 
 #### 1. Universal Barcode Input Component
 
+**Barcode-First Implementation:**
+
 ```typescript
-interface BarcodeInputProps {
-  onScan: (barcode: string) => void;
-  onError?: (error: Error) => void;
-  placeholder?: string;
-  autoFocus?: boolean;
-  validate?: (barcode: string) => boolean;
+interface BarcodeInputProps extends Omit<TextFieldProps, 'onChange' | 'value'> {
+  value: string;
+  onChange: (value: string) => void;
+  onScan?: (barcode: string) => void;
+  enableCamera?: boolean;
+  autoSubmitOnEnter?: boolean;
 }
 
+/**
+ * BarcodeInput Component - Barcode-First Principle
+ * 
+ * Primary: Barcode scanning (handheld scanner or camera)
+ * Fallback: Manual keyboard input
+ * 
+ * Always provides both options for maximum flexibility.
+ */
 const BarcodeInput: React.FC<BarcodeInputProps> = ({
+  value,
+  onChange,
   onScan,
-  onError,
-  placeholder = "Scan or enter barcode",
+  enableCamera = true,
+  autoSubmitOnEnter = false,
+  placeholder = "Scan barcode first, or enter manually if scanning fails",
   autoFocus = true,
-  validate
+  ...textFieldProps
 }) => {
+  const [scannerOpen, setScannerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [barcode, setBarcode] = useState('');
-  const [isScanning, setIsScanning] = useState(false);
 
-  // Handle keyboard input (handheld scanner)
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (validate ? validate(barcode) : barcode.length > 0) {
-        onScan(barcode);
-        setBarcode('');
+  // Handle barcode scan from camera (primary method)
+  const handleScan = (barcode: string) => {
+    onChange(barcode);
+    if (onScan) {
+      onScan(barcode);
+    }
+    setScannerOpen(false);
+  };
+
+  // Handle Enter key press (for handheld scanners that send Enter after scanning)
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && value.trim()) {
+      if (autoSubmitOnEnter && onScan) {
+        onScan(value.trim());
+      }
+      // Prevent form submission if this is in a form
+      if (!autoSubmitOnEnter) {
+        e.preventDefault();
       }
     }
   };
 
-  // Camera scanning
-  const handleCameraScan = () => {
-    setIsScanning(true);
-    // Implement camera scanning
-  };
+  // Auto-focus on mount for better UX with handheld scanners
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [autoFocus]);
 
   return (
-    <Box>
+    <>
       <TextField
-        ref={inputRef}
-        value={barcode}
-        onChange={(e) => setBarcode(e.target.value)}
+        {...textFieldProps}
+        inputRef={inputRef}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         onKeyPress={handleKeyPress}
         placeholder={placeholder}
         autoFocus={autoFocus}
         InputProps={{
-          endAdornment: (
+          ...textFieldProps.InputProps,
+          endAdornment: enableCamera ? (
             <InputAdornment position="end">
-              <IconButton onClick={handleCameraScan}>
-                <CameraIcon />
+              <IconButton
+                onClick={() => setScannerOpen(true)}
+                aria-label="Scan barcode"
+              >
+                <QrCodeScannerIcon />
               </IconButton>
             </InputAdornment>
-          )
+          ) : textFieldProps.InputProps?.endAdornment,
         }}
       />
-      {isScanning && (
+      {enableCamera && (
         <BarcodeScanner
-          onScan={(scannedBarcode) => {
-            if (validate ? validate(scannedBarcode) : true) {
-              onScan(scannedBarcode);
-              setIsScanning(false);
-            }
-          }}
-          onError={onError}
+          open={scannerOpen}
+          onClose={() => setScannerOpen(false)}
+          onScan={handleScan}
         />
       )}
-    </Box>
+    </>
   );
 };
 ```
+
+**Key Features:**
+- **Auto-focus:** Fields auto-focus for handheld scanner compatibility
+- **Camera button:** Always visible for camera scanning option
+- **Manual input:** Full keyboard support as fallback
+- **Helper text:** Guides users to "scan first, enter manually if scanning fails"
+- **Enter key handling:** Supports handheld scanners that send Enter after scanning
 
 #### 2. Barcode Validation Service
 
@@ -1302,12 +1351,82 @@ class BarcodeValidationService {
 }
 ```
 
-#### 3. Batch Scanning Support
+#### 3. Barcode Usage Guidelines
+
+**Where to Use BarcodeInput:**
+
+1. **Product Identification:**
+   - Product forms (primary barcode, secondary barcodes)
+   - Consignment entry (product code lookup)
+   - Stock count (product identification)
+   - Product search fields
+
+2. **Location Identification:**
+   - Location forms (location barcode)
+   - Location assignment (assign location to stock)
+   - Stock movement (source/target locations)
+   - Location search fields
+
+3. **Consignment Management:**
+   - Consignment search (by reference or barcode)
+   - Product lookup in consignment line items
+
+4. **Any Identifier Field:**
+   - Any field that can be scanned should use BarcodeInput
+   - Reduces manual input errors
+   - Improves operational efficiency
+
+**Implementation Pattern:**
+
+```typescript
+// Example: Product Form with Barcode-First Input
+const ProductForm = () => {
+  const [barcode, setBarcode] = useState('');
+  const [barcodeError, setBarcodeError] = useState<string | null>(null);
+
+  // Primary: Handle barcode scan
+  const handleBarcodeScan = async (scannedBarcode: string) => {
+    setBarcode(scannedBarcode);
+    setBarcodeError(null);
+    
+    // Validate and auto-fill
+    try {
+      const product = await validateBarcode(scannedBarcode);
+      setProductCode(product.code);
+      setProductName(product.name);
+    } catch (error) {
+      setBarcodeError('Barcode not found. Please enter product code manually.');
+    }
+  };
+
+  // Fallback: Handle manual input
+  const handleBarcodeChange = (value: string) => {
+    setBarcode(value);
+    setBarcodeError(null);
+  };
+
+  return (
+    <BarcodeInput
+      label="Product Barcode"
+      value={barcode}
+      onChange={handleBarcodeChange}
+      onScan={handleBarcodeScan}
+      error={!!barcodeError}
+      helperText={barcodeError || 'Scan barcode first, or enter manually if scanning fails'}
+      autoFocus
+      required
+    />
+  );
+};
+```
+
+#### 4. Batch Scanning Support
 
 ```typescript
 const BatchBarcodeScanner: React.FC = () => {
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
 
+  // Primary: Scan barcode
   const handleScan = async (barcode: string) => {
     const product = await barcodeService.validateProductBarcode(barcode);
     if (product) {
@@ -1324,7 +1443,11 @@ const BatchBarcodeScanner: React.FC = () => {
 
   return (
     <Box>
-      <BarcodeInput onScan={handleScan} />
+      <BarcodeInput
+        onScan={handleScan}
+        placeholder="Scan product barcode first, or enter manually"
+        autoFocus
+      />
       <List>
         {scannedItems.map((item, index) => (
           <ListItem key={index}>

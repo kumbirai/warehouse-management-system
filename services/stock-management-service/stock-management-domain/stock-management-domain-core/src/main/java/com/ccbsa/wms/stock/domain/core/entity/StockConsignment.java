@@ -14,6 +14,7 @@ import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentLineItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentReference;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentStatus;
+import com.ccbsa.wms.stock.domain.core.valueobject.ReceivedBy;
 
 /**
  * Aggregate Root: StockConsignment
@@ -30,7 +31,7 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
     private ConsignmentStatus status;
     private LocalDateTime receivedAt;
     private LocalDateTime confirmedAt;
-    private String receivedBy;
+    private ReceivedBy receivedBy;
     private List<ConsignmentLineItem> lineItems;
     private LocalDateTime createdAt;
     private LocalDateTime lastModifiedAt;
@@ -166,7 +167,7 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
         return confirmedAt;
     }
 
-    public String getReceivedBy() {
+    public ReceivedBy getReceivedBy() {
         return receivedBy;
     }
 
@@ -213,7 +214,7 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
             return this;
         }
 
-        public Builder receivedBy(String receivedBy) {
+        public Builder receivedBy(ReceivedBy receivedBy) {
             consignment.receivedBy = receivedBy;
             return this;
         }

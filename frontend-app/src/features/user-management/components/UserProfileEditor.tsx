@@ -1,9 +1,10 @@
-import { Box, Button, Grid, Paper, TextField, Typography } from '@mui/material';
+import { Box, Grid, Paper, TextField, Typography } from '@mui/material';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo } from 'react';
 import { UpdateUserProfileRequest, User } from '../types/user';
+import { FormActions } from '../../../components/common';
 
 const profileSchema = z.object({
   emailAddress: z
@@ -91,14 +92,12 @@ export const UserProfileEditor = ({
           </Grid>
         </Grid>
 
-        <Box display="flex" justifyContent="flex-end" gap={2} mt={3}>
-          <Button variant="outlined" onClick={onCancel} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button variant="contained" type="submit" disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </Box>
+        <FormActions
+          onCancel={onCancel}
+          isSubmitting={isLoading}
+          submitLabel="Save Changes"
+          cancelLabel="Cancel"
+        />
       </Box>
     </Paper>
   );

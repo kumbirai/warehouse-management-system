@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -20,9 +21,11 @@ import com.ccbsa.wms.stock.application.dto.command.UploadConsignmentCsvResultDTO
 import com.ccbsa.wms.stock.application.dto.command.ValidateConsignmentCommandDTO;
 import com.ccbsa.wms.stock.application.dto.command.ValidateConsignmentResultDTO;
 import com.ccbsa.wms.stock.application.dto.mapper.StockConsignmentDTOMapper;
+import com.ccbsa.wms.stock.application.service.command.ConfirmConsignmentCommandHandler;
 import com.ccbsa.wms.stock.application.service.command.CreateConsignmentCommandHandler;
 import com.ccbsa.wms.stock.application.service.command.UploadConsignmentCsvCommandHandler;
 import com.ccbsa.wms.stock.application.service.command.ValidateConsignmentCommandHandler;
+import com.ccbsa.wms.stock.application.service.command.dto.ConfirmConsignmentCommand;
 import com.ccbsa.wms.stock.application.service.command.dto.CreateConsignmentCommand;
 import com.ccbsa.wms.stock.application.service.command.dto.CreateConsignmentResult;
 import com.ccbsa.wms.stock.application.service.command.dto.UploadConsignmentCsvCommand;
@@ -48,13 +51,16 @@ public class StockConsignmentCommandController {
     private final CreateConsignmentCommandHandler createCommandHandler;
     private final UploadConsignmentCsvCommandHandler uploadCsvCommandHandler;
     private final ValidateConsignmentCommandHandler validateCommandHandler;
+    private final ConfirmConsignmentCommandHandler confirmCommandHandler;
     private final StockConsignmentDTOMapper mapper;
 
     public StockConsignmentCommandController(CreateConsignmentCommandHandler createCommandHandler, UploadConsignmentCsvCommandHandler uploadCsvCommandHandler,
-                                             ValidateConsignmentCommandHandler validateCommandHandler, StockConsignmentDTOMapper mapper) {
+                                             ValidateConsignmentCommandHandler validateCommandHandler, ConfirmConsignmentCommandHandler confirmCommandHandler,
+                                             StockConsignmentDTOMapper mapper) {
         this.createCommandHandler = createCommandHandler;
         this.uploadCsvCommandHandler = uploadCsvCommandHandler;
         this.validateCommandHandler = validateCommandHandler;
+        this.confirmCommandHandler = confirmCommandHandler;
         this.mapper = mapper;
     }
 
@@ -111,6 +117,20 @@ public class StockConsignmentCommandController {
         ValidateConsignmentResultDTO resultDTO = mapper.toValidateResultDTO(result);
 
         return ApiResponseBuilder.ok(resultDTO);
+    }
+
+    @PostMapping("/{consignmentId}/confirm")
+    @Operation(summary = "Confirm Consignment Receipt", description = "Confirms receipt of a stock consignment and triggers stock item creation")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK')")
+    public ResponseEntity<ApiResponse<Void>> confirmConsignment(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable("consignmentId") String consignmentId) {
+        // Map to command
+        ConfirmConsignmentCommand command = ConfirmConsignmentCommand.builder().tenantId(com.ccbsa.common.domain.valueobject.TenantId.of(tenantId))
+                .consignmentId(com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId.of(consignmentId)).build();
+
+        // Execute command
+        confirmCommandHandler.handle(command);
+
+        return ApiResponseBuilder.ok(null);
     }
 }
 
