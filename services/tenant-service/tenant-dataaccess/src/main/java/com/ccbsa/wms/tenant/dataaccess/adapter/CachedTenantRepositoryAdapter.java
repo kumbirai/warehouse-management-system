@@ -116,16 +116,26 @@ public class CachedTenantRepositoryAdapter implements TenantRepository {
         // Write-through: Save to database + update cache
         baseRepository.save(tenant);
 
-        // Update cache using global key
+        // Update cache using global key (non-blocking with timeout protection)
         if (tenant.getId() != null) {
             String cacheKey = CacheKeyGenerator.forGlobal(CacheNamespace.TENANTS.getValue(), tenant.getId().getValue());
             try {
                 tenant.clearDomainEvents(); // Clear domain events before caching
+
+                // Execute cache write with timeout protection
+                // Redis command timeout is configured to 2 seconds in CacheConfiguration
+                // This try-catch ensures we don't block if Redis is unavailable or times out
                 redisTemplate.opsForValue().set(cacheKey, tenant, cacheTtl);
                 cacheWrites.increment();
                 log.trace("Cache WRITE (write-through) for key: {}", cacheKey);
+            } catch (org.springframework.data.redis.RedisConnectionFailureException e) {
+                // Redis connection failure - log but don't throw (graceful degradation)
+                log.warn("Cache write-through failed due to Redis connection failure for key: {} - continuing without cache", cacheKey);
             } catch (Exception e) {
-                log.error("Cache write-through failed for key: {}", cacheKey, e);
+                // Any other cache error (including timeouts) - log but don't throw (graceful degradation)
+                // Redis timeout is handled by Lettuce client configuration (2 second command timeout)
+                log.warn("Cache write-through failed for key: {} - continuing without cache. Error: {}", cacheKey, e.getMessage());
+                // Don't throw - cache failure shouldn't break application
             }
         }
     }

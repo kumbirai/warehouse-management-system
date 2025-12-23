@@ -23,6 +23,7 @@ import org.springframework.util.backoff.ExponentialBackOff;
 import com.ccbsa.common.messaging.config.KafkaConfig;
 import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
 import com.ccbsa.wms.common.security.ServiceSecurityConfig;
+import com.ccbsa.wms.location.domain.core.service.FEFOAssignmentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -145,6 +146,21 @@ public class LocationManagementServiceConfiguration {
         backOff.setMaxInterval(maxInterval);
         backOff.setMaxElapsedTime(maxInterval * maxRetries);
         return backOff;
+    }
+
+    /**
+     * Creates a bean for FEFOAssignmentService domain service.
+     * <p>
+     * This domain service coordinates logic across multiple aggregates within the Location Management bounded context.
+     * It implements FEFO (First Expiring First Out) principles for location assignment.
+     * <p>
+     * The service is stateless and can be safely shared as a singleton bean.
+     *
+     * @return FEFOAssignmentService instance
+     */
+    @Bean
+    public FEFOAssignmentService fefoAssignmentService() {
+        return new FEFOAssignmentService();
     }
 }
 

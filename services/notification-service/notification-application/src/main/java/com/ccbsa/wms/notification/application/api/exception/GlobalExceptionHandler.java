@@ -23,7 +23,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * <p>
  * This handler extends {@link BaseGlobalExceptionHandler} to inherit common exception handling and adds notification-service-specific exception handlers.
  */
-@RestControllerAdvice(basePackages = "com.ccbsa.wms.notification.application.api")
+@RestControllerAdvice
 public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 

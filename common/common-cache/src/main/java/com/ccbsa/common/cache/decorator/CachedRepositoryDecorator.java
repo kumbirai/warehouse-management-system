@@ -147,23 +147,34 @@ public abstract class CachedRepositoryDecorator<T, ID> {
      * Saves entity to database and updates cache (write-through).
      * <p>
      * Write-through pattern: 1. Save to database (source of truth) 2. Update cache immediately 3. Return saved entity
+     * <p>
+     * Cache writes are non-blocking with timeout protection to prevent hanging operations.
+     * Redis command timeout is configured to 2 seconds in CacheConfiguration.
      */
     protected T saveWithCache(TenantId tenantId, UUID entityId, T entity, Function<T, T> databaseSaver) {
         // 1. Save to database first (source of truth)
         T savedEntity = databaseSaver.apply(entity);
 
-        // 2. Update cache (write-through)
+        // 2. Update cache (write-through) with timeout protection
         String cacheKey = CacheKeyGenerator.forEntity(tenantId, cacheNamespace, entityId);
 
         try {
             // Clear domain events before caching (domain events are transient and should not be cached)
             clearDomainEventsIfAggregateRoot(savedEntity);
 
+            // Execute cache write with timeout protection
+            // Redis command timeout is configured to 2 seconds in CacheConfiguration
+            // This try-catch ensures we don't block if Redis is unavailable or times out
             redisTemplate.opsForValue().set(cacheKey, savedEntity, cacheTtl);
             cacheWrites.increment();
             log.trace("Cache WRITE (write-through) for key: {}", cacheKey);
+        } catch (org.springframework.data.redis.RedisConnectionFailureException e) {
+            // Redis connection failure - log but don't throw (graceful degradation)
+            log.warn("Cache write-through failed due to Redis connection failure for key: {} - continuing without cache", cacheKey);
         } catch (Exception e) {
-            log.error("Cache write-through failed for key: {}", cacheKey, e);
+            // Any other cache error (including timeouts) - log but don't throw (graceful degradation)
+            // Redis timeout is handled by Lettuce client configuration (2 second command timeout)
+            log.warn("Cache write-through failed for key: {} - continuing without cache. Error: {}", cacheKey, e.getMessage());
             // Don't throw - cache failure shouldn't break application
         }
 

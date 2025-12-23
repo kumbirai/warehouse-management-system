@@ -45,27 +45,13 @@ CREATE TABLE IF NOT EXISTS users
     version BIGINT NOT NULL DEFAULT 0
     );
 
--- Add status check constraint
-DO
-$$
-BEGIN
-    IF
-EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'users_status_check' 
-        AND table_name = 'users'
-        AND table_schema = current_schema()
-    ) THEN
-ALTER TABLE users DROP CONSTRAINT users_status_check;
-END IF;
+-- Add status check constraint (idempotent approach)
+-- Drop constraint if it exists, then add it
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check;
 
 ALTER TABLE users
     ADD CONSTRAINT users_status_check
         CHECK (status IN ('ACTIVE', 'INACTIVE', 'SUSPENDED'));
-EXCEPTION
-    WHEN duplicate_object THEN
-        NULL;
-END $$;
 
 -- Add table comment
 COMMENT

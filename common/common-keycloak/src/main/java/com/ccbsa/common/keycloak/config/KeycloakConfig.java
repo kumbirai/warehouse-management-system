@@ -25,8 +25,8 @@ public class KeycloakConfig {
     private String adminPassword;
     @NotBlank(message = "Admin client ID is required")
     private String adminClientId = "admin-cli";
-    private int connectionTimeout = 5000;
-    private int socketTimeout = 5000;
+    private int connectionTimeout = 10000; // 10 seconds - increased for reliability
+    private int socketTimeout = 20000; // 20 seconds - increased to prevent timeouts during group operations
     /**
      * Default realm name for user operations when tenant-specific realm is not available. This is used in the single-realm approach or as a fallback.
      */

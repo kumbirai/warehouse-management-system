@@ -25,7 +25,7 @@ spring:
           # HTTP client configuration for load-balanced routes
           httpclient:
             connect-timeout: 5000  # 5 seconds connection timeout
-            response-timeout: 30s  # 30 seconds response timeout (matches frontend timeout)
+            response-timeout: 60s  # 60 seconds response timeout (increased for Flyway migrations during tenant schema creation)
             pool:
               type: ELASTIC
               max-connections: 500

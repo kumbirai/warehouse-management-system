@@ -53,6 +53,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -378,10 +379,12 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
     @Override
     public com.ccbsa.wms.user.domain.core.valueobject.KeycloakUserId createUser(String tenantId, String username, String email, String password, String firstName,
                                                                                 String lastName) {
-        logger.debug("Creating user in Keycloak: username={}, tenantId={}", username, tenantId);
+        logger.info("Creating user in Keycloak: username={}, tenantId={}", username, tenantId);
 
         try {
+            logger.debug("Getting Keycloak Admin Client and realm: {}", keycloakConfig.getDefaultRealm());
             RealmResource realm = keycloakClientPort.getAdminClient().realm(keycloakConfig.getDefaultRealm());
+            logger.debug("Realm resource obtained successfully");
 
             // Create user representation
             UserRepresentation user = new UserRepresentation();
@@ -405,8 +408,11 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
             user.setCredentials(Collections.singletonList(credential));
 
             // Create user
+            logger.debug("Creating user representation in Keycloak");
             UsersResource usersResource = realm.users();
+            logger.debug("Calling Keycloak API to create user");
             try (Response response = usersResource.create(user)) {
+                logger.debug("Keycloak user creation response received: status={}", response.getStatus());
                 int statusCode = response.getStatus();
                 if (statusCode == Response.Status.CONFLICT.getStatusCode()) {
                     // HTTP 409 Conflict - duplicate username or email
@@ -424,8 +430,19 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
                 String locationHeader = response.getLocation().toString();
                 String keycloakUserId = locationHeader.substring(locationHeader.lastIndexOf('/') + 1);
 
-                // Assign user to tenant group
-                assignUserToTenantGroup(realm, keycloakUserId, tenantId);
+                // Assign user to tenant group (non-blocking - group assignment is optional)
+                // If group doesn't exist or assignment fails, log warning but don't fail user creation
+                logger.debug("Assigning user to tenant group: userId={}, tenantId={}", keycloakUserId, tenantId);
+                try {
+                    assignUserToTenantGroup(realm, keycloakUserId, tenantId);
+                    logger.debug("User assigned to tenant group successfully");
+                } catch (KeycloakServiceException e) {
+                    // Group assignment failed - log warning but don't fail user creation
+                    // Groups are used for organization and don't affect core user functionality
+                    logger.warn("Failed to assign user to tenant group (user creation will continue): userId={}, tenantId={}, error={}",
+                            keycloakUserId, tenantId, e.getMessage());
+                    logger.debug("Group assignment failure details", e);
+                }
 
                 logger.info("User created successfully in Keycloak: userId={}, username={}", keycloakUserId, username);
                 return com.ccbsa.wms.user.domain.core.valueobject.KeycloakUserId.of(keycloakUserId);
@@ -440,6 +457,9 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
 
     /**
      * Assigns a user to their tenant group in Keycloak.
+     * <p>
+     * Uses efficient group lookup via getGroupByPath first, falling back to groups().groups() only if needed.
+     * This avoids fetching all groups unnecessarily, which can cause timeouts.
      *
      * @param realm          Realm resource
      * @param keycloakUserId Keycloak user ID
@@ -451,9 +471,49 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
         logger.debug("Assigning user to tenant group: userId={}, group={}", keycloakUserId, groupName);
 
         try {
-            // Find tenant group
-            List<GroupRepresentation> groups = realm.groups().groups();
-            GroupRepresentation tenantGroup = groups.stream().filter(group -> groupName.equalsIgnoreCase(group.getName())).findFirst().orElse(null);
+            // Find tenant group using efficient path lookup first
+            GroupRepresentation tenantGroup = null;
+            try {
+                // Try efficient path-based lookup first (doesn't fetch all groups)
+                tenantGroup = realm.getGroupByPath(String.format("/%s", groupName));
+                if (tenantGroup != null) {
+                    logger.debug("Found tenant group via path lookup: {}", groupName);
+                }
+            } catch (NotFoundException e) {
+                logger.debug("Group {} not found via path lookup, falling back to groups list", groupName);
+            } catch (jakarta.ws.rs.ProcessingException e) {
+                // Handle timeout or connection errors
+                if (e.getCause() instanceof java.net.SocketTimeoutException) {
+                    String errorMsg = String.format("Timeout while fetching group by path from Keycloak: %s", e.getMessage());
+                    logger.error(errorMsg);
+                    throw new KeycloakServiceException(errorMsg, e);
+                }
+                throw e;
+            } catch (Exception e) {
+                logger.debug("Path lookup failed for group {}, will try groups list: {}", groupName, e.getMessage());
+            }
+
+            // Fallback to fetching all groups if path lookup didn't work
+            if (tenantGroup == null) {
+                try {
+                    List<GroupRepresentation> groups = realm.groups().groups();
+                    tenantGroup = groups.stream()
+                            .filter(group -> groupName.equalsIgnoreCase(group.getName()))
+                            .findFirst()
+                            .orElse(null);
+                } catch (jakarta.ws.rs.ProcessingException e) {
+                    // Handle timeout or connection errors
+                    if (e.getCause() instanceof java.net.SocketTimeoutException) {
+                        String errorMsg = String.format("Timeout while fetching groups from Keycloak: %s", e.getMessage());
+                        logger.error(errorMsg);
+                        throw new KeycloakServiceException(errorMsg, e);
+                    }
+                    throw e;
+                } catch (Exception e) {
+                    logger.error("Failed to fetch groups from Keycloak: {}", e.getMessage(), e);
+                    throw new KeycloakServiceException(String.format("Failed to fetch groups from Keycloak: %s", e.getMessage()), e);
+                }
+            }
 
             if (tenantGroup == null) {
                 String errorMsg = String.format("Tenant group not found: %s", groupName);
@@ -461,9 +521,19 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
                 throw new KeycloakServiceException(errorMsg);
             }
 
-            // Assign user to group
-            UserResource userResource = realm.users().get(keycloakUserId);
-            userResource.joinGroup(tenantGroup.getId());
+            // Assign user to group with timeout handling
+            try {
+                UserResource userResource = realm.users().get(keycloakUserId);
+                userResource.joinGroup(tenantGroup.getId());
+            } catch (jakarta.ws.rs.ProcessingException e) {
+                // Handle timeout or connection errors
+                if (e.getCause() instanceof java.net.SocketTimeoutException) {
+                    String errorMsg = String.format("Timeout while assigning user to group in Keycloak: %s", e.getMessage());
+                    logger.error(errorMsg);
+                    throw new KeycloakServiceException(errorMsg, e);
+                }
+                throw e;
+            }
 
             logger.debug("User assigned to tenant group successfully: userId={}, group={}", keycloakUserId, groupName);
         } catch (KeycloakServiceException e) {

@@ -27,12 +27,12 @@ import com.ccbsa.wms.user.application.service.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * Global Exception Handler: BffExceptionHandler
+ * Global Exception Handler: GlobalExceptionHandler
  * <p>
- * Handles exceptions for BFF endpoints and provides consistent error responses using the standardized ApiResponse format.
+ * Handles exceptions across all controllers and provides consistent error responses using the standardized ApiResponse format.
  *
  * <p>This handler extends {@link BaseGlobalExceptionHandler} to inherit common exception
- * handling and adds BFF-specific exception handlers.</p>
+ * handling and adds user-service-specific exception handlers.</p>
  *
  * <p>Common exceptions are handled by the base class:</p>
  * <ul>
@@ -46,9 +46,9 @@ import jakarta.servlet.http.HttpServletRequest;
  *   <li>{@link Exception}</li>
  * </ul>
  */
-@RestControllerAdvice(basePackages = "com.ccbsa.wms.user.application.api")
-public class BffExceptionHandler extends BaseGlobalExceptionHandler {
-    private static final Logger logger = LoggerFactory.getLogger(BffExceptionHandler.class);
+@RestControllerAdvice
+public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
      * Handles AuthenticationException - indicates authentication failed (invalid credentials).

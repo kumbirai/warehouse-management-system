@@ -16,7 +16,7 @@ import com.ccbsa.common.keycloak.config.KeycloakConfig;
  * <p>
  * Note: Eureka client is auto-configured when spring-cloud-starter-netflix-eureka-client is on the classpath.
  */
-@SpringBootApplication(scanBasePackages = {"com.ccbsa.wms.tenant", "com.ccbsa.common.keycloak", "com.ccbsa.wms.common.security"})
+@SpringBootApplication(scanBasePackages = {"com.ccbsa.wms.tenant", "com.ccbsa.common.keycloak", "com.ccbsa.wms.common.security", "com.ccbsa.common.cache"})
 @EnableConfigurationProperties(KeycloakConfig.class)
 @EnableJpaRepositories(basePackages = "com.ccbsa.wms.tenant.dataaccess.jpa")
 @EntityScan(basePackages = "com.ccbsa.wms.tenant.dataaccess.entity")

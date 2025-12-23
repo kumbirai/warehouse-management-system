@@ -1,7 +1,9 @@
 package com.ccbsa.common.keycloak.adapter;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.slf4j.Logger;
@@ -12,11 +14,12 @@ import com.ccbsa.common.keycloak.config.KeycloakConfig;
 import com.ccbsa.common.keycloak.port.KeycloakClientPort;
 
 import jakarta.annotation.PreDestroy;
+import jakarta.ws.rs.client.ClientBuilder;
 
 /**
  * Adapter implementation for Keycloak client operations. Provides the base Keycloak Admin Client instance used by all service-specific adapters.
  * <p>
- * This adapter manages the Keycloak client lifecycle and connection pooling.
+ * This adapter manages the Keycloak client lifecycle and connection pooling with production-grade timeout configuration.
  */
 @Component
 public class KeycloakClientAdapter implements KeycloakClientPort {
@@ -27,12 +30,26 @@ public class KeycloakClientAdapter implements KeycloakClientPort {
     public KeycloakClientAdapter(KeycloakConfig config) {
         this.config = Objects.requireNonNull(config, "KeycloakConfig must not be null");
         this.keycloak = createKeycloakClient();
-        logger.info("Keycloak Admin Client initialized for server: {}", config.getServerUrl());
+        logger.info("Keycloak Admin Client initialized for server: {} with connectionTimeout={}ms, socketTimeout={}ms",
+                config.getServerUrl(), config.getConnectionTimeout(), config.getSocketTimeout());
     }
 
     private Keycloak createKeycloakClient() {
-        return KeycloakBuilder.builder().serverUrl(config.getServerUrl()).realm(config.getAdminRealm()).username(config.getAdminUsername()).password(config.getAdminPassword())
-                .clientId(config.getAdminClientId()).build();
+        // Configure Resteasy client with timeouts
+        ResteasyClientBuilder resteasyClientBuilder = (ResteasyClientBuilder) ClientBuilder.newBuilder();
+        resteasyClientBuilder.connectionPoolSize(10);
+        resteasyClientBuilder.connectionCheckoutTimeout(config.getConnectionTimeout(), TimeUnit.MILLISECONDS);
+        resteasyClientBuilder.readTimeout(config.getSocketTimeout(), TimeUnit.MILLISECONDS);
+        resteasyClientBuilder.connectTimeout(config.getConnectionTimeout(), TimeUnit.MILLISECONDS);
+
+        return KeycloakBuilder.builder()
+                .serverUrl(config.getServerUrl())
+                .realm(config.getAdminRealm())
+                .username(config.getAdminUsername())
+                .password(config.getAdminPassword())
+                .clientId(config.getAdminClientId())
+                .resteasyClient(resteasyClientBuilder.build())
+                .build();
     }
 
     @Override
@@ -48,22 +65,13 @@ public class KeycloakClientAdapter implements KeycloakClientPort {
 
     @Override
     public Keycloak getAdminClient() {
-        if (keycloak == null || isClosed()) {
-            logger.debug("Recreating Keycloak client connection");
+        // Always return the client - don't check if closed as it requires a blocking call
+        // The client will handle connection errors when used, and timeouts are configured
+        if (keycloak == null) {
+            logger.debug("Creating new Keycloak client connection");
             keycloak = createKeycloakClient();
         }
         return keycloak;
-    }
-
-    private boolean isClosed() {
-        // Keycloak client doesn't expose a direct "isClosed" method
-        // We check accessibility by attempting a simple operation
-        try {
-            keycloak.realms().findAll();
-            return false;
-        } catch (Exception e) {
-            return true;
-        }
     }
 
     @Override

@@ -12,7 +12,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  * <p>
  * Note: Eureka client is auto-configured when spring-cloud-starter-netflix-eureka-client is on the classpath.
  */
-@SpringBootApplication(scanBasePackages = {"com.ccbsa.wms.notification", "com.ccbsa.wms.common.security", "com.ccbsa.wms.notification.email"})
+@SpringBootApplication(scanBasePackages = {"com.ccbsa.wms.notification", "com.ccbsa.wms.common.security", "com.ccbsa.wms.notification.email", "com.ccbsa.common.cache"})
 @EnableJpaRepositories(basePackages = "com.ccbsa.wms.notification.dataaccess.jpa")
 @EntityScan(basePackages = "com.ccbsa.wms.notification.dataaccess.entity")
 public class NotificationServiceApplication {

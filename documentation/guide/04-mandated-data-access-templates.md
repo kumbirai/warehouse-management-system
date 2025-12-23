@@ -858,6 +858,20 @@ public NotificationEntity toEntity(Notification notification) {
 
 See [Production-Grade Caching Strategy](../caching/README.md) for complete implementation guide.
 
+### Error Handling and Timeout Protection
+
+**⚠️ PRODUCTION-GRADE REQUIREMENT:** All cache operations MUST implement graceful error handling:
+
+1. **Redis Connection Failures**: Catch `RedisConnectionFailureException` and log as warning (not error)
+2. **Timeout Protection**: Redis command timeout is configured to 2 seconds in `CacheConfiguration`
+3. **Graceful Degradation**: Cache failures must NOT break application - always continue without cache
+4. **Logging Levels**: 
+   - Connection failures: `log.warn()` (expected in degraded scenarios)
+   - Other errors: `log.warn()` with error message (not full stack trace for performance)
+
+The base `CachedRepositoryDecorator.saveWithCache()` method implements this pattern automatically.
+Services that override `save()` directly must follow the same pattern.
+
 ### Cached Adapter Structure
 
 ```java
@@ -936,6 +950,10 @@ public class Cached{DomainObject}RepositoryAdapter
         // Write-through: Save to database + update cache
         baseRepository.save({domainObject});
 
+        // Cache write-through with timeout protection
+        // Redis command timeout is configured to 2 seconds in CacheConfiguration
+        // saveWithCache() handles RedisConnectionFailureException and other errors gracefully
+        // Cache failures don't break application (graceful degradation)
         saveWithCache(
             {domainObject}.getTenantId(),
             {domainObject}.getId().getValue(),

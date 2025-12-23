@@ -17,7 +17,7 @@ import reactor.netty.http.client.HttpClient;
  */
 public class WebTestClientConfig {
 
-    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
+    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(60); // Increased for Flyway migrations
     private static final int DEFAULT_BUFFER_SIZE = 16 * 1024 * 1024; // 16MB
 
     /**

@@ -113,8 +113,8 @@ keycloak:
     adminClientId: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
     defaultRealm: ${KEYCLOAK_DEFAULT_REALM:wms-realm}
     clientSecret: ${KEYCLOAK_CLIENT_SECRET:B4iTgRx7eWL9NVV2AmnzCZj0Lix5EM6E}
-    connectionTimeout: 5000
-    socketTimeout: 5000
+    connectionTimeout: 10000  # 10 seconds - increased for reliability
+    socketTimeout: 20000      # 20 seconds - increased to prevent timeouts during group operations
 
 # Tenant Service Configuration
 tenant:
