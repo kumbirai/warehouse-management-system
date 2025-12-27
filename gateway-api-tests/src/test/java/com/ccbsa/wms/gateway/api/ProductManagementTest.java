@@ -967,7 +967,7 @@ public class ProductManagementTest extends BaseIntegrationTest {
     /**
      * Create authenticated PUT request with Bearer token and tenant context.
      */
-    private WebTestClient.RequestHeadersSpec<?> authenticatedPut(String uri, String accessToken, String tenantId, Object requestBody) {
+    protected WebTestClient.RequestHeadersSpec<?> authenticatedPut(String uri, String accessToken, String tenantId, Object requestBody) {
         return webTestClient.put()
                 .uri(uri)
                 .contentType(MediaType.APPLICATION_JSON)

@@ -598,7 +598,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
                 .aisle("AISLE-02")
                 .rack("RACK-03")
                 .level("LEVEL-04")
-                .barcode("UPDATED-BARCODE-123")
+                .barcode("UPDATEDBARCODE123")
                 .description("Location with updated barcode")
                 .build();
 
@@ -621,7 +621,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
 
         LocationResponse updatedLocation = apiResponse.getData();
         assertThat(updatedLocation).isNotNull();
-        assertThat(updatedLocation.getBarcode()).isEqualTo("UPDATED-BARCODE-123");
+        assertThat(updatedLocation.getBarcode()).isEqualTo("UPDATEDBARCODE123");
         assertThat(updatedLocation.getCoordinates().getZone()).isEqualTo("ZONE-B");
     }
 
@@ -825,10 +825,226 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(updatedLocation.getDescription()).isEqualTo("Updated with same barcode");
     }
 
-    // ==================== LOCATION HIERARCHY TESTS ====================
+    // ==================== VALIDATION TESTS ====================
 
     @Test
     @Order(32)
+    public void testUpdateLocation_ZoneExceedsMaxLength() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-EXCEEDS-10") // 15 characters - exceeds 10
+                .aisle("AISLE-01")
+                .rack("RACK-02")
+                .level("LEVEL-03")
+                .build();
+
+        // Act
+        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange();
+
+        // Assert
+        response.expectStatus().isBadRequest();
+    }
+
+    @Test
+    @Order(33)
+    public void testUpdateLocation_AisleExceedsMaxLength() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-A")
+                .aisle("AISLE-EXCEEDS-10") // 15 characters - exceeds 10
+                .rack("RACK-02")
+                .level("LEVEL-03")
+                .build();
+
+        // Act
+        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange();
+
+        // Assert
+        response.expectStatus().isBadRequest();
+    }
+
+    @Test
+    @Order(34)
+    public void testUpdateLocation_RackExceedsMaxLength() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-A")
+                .aisle("AISLE-01")
+                .rack("RACK-EXCEEDS-10") // 15 characters - exceeds 10
+                .level("LEVEL-03")
+                .build();
+
+        // Act
+        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange();
+
+        // Assert
+        response.expectStatus().isBadRequest();
+    }
+
+    @Test
+    @Order(35)
+    public void testUpdateLocation_LevelExceedsMaxLength() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-A")
+                .aisle("AISLE-01")
+                .rack("RACK-02")
+                .level("LEVEL-EXCEEDS-10") // 16 characters - exceeds 10
+                .build();
+
+        // Act
+        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange();
+
+        // Assert
+        response.expectStatus().isBadRequest();
+    }
+
+    @Test
+    @Order(36)
+    public void testUpdateLocation_BarcodeTooShort() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-A")
+                .aisle("AISLE-01")
+                .rack("RACK-02")
+                .level("LEVEL-03")
+                .barcode("SHORT") // 5 characters - less than minimum 8
+                .build();
+
+        // Act
+        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange();
+
+        // Assert
+        response.expectStatus().isBadRequest();
+    }
+
+    @Test
+    @Order(37)
+    public void testUpdateLocation_BarcodeTooLong() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-A")
+                .aisle("AISLE-01")
+                .rack("RACK-02")
+                .level("LEVEL-03")
+                .barcode("BARCODE123456789012345") // 23 characters - exceeds maximum 20
+                .build();
+
+        // Act
+        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange();
+
+        // Assert
+        response.expectStatus().isBadRequest();
+    }
+
+    @Test
+    @Order(38)
+    public void testUpdateLocation_BarcodeInvalidCharacters() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-A")
+                .aisle("AISLE-01")
+                .rack("RACK-02")
+                .level("LEVEL-03")
+                .barcode("BARCODE-123") // Contains hyphen - invalid
+                .build();
+
+        // Act
+        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange();
+
+        // Assert
+        response.expectStatus().isBadRequest();
+    }
+
+    @Test
+    @Order(39)
+    public void testUpdateLocation_ValidBarcode() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
+                .zone("ZONE-A")
+                .aisle("AISLE-01")
+                .rack("RACK-02")
+                .level("LEVEL-03")
+                .barcode("VALIDBARCODE123") // 15 characters, alphanumeric - valid
+                .build();
+
+        // Act
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedPutWithTenant(
+                "/api/v1/location-management/locations/" + location.getLocationId(),
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                updateRequest
+        ).exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                })
+                .returnResult();
+
+        // Assert
+        ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isTrue();
+
+        LocationResponse updatedLocation = apiResponse.getData();
+        assertThat(updatedLocation).isNotNull();
+        assertThat(updatedLocation.getBarcode()).isEqualTo("VALIDBARCODE123");
+    }
+
+    // ==================== LOCATION HIERARCHY TESTS ====================
+
+    @Test
+    @Order(50)
     public void testLocationPathGeneration() {
         // Arrange - Create full hierarchy
         CreateLocationResponse warehouse = createLocation(LocationTestDataBuilder.buildWarehouseRequest());

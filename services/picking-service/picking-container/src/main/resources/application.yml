@@ -24,8 +24,10 @@ spring:
         format_sql: true
   
   # Flyway Configuration
+  # Note: Flyway is disabled at startup since migrations are run programmatically
+  # in TenantSchemaCreatedEventListener when tenant schemas are created.
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migration
     baseline-on-migrate: true
   

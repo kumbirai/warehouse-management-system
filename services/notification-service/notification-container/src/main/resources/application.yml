@@ -146,14 +146,18 @@ notification:
       password: ${NOTIFICATION_EMAIL_PASSWORD:}
 
 # User Service Configuration
+# Note: Uses Eureka service discovery via @LoadBalanced RestTemplate
+# Service name is resolved through Eureka registry (no port needed)
 user:
   service:
-    url: ${USER_SERVICE_URL:http://user-service:8080}
+    url: ${USER_SERVICE_URL:http://user-service}
 
 # Tenant Service Configuration
+# Note: Uses Eureka service discovery via @LoadBalanced RestTemplate
+# Service name is resolved through Eureka registry (no port needed)
 tenant:
   service:
-    url: ${TENANT_SERVICE_URL:http://tenant-service:8080}
+    url: ${TENANT_SERVICE_URL:http://tenant-service}
 
 # Cache Configuration
 wms:

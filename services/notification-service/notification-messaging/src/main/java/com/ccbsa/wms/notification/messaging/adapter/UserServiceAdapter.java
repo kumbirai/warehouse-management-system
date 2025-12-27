@@ -32,7 +32,7 @@ public class UserServiceAdapter implements UserServicePort {
     private final RestTemplate restTemplate;
     private final String userServiceUrl;
 
-    public UserServiceAdapter(RestTemplate restTemplate, @Value("${user.service.url:http://user-service:8080}") String userServiceUrl) {
+    public UserServiceAdapter(RestTemplate restTemplate, @Value("${user.service.url:http://user-service}") String userServiceUrl) {
         this.restTemplate = restTemplate;
         this.userServiceUrl = userServiceUrl;
     }

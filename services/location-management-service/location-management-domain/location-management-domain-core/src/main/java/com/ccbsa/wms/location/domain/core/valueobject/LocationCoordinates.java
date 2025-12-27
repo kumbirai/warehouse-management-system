@@ -27,10 +27,11 @@ public final class LocationCoordinates {
      */
     private LocationCoordinates(String zone, String aisle, String rack, String level) {
         validate(zone, aisle, rack, level);
-        this.zone = zone;
-        this.aisle = aisle;
-        this.rack = rack;
-        this.level = level;
+        // Store trimmed values to ensure consistency
+        this.zone = zone.trim();
+        this.aisle = aisle.trim();
+        this.rack = rack.trim();
+        this.level = level.trim();
     }
 
     /**
@@ -46,14 +47,33 @@ public final class LocationCoordinates {
         if (zone == null || zone.trim().isEmpty()) {
             throw new IllegalArgumentException("Zone cannot be null or empty");
         }
+        String trimmedZone = zone.trim();
+        if (trimmedZone.length() > 10) {
+            throw new IllegalArgumentException("Zone cannot exceed 10 characters");
+        }
+
         if (aisle == null || aisle.trim().isEmpty()) {
             throw new IllegalArgumentException("Aisle cannot be null or empty");
         }
+        String trimmedAisle = aisle.trim();
+        if (trimmedAisle.length() > 10) {
+            throw new IllegalArgumentException("Aisle cannot exceed 10 characters");
+        }
+
         if (rack == null || rack.trim().isEmpty()) {
             throw new IllegalArgumentException("Rack cannot be null or empty");
         }
+        String trimmedRack = rack.trim();
+        if (trimmedRack.length() > 10) {
+            throw new IllegalArgumentException("Rack cannot exceed 10 characters");
+        }
+
         if (level == null || level.trim().isEmpty()) {
             throw new IllegalArgumentException("Level cannot be null or empty");
+        }
+        String trimmedLevel = level.trim();
+        if (trimmedLevel.length() > 10) {
+            throw new IllegalArgumentException("Level cannot exceed 10 characters");
         }
     }
 

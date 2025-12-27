@@ -15,11 +15,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
+import com.ccbsa.wms.stock.application.service.exception.ProductServiceException;
 import com.ccbsa.wms.stock.application.service.port.service.ProductServicePort;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Adapter: ProductServiceAdapter
@@ -40,7 +45,7 @@ public class ProductServiceAdapter implements ProductServicePort {
     private final RestTemplate restTemplate;
     private final String productServiceUrl;
 
-    public ProductServiceAdapter(RestTemplate restTemplate, @Value("${product.service.url:http://product-service:8080}") String productServiceUrl) {
+    public ProductServiceAdapter(RestTemplate restTemplate, @Value("${product.service.url:http://product-service}") String productServiceUrl) {
         this.restTemplate = restTemplate;
         this.productServiceUrl = productServiceUrl;
     }
@@ -54,7 +59,27 @@ public class ProductServiceAdapter implements ProductServicePort {
             logger.debug("Calling product service: {}", url);
 
             HttpHeaders headers = new HttpHeaders();
-            headers.set("X-Tenant-Id", tenantId.getValue());
+
+            // Forward Authorization header from current request for service-to-service authentication
+            String authorizationHeader = getAuthorizationHeader();
+            if (authorizationHeader != null) {
+                headers.set("Authorization", authorizationHeader);
+                logger.debug("Forwarding Authorization header to product service");
+            } else {
+                logger.warn("No Authorization header found in current request - product service call may fail");
+            }
+
+            // Forward X-Tenant-Id header (required by product service)
+            String tenantIdHeader = getTenantIdHeader();
+            if (tenantIdHeader != null) {
+                headers.set("X-Tenant-Id", tenantIdHeader);
+                logger.debug("Forwarding X-Tenant-Id header to product service: {}", tenantIdHeader);
+            } else {
+                // Set the tenantId from the method parameter as fallback
+                headers.set("X-Tenant-Id", tenantId.getValue());
+                logger.debug("Setting X-Tenant-Id header from method parameter: {}", tenantId.getValue());
+            }
+
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
             ResponseEntity<ApiResponse<ValidateBarcodeResponse>> response = restTemplate.exchange(url, HttpMethod.GET, entity, BARCODE_RESPONSE_TYPE);
@@ -77,11 +102,47 @@ public class ProductServiceAdapter implements ProductServicePort {
             return Optional.empty();
         } catch (RestClientException e) {
             logger.error("Failed to validate product barcode from product-service: barcode={}", barcode, e);
-            throw new RuntimeException(String.format("Failed to validate product barcode: %s", e.getMessage()), e);
+            throw new ProductServiceException(String.format("Product service is temporarily unavailable. Please try again later."), e);
         } catch (Exception e) {
             logger.error("Unexpected error validating product barcode: barcode={}", barcode, e);
-            throw new RuntimeException(String.format("Failed to validate product barcode: %s", e.getMessage()), e);
+            throw new ProductServiceException(String.format("Product service error: %s", e.getMessage()), e);
         }
+    }
+
+    /**
+     * Extracts the Authorization header from the current HTTP request. This allows service-to-service calls to forward the JWT token.
+     *
+     * @return Authorization header value or null if not available
+     */
+    private String getAuthorizationHeader() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                return request.getHeader("Authorization");
+            }
+        } catch (Exception e) {
+            logger.debug("Could not extract Authorization header from request context: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Extracts the X-Tenant-Id header from the current HTTP request. This allows service-to-service calls to forward the tenant context.
+     *
+     * @return X-Tenant-Id header value or null if not available
+     */
+    private String getTenantIdHeader() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                return request.getHeader("X-Tenant-Id");
+            }
+        } catch (Exception e) {
+            logger.debug("Could not extract X-Tenant-Id header from request context: {}", e.getMessage());
+        }
+        return null;
     }
 
     @Override
@@ -93,7 +154,27 @@ public class ProductServiceAdapter implements ProductServicePort {
             logger.debug("Calling product service: {}", url);
 
             HttpHeaders headers = new HttpHeaders();
-            headers.set("X-Tenant-Id", tenantId.getValue());
+
+            // Forward Authorization header from current request for service-to-service authentication
+            String authorizationHeader = getAuthorizationHeader();
+            if (authorizationHeader != null) {
+                headers.set("Authorization", authorizationHeader);
+                logger.debug("Forwarding Authorization header to product service");
+            } else {
+                logger.warn("No Authorization header found in current request - product service call may fail");
+            }
+
+            // Forward X-Tenant-Id header (required by product service)
+            String tenantIdHeader = getTenantIdHeader();
+            if (tenantIdHeader != null) {
+                headers.set("X-Tenant-Id", tenantIdHeader);
+                logger.debug("Forwarding X-Tenant-Id header to product service: {}", tenantIdHeader);
+            } else {
+                // Set the tenantId from the method parameter as fallback
+                headers.set("X-Tenant-Id", tenantId.getValue());
+                logger.debug("Setting X-Tenant-Id header from method parameter: {}", tenantId.getValue());
+            }
+
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
             ResponseEntity<ApiResponse<ProductResponse>> response = restTemplate.exchange(url, HttpMethod.GET, entity, PRODUCT_RESPONSE_TYPE);
@@ -113,10 +194,10 @@ public class ProductServiceAdapter implements ProductServicePort {
             return Optional.empty();
         } catch (RestClientException e) {
             logger.error("Failed to get product by code from product-service: productCode={}", productCode.getValue(), e);
-            throw new RuntimeException(String.format("Failed to get product by code: %s", e.getMessage()), e);
+            throw new ProductServiceException(String.format("Product service is temporarily unavailable. Please try again later."), e);
         } catch (Exception e) {
             logger.error("Unexpected error getting product by code: productCode={}", productCode.getValue(), e);
-            throw new RuntimeException(String.format("Failed to get product by code: %s", e.getMessage()), e);
+            throw new ProductServiceException(String.format("Product service error: %s", e.getMessage()), e);
         }
     }
 

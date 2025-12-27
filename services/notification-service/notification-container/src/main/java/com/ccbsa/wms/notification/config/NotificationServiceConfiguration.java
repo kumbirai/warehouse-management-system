@@ -7,6 +7,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -24,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 import com.ccbsa.common.messaging.config.KafkaConfig;
 import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
 import com.ccbsa.wms.common.security.ServiceSecurityConfig;
+import com.ccbsa.wms.notification.messaging.listener.PartitionAssignmentLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -69,7 +71,16 @@ public class NotificationServiceConfiguration {
     @Value("${spring.kafka.error-handling.max-interval:10000}")
     private Long maxInterval;
 
+    /**
+     * RestTemplate bean for external service calls (e.g., Tenant Service, User Service).
+     * <p>
+     * Configured with @LoadBalanced to enable Eureka service discovery. Uses service names
+     * (e.g., http://tenant-service) which are resolved via Eureka registry.
+     *
+     * @return RestTemplate configured with LoadBalancer for service discovery
+     */
     @Bean
+    @LoadBalanced
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }
@@ -142,6 +153,9 @@ public class NotificationServiceConfiguration {
 
         // Concurrency for parallel processing
         factory.setConcurrency(concurrency);
+
+        // Add partition assignment logger for debugging partition assignment issues
+        factory.getContainerProperties().setConsumerRebalanceListener(new PartitionAssignmentLogger());
 
         // Error handler with exponential backoff for retryable exceptions
         // Non-retryable exceptions (deserialization errors) skip retries

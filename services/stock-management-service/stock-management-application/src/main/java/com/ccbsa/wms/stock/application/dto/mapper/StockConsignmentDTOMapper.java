@@ -26,6 +26,8 @@ import com.ccbsa.wms.stock.application.service.command.dto.ValidateConsignmentCo
 import com.ccbsa.wms.stock.application.service.command.dto.ValidateConsignmentResult;
 import com.ccbsa.wms.stock.application.service.query.dto.ConsignmentQueryResult;
 import com.ccbsa.wms.stock.application.service.query.dto.GetConsignmentQuery;
+import com.ccbsa.wms.stock.application.service.query.dto.ListConsignmentsQuery;
+import com.ccbsa.wms.stock.application.service.query.dto.ListConsignmentsQueryResult;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentLineItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentReference;
@@ -155,6 +157,28 @@ public class StockConsignmentDTOMapper {
      */
     public GetConsignmentQuery toGetConsignmentQuery(String consignmentId, String tenantId) {
         return GetConsignmentQuery.builder().consignmentId(ConsignmentId.of(consignmentId)).tenantId(TenantId.of(tenantId)).build();
+    }
+
+    /**
+     * Converts tenant ID, page, and size to ListConsignmentsQuery.
+     *
+     * @param tenantId Tenant ID string
+     * @param page     Page number (0-based)
+     * @param size     Page size
+     * @return ListConsignmentsQuery
+     */
+    public ListConsignmentsQuery toListConsignmentsQuery(String tenantId, Integer page, Integer size) {
+        return ListConsignmentsQuery.builder().tenantId(TenantId.of(tenantId)).page(page).size(size).build();
+    }
+
+    /**
+     * Converts ListConsignmentsQueryResult to list of ConsignmentQueryDTO.
+     *
+     * @param result Query result
+     * @return List of ConsignmentQueryDTO
+     */
+    public List<ConsignmentQueryDTO> toConsignmentQueryDTOList(ListConsignmentsQueryResult result) {
+        return result.getConsignments().stream().map(this::toQueryResultDTO).collect(Collectors.toList());
     }
 
     /**

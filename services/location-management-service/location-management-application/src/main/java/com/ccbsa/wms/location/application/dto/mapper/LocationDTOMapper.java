@@ -103,6 +103,9 @@ public class LocationDTOMapper {
      * Generates coordinates from hierarchical location model.
      * For warehouses, uses code as zone and generates defaults for other fields.
      * For other types, derives coordinates from hierarchy or uses defaults.
+     * <p>
+     * Note: All coordinate values (zone, aisle, rack, level) must not exceed 10 characters
+     * as per LocationCoordinates validation rules.
      *
      * @param dto Command DTO
      * @return LocationCoordinates
@@ -111,49 +114,51 @@ public class LocationDTOMapper {
         String type = dto.getType() != null ? dto.getType().toUpperCase(Locale.ROOT) : "";
         String code = dto.getCode() != null ? dto.getCode() : "";
 
-        // Sanitize code to remove hyphens and other non-alphanumeric characters
-        // This ensures barcode generation produces valid alphanumeric strings
-        String sanitizedCode = sanitizeForBarcode(code);
+        // Sanitize and truncate code to ensure it fits within 10-character limit for coordinates
+        // This ensures barcode generation produces valid alphanumeric strings and coordinates pass validation
+        String sanitizedCode = sanitizeAndTruncateForCoordinate(code, 10);
 
         switch (type) {
             case "WAREHOUSE":
-                // For warehouses, use sanitized code as zone, generate defaults for others
+                // For warehouses, use sanitized code as zone (max 10 chars), generate defaults for others
                 return LocationCoordinates.of(sanitizedCode.isEmpty() ? "WH" : sanitizedCode, "00", "00", "00");
             case "ZONE":
-                // For zones, use sanitized code as zone identifier
+                // For zones, use sanitized code as zone identifier (max 10 chars)
                 return LocationCoordinates.of(sanitizedCode.isEmpty() ? "ZONE" : sanitizedCode, "00", "00", "00");
             case "AISLE":
-                // For aisles, derive from parent or use sanitized code
+                // For aisles, derive from parent or use sanitized code (max 10 chars)
                 return LocationCoordinates.of("ZONE", // Will be derived from parent in future
                         sanitizedCode.isEmpty() ? "AISLE" : sanitizedCode, "00", "00");
             case "RACK":
-                // For racks, derive from parent hierarchy
+                // For racks, derive from parent hierarchy, use sanitized code (max 10 chars)
                 return LocationCoordinates.of("ZONE", // Will be derived from parent in future
                         "AISLE", // Will be derived from parent in future
                         sanitizedCode.isEmpty() ? "RACK" : sanitizedCode, "00");
             case "BIN":
             case "LEVEL":
-                // For bins/levels, derive from parent hierarchy
+                // For bins/levels, derive from parent hierarchy, use sanitized code (max 10 chars)
                 return LocationCoordinates.of("ZONE", // Will be derived from parent in future
                         "AISLE", // Will be derived from parent in future
                         "RACK", // Will be derived from parent in future
                         sanitizedCode.isEmpty() ? "BIN" : sanitizedCode);
             default:
-                // Default: use sanitized code as zone if available
+                // Default: use sanitized code as zone if available (max 10 chars)
                 return LocationCoordinates.of(sanitizedCode.isEmpty() ? "LOC" : sanitizedCode, "00", "00", "00");
         }
     }
 
     /**
      * Generates default coordinates when no model is specified.
+     * <p>
+     * Note: Zone value must not exceed 10 characters as per LocationCoordinates validation rules.
      *
      * @param dto Command DTO
      * @return LocationCoordinates with default values
      */
     private LocationCoordinates generateDefaultCoordinates(CreateLocationCommandDTO dto) {
-        // Use sanitized code if available, otherwise generate defaults
+        // Use sanitized and truncated code if available, otherwise generate defaults
         String code = dto.getCode() != null ? dto.getCode() : "";
-        String zone = sanitizeForBarcode(code);
+        String zone = sanitizeAndTruncateForCoordinate(code, 10);
         if (zone.isEmpty()) {
             zone = "DEFAULT";
         }
@@ -161,19 +166,29 @@ public class LocationDTOMapper {
     }
 
     /**
-     * Sanitizes a string for barcode generation by removing non-alphanumeric characters.
-     * This ensures that when coordinates are concatenated to form a barcode, the result
-     * is valid alphanumeric (8-20 characters as per CCBSA standards).
+     * Sanitizes and truncates a string for use as a coordinate value (zone, aisle, rack, level).
+     * Coordinate values must not exceed 10 characters as per LocationCoordinates validation rules.
+     * <p>
+     * This method:
+     * 1. Removes all non-alphanumeric characters
+     * 2. Converts to uppercase
+     * 3. Truncates to the specified maximum length
      *
-     * @param value String value to sanitize
-     * @return Sanitized string with only alphanumeric characters, uppercase
+     * @param value     String value to sanitize and truncate
+     * @param maxLength Maximum length (typically 10 for coordinates)
+     * @return Sanitized and truncated string with only alphanumeric characters, uppercase, max length
      */
-    private String sanitizeForBarcode(String value) {
+    private String sanitizeAndTruncateForCoordinate(String value, int maxLength) {
         if (value == null || value.trim().isEmpty()) {
             return "";
         }
         // Remove all non-alphanumeric characters and convert to uppercase
-        return value.replaceAll("[^A-Za-z0-9]", "").toUpperCase(Locale.ROOT);
+        String sanitized = value.replaceAll("[^A-Za-z0-9]", "").toUpperCase(Locale.ROOT);
+        // Truncate to max length if necessary
+        if (sanitized.length() > maxLength) {
+            return sanitized.substring(0, maxLength);
+        }
+        return sanitized;
     }
 
     /**

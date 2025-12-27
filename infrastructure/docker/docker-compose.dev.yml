@@ -85,7 +85,10 @@ services:
       KAFKA_JMX_PORT: 9101
       KAFKA_JMX_HOSTNAME: localhost
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
-      KAFKA_NUM_PARTITIONS: 3
+      # Increased partitions to support all notification service listeners
+      # 4 tenant event listeners × 3 concurrency = 12 consumers minimum
+      # Using 16 partitions for scalability and to ensure all consumers get partitions
+      KAFKA_NUM_PARTITIONS: 16
       KAFKA_DEFAULT_REPLICATION_FACTOR: 1
     volumes:
       - kafka_dev_data:/var/lib/kafka/data

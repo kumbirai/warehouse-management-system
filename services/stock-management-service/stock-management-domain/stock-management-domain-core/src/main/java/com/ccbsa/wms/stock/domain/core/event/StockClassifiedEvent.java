@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import com.ccbsa.common.domain.valueobject.StockClassification;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 import com.ccbsa.wms.stock.domain.core.entity.StockItem;
+import com.ccbsa.wms.stock.domain.core.valueobject.Quantity;
 
 /**
  * Domain Event: StockClassifiedEvent
@@ -23,6 +24,7 @@ public class StockClassifiedEvent extends StockManagementEvent<StockItem> {
     private final StockClassification oldClassification;
     private final StockClassification newClassification;
     private final LocalDate expirationDate;
+    private final Quantity quantity;
 
     /**
      * Constructor for StockClassifiedEvent.
@@ -32,13 +34,16 @@ public class StockClassifiedEvent extends StockManagementEvent<StockItem> {
      * @param oldClassification Previous classification (may be null for initial classification)
      * @param newClassification New classification
      * @param expirationDate    Expiration date (may be null for non-perishable)
+     * @param quantity          Stock item quantity (required for FEFO location assignment)
      */
-    public StockClassifiedEvent(String aggregateId, ProductId productId, StockClassification oldClassification, StockClassification newClassification, LocalDate expirationDate) {
+    public StockClassifiedEvent(String aggregateId, ProductId productId, StockClassification oldClassification, StockClassification newClassification, LocalDate expirationDate,
+                                Quantity quantity) {
         super(aggregateId, AGGREGATE_TYPE);
         this.productId = productId;
         this.oldClassification = oldClassification;
         this.newClassification = newClassification;
         this.expirationDate = expirationDate;
+        this.quantity = quantity;
     }
 
     public ProductId getProductId() {
@@ -55,6 +60,10 @@ public class StockClassifiedEvent extends StockManagementEvent<StockItem> {
 
     public LocalDate getExpirationDate() {
         return expirationDate;
+    }
+
+    public Quantity getQuantity() {
+        return quantity;
     }
 }
 

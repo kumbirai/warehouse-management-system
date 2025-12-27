@@ -12,6 +12,7 @@ import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.application.api.ApiResponseBuilder;
 import com.ccbsa.common.application.api.RequestContext;
 import com.ccbsa.common.application.api.exception.BaseGlobalExceptionHandler;
+import com.ccbsa.wms.stock.application.service.exception.ProductServiceException;
 import com.ccbsa.wms.stock.domain.core.exception.ConsignmentNotFoundException;
 import com.ccbsa.wms.stock.domain.core.exception.InvalidConsignmentReferenceException;
 import com.ccbsa.wms.stock.domain.core.exception.InvalidExpirationDateException;
@@ -117,6 +118,24 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
 
         ApiError error = ApiError.builder("ACCESS_DENIED", "You do not have permission to perform this action").path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.FORBIDDEN, error);
+    }
+
+    /**
+     * Handles ProductServiceException - indicates Product Service is unavailable.
+     *
+     * @param ex      The exception
+     * @param request The HTTP request
+     * @return Error response with 503 Service Unavailable
+     */
+    @ExceptionHandler(ProductServiceException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProductServiceException(ProductServiceException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        logger.error("Product service error: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path, ex);
+
+        ApiError error = ApiError.builder("PRODUCT_SERVICE_UNAVAILABLE", ex.getMessage()).path(path).requestId(requestId).build();
+        return ApiResponseBuilder.error(HttpStatus.SERVICE_UNAVAILABLE, error);
     }
 }
 

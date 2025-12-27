@@ -1,6 +1,7 @@
 package com.ccbsa.wms.stock.messaging.listener;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -72,8 +73,19 @@ public class LocationAssignedEventListener {
 
             // Get stock item
             StockItemId stockItemId = StockItemId.of(stockItemIdString);
-            StockItem stockItem =
-                    stockItemRepository.findById(stockItemId, tenantId).orElseThrow(() -> new IllegalStateException(String.format("Stock item not found: %s", stockItemIdString)));
+            Optional<StockItem> stockItemOptional = stockItemRepository.findById(stockItemId, tenantId);
+
+            // Handle case where stock item doesn't exist (race condition or deleted item)
+            if (stockItemOptional.isEmpty()) {
+                logger.warn(
+                        "Stock item not found for LocationAssignedEvent - may be a race condition or deleted item: stockItemId={}, locationId={}, tenantId={}. Acknowledging "
+                                + "event to prevent reprocessing.",
+                        stockItemIdString, locationIdString, tenantId.getValue());
+                acknowledgment.acknowledge();
+                return;
+            }
+
+            StockItem stockItem = stockItemOptional.get();
 
             // Check if location is already assigned (idempotency check)
             LocationId locationId = LocationId.of(locationIdString);
@@ -84,15 +96,26 @@ public class LocationAssignedEventListener {
             }
 
             // Update stock item with location (if not already assigned)
-            // Note: The location assignment logic is in the domain, but we need to update the stock item
-            // Since LocationAssignedEvent is published by Location Management Service after assignment,
-            // we just need to ensure the stock item reflects the location assignment
-            // In a fully event-driven system, we might not need to update here if the assignment
-            // was already done synchronously. However, for eventual consistency, we update here.
+            // This handles the case where Location Management Service assigns location via FEFO
+            // and publishes LocationAssignedEvent. We need to update the stock item to reflect
+            // the location assignment for eventual consistency.
+            if (stockItem.getLocationId() == null) {
+                // Get quantity from stock item (needed for assignLocation method)
+                com.ccbsa.wms.stock.domain.core.valueobject.Quantity quantity = stockItem.getQuantity();
 
-            // For now, we'll just log - the actual location assignment should have been done
-            // synchronously in AssignLocationToStockCommandHandler
-            logger.info("Location assignment event received for stock item: stockItemId={}, locationId={}", stockItemIdString, locationIdString);
+                // Update stock item with location using domain method
+                // Note: This will publish LocationAssignedEvent again, but the idempotency check
+                // in the Location Management Service will prevent duplicate processing
+                stockItem.assignLocation(locationId, quantity);
+
+                // Persist the updated stock item
+                stockItemRepository.save(stockItem);
+
+                logger.info("Updated stock item with location assignment: stockItemId={}, locationId={}", stockItemIdString, locationIdString);
+            } else {
+                logger.debug("Stock item already has location assigned: stockItemId={}, existingLocationId={}, newLocationId={}", stockItemIdString,
+                        stockItem.getLocationId().getValueAsString(), locationIdString);
+            }
 
             acknowledgment.acknowledge();
         } catch (Exception e) {

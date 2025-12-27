@@ -82,18 +82,13 @@ public class StockClassifiedEventListener {
 
             logger.info("Received StockClassifiedEvent: stockItemId={}, classification={}, tenantId={}", stockItemIdString, newClassification, tenantId.getValue());
 
-            // Extract expiration date and quantity
-            // Note: We need to get the stock item to get quantity - for now, we'll use a placeholder
-            // In production, we might need to query Stock Management Service or include quantity in event
-            // For Sprint 3, we'll create a single-item assignment request
+            // Extract expiration date and quantity from event
             ExpirationDate expirationDate = extractExpirationDate(eventData);
+            BigDecimal quantity = extractQuantity(eventData);
 
             // Create stock item assignment request
-            // Note: Quantity is not in the event - we'll need to query or include it
-            // For now, we'll use a default quantity of 1 (this should be fixed to include quantity in event)
             StockItemAssignmentRequest assignmentRequest =
-                    StockItemAssignmentRequest.builder().stockItemId(stockItemIdString).quantity(BigDecimal.ONE) // TODO: Include quantity in StockClassifiedEvent
-                            .expirationDate(expirationDate).classification(newClassification).build();
+                    StockItemAssignmentRequest.builder().stockItemId(stockItemIdString).quantity(quantity).expirationDate(expirationDate).classification(newClassification).build();
 
             // Trigger FEFO assignment
             List<StockItemAssignmentRequest> stockItems = List.of(assignmentRequest);
@@ -251,6 +246,40 @@ public class StockClassifiedEventListener {
             }
         }
         return null;
+    }
+
+    private BigDecimal extractQuantity(Map<String, Object> eventData) {
+        Object quantityObj = eventData.get("quantity");
+        if (quantityObj != null) {
+            if (quantityObj instanceof Number) {
+                return BigDecimal.valueOf(((Number) quantityObj).doubleValue());
+            }
+            if (quantityObj instanceof String) {
+                try {
+                    return new BigDecimal((String) quantityObj);
+                } catch (NumberFormatException e) {
+                    logger.warn("Invalid quantity format: {}", quantityObj);
+                    return BigDecimal.ONE; // Fallback to 1
+                }
+            }
+            if (quantityObj instanceof Map) {
+                @SuppressWarnings("unchecked") Map<String, Object> quantityMap = (Map<String, Object>) quantityObj;
+                Object valueObj = quantityMap.get("value");
+                if (valueObj != null) {
+                    if (valueObj instanceof Number) {
+                        return BigDecimal.valueOf(((Number) valueObj).doubleValue());
+                    }
+                    try {
+                        return new BigDecimal(valueObj.toString());
+                    } catch (NumberFormatException e) {
+                        logger.warn("Invalid quantity value: {}", valueObj);
+                        return BigDecimal.ONE; // Fallback to 1
+                    }
+                }
+            }
+        }
+        logger.warn("Quantity not found in event data, using default value of 1");
+        return BigDecimal.ONE; // Fallback to 1 if quantity not found
     }
 
     private String extractEventId(Map<String, Object> eventData) {

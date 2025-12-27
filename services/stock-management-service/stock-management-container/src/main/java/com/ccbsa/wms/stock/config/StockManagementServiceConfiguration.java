@@ -13,6 +13,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -158,12 +159,16 @@ public class StockManagementServiceConfiguration {
     /**
      * RestTemplate bean for external service calls (e.g., Product Service).
      * <p>
+     * Configured with @LoadBalanced to enable Eureka service discovery. Uses service names
+     * (e.g., http://product-service) which are resolved via Eureka registry.
+     * <p>
      * Configured with connection pooling and timeouts for production use. Uses HttpComponentsClientHttpRequestFactory to avoid deprecated RestTemplateBuilder methods.
      *
      * @param builder RestTemplateBuilder
-     * @return RestTemplate configured for external service calls
+     * @return RestTemplate configured with LoadBalancer for service discovery
      */
     @Bean
+    @LoadBalanced
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
         // Create connection pool manager
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();

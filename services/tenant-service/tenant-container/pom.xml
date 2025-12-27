@@ -49,6 +49,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Common Application (required for BaseGlobalExceptionHandler) -->
+        <dependency>
+            <groupId>com.ccbsa.wms</groupId>
+            <artifactId>common-application</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Common Cache -->
         <dependency>
             <groupId>com.ccbsa.wms</groupId>

@@ -1,5 +1,6 @@
 package com.ccbsa.wms.stock.application.service.port.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
@@ -50,5 +51,23 @@ public interface StockConsignmentRepository {
      * @return true if consignment exists with the reference
      */
     boolean existsByConsignmentReferenceAndTenantId(ConsignmentReference reference, TenantId tenantId);
+
+    /**
+     * Finds all consignments for a tenant with pagination.
+     *
+     * @param tenantId Tenant identifier
+     * @param page     Page number (0-based)
+     * @param size     Page size
+     * @return List of StockConsignment aggregates
+     */
+    List<StockConsignment> findByTenantId(TenantId tenantId, int page, int size);
+
+    /**
+     * Counts all consignments for a tenant.
+     *
+     * @param tenantId Tenant identifier
+     * @return Total count of consignments
+     */
+    long countByTenantId(TenantId tenantId);
 }
 

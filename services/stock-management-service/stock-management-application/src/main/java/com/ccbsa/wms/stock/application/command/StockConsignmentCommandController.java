@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -119,7 +120,7 @@ public class StockConsignmentCommandController {
         return ApiResponseBuilder.ok(resultDTO);
     }
 
-    @PostMapping("/{consignmentId}/confirm")
+    @PutMapping("/{consignmentId}/confirm")
     @Operation(summary = "Confirm Consignment Receipt", description = "Confirms receipt of a stock consignment and triggers stock item creation")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK')")
     public ResponseEntity<ApiResponse<Void>> confirmConsignment(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable("consignmentId") String consignmentId) {

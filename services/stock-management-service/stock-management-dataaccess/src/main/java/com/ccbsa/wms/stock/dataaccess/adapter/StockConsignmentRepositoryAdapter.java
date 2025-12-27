@@ -3,6 +3,7 @@ package com.ccbsa.wms.stock.dataaccess.adapter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.Optional;
 
 import org.hibernate.Session;
@@ -299,6 +300,75 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
 
         // Now query using JPA repository (will use the schema set in search_path)
         return jpaRepository.existsByTenantIdAndConsignmentReference(tenantId.getValue(), reference.getValue());
+    }
+
+    @Override
+    public List<StockConsignment> findByTenantId(TenantId tenantId, int page, int size) {
+        // Verify TenantContext is set (critical for schema resolution)
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when querying consignments! Cannot resolve schema.");
+            throw new IllegalStateException("TenantContext must be set before querying consignments");
+        }
+
+        // Verify tenantId matches TenantContext
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
+        }
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Create Pageable for pagination
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+
+        // Now query using JPA repository (will use the schema set in search_path)
+        return jpaRepository.findByTenantIdOrderByCreatedAtDesc(tenantId.getValue(), pageable).stream().map(mapper::toDomain).collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    public long countByTenantId(TenantId tenantId) {
+        // Verify TenantContext is set (critical for schema resolution)
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            logger.error("TenantContext is not set when counting consignments! Cannot resolve schema.");
+            throw new IllegalStateException("TenantContext must be set before counting consignments");
+        }
+
+        // Verify tenantId matches TenantContext
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
+        }
+
+        // Get the actual schema name from TenantSchemaResolver
+        String schemaName = schemaResolver.resolveSchema();
+        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+
+        // On-demand safety: ensure schema exists and migrations are applied
+        schemaProvisioner.ensureSchemaReady(schemaName);
+
+        // Validate schema name format before use
+        validateSchemaName(schemaName);
+
+        // Set the search_path explicitly on the database connection
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Now query using JPA repository (will use the schema set in search_path)
+        return jpaRepository.countByTenantId(tenantId.getValue());
     }
 }
 

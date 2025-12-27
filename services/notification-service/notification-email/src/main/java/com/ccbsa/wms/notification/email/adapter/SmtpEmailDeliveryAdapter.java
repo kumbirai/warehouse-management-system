@@ -136,11 +136,12 @@ public class SmtpEmailDeliveryAdapter implements NotificationDeliveryPort {
     /**
      * Gets recipient email address.
      * <p>
-     * Primary: Uses email stored in notification (from event payload) - zero latency. Fallback: Retrieves from user-service via REST API (for edge cases like resending old
-     * notifications).
+     * Primary: Uses email stored in notification (from event payload) - zero latency.
+     * Fallback: For tenant notifications, retrieves from tenant-service. For user notifications, retrieves from user-service.
      *
      * @param notification Notification entity
      * @return Recipient email address
+     * @throws RuntimeException if email cannot be retrieved
      */
     private EmailAddress getRecipientEmail(Notification notification) {
         // Prefer email stored in notification (from event payload)
@@ -149,9 +150,21 @@ public class SmtpEmailDeliveryAdapter implements NotificationDeliveryPort {
             return notification.getRecipientEmail();
         }
 
-        // Fallback: Retrieve from user-service (for edge cases like resending old notifications)
-        logger.debug("Email not in notification, retrieving from user-service: notificationId={}, userId={}", notification.getId(), notification.getRecipientUserId());
-        return userServicePort.getUserEmail(notification.getRecipientUserId());
+        // Fallback: Retrieve based on notification type
+        if (isTenantNotification(notification.getType())) {
+            // For tenant notifications, retrieve from tenant-service
+            logger.debug("Email not in notification, retrieving from tenant-service: notificationId={}, tenantId={}", notification.getId(), notification.getTenantId());
+            try {
+                return tenantServicePort.getTenantEmail(notification.getTenantId());
+            } catch (Exception e) {
+                logger.error("Failed to retrieve tenant email: notificationId={}, tenantId={}, error={}", notification.getId(), notification.getTenantId(), e.getMessage(), e);
+                throw new RuntimeException(String.format("Failed to retrieve tenant email for notification: %s", notification.getId()), e);
+            }
+        } else {
+            // For user notifications, retrieve from user-service
+            logger.debug("Email not in notification, retrieving from user-service: notificationId={}, userId={}", notification.getId(), notification.getRecipientUserId());
+            return userServicePort.getUserEmail(notification.getRecipientUserId());
+        }
     }
 
     /**
@@ -188,6 +201,17 @@ public class SmtpEmailDeliveryAdapter implements NotificationDeliveryPort {
         logger.debug("Rendering email template: templateName={}, notificationId={}, contextKeys={}", templateName, notification.getId(), context.keySet());
 
         return templateEngine.render(templateName, context);
+    }
+
+    /**
+     * Checks if the notification type is tenant-related.
+     *
+     * @param type Notification type
+     * @return true if this is a tenant-related notification
+     */
+    private boolean isTenantNotification(NotificationType type) {
+        return type == NotificationType.TENANT_CREATED || type == NotificationType.TENANT_ACTIVATED || type == NotificationType.TENANT_DEACTIVATED
+                || type == NotificationType.TENANT_SUSPENDED;
     }
 
     /**
@@ -275,17 +299,6 @@ public class SmtpEmailDeliveryAdapter implements NotificationDeliveryPort {
         extractAdditionalContext(notification, context);
 
         return context;
-    }
-
-    /**
-     * Checks if the notification type is tenant-related.
-     *
-     * @param type Notification type
-     * @return true if this is a tenant-related notification
-     */
-    private boolean isTenantNotification(NotificationType type) {
-        return type == NotificationType.TENANT_CREATED || type == NotificationType.TENANT_ACTIVATED || type == NotificationType.TENANT_DEACTIVATED
-                || type == NotificationType.TENANT_SUSPENDED;
     }
 
     /**

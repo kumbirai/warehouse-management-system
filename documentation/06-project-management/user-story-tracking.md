@@ -29,13 +29,13 @@ This document tracks the progress and implementation status of all user stories 
 
 | Status      | Story Count | Story Points |
 |-------------|-------------|--------------|
-| Not Started | 58          | ~380         |
+| Not Started | 60          | ~396         |
 | In Progress | 0           | 0            |
 | In Review   | 0           | 0            |
 | Done        | 0           | 0            |
 | Blocked     | 0           | 0            |
 | Deferred    | 0           | 0            |
-| **Total**   | **58**      | **~380**     |
+| **Total**   | **60**      | **~396**     |
 
 ---
 
@@ -104,8 +104,10 @@ This document tracks the progress and implementation status of all user stories 
 | US-5.1.1 | Monitor Stock Levels                     | Must Have | 5      | Not Started | -           | -      | -     |
 | US-5.1.2 | Enforce Minimum and Maximum Stock Levels | Must Have | 5      | Not Started | -           | -      | -     |
 | US-5.1.3 | Generate Restock Request                 | Must Have | 5      | Not Started | -           | -      | -     |
+| US-5.2.1 | Allocate Stock for Picking Orders        | Must Have | 8      | Not Started | -           | -      | -     |
+| US-5.2.2 | Adjust Stock Levels                      | Must Have | 5      | Not Started | -           | -      | -     |
 
-**Epic Total:** 3 stories, 15 points
+**Epic Total:** 5 stories, 28 points
 
 ---
 
@@ -233,7 +235,7 @@ This document tracks the progress and implementation status of all user stories 
 
 ### Sprint 4: Stock Movement and Levels (Planned)
 
-**Sprint Goal:** Track stock movements and monitor stock levels
+**Sprint Goal:** Track stock movements, monitor stock levels, allocate stock, and adjust stock levels
 
 **Stories:**
 
@@ -242,8 +244,10 @@ This document tracks the progress and implementation status of all user stories 
 - US-3.4.1: Manage Location Status (5)
 - US-5.1.1: Monitor Stock Levels (5)
 - US-5.1.2: Enforce Minimum and Maximum Stock Levels (5)
+- US-5.2.1: Allocate Stock for Picking Orders (8)
+- US-5.2.2: Adjust Stock Levels (5)
 
-**Total Points:** 28
+**Total Points:** 41
 
 ---
 
@@ -354,7 +358,7 @@ This document tracks the progress and implementation status of all user stories 
 | Sprint 1  | 29             | 0                | -        |
 | Sprint 2  | 34             | 0                | -        |
 | Sprint 3  | 26             | 0                | -        |
-| Sprint 4  | 28             | 0                | -        |
+| Sprint 4  | 41             | 0                | -        |
 | Sprint 5  | 39             | 0                | -        |
 | Sprint 6  | 26             | 0                | -        |
 | Sprint 7  | 28             | 0                | -        |

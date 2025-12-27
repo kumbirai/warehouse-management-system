@@ -92,7 +92,27 @@ public class TenantSchemaCreatedEventListener {
 
             acknowledgment.acknowledge();
         } catch (Exception e) {
-            logger.error("Error processing TenantSchemaCreatedEvent: eventId={}, error={}", extractEventId(eventData), e.getMessage(), e);
+            // Safely extract event details for logging
+            String eventId = extractEventId(eventData);
+            String tenantId = "unknown";
+            String schemaName = "unknown";
+            try {
+                tenantId = extractAggregateIdAsString(eventData);
+            } catch (Exception ex) {
+                logger.debug("Could not extract tenantId from event data", ex);
+            }
+            try {
+                schemaName = extractSchemaName(eventData);
+                if (schemaName == null) {
+                    schemaName = "unknown";
+                }
+            } catch (Exception ex) {
+                logger.debug("Could not extract schemaName from event data", ex);
+            }
+
+            logger.error("Error processing TenantSchemaCreatedEvent: eventId={}, tenantId={}, schemaName={}, error={}", eventId, tenantId, schemaName, e.getMessage(), e);
+            // Acknowledge even on error to prevent infinite retries of events that will always fail
+            // The on-demand schema provisioner will handle missing schemas as a fallback
             acknowledgment.acknowledge();
         }
     }

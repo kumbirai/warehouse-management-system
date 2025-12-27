@@ -96,9 +96,13 @@ public class TestData {
     /**
      * Generates a unique warehouse code by including a UUID component.
      * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
+     * <p>
+     * Note: The code may be sanitized and truncated when used as zone coordinates (max 10 chars),
+     * but the full code is preserved for location identification.
      */
     public static String warehouseCode() {
         // Use UUID to ensure uniqueness, but keep it readable with a short prefix
+        // Format: WH-XX-XXXXXXXX (e.g., WH-16-91B2EA5A)
         String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
         return "WH-" + faker.number().digits(2) + "-" + uuid;
     }
@@ -106,8 +110,12 @@ public class TestData {
     /**
      * Generates a unique zone code by including a UUID component.
      * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
+     * <p>
+     * Note: The code may be sanitized and truncated when used as zone coordinates (max 10 chars),
+     * but the full code is preserved for location identification.
      */
     public static String zoneCode() {
+        // Format: ZONE-X-XXXXXXXX (e.g., ZONE-A-91B2EA5A)
         String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
         return "ZONE-" + faker.bothify("?").toUpperCase() + "-" + uuid;
     }
@@ -115,8 +123,12 @@ public class TestData {
     /**
      * Generates a unique aisle code by including a UUID component.
      * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
+     * <p>
+     * Note: The code may be sanitized and truncated when used as aisle coordinates (max 10 chars),
+     * but the full code is preserved for location identification.
      */
     public static String aisleCode() {
+        // Format: AISLE-XX-XXXXXXXX (e.g., AISLE-01-91B2EA5A)
         String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
         return "AISLE-" + faker.number().digits(2) + "-" + uuid;
     }
@@ -124,8 +136,12 @@ public class TestData {
     /**
      * Generates a unique rack code by including a UUID component.
      * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
+     * <p>
+     * Note: The code may be sanitized and truncated when used as rack coordinates (max 10 chars),
+     * but the full code is preserved for location identification.
      */
     public static String rackCode() {
+        // Format: RACK-XX-XXXXXXXX (e.g., RACK-A1-91B2EA5A)
         String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
         return "RACK-" + faker.bothify("?#").toUpperCase() + "-" + uuid;
     }
@@ -133,8 +149,12 @@ public class TestData {
     /**
      * Generates a unique bin code by including a UUID component.
      * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
+     * <p>
+     * Note: The code may be sanitized and truncated when used as level coordinates (max 10 chars),
+     * but the full code is preserved for location identification.
      */
     public static String binCode() {
+        // Format: BIN-XX-XXXXXXXX (e.g., BIN-01-91B2EA5A)
         String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
         return "BIN-" + faker.number().digits(2) + "-" + uuid;
     }

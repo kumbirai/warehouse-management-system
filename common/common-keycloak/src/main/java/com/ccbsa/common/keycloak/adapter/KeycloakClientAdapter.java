@@ -30,8 +30,8 @@ public class KeycloakClientAdapter implements KeycloakClientPort {
     public KeycloakClientAdapter(KeycloakConfig config) {
         this.config = Objects.requireNonNull(config, "KeycloakConfig must not be null");
         this.keycloak = createKeycloakClient();
-        logger.info("Keycloak Admin Client initialized for server: {} with connectionTimeout={}ms, socketTimeout={}ms",
-                config.getServerUrl(), config.getConnectionTimeout(), config.getSocketTimeout());
+        logger.info("Keycloak Admin Client initialized for server: {} with connectionTimeout={}ms, socketTimeout={}ms", config.getServerUrl(), config.getConnectionTimeout(),
+                config.getSocketTimeout());
     }
 
     private Keycloak createKeycloakClient() {
@@ -42,14 +42,8 @@ public class KeycloakClientAdapter implements KeycloakClientPort {
         resteasyClientBuilder.readTimeout(config.getSocketTimeout(), TimeUnit.MILLISECONDS);
         resteasyClientBuilder.connectTimeout(config.getConnectionTimeout(), TimeUnit.MILLISECONDS);
 
-        return KeycloakBuilder.builder()
-                .serverUrl(config.getServerUrl())
-                .realm(config.getAdminRealm())
-                .username(config.getAdminUsername())
-                .password(config.getAdminPassword())
-                .clientId(config.getAdminClientId())
-                .resteasyClient(resteasyClientBuilder.build())
-                .build();
+        return KeycloakBuilder.builder().serverUrl(config.getServerUrl()).realm(config.getAdminRealm()).username(config.getAdminUsername()).password(config.getAdminPassword())
+                .clientId(config.getAdminClientId()).resteasyClient(resteasyClientBuilder.build()).build();
     }
 
     @Override

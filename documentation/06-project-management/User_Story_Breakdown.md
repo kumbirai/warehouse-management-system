@@ -1149,6 +1149,99 @@ Epics align with BRD Functional Requirements:
 
 ---
 
+### US-5.2.1: Allocate Stock for Picking Orders
+
+**Story ID:** US-5.2.1  
+**Title:** Allocate Stock for Picking Orders  
+**Epic:** Stock Level Management  
+**Service:** Stock Management Service  
+**Priority:** Must Have  
+**Story Points:** 8
+
+**As a** warehouse operator  
+**I want** to allocate stock for picking orders  
+**So that** I can reserve stock for specific orders and prevent double allocation
+
+**Acceptance Criteria:**
+
+- [ ] AC1: System allows allocating stock by product and location
+- [ ] AC2: System validates sufficient available stock before allocation
+- [ ] AC3: System supports allocation types: PICKING_ORDER, RESERVATION, OTHER
+- [ ] AC4: System tracks allocated quantity separately from available quantity
+- [ ] AC5: System prevents allocation exceeding available stock
+- [ ] AC6: System supports FEFO-based allocation (allocates earliest expiring stock first)
+- [ ] AC7: System publishes `StockAllocatedEvent` after successful allocation
+- [ ] AC8: System allows querying allocations by reference ID (e.g., order ID)
+
+**Technical Notes:**
+
+- Create `StockAllocation` aggregate for each allocation
+- API endpoint: `POST /api/v1/stock-management/allocations`
+- Validate stock availability: `availableQuantity = totalQuantity - allocatedQuantity`
+- Support FEFO allocation by querying stock items sorted by expiration date
+- Track allocation status: ALLOCATED, RELEASED, PICKED
+- Update stock item allocated quantity
+- Publish domain event for downstream services (picking service)
+
+**Dependencies:**
+
+- US-5.1.1: Monitor Stock Levels
+- US-2.1.1: Classify Stock by Expiration Date (for FEFO allocation)
+- US-3.2.1: Assign Location to Stock
+
+**Related BRD Requirements:**
+
+- FR-5.1: Stock Level Management
+- FR-6.4: Picking Execution
+
+---
+
+### US-5.2.2: Adjust Stock Levels
+
+**Story ID:** US-5.2.2  
+**Title:** Adjust Stock Levels  
+**Epic:** Stock Level Management  
+**Service:** Stock Management Service  
+**Priority:** Must Have  
+**Story Points:** 5
+
+**As a** warehouse manager  
+**I want** to manually adjust stock levels  
+**So that** I can correct discrepancies from stock counts, damage, or other reasons
+
+**Acceptance Criteria:**
+
+- [ ] AC1: System allows increasing stock levels (positive adjustment)
+- [ ] AC2: System allows decreasing stock levels (negative adjustment)
+- [ ] AC3: System requires adjustment reason (STOCK_COUNT, DAMAGE, CORRECTION, etc.)
+- [ ] AC4: System prevents negative stock levels after adjustment
+- [ ] AC5: System records adjustment timestamp, user, and reason
+- [ ] AC6: System publishes `StockAdjustedEvent` after successful adjustment
+- [ ] AC7: System maintains audit trail of all adjustments
+- [ ] AC8: System supports adjustments at consignment level or stock item level
+
+**Technical Notes:**
+
+- API endpoint: `POST /api/v1/stock-management/adjustments`
+- Create `StockAdjustment` aggregate for each adjustment
+- Validate adjustment doesn't result in negative quantity
+- Support adjustment types: INCREASE, DECREASE
+- Link adjustment to consignment or stock item
+- Update stock item quantity and trigger reclassification if needed
+- Publish domain event for audit and downstream processing
+
+**Dependencies:**
+
+- US-5.1.1: Monitor Stock Levels
+- US-1.1.5: Create Stock Consignment
+
+**Related BRD Requirements:**
+
+- FR-5.1: Stock Level Management
+- FR-8.1: Stock Count Reconciliation
+
+---
+
 ## Epic 6: Picking List Management
 
 **Epic ID:** EPIC-6  
@@ -2315,14 +2408,14 @@ Epics align with BRD Functional Requirements:
 - **Epic 2:** Stock Classification and Expiration Management - 4 stories
 - **Epic 3:** Warehouse Location Management - 6 stories
 - **Epic 4:** Product Identification - 5 stories (CSV upload, manual entry, D365 sync)
-- **Epic 5:** Stock Level Management - 3 stories
+- **Epic 5:** Stock Level Management - 5 stories
 - **Epic 6:** Picking List Management - 8 stories (CSV upload, manual entry, D365 ingestion)
 - **Epic 7:** Returns Management - 5 stories
 - **Epic 8:** Reconciliation - 5 stories
 - **Epic 9:** Integration Requirements - 5 stories (D365 integration, lower priority)
 - **Non-Functional Requirements:** 6 stories
 
-**Total:** 58 user stories
+**Total:** 60 user stories
 
 ### Priority Distribution
 

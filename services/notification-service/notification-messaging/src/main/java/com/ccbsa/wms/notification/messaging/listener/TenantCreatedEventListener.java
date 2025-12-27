@@ -1,6 +1,7 @@
 package com.ccbsa.wms.notification.messaging.listener;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,8 @@ import com.ccbsa.wms.notification.application.service.command.dto.CreateNotifica
 import com.ccbsa.wms.notification.application.service.port.service.TenantServicePort;
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
 
+import jakarta.annotation.PostConstruct;
+
 /**
  * Event Listener: TenantCreatedEventListener
  * <p>
@@ -40,6 +43,16 @@ public class TenantCreatedEventListener {
     public TenantCreatedEventListener(CreateNotificationCommandHandler createNotificationCommandHandler, TenantServicePort tenantServicePort) {
         this.createNotificationCommandHandler = createNotificationCommandHandler;
         this.tenantServicePort = tenantServicePort;
+    }
+
+    /**
+     * Initializes the listener and logs registration status.
+     * <p>
+     * This method is called after dependency injection to verify the listener is properly registered.
+     */
+    @PostConstruct
+    public void init() {
+        logger.info("TenantCreatedEventListener initialized and ready to consume TenantCreatedEvent from topic 'tenant-events' with groupId 'notification-service'");
     }
 
     @KafkaListener(topics = "tenant-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
@@ -70,19 +83,27 @@ public class TenantCreatedEventListener {
             // Set tenant context for multi-tenant schema resolution
             TenantContext.setTenantId(tenantId);
             try {
-                // Get tenant email from event payload or tenant-service
-                EmailAddress tenantEmail = extractEmailFromEvent(eventData, tenantId);
+                // Get tenant email from event payload or tenant-service (optional)
+                Optional<EmailAddress> tenantEmailOpt = extractEmailFromEvent(eventData, tenantId);
 
                 // Create tenant creation notification
                 // Use tenantId as recipientUserId placeholder since tenant notifications don't target a specific user
-                CreateNotificationCommand command =
-                        CreateNotificationCommand.builder().tenantId(tenantId).recipientUserId(UserId.of(tenantId.getValue())).recipientEmail(tenantEmail)
-                                .title(Title.of("New Tenant Created")).message(Message.of("A new tenant account has been created. Please wait for activation."))
-                                .type(NotificationType.TENANT_CREATED).build();
+                CreateNotificationCommand.Builder commandBuilder =
+                        CreateNotificationCommand.builder().tenantId(tenantId).recipientUserId(UserId.of(tenantId.getValue())).title(Title.of("New Tenant Created"))
+                                .message(Message.of("A new tenant account has been created. Please wait for activation.")).type(NotificationType.TENANT_CREATED);
+
+                // Set email if available
+                tenantEmailOpt.ifPresent(commandBuilder::recipientEmail);
+
+                CreateNotificationCommand command = commandBuilder.build();
 
                 createNotificationCommandHandler.handle(command);
 
-                logger.info("Created tenant creation notification for tenant: tenantId={}, email={}", tenantId.getValue(), tenantEmail.getValue());
+                if (tenantEmailOpt.isPresent()) {
+                    logger.info("Created tenant creation notification for tenant: tenantId={}, email={}", tenantId.getValue(), tenantEmailOpt.get().getValue());
+                } else {
+                    logger.warn("Created tenant creation notification for tenant without email: tenantId={}. Email delivery will be skipped.", tenantId.getValue());
+                }
 
                 // Acknowledge message
                 acknowledgment.acknowledge();
@@ -228,29 +249,50 @@ public class TenantCreatedEventListener {
 
     /**
      * Extracts email from event payload or fetches from tenant service.
+     * <p>
+     * Email is optional for tenant creation notifications. If email is not available in the event payload
+     * and tenant-service is not reachable, returns empty Optional. The notification will still be created
+     * but email delivery will be skipped.
      *
      * @param eventData Event data map
      * @param tenantId  Tenant ID
-     * @return Email address
+     * @return Optional email address, empty if not available
      */
-    private EmailAddress extractEmailFromEvent(Map<String, Object> eventData, TenantId tenantId) {
+    private Optional<EmailAddress> extractEmailFromEvent(Map<String, Object> eventData, TenantId tenantId) {
         // Try to extract email from event payload first
         Object emailObj = eventData.get("email");
         if (emailObj != null) {
+            // Handle null value (email field present but null)
             if (emailObj instanceof Map) {
                 // Email might be serialized as a value object with a "value" field
                 @SuppressWarnings("unchecked") Map<String, Object> emailMap = (Map<String, Object>) emailObj;
                 Object valueObj = emailMap.get("value");
-                if (valueObj instanceof String) {
-                    return EmailAddress.of((String) valueObj);
+                if (valueObj instanceof String && !((String) valueObj).trim().isEmpty()) {
+                    try {
+                        return Optional.of(EmailAddress.of((String) valueObj));
+                    } catch (IllegalArgumentException e) {
+                        logger.warn("Invalid email format in event payload: tenantId={}, email={}", tenantId.getValue(), valueObj, e);
+                    }
                 }
-            } else if (emailObj instanceof String) {
-                return EmailAddress.of((String) emailObj);
+            } else if (emailObj instanceof String && !((String) emailObj).trim().isEmpty()) {
+                try {
+                    return Optional.of(EmailAddress.of((String) emailObj));
+                } catch (IllegalArgumentException e) {
+                    logger.warn("Invalid email format in event payload: tenantId={}, email={}", tenantId.getValue(), emailObj, e);
+                }
             }
         }
 
-        // Fallback to tenant service
-        return tenantServicePort.getTenantEmail(tenantId);
+        // Fallback to tenant service (only if email not found in event)
+        try {
+            EmailAddress email = tenantServicePort.getTenantEmail(tenantId);
+            return Optional.of(email);
+        } catch (Exception e) {
+            // Log warning but don't fail - email is optional for tenant notifications
+            logger.warn("Failed to retrieve tenant email from tenant-service: tenantId={}, error={}. Notification will be created without email.", tenantId.getValue(),
+                    e.getMessage());
+            return Optional.empty();
+        }
     }
 }
 

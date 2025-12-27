@@ -277,6 +277,30 @@ public abstract class BaseIntegrationTest {
     }
 
     /**
+     * Create authenticated PUT request with Bearer token and tenant context.
+     *
+     * @param uri         the request URI
+     * @param accessToken the JWT access token
+     * @param tenantId    the tenant ID for X-Tenant-Id header
+     * @param requestBody the request body (optional)
+     * @return WebTestClient.RequestHeadersSpec for further configuration
+     */
+    protected WebTestClient.RequestHeadersSpec<?> authenticatedPut(String uri, String accessToken, String tenantId, Object requestBody) {
+        WebTestClient.RequestBodySpec spec = webTestClient.put()
+                .uri(uri)
+                .contentType(MediaType.APPLICATION_JSON)
+                .headers(headers -> {
+                    RequestHeaderHelper.addAuthHeaders(headers, accessToken);
+                    RequestHeaderHelper.addTenantHeader(headers, tenantId);
+                });
+
+        if (requestBody != null) {
+            return spec.bodyValue(requestBody);
+        }
+        return spec;
+    }
+
+    /**
      * Create authenticated DELETE request with Bearer token.
      *
      * @param uri         the request URI

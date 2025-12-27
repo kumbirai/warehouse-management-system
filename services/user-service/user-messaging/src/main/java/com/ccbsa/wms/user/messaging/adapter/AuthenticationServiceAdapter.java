@@ -439,8 +439,7 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
                 } catch (KeycloakServiceException e) {
                     // Group assignment failed - log warning but don't fail user creation
                     // Groups are used for organization and don't affect core user functionality
-                    logger.warn("Failed to assign user to tenant group (user creation will continue): userId={}, tenantId={}, error={}",
-                            keycloakUserId, tenantId, e.getMessage());
+                    logger.warn("Failed to assign user to tenant group (user creation will continue): userId={}, tenantId={}, error={}", keycloakUserId, tenantId, e.getMessage());
                     logger.debug("Group assignment failure details", e);
                 }
 
@@ -488,7 +487,9 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
                     logger.error(errorMsg);
                     throw new KeycloakServiceException(errorMsg, e);
                 }
-                throw e;
+                String errorMsg = String.format("Connection error while fetching group by path from Keycloak: %s", e.getMessage());
+                logger.error(errorMsg);
+                throw new KeycloakServiceException(errorMsg, e);
             } catch (Exception e) {
                 logger.debug("Path lookup failed for group {}, will try groups list: {}", groupName, e.getMessage());
             }
@@ -497,10 +498,7 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
             if (tenantGroup == null) {
                 try {
                     List<GroupRepresentation> groups = realm.groups().groups();
-                    tenantGroup = groups.stream()
-                            .filter(group -> groupName.equalsIgnoreCase(group.getName()))
-                            .findFirst()
-                            .orElse(null);
+                    tenantGroup = groups.stream().filter(group -> groupName.equalsIgnoreCase(group.getName())).findFirst().orElse(null);
                 } catch (jakarta.ws.rs.ProcessingException e) {
                     // Handle timeout or connection errors
                     if (e.getCause() instanceof java.net.SocketTimeoutException) {
@@ -508,7 +506,9 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
                         logger.error(errorMsg);
                         throw new KeycloakServiceException(errorMsg, e);
                     }
-                    throw e;
+                    String errorMsg = String.format("Connection error while fetching groups from Keycloak: %s", e.getMessage());
+                    logger.error(errorMsg);
+                    throw new KeycloakServiceException(errorMsg, e);
                 } catch (Exception e) {
                     logger.error("Failed to fetch groups from Keycloak: {}", e.getMessage(), e);
                     throw new KeycloakServiceException(String.format("Failed to fetch groups from Keycloak: %s", e.getMessage()), e);
@@ -532,15 +532,14 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
                     logger.error(errorMsg);
                     throw new KeycloakServiceException(errorMsg, e);
                 }
-                throw e;
+                String errorMsg = String.format("Connection error while assigning user to group in Keycloak: %s", e.getMessage());
+                logger.error(errorMsg);
+                throw new KeycloakServiceException(errorMsg, e);
             }
 
             logger.debug("User assigned to tenant group successfully: userId={}, group={}", keycloakUserId, groupName);
         } catch (KeycloakServiceException e) {
             throw e;
-        } catch (Exception e) {
-            logger.error("Failed to assign user to tenant group: {}", e.getMessage(), e);
-            throw new KeycloakServiceException(String.format("Failed to assign user to tenant group: %s", e.getMessage()), e);
         }
     }
 

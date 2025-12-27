@@ -11,7 +11,23 @@ const locationSchema = z.object({
   aisle: z.string().min(1, 'Aisle is required').max(10, 'Aisle cannot exceed 10 characters'),
   rack: z.string().min(1, 'Rack is required').max(10, 'Rack cannot exceed 10 characters'),
   level: z.string().min(1, 'Level is required').max(10, 'Level cannot exceed 10 characters'),
-  barcode: z.string().max(50, 'Barcode cannot exceed 50 characters').optional(),
+  barcode: z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .refine(
+      (val) => {
+        if (!val || val.trim().length === 0) {
+          return true; // Optional field, empty is allowed
+        }
+        const upperVal = val.toUpperCase().trim();
+        // Must be 8-20 alphanumeric characters (A-Z, 0-9)
+        return upperVal.length >= 8 && upperVal.length <= 20 && /^[A-Z0-9]+$/.test(upperVal);
+      },
+      {
+        message: 'Barcode must be 8-20 alphanumeric characters (A-Z, 0-9)',
+      }
+    ),
   description: z.string().max(500, 'Description cannot exceed 500 characters').optional(),
 });
 

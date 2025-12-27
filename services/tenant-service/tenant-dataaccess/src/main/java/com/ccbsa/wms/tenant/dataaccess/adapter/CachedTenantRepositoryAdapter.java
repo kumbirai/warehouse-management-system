@@ -83,7 +83,17 @@ public class CachedTenantRepositoryAdapter implements TenantRepository {
             }
         } catch (Exception e) {
             if (e instanceof org.springframework.data.redis.serializer.SerializationException) {
-                log.debug("Cache deserialization failed for key: {} (old entry may be incompatible), falling back to database", cacheKey);
+                log.debug("Cache deserialization failed for key: {} (old entry may be incompatible), evicting stale entry and falling back to database", cacheKey);
+                // Evict stale cache entry to prevent repeated deserialization failures
+                try {
+                    Boolean deleted = redisTemplate.delete(cacheKey);
+                    if (Boolean.TRUE.equals(deleted)) {
+                        cacheEvictions.increment();
+                        log.trace("Cache EVICTION (stale entry) for key: {}", cacheKey);
+                    }
+                } catch (Exception evictionError) {
+                    log.warn("Failed to evict stale cache entry for key: {}", cacheKey, evictionError);
+                }
             } else {
                 log.warn("Cache read failed for key: {}, falling back to database", cacheKey, e);
             }

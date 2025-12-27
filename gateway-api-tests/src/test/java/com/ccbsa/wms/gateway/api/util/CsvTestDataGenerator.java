@@ -51,25 +51,34 @@ public class CsvTestDataGenerator {
     }
 
     /**
-     * Generate consignment CSV file.
+     * Generate consignment CSV file with new format.
+     * Required columns: ConsignmentReference, ProductCode, Quantity, ReceivedDate, WarehouseId
+     * Optional columns: ExpirationDate
      */
-    public static File generateConsignmentCsv(Path outputPath, int rowCount, String productId, String locationId) throws IOException {
+    public static File generateConsignmentCsv(Path outputPath, int rowCount, String productCode, String warehouseId) throws IOException {
         File csvFile = outputPath.resolve("consignments-test.csv").toFile();
 
         try (FileWriter writer = new FileWriter(csvFile)) {
-            // Write header
-            writer.write("productId,locationId,quantity,batchNumber,expirationDate,manufactureDate,supplierReference\n");
+            // Write header with required columns
+            writer.write("ConsignmentReference,ProductCode,Quantity,ReceivedDate,WarehouseId,ExpirationDate\n");
 
-            // Write rows
+            // Write rows - each row is a line item, multiple rows with same ConsignmentReference form one consignment
+            String consignmentRef = "CONS-TEST-" + System.currentTimeMillis();
+            java.time.LocalDateTime receivedDate = java.time.LocalDateTime.now();
+            
             for (int i = 0; i < rowCount; i++) {
-                writer.write(String.format("%s,%s,%d,%s,%s,%s,%s\n",
-                        productId,
-                        locationId,
+                // Use same consignment reference for all rows (single consignment with multiple line items)
+                // Or use different reference for each row (multiple consignments)
+                String currentConsignmentRef = rowCount == 1 ? consignmentRef : consignmentRef + "-" + i;
+                String expirationDate = TestData.expirationDate() != null ? TestData.expirationDate().toString() : "";
+                
+                writer.write(String.format("%s,%s,%d,%s,%s,%s\n",
+                        currentConsignmentRef,
+                        productCode,
                         TestData.stockQuantity(),
-                        TestData.batchNumber(),
-                        TestData.expirationDate(),
-                        TestData.manufactureDate(),
-                        TestData.supplierReference()
+                        receivedDate.toString(),
+                        warehouseId,
+                        expirationDate
                 ));
             }
         }

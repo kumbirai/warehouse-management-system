@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.ccbsa.common.domain.EventMetadata;
 import com.ccbsa.common.domain.valueobject.TenantId;
@@ -105,12 +107,44 @@ public class RemoveUserRoleCommandHandler {
         // Note: Role information is stored in Keycloak, not in domain model
         userRepository.save(targetUser);
 
-        // 8. Publish event with metadata (including removedBy)
+        // 8. Publish event with metadata (including removedBy) after transaction commit
         EventMetadata metadata = EventMetadata.builder().userId(currentUserId.getValue()).build();
         UserRoleRemovedEvent event = new UserRoleRemovedEvent(targetUser.getId(), targetUser.getTenantId(), command.getRoleName(), metadata);
-        eventPublisher.publish(Collections.singletonList(event));
+        publishEventsAfterCommit(Collections.singletonList(event));
 
         logger.info("Role removed successfully: userId={}, role={}, removedBy={}", targetUser.getId().getValue(), command.getRoleName(), currentUserId.getValue());
+    }
+
+    /**
+     * Publishes domain events after transaction commit to avoid race conditions.
+     * <p>
+     * Events are published using TransactionSynchronizationManager to ensure they are only published after the database transaction has successfully committed. This prevents race
+     * conditions where event listeners consume events before the aggregate is visible in the database.
+     *
+     * @param domainEvents Domain events to publish
+     */
+    private void publishEventsAfterCommit(List<com.ccbsa.common.domain.DomainEvent<?>> domainEvents) {
+        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+            // No active transaction - publish immediately
+            logger.debug("No active transaction - publishing events immediately");
+            eventPublisher.publish(domainEvents);
+            return;
+        }
+
+        // Register synchronization to publish events after transaction commit
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    eventPublisher.publish(domainEvents);
+                } catch (Exception e) {
+                    logger.error("Failed to publish domain events after transaction commit", e);
+                    // Don't throw - transaction already committed, event publishing failure
+                    // should be handled by retry mechanisms or dead letter queue
+                }
+            }
+        });
     }
 }
 

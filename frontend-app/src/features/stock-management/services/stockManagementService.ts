@@ -271,7 +271,7 @@ export const stockManagementService = {
    * Confirms a consignment receipt (Sprint 3).
    */
   async confirmConsignment(consignmentId: string, tenantId: string): Promise<ApiResponse<void>> {
-    const response = await apiClient.post<ApiResponse<void>>(
+    const response = await apiClient.put<ApiResponse<void>>(
       `${STOCK_MANAGEMENT_BASE_PATH}/consignments/${consignmentId}/confirm`,
       {},
       {

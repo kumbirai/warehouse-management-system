@@ -1,10 +1,14 @@
 package com.ccbsa.wms.tenant.messaging.publisher;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.application.context.CorrelationContext;
@@ -53,11 +57,28 @@ public class TenantEventPublisherImpl implements TenantEventPublisher {
             TenantEvent<?> enrichedEvent = enrichEventWithMetadata(event);
 
             String key = enrichedEvent.getAggregateId();
-            kafkaTemplate.send(TENANT_EVENTS_TOPIC, key, enrichedEvent);
-            logger.debug("Published tenant event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
-                    enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
+            String eventType = enrichedEvent.getClass().getSimpleName();
+            String correlationId = enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none";
+
+            // Send event and wait for completion to ensure it's published
+            // Using get() with timeout to make it synchronous and catch any send failures immediately
+            // Timeout of 30 seconds should be sufficient for Kafka send operations
+            SendResult<String, Object> sendResult = kafkaTemplate.send(TENANT_EVENTS_TOPIC, key, enrichedEvent).get(30, TimeUnit.SECONDS);
+
+            logger.info("Published tenant event: {} with key: {} to topic: {} [partition: {}, offset: {}, correlationId: {}]", eventType, key, TENANT_EVENTS_TOPIC,
+                    sendResult.getRecordMetadata().partition(), sendResult.getRecordMetadata().offset(), correlationId);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Interrupted while publishing tenant event: {} to topic: {}", event.getClass().getSimpleName(), TENANT_EVENTS_TOPIC, e);
+            throw new RuntimeException("Failed to publish tenant event: interrupted", e);
+        } catch (ExecutionException e) {
+            logger.error("Failed to publish tenant event: {} to topic: {}", event.getClass().getSimpleName(), TENANT_EVENTS_TOPIC, e);
+            throw new RuntimeException("Failed to publish tenant event", e.getCause() != null ? e.getCause() : e);
+        } catch (TimeoutException e) {
+            logger.error("Timeout while publishing tenant event: {} to topic: {}", event.getClass().getSimpleName(), TENANT_EVENTS_TOPIC, e);
+            throw new RuntimeException("Failed to publish tenant event: timeout", e);
         } catch (Exception e) {
-            logger.error("Failed to publish tenant event: {}", event.getClass().getSimpleName(), e);
+            logger.error("Unexpected error while publishing tenant event: {} to topic: {}", event.getClass().getSimpleName(), TENANT_EVENTS_TOPIC, e);
             throw new RuntimeException("Failed to publish tenant event", e);
         }
     }

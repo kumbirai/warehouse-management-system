@@ -144,8 +144,12 @@ import com.ccbsa.wms.{service}.domain.core.entity.{DomainObject};
 import com.ccbsa.wms.{service}.domain.core.valueobject.{DomainObject}Id;
 import com.ccbsa.wms.{service}.domain.core.exception.{DomainObject}NotFoundException;
 import com.ccbsa.common.domain.DomainEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -163,6 +167,7 @@ import java.util.List;
  */
 @Component
 public class {Action}{DomainObject}CommandHandler {
+    private static final Logger logger = LoggerFactory.getLogger({Action}{DomainObject}CommandHandler.class);
     
     private final {DomainObject}Repository repository;
     private final {Service}EventPublisher eventPublisher;
@@ -207,18 +212,24 @@ public class {Action}{DomainObject}CommandHandler {
         // 3. Execute business logic (via aggregate)
         {domainObject}.{businessAction}(command.get{Parameter}());
         
-        // 4. Persist aggregate
+        // 4. Get domain events BEFORE saving
+        List<DomainEvent<?>> domainEvents = List.copyOf({domainObject}.getDomainEvents());
+        
+        // 5. Persist aggregate
         repository.save({domainObject});
         
-        // 5. Publish events (after successful commit)
+        // 6. Publish events after transaction commit
         // Note: Correlation ID is automatically injected by event publisher from CorrelationContext
-        List<DomainEvent<?>> domainEvents = {domainObject}.getDomainEvents();
+        // Events are published using TransactionSynchronizationManager to ensure they are only
+        // published after the database transaction has successfully committed. This prevents
+        // race conditions where event listeners consume events before the aggregate is visible
+        // in the database.
         if (!domainEvents.isEmpty()) {
-            eventPublisher.publish(domainEvents);
+            publishEventsAfterCommit(domainEvents);
             {domainObject}.clearDomainEvents();
         }
         
-        // 6. Return command-specific result (NOT domain entity)
+        // 7. Return command-specific result (NOT domain entity)
         return {Action}{DomainObject}Result.builder()
             .{domainObject}Id({domainObject}.getId())
             .status({domainObject}.getStatus())
@@ -232,6 +243,38 @@ public class {Action}{DomainObject}CommandHandler {
      * @param command Command to validate
      * @throws IllegalArgumentException if validation fails
      */
+    /**
+     * Publishes domain events after transaction commit to avoid race conditions.
+     * <p>
+     * Events are published using TransactionSynchronizationManager to ensure they are only published after the database transaction has successfully committed. This prevents race
+     * conditions where event listeners consume events before the aggregate is visible in the database.
+     *
+     * @param domainEvents Domain events to publish
+     */
+    private void publishEventsAfterCommit(List<DomainEvent<?>> domainEvents) {
+        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+            // No active transaction - publish immediately
+            logger.debug("No active transaction - publishing events immediately");
+            eventPublisher.publish(domainEvents);
+            return;
+        }
+
+        // Register synchronization to publish events after transaction commit
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    eventPublisher.publish(domainEvents);
+                } catch (Exception e) {
+                    logger.error("Failed to publish domain events after transaction commit", e);
+                    // Don't throw - transaction already committed, event publishing failure
+                    // should be handled by retry mechanisms or dead letter queue
+                }
+            }
+        });
+    }
+    
     private void validateCommand({Action}{DomainObject}Command command) {
         if (command == null) {
             throw new IllegalArgumentException("Command cannot be null");
@@ -255,8 +298,12 @@ import com.ccbsa.wms.{service}.domain.core.entity.{DomainObject};
 import com.ccbsa.wms.{service}.domain.core.valueobject.{DomainObject}Id;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.DomainEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -267,6 +314,7 @@ import java.util.List;
  */
 @Component
 public class Create{DomainObject}CommandHandler {
+    private static final Logger logger = LoggerFactory.getLogger(Create{DomainObject}CommandHandler.class);
     
     private final {DomainObject}Repository repository;
     private final {Service}EventPublisher eventPublisher;
@@ -284,22 +332,56 @@ public class Create{DomainObject}CommandHandler {
             .status({DomainObject}Status.CREATED)
             .build();
         
-        // 3. Persist aggregate
+        // 3. Get domain events BEFORE saving
+        List<DomainEvent<?>> domainEvents = List.copyOf({domainObject}.getDomainEvents());
+        
+        // 4. Persist aggregate
         repository.save({domainObject});
         
-        // 4. Publish events
-        List<DomainEvent<?>> domainEvents = {domainObject}.getDomainEvents();
+        // 5. Publish events after transaction commit
         if (!domainEvents.isEmpty()) {
-            eventPublisher.publish(domainEvents);
+            publishEventsAfterCommit(domainEvents);
             {domainObject}.clearDomainEvents();
         }
         
-        // 5. Return result
+        // 6. Return result
         return Create{DomainObject}Result.builder()
             .{domainObject}Id({domainObject}.getId())
             .status({domainObject}.getStatus())
             .createdAt({domainObject}.getCreatedAt())
             .build();
+    }
+    
+    /**
+     * Publishes domain events after transaction commit to avoid race conditions.
+     * <p>
+     * Events are published using TransactionSynchronizationManager to ensure they are only published after the database transaction has successfully committed. This prevents race
+     * conditions where event listeners consume events before the aggregate is visible in the database.
+     *
+     * @param domainEvents Domain events to publish
+     */
+    private void publishEventsAfterCommit(List<DomainEvent<?>> domainEvents) {
+        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+            // No active transaction - publish immediately
+            logger.debug("No active transaction - publishing events immediately");
+            eventPublisher.publish(domainEvents);
+            return;
+        }
+
+        // Register synchronization to publish events after transaction commit
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    eventPublisher.publish(domainEvents);
+                } catch (Exception e) {
+                    logger.error("Failed to publish domain events after transaction commit", e);
+                    // Don't throw - transaction already committed, event publishing failure
+                    // should be handled by retry mechanisms or dead letter queue
+                }
+            }
+        });
     }
     
     private void validateCommand(Create{DomainObject}Command command) {

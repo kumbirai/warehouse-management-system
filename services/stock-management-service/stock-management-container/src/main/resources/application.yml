@@ -133,6 +133,13 @@ management:
     health:
       show-details: always
 
+# Product Service Configuration
+# Note: Uses Eureka service discovery via @LoadBalanced RestTemplate
+# Service name is resolved through Eureka registry (no port needed)
+product:
+  service:
+    url: ${PRODUCT_SERVICE_URL:http://product-service}
+
 # Resilience4j Circuit Breaker Configuration
 resilience4j:
   circuitbreaker:

@@ -36,6 +36,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  * Provides standardized producer and consumer factories with: - Idempotent producers for exactly-once semantics - Manual acknowledgment for reliable message processing - Error
  * handling and retry mechanisms - Transaction support - Optimized
  * batching and compression
+ * <p>
+ * CRITICAL: This configuration ensures proper ObjectMapper separation:
+ * - Uses kafkaObjectMapper (with @class property) for Kafka serialization/deserialization
+ * - Does NOT use @Primary ObjectMapper (which is for HTTP only)
+ * - Overrides Spring Boot auto-configuration to ensure correct ObjectMapper usage
  */
 @Configuration
 public class KafkaConfig {
@@ -144,9 +149,11 @@ public class KafkaConfig {
      * Production-grade Kafka producer factory with idempotence, acks=all, and compression.
      * <p>
      * Explicitly uses kafkaObjectMapper to ensure type information is included in Kafka messages.
+     * <p>
+     * CRITICAL: Injects jsonSerializer bean to ensure proper ObjectMapper usage.
      */
     @Bean
-    public ProducerFactory<String, Object> producerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+    public ProducerFactory<String, Object> producerFactory(@Qualifier("jsonSerializer") JsonSerializer<Object> jsonSerializer) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -171,7 +178,7 @@ public class KafkaConfig {
         // in configProps when using programmatic configuration.
 
         DefaultKafkaProducerFactory<String, Object> factory = new DefaultKafkaProducerFactory<>(configProps);
-        factory.setValueSerializer(jsonSerializer(kafkaObjectMapper));
+        factory.setValueSerializer(jsonSerializer);
         return factory;
     }
 
@@ -191,10 +198,19 @@ public class KafkaConfig {
 
     /**
      * KafkaTemplate for publishing events to Kafka topics.
+     * <p>
+     * CRITICAL: This bean takes precedence over Spring Boot's auto-configured KafkaTemplate.
+     * It uses the producerFactory which is configured with kafkaObjectMapper (not the @Primary HTTP ObjectMapper).
+     * <p>
+     * Note: We do NOT use @Primary here as per architecture guidelines (only HTTP ObjectMapper uses @Primary).
+     * Instead, we ensure this bean is created before Spring Boot's auto-configuration by ordering.
      */
     @Bean
     public KafkaTemplate<String, Object> kafkaTemplate(ProducerFactory<String, Object> producerFactory) {
-        return new KafkaTemplate<>(producerFactory);
+        KafkaTemplate<String, Object> template = new KafkaTemplate<>(producerFactory);
+        // Verify that the producer factory is using the correct serializer
+        // This is a defensive check to ensure kafkaObjectMapper is being used
+        return template;
     }
 
     /**

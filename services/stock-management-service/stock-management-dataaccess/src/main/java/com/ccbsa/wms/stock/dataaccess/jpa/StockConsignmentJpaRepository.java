@@ -1,8 +1,10 @@
 package com.ccbsa.wms.stock.dataaccess.jpa;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.ccbsa.wms.stock.dataaccess.entity.StockConsignmentEntity;
@@ -39,5 +41,22 @@ public interface StockConsignmentJpaRepository extends JpaRepository<StockConsig
      * @return true if consignment exists
      */
     boolean existsByTenantIdAndConsignmentReference(String tenantId, String consignmentReference);
+
+    /**
+     * Finds all consignments for a tenant with pagination.
+     *
+     * @param tenantId Tenant identifier
+     * @param pageable Pagination parameters
+     * @return List of StockConsignmentEntity
+     */
+    List<StockConsignmentEntity> findByTenantIdOrderByCreatedAtDesc(String tenantId, Pageable pageable);
+
+    /**
+     * Counts all consignments for a tenant.
+     *
+     * @param tenantId Tenant identifier
+     * @return Total count of consignments
+     */
+    long countByTenantId(String tenantId);
 }
 
