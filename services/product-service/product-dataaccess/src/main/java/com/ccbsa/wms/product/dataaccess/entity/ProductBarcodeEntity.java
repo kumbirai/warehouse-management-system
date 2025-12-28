@@ -12,6 +12,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * JPA Entity: ProductBarcodeEntity
@@ -22,6 +25,9 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "product_barcodes", schema = "tenant_schema")
+@Getter
+@Setter
+@NoArgsConstructor
 public class ProductBarcodeEntity {
     @Id
     @Column(name = "id", nullable = false)
@@ -37,42 +43,5 @@ public class ProductBarcodeEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "barcode_type", length = 50, nullable = false)
     private BarcodeType barcodeType;
-
-    // JPA requires no-arg constructor
-    public ProductBarcodeEntity() {
-    }
-
-    // Getters and setters
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public ProductEntity getProduct() {
-        return product;
-    }
-
-    public void setProduct(ProductEntity product) {
-        this.product = product;
-    }
-
-    public String getBarcode() {
-        return barcode;
-    }
-
-    public void setBarcode(String barcode) {
-        this.barcode = barcode;
-    }
-
-    public BarcodeType getBarcodeType() {
-        return barcodeType;
-    }
-
-    public void setBarcodeType(BarcodeType barcodeType) {
-        this.barcodeType = barcodeType;
-    }
 }
 

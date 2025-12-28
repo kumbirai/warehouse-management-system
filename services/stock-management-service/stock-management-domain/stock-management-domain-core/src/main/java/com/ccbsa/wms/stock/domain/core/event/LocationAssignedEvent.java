@@ -1,12 +1,12 @@
 package com.ccbsa.wms.stock.domain.core.event;
 
 import com.ccbsa.common.domain.valueobject.ExpirationDate;
+import com.ccbsa.common.domain.valueobject.ProductId;
+import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.common.domain.valueobject.StockClassification;
+import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 import com.ccbsa.wms.stock.domain.core.entity.StockItem;
-import com.ccbsa.wms.stock.domain.core.valueobject.Quantity;
-import com.ccbsa.wms.stock.domain.core.valueobject.StockItemId;
 
 /**
  * Domain Event: LocationAssignedEvent

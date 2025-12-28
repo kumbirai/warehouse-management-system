@@ -57,8 +57,8 @@ public class StockManagementEventPublisherImpl implements StockManagementEventPu
 
             String key = enrichedEvent.getAggregateId();
             kafkaTemplate.send(STOCK_MANAGEMENT_EVENTS_TOPIC, key, enrichedEvent);
-            logger.debug("Published stock management event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
-                    enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
+            logger.info("Published stock management event: {} with key: {} to topic: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
+                    STOCK_MANAGEMENT_EVENTS_TOPIC, enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
         } catch (Exception e) {
             logger.error("Failed to publish stock management event: {}", event.getClass().getSimpleName(), e);
             throw new RuntimeException("Failed to publish stock management event", e);
@@ -89,21 +89,25 @@ public class StockManagementEventPublisherImpl implements StockManagementEventPu
     }
 
     /**
-     * Builds event metadata from CorrelationContext.
+     * Builds event metadata from CorrelationContext and TenantContext.
      *
      * @return EventMetadata, or null if no metadata available
      */
     private EventMetadata buildEventMetadata() {
         String correlationId = CorrelationContext.getCorrelationId();
-        // User ID can be added from security context if needed
-        // For now, we'll just use correlation ID
+        String userId = com.ccbsa.wms.common.security.TenantContext.getUserId() != null ? com.ccbsa.wms.common.security.TenantContext.getUserId().getValue() : null;
 
-        if (correlationId == null) {
+        if (correlationId == null && userId == null) {
             return null;
         }
 
         EventMetadata.Builder metadataBuilder = EventMetadata.builder();
-        metadataBuilder.correlationId(correlationId);
+        if (correlationId != null) {
+            metadataBuilder.correlationId(correlationId);
+        }
+        if (userId != null) {
+            metadataBuilder.userId(userId);
+        }
         // Causation ID is set when events are published as a result of consuming other events
         // For command-initiated events, causation ID is null
         return metadataBuilder.build();

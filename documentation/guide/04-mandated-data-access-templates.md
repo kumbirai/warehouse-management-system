@@ -2,8 +2,8 @@
 
 ## Warehouse Management System Integration - CCBSA LDP System
 
-**Document Version:** 1.1
-**Date:** 2025-12-09
+**Document Version:** 1.2
+**Date:** 2025-01
 **Status:** Approved
 **Related:** [Production-Grade Caching Strategy](../caching/README.md)
 
@@ -20,6 +20,61 @@ Templates for the **Data Access** module (`{service}-dataaccess`). Implements re
 - **Cached Repository Adapters** - **MANDATORY** decorator pattern for distributed caching with Redis
 
 **⚠️ IMPORTANT:** Caching is **NOT OPTIONAL**. All services MUST implement cached repository adapters following the [Production-Grade Caching Strategy](../caching/README.md).
+
+## Lombok Usage in Data Access Layer
+
+**MANDATORY**: Use Lombok for JPA entities, adapters, and mappers to reduce boilerplate.
+
+**JPA Entities**:
+- Use `@Getter` / `@Setter` for field accessors
+- Use `@NoArgsConstructor` for JPA requirement (no-arg constructor)
+- Use `@AllArgsConstructor` for full constructor (optional)
+- Use `@Builder` for test data creation (optional)
+- **Avoid** `@ToString` on entities with lazy-loaded collections (causes LazyInitializationException)
+- **Avoid** `@EqualsAndHashCode` on entities (use ID-based comparison only)
+
+**Repository Adapters**:
+- Use `@Slf4j` for logging
+- Use `@RequiredArgsConstructor` for dependency injection
+- Use `@Repository` for Spring bean registration
+
+**Mappers**:
+- Use `@Component` for Spring bean registration
+- Use `@RequiredArgsConstructor` if mapper has dependencies
+
+**Example:**
+```java
+// JPA Entity with Lombok
+@Entity
+@Table(name = "stock_consignments", schema = "tenant_schema")
+@Getter
+@Setter
+@NoArgsConstructor
+public class StockConsignmentEntity {
+    @Id
+    private UUID id;
+
+    @Column(name = "tenant_id", nullable = false)
+    private String tenantId;
+
+    @Column(name = "batch_number")
+    private String batchNumber;
+
+    @Version
+    private Long version;
+}
+
+// Repository Adapter with Lombok
+@Slf4j
+@Repository
+@RequiredArgsConstructor
+public class StockConsignmentRepositoryAdapter implements StockConsignmentRepository {
+    private final StockConsignmentJpaRepository jpaRepository;
+    private final StockConsignmentEntityMapper mapper;
+
+    // implementation methods...
+}
+```
 
 ---
 
@@ -1061,6 +1116,10 @@ For each service, you MUST implement:
 - ✅ Configure cache TTL in `application.yml`
 - ✅ Write unit tests for cache hit/miss scenarios
 - ✅ Add to `CacheNamespace` enum in `common-cache` module
+- ✅ **JPA entities use Lombok** (`@Getter`, `@Setter`, `@NoArgsConstructor`)
+- ✅ **Repository adapters use Lombok** (`@Slf4j`, `@RequiredArgsConstructor`, `@Repository`)
+- ✅ **Mappers use Lombok** (`@Component`, optionally `@RequiredArgsConstructor`)
+- ✅ **Avoid `@ToString` and `@EqualsAndHashCode` on JPA entities** (prevent lazy loading issues)
 
 **See:** [Production-Grade Caching Strategy](../caching/README.md) for complete implementation guide, testing strategy, and monitoring setup.
 
@@ -1069,9 +1128,10 @@ For each service, you MUST implement:
 **Document Control**
 
 - **Version History:**
-    - v1.0 (2025-01) - Initial template creation
-    - v1.1 (2025-12) - Added optimistic locking version field handling pattern
+    - v1.2 (2025-01) - Added comprehensive Lombok usage guidelines for JPA entities, adapters, and mappers
     - v1.1 (2025-12-09) - **BREAKING CHANGE**: Made caching MANDATORY, added cached adapter templates
+    - v1.1 (2025-12) - Added optimistic locking version field handling pattern
+    - v1.0 (2025-01) - Initial template creation
 - **Review Cycle:** Review when data access patterns change
 - **Related Documentation:** [Production-Grade Caching Strategy](../caching/README.md)
 

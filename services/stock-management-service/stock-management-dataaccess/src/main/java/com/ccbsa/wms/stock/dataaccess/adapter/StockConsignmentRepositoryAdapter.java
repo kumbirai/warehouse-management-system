@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.hibernate.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
@@ -26,6 +24,8 @@ import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentReference;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Repository Adapter: StockConsignmentRepositoryAdapter
@@ -33,9 +33,9 @@ import jakarta.persistence.PersistenceContext;
  * Implements StockConsignmentRepository port interface. Adapts between domain StockConsignment aggregate and JPA StockConsignmentEntity.
  */
 @Repository
+@Slf4j
+@RequiredArgsConstructor
 public class StockConsignmentRepositoryAdapter implements StockConsignmentRepository {
-    private static final Logger logger = LoggerFactory.getLogger(StockConsignmentRepositoryAdapter.class);
-
     private final StockConsignmentJpaRepository jpaRepository;
     private final StockConsignmentEntityMapper mapper;
     private final TenantSchemaResolver schemaResolver;
@@ -44,32 +44,24 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
     @PersistenceContext
     private EntityManager entityManager;
 
-    public StockConsignmentRepositoryAdapter(StockConsignmentJpaRepository jpaRepository, StockConsignmentEntityMapper mapper, TenantSchemaResolver schemaResolver,
-                                             TenantSchemaProvisioner schemaProvisioner) {
-        this.jpaRepository = jpaRepository;
-        this.mapper = mapper;
-        this.schemaResolver = schemaResolver;
-        this.schemaProvisioner = schemaProvisioner;
-    }
-
     @Override
     public void save(StockConsignment consignment) {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId tenantId = TenantContext.getTenantId();
         if (tenantId == null) {
-            logger.error("TenantContext is not set when saving consignment! Cannot resolve schema.");
+            log.error("TenantContext is not set when saving consignment! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before saving consignment");
         }
 
         // Verify tenantId matches
         if (!tenantId.getValue().equals(consignment.getTenantId().getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Consignment: {}", tenantId.getValue(), consignment.getTenantId().getValue());
+            log.error("TenantContext mismatch! Context: {}, Consignment: {}", tenantId.getValue(), consignment.getTenantId().getValue());
             throw new IllegalStateException("TenantContext tenantId does not match consignment tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -95,7 +87,7 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
         }
 
         jpaRepository.save(entity);
-        logger.debug("Consignment saved successfully to schema: '{}'", schemaName);
+        log.debug("Consignment saved successfully to schema: '{}'", schemaName);
 
         // Domain events are preserved by the command handler before calling save()
         // The command handler gets domain events from the original consignment before save()
@@ -181,10 +173,10 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
     private void executeSetSearchPath(Connection connection, String schemaName) {
         try (Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
-            logger.debug("Setting search_path to: {}", schemaName);
+            log.debug("Setting search_path to: {}", schemaName);
             stmt.execute(setSchemaSql);
         } catch (SQLException e) {
-            logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
+            log.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
             throw new RuntimeException("Failed to set database schema", e);
         }
     }
@@ -208,19 +200,19 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying consignment! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying consignment! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying consignment");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -241,19 +233,19 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying consignment by reference! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying consignment by reference! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying consignment by reference");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -274,19 +266,19 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when checking consignment reference existence! Cannot resolve schema.");
+            log.error("TenantContext is not set when checking consignment reference existence! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before checking consignment reference existence");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -307,19 +299,19 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying consignments! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying consignments! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying consignments");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -343,19 +335,19 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when counting consignments! Cannot resolve schema.");
+            log.error("TenantContext is not set when counting consignments! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before counting consignments");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);

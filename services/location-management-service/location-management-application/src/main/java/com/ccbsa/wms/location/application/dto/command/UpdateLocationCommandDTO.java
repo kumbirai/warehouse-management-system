@@ -1,12 +1,22 @@
 package com.ccbsa.wms.location.application.dto.command;
 
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Command DTO: UpdateLocationCommandDTO
  * <p>
  * Request DTO for updating an existing warehouse location.
  */
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public final class UpdateLocationCommandDTO {
     @Size(max = 10, message = "Zone must not exceed 10 characters")
     private String zone;
@@ -25,65 +35,5 @@ public final class UpdateLocationCommandDTO {
 
     @Size(max = 500, message = "Description must not exceed 500 characters")
     private String description; // Optional - can be null if not updating
-
-    public UpdateLocationCommandDTO() {
-    }
-
-    public UpdateLocationCommandDTO(String zone, String aisle, String rack, String level, String barcode, String description) {
-        this.zone = zone;
-        this.aisle = aisle;
-        this.rack = rack;
-        this.level = level;
-        this.barcode = barcode;
-        this.description = description;
-    }
-
-    public String getZone() {
-        return zone;
-    }
-
-    public void setZone(String zone) {
-        this.zone = zone;
-    }
-
-    public String getAisle() {
-        return aisle;
-    }
-
-    public void setAisle(String aisle) {
-        this.aisle = aisle;
-    }
-
-    public String getRack() {
-        return rack;
-    }
-
-    public void setRack(String rack) {
-        this.rack = rack;
-    }
-
-    public String getLevel() {
-        return level;
-    }
-
-    public void setLevel(String level) {
-        this.level = level;
-    }
-
-    public String getBarcode() {
-        return barcode;
-    }
-
-    public void setBarcode(String barcode) {
-        this.barcode = barcode;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 }
 

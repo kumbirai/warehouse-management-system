@@ -1,5 +1,6 @@
 package com.ccbsa.wms.user.application.service.query.dto;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -19,7 +20,7 @@ public class ListUsersQueryResult {
     }
 
     public List<GetUserQueryResult> getItems() {
-        return items;
+        return Collections.unmodifiableList(items);
     }
 
     public long getTotalCount() {

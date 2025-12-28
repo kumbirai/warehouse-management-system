@@ -116,8 +116,14 @@ wms:
       tenants:
         ttl-minutes: 30        # Tenant entities cached for 30 minutes
 
-# Keycloak Admin Client Configuration
+# Keycloak Service Account Configuration (for service-to-service authentication)
 keycloak:
+  service-account:
+    token-endpoint: ${KEYCLOAK_TOKEN_ENDPOINT:http://localhost:7080/realms/wms-realm/protocol/openid-connect/token}
+    client-id: ${SERVICE_ACCOUNT_CLIENT_ID:wms-service-account}
+    client-secret: ${SERVICE_ACCOUNT_CLIENT_SECRET:0y9HDRzWQE0FP7SlDBwmmj2EeVJ0tTC9}
+  
+  # Keycloak Admin Client Configuration
   admin:
     serverUrl: ${KEYCLOAK_SERVER_URL:http://localhost:7080}
     adminRealm: ${KEYCLOAK_ADMIN_REALM:master}

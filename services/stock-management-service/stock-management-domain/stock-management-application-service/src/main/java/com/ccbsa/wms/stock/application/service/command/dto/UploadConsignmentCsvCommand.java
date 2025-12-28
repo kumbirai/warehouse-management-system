@@ -5,67 +5,31 @@ import java.io.InputStream;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.stock.domain.core.valueobject.ReceivedBy;
 
+import lombok.Builder;
+import lombok.Getter;
+
 /**
  * Command DTO: UploadConsignmentCsvCommand
  * <p>
  * Command object for uploading consignment data via CSV file.
  */
+@Getter
+@Builder
 public final class UploadConsignmentCsvCommand {
     private final TenantId tenantId;
     private final InputStream csvInputStream;
     private final ReceivedBy receivedBy;
 
-    private UploadConsignmentCsvCommand(Builder builder) {
-        this.tenantId = builder.tenantId;
-        this.csvInputStream = builder.csvInputStream;
-        this.receivedBy = builder.receivedBy;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public TenantId getTenantId() {
-        return tenantId;
-    }
-
-    public InputStream getCsvInputStream() {
-        return csvInputStream;
-    }
-
-    public ReceivedBy getReceivedBy() {
-        return receivedBy;
-    }
-
-    public static class Builder {
-        private TenantId tenantId;
-        private InputStream csvInputStream;
-        private ReceivedBy receivedBy;
-
-        public Builder tenantId(TenantId tenantId) {
-            this.tenantId = tenantId;
-            return this;
+    public UploadConsignmentCsvCommand(TenantId tenantId, InputStream csvInputStream, ReceivedBy receivedBy) {
+        if (tenantId == null) {
+            throw new IllegalArgumentException("TenantId is required");
         }
-
-        public Builder csvInputStream(InputStream csvInputStream) {
-            this.csvInputStream = csvInputStream;
-            return this;
+        if (csvInputStream == null) {
+            throw new IllegalArgumentException("CSV input stream is required");
         }
-
-        public Builder receivedBy(ReceivedBy receivedBy) {
-            this.receivedBy = receivedBy;
-            return this;
-        }
-
-        public UploadConsignmentCsvCommand build() {
-            if (tenantId == null) {
-                throw new IllegalArgumentException("TenantId is required");
-            }
-            if (csvInputStream == null) {
-                throw new IllegalArgumentException("CSV input stream is required");
-            }
-            return new UploadConsignmentCsvCommand(this);
-        }
+        this.tenantId = tenantId;
+        this.csvInputStream = csvInputStream;
+        this.receivedBy = receivedBy;
     }
 }
 

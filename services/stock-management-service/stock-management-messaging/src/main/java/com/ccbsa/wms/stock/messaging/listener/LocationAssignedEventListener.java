@@ -15,12 +15,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ccbsa.common.application.context.CorrelationContext;
+import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.application.service.port.repository.StockItemRepository;
 import com.ccbsa.wms.stock.domain.core.entity.StockItem;
-import com.ccbsa.wms.stock.domain.core.valueobject.StockItemId;
 
 /**
  * Event Listener: LocationAssignedEventListener
@@ -76,11 +76,11 @@ public class LocationAssignedEventListener {
             Optional<StockItem> stockItemOptional = stockItemRepository.findById(stockItemId, tenantId);
 
             // Handle case where stock item doesn't exist (race condition or deleted item)
+            // This is expected in event-driven systems where events can arrive out of order
+            // or after the item has been deleted. We acknowledge the event to prevent infinite reprocessing.
             if (stockItemOptional.isEmpty()) {
-                logger.warn(
-                        "Stock item not found for LocationAssignedEvent - may be a race condition or deleted item: stockItemId={}, locationId={}, tenantId={}. Acknowledging "
-                                + "event to prevent reprocessing.",
-                        stockItemIdString, locationIdString, tenantId.getValue());
+                logger.debug("Stock item not found for LocationAssignedEvent (expected in event-driven systems - may be race condition or deleted item): "
+                        + "stockItemId={}, locationId={}, tenantId={}. Acknowledging event to prevent reprocessing.", stockItemIdString, locationIdString, tenantId.getValue());
                 acknowledgment.acknowledge();
                 return;
             }
@@ -101,7 +101,7 @@ public class LocationAssignedEventListener {
             // the location assignment for eventual consistency.
             if (stockItem.getLocationId() == null) {
                 // Get quantity from stock item (needed for assignLocation method)
-                com.ccbsa.wms.stock.domain.core.valueobject.Quantity quantity = stockItem.getQuantity();
+                com.ccbsa.common.domain.valueobject.Quantity quantity = stockItem.getQuantity();
 
                 // Update stock item with location using domain method
                 // Note: This will publish LocationAssignedEvent again, but the idempotency check

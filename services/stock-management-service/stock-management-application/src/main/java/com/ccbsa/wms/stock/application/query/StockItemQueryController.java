@@ -15,16 +15,24 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.application.api.ApiResponseBuilder;
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.StockClassification;
+import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.application.dto.query.StockItemQueryDTO;
+import com.ccbsa.wms.stock.application.dto.query.StockItemsByClassificationResponseDTO;
 import com.ccbsa.wms.stock.application.service.query.GetStockItemQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.GetStockItemsByClassificationQueryHandler;
+import com.ccbsa.wms.stock.application.service.query.GetStockItemsByProductAndLocationQueryHandler;
+import com.ccbsa.wms.stock.application.service.query.GetStockItemsByProductQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemQueryResult;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemsByClassificationQuery;
-import com.ccbsa.wms.stock.domain.core.valueobject.StockItemId;
+import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemsByProductAndLocationQuery;
+import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemsByProductQuery;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -45,10 +53,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class StockItemQueryController {
     private final GetStockItemQueryHandler getStockItemQueryHandler;
     private final GetStockItemsByClassificationQueryHandler getStockItemsByClassificationQueryHandler;
+    private final GetStockItemsByProductAndLocationQueryHandler getStockItemsByProductAndLocationQueryHandler;
+    private final GetStockItemsByProductQueryHandler getStockItemsByProductQueryHandler;
 
-    public StockItemQueryController(GetStockItemQueryHandler getStockItemQueryHandler, GetStockItemsByClassificationQueryHandler getStockItemsByClassificationQueryHandler) {
+    public StockItemQueryController(GetStockItemQueryHandler getStockItemQueryHandler, GetStockItemsByClassificationQueryHandler getStockItemsByClassificationQueryHandler,
+                                    GetStockItemsByProductAndLocationQueryHandler getStockItemsByProductAndLocationQueryHandler,
+                                    GetStockItemsByProductQueryHandler getStockItemsByProductQueryHandler) {
         this.getStockItemQueryHandler = getStockItemQueryHandler;
         this.getStockItemsByClassificationQueryHandler = getStockItemsByClassificationQueryHandler;
+        this.getStockItemsByProductAndLocationQueryHandler = getStockItemsByProductAndLocationQueryHandler;
+        this.getStockItemsByProductQueryHandler = getStockItemsByProductQueryHandler;
     }
 
     @GetMapping("/{stockItemId}")
@@ -87,19 +101,81 @@ public class StockItemQueryController {
     @GetMapping("/by-classification")
     @Operation(summary = "Get Stock Items by Classification", description = "Gets stock items filtered by classification")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER')")
-    public ResponseEntity<ApiResponse<List<StockItemQueryDTO>>> getStockItemsByClassification(@RequestHeader("X-Tenant-Id") String tenantId,
-                                                                                              @RequestParam("classification") String classification) {
+    public ResponseEntity<ApiResponse<StockItemsByClassificationResponseDTO>> getStockItemsByClassification(@RequestHeader("X-Tenant-Id") String tenantId,
+                                                                                                            @RequestParam("classification") String classification) {
+        // Log incoming request for debugging
+        org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(StockItemQueryController.class);
+        log.info("Received request to get stock items by classification: tenantId={}, classification={}", tenantId, classification);
+
         // Map to query
         StockClassification stockClassification = StockClassification.valueOf(classification.toUpperCase(Locale.ROOT));
         GetStockItemsByClassificationQuery query = GetStockItemsByClassificationQuery.builder().tenantId(TenantId.of(tenantId)).classification(stockClassification).build();
 
         // Execute query
         List<GetStockItemQueryResult> results = getStockItemsByClassificationQueryHandler.handle(query);
+        log.info("Query returned {} stock items for classification: {}, tenantId: {}", results.size(), classification, tenantId);
 
         // Map results to DTOs
-        List<StockItemQueryDTO> dtos = results.stream().map(this::mapToDTO).collect(Collectors.toList());
+        @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE", justification = "dtos is used in builder - SpotBugs false positive") List<StockItemQueryDTO> dtos =
+                results.stream().map(this::mapToDTO).collect(Collectors.toList());
 
-        return ApiResponseBuilder.ok(dtos);
+        // Wrap in response DTO to match frontend expectation: { stockItems: StockItem[] }
+        StockItemsByClassificationResponseDTO response = StockItemsByClassificationResponseDTO.builder().stockItems(dtos).build();
+
+        return ApiResponseBuilder.ok(response);
+    }
+
+    @GetMapping
+    @Operation(summary = "Get Stock Items by Product and Location", description = "Gets stock items filtered by product ID and location ID")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER')")
+    public ResponseEntity<ApiResponse<List<StockItemQueryDTO>>> getStockItemsByProductAndLocation(@RequestHeader("X-Tenant-Id") String tenantId,
+                                                                                                  @RequestParam("productId") String productId,
+                                                                                                  @RequestParam("locationId") String locationId) {
+        try {
+            // Map to query
+            GetStockItemsByProductAndLocationQuery query =
+                    GetStockItemsByProductAndLocationQuery.builder().tenantId(TenantId.of(tenantId)).productId(ProductId.of(java.util.UUID.fromString(productId)))
+                            .locationId(LocationId.of(java.util.UUID.fromString(locationId))).build();
+
+            // Execute query
+            List<GetStockItemQueryResult> results = getStockItemsByProductAndLocationQueryHandler.handle(query);
+
+            // Map results to DTOs
+            List<StockItemQueryDTO> dtos = results.stream().map(this::mapToDTO).collect(Collectors.toList());
+
+            return ApiResponseBuilder.ok(dtos);
+        } catch (IllegalArgumentException e) {
+            // Handle validation errors (e.g., invalid UUID format)
+            return ApiResponseBuilder.error(org.springframework.http.HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Invalid request parameters: " + e.getMessage());
+        } catch (Exception e) {
+            // Handle unexpected errors
+            return ApiResponseBuilder.error(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR",
+                    "An unexpected error occurred while retrieving stock items");
+        }
+    }
+
+    @GetMapping("/by-product")
+    @Operation(summary = "Get Stock Items by Product", description = "Gets stock items filtered by product ID (including items without location assignment)")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER')")
+    public ResponseEntity<ApiResponse<List<StockItemQueryDTO>>> getStockItemsByProduct(@RequestHeader("X-Tenant-Id") String tenantId, @RequestParam("productId") String productId) {
+        try {
+            // Map to query
+            GetStockItemsByProductQuery query =
+                    GetStockItemsByProductQuery.builder().tenantId(TenantId.of(tenantId)).productId(ProductId.of(java.util.UUID.fromString(productId))).build();
+
+            // Execute query
+            List<GetStockItemQueryResult> results = getStockItemsByProductQueryHandler.handle(query);
+
+            // Map results to DTOs
+            List<StockItemQueryDTO> dtos = results.stream().map(this::mapToDTO).collect(Collectors.toList());
+
+            return ApiResponseBuilder.ok(dtos);
+        } catch (IllegalArgumentException e) {
+            return ApiResponseBuilder.error(org.springframework.http.HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Invalid request parameters: " + e.getMessage());
+        } catch (Exception e) {
+            return ApiResponseBuilder.error(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR",
+                    "An unexpected error occurred while retrieving stock items");
+        }
     }
 }
 

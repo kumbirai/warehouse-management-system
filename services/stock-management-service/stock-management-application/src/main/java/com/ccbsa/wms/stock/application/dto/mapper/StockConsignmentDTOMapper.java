@@ -9,7 +9,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.common.domain.valueobject.WarehouseId;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
 import com.ccbsa.wms.stock.application.dto.command.CreateConsignmentCommandDTO;
 import com.ccbsa.wms.stock.application.dto.command.CreateConsignmentResultDTO;
@@ -24,6 +26,9 @@ import com.ccbsa.wms.stock.application.service.command.dto.UploadConsignmentCsvC
 import com.ccbsa.wms.stock.application.service.command.dto.UploadConsignmentCsvResult;
 import com.ccbsa.wms.stock.application.service.command.dto.ValidateConsignmentCommand;
 import com.ccbsa.wms.stock.application.service.command.dto.ValidateConsignmentResult;
+import com.ccbsa.wms.stock.application.service.port.service.LocationServicePort;
+import com.ccbsa.wms.stock.application.service.port.service.ProductServicePort;
+import com.ccbsa.wms.stock.application.service.port.service.UserServicePort;
 import com.ccbsa.wms.stock.application.service.query.dto.ConsignmentQueryResult;
 import com.ccbsa.wms.stock.application.service.query.dto.GetConsignmentQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.ListConsignmentsQuery;
@@ -33,13 +38,21 @@ import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentLineItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentReference;
 import com.ccbsa.wms.stock.domain.core.valueobject.ReceivedBy;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * DTO Mapper: StockConsignmentDTOMapper
  * <p>
  * Maps between API DTOs and application service commands/queries. Acts as an anti-corruption layer protecting the domain from external API changes.
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class StockConsignmentDTOMapper {
+    private final ProductServicePort productServicePort;
+    private final UserServicePort userServicePort;
+    private final LocationServicePort locationServicePort;
 
     /**
      * Converts CreateConsignmentCommandDTO to CreateConsignmentCommand.
@@ -174,20 +187,22 @@ public class StockConsignmentDTOMapper {
     /**
      * Converts ListConsignmentsQueryResult to list of ConsignmentQueryDTO.
      *
-     * @param result Query result
+     * @param result   Query result
+     * @param tenantId Tenant identifier
      * @return List of ConsignmentQueryDTO
      */
-    public List<ConsignmentQueryDTO> toConsignmentQueryDTOList(ListConsignmentsQueryResult result) {
-        return result.getConsignments().stream().map(this::toQueryResultDTO).collect(Collectors.toList());
+    public List<ConsignmentQueryDTO> toConsignmentQueryDTOList(ListConsignmentsQueryResult result, String tenantId) {
+        return result.getConsignments().stream().map(r -> toQueryResultDTO(r, tenantId)).collect(Collectors.toList());
     }
 
     /**
      * Converts ConsignmentQueryResult to ConsignmentQueryDTO.
      *
-     * @param result Query result
+     * @param result   Query result
+     * @param tenantId Tenant identifier
      * @return ConsignmentQueryDTO
      */
-    public ConsignmentQueryDTO toQueryResultDTO(ConsignmentQueryResult result) {
+    public ConsignmentQueryDTO toQueryResultDTO(ConsignmentQueryResult result, String tenantId) {
         ConsignmentQueryDTO dto = new ConsignmentQueryDTO();
         dto.setConsignmentId(result.getConsignmentId().getValueAsString());
         dto.setConsignmentReference(result.getConsignmentReference().getValue());
@@ -199,6 +214,34 @@ public class StockConsignmentDTOMapper {
         dto.setCreatedAt(result.getCreatedAt());
         dto.setLastModifiedAt(result.getLastModifiedAt());
 
+        // Resolve warehouse name
+        if (tenantId != null && result.getWarehouseId() != null) {
+            try {
+                var locationInfo = locationServicePort.getLocationInfo(LocationId.of(result.getWarehouseId().getValue()), TenantId.of(tenantId));
+                locationInfo.ifPresent(info -> dto.setWarehouseName(info.getDisplayName()));
+            } catch (Exception e) {
+                // If we can't get warehouse name, leave it null - this is optional enrichment
+                // Log at debug level to avoid noise in production logs
+                if (log.isDebugEnabled()) {
+                    log.debug("Could not resolve warehouse name for warehouseId: {}, tenantId: {}", result.getWarehouseId().getValue(), tenantId, e);
+                }
+            }
+        }
+
+        // Resolve user name
+        if (tenantId != null && result.getReceivedBy() != null && !result.getReceivedBy().getValue().isEmpty()) {
+            try {
+                var userInfo = userServicePort.getUserInfo(UserId.of(result.getReceivedBy().getValue()), TenantId.of(tenantId));
+                userInfo.ifPresent(info -> dto.setReceivedByName(info.getDisplayName()));
+            } catch (Exception e) {
+                // If we can't get user name, leave it null - this is optional enrichment
+                // Log at debug level to avoid noise in production logs
+                if (log.isDebugEnabled()) {
+                    log.debug("Could not resolve user name for userId: {}, tenantId: {}", result.getReceivedBy().getValue(), tenantId, e);
+                }
+            }
+        }
+
         // Map line items
         List<ConsignmentQueryDTO.ConsignmentLineItemDTO> lineItemDTOs = result.getLineItems().stream().map(item -> {
             ConsignmentQueryDTO.ConsignmentLineItemDTO itemDTO = new ConsignmentQueryDTO.ConsignmentLineItemDTO();
@@ -208,6 +251,21 @@ public class StockConsignmentDTOMapper {
             return itemDTO;
         }).collect(Collectors.toList());
         dto.setLineItems(lineItemDTOs);
+
+        // Set productId from first line item (for backward compatibility with tests)
+        if (!result.getLineItems().isEmpty() && tenantId != null) {
+            try {
+                ProductCode firstProductCode = result.getLineItems().get(0).getProductCode();
+                var productInfo = productServicePort.getProductByCode(firstProductCode, TenantId.of(tenantId));
+                productInfo.ifPresent(info -> dto.setProductId(info.getProductId()));
+            } catch (Exception e) {
+                // If we can't get productId, leave it null - this is optional for backward compatibility
+                // Log at debug level to avoid noise in production logs
+                if (log.isDebugEnabled()) {
+                    log.debug("Could not resolve productId for productCode: {}, tenantId: {}", result.getLineItems().get(0).getProductCode().getValue(), tenantId, e);
+                }
+            }
+        }
 
         return dto;
     }

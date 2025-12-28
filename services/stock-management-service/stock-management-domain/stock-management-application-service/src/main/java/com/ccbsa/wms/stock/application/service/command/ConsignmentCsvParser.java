@@ -15,11 +15,11 @@ import java.util.Set;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.ccbsa.wms.stock.application.service.command.dto.ConsignmentCsvRow;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * CSV Parser: ConsignmentCsvParser
@@ -29,8 +29,8 @@ import com.ccbsa.wms.stock.application.service.command.dto.ConsignmentCsvRow;
  * Responsibilities: - Parse CSV content using Apache Commons CSV - Validate CSV format and required columns - Extract consignment data from CSV rows - Handle CSV parsing errors
  */
 @Component
+@Slf4j
 public class ConsignmentCsvParser {
-    private static final Logger logger = LoggerFactory.getLogger(ConsignmentCsvParser.class);
     private static final int MAX_ROWS = 10000;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -81,12 +81,12 @@ public class ConsignmentCsvParser {
 
                     rows.add(row);
                 } catch (IllegalArgumentException | DateTimeParseException e) {
-                    logger.warn("Invalid CSV row {}: {}", rowNumber, e.getMessage());
+                    log.warn("Invalid CSV row {}: {}", rowNumber, e.getMessage());
                     throw new IllegalArgumentException(String.format("Row %d: %s", rowNumber, e.getMessage()), e);
                 }
             }
 
-            logger.debug("Parsed {} rows from CSV", rows.size());
+            log.debug("Parsed {} rows from CSV", rows.size());
             return rows;
         }
     }

@@ -10,8 +10,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.hibernate.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.NonNull;
@@ -20,6 +18,7 @@ import org.springframework.stereotype.Repository;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.user.application.service.port.repository.UserRepository;
 import com.ccbsa.wms.user.dataaccess.entity.UserEntity;
 import com.ccbsa.wms.user.dataaccess.jpa.UserJpaRepository;
@@ -35,6 +34,8 @@ import com.ccbsa.wms.user.domain.core.valueobject.Username;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Repository Adapter: UserRepositoryAdapter
@@ -42,9 +43,9 @@ import jakarta.persistence.PersistenceContext;
  * Implements UserRepository port interface. Adapts between domain User aggregate and JPA UserEntity.
  */
 @Repository
+@Slf4j
+@RequiredArgsConstructor
 public class UserRepositoryAdapter implements UserRepository {
-    private static final Logger logger = LoggerFactory.getLogger(UserRepositoryAdapter.class);
-
     private final UserJpaRepository jpaRepository;
     private final UserEntityMapper mapper;
     private final JdbcTemplate jdbcTemplate;
@@ -54,21 +55,12 @@ public class UserRepositoryAdapter implements UserRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public UserRepositoryAdapter(UserJpaRepository jpaRepository, UserEntityMapper mapper, JdbcTemplate jdbcTemplate, TenantSchemaResolver schemaResolver,
-                                 TenantSchemaProvisioner schemaProvisioner) {
-        this.jpaRepository = jpaRepository;
-        this.mapper = mapper;
-        this.jdbcTemplate = jdbcTemplate;
-        this.schemaResolver = schemaResolver;
-        this.schemaProvisioner = schemaProvisioner;
-    }
-
     @Override
     public void save(User user) {
         // Verify TenantContext is set before saving (critical for schema resolution)
-        com.ccbsa.common.domain.valueobject.TenantId tenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
+        TenantId tenantId = TenantContext.getTenantId();
         if (tenantId == null) {
-            logger.error("TenantContext is not set when saving user! User will be saved to wrong schema. User tenantId: {}",
+            log.error("TenantContext is not set when saving user! User will be saved to wrong schema. User tenantId: {}",
                     user.getTenantId() != null ? user.getTenantId().getValue() : "null");
             throw new IllegalStateException(
                     String.format("TenantContext must be set before saving user. Expected tenantId: %s", user.getTenantId() != null ? user.getTenantId().getValue() : "null"));
@@ -76,15 +68,15 @@ public class UserRepositoryAdapter implements UserRepository {
 
         // Verify tenantId matches
         if (!tenantId.getValue().equals(user.getTenantId().getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, User: {}", tenantId.getValue(), user.getTenantId().getValue());
+            log.error("TenantContext mismatch! Context: {}, User: {}", tenantId.getValue(), user.getTenantId().getValue());
             throw new IllegalStateException("TenantContext tenantId does not match user tenantId");
         }
 
-        logger.info("Saving user with TenantContext set to: {}", tenantId.getValue());
+        log.info("Saving user with TenantContext set to: {}", tenantId.getValue());
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.info("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
+        log.info("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -112,7 +104,7 @@ public class UserRepositoryAdapter implements UserRepository {
             jpaRepository.save(entity);
         }
 
-        logger.info("User saved successfully to schema: '{}'", schemaName);
+        log.info("User saved successfully to schema: '{}'", schemaName);
     }
 
     /**
@@ -187,10 +179,10 @@ public class UserRepositoryAdapter implements UserRepository {
     private void executeSetSearchPath(Connection connection, String schemaName) {
         try (Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
-            logger.debug("Setting search_path to: {}", schemaName);
+            log.debug("Setting search_path to: {}", schemaName);
             stmt.execute(setSchemaSql);
         } catch (SQLException e) {
-            logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
+            log.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
             throw new RuntimeException("Failed to set database schema", e);
         }
     }
@@ -225,17 +217,17 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public Optional<User> findById(UserId userId) {
         // Verify TenantContext is set (critical for schema resolution)
-        com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
+        TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying user by ID! Cannot resolve schema. UserId: {}", userId != null ? userId.getValue() : "null");
+            log.error("TenantContext is not set when querying user by ID! Cannot resolve schema. UserId: {}", userId != null ? userId.getValue() : "null");
             throw new IllegalStateException("TenantContext must be set before querying user by ID");
         }
 
-        logger.debug("Querying user by ID with TenantContext set to: {}", contextTenantId.getValue());
+        log.debug("Querying user by ID with TenantContext set to: {}", contextTenantId.getValue());
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -260,24 +252,24 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public List<User> findByTenantId(TenantId tenantId) {
         // Verify TenantContext is set (critical for schema resolution)
-        com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
+        TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
+            log.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
             throw new IllegalStateException(
                     String.format("TenantContext must be set before querying users. Expected tenantId: %s", tenantId != null ? tenantId.getValue() : "null"));
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
-        logger.debug("Querying users with TenantContext set to: {}", contextTenantId.getValue());
+        log.debug("Querying users with TenantContext set to: {}", contextTenantId.getValue());
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -311,22 +303,22 @@ public class UserRepositoryAdapter implements UserRepository {
 
     @Override
     public List<User> findAllAcrossTenants(UserStatus status) {
-        logger.info("Finding all users across all tenant schemas with status={}", status);
+        log.info("Finding all users across all tenant schemas with status={}", status);
 
         try {
             // 1. Get all tenant schemas from information_schema using JdbcTemplate (bypasses Hibernate)
             List<String> tenantSchemas = getTenantSchemas();
-            logger.info("Found {} tenant schemas: {}", tenantSchemas.size(), tenantSchemas);
+            log.info("Found {} tenant schemas: {}", tenantSchemas.size(), tenantSchemas);
 
             if (tenantSchemas.isEmpty()) {
-                logger.warn("No tenant schemas found - returning empty list");
+                log.warn("No tenant schemas found - returning empty list");
                 return List.of();
             }
 
             // 2. Build UNION query dynamically
             String sql = buildCrossSchemaQuery(tenantSchemas, status);
-            logger.info("Generated cross-schema SQL query (length={})", sql.length());
-            logger.info("SQL query: {}", sql);
+            log.info("Generated cross-schema SQL query (length={})", sql.length());
+            log.info("SQL query: {}", sql);
 
             // 3. Execute query using JdbcTemplate (bypasses Hibernate naming strategy)
             // Note: When status filter is applied, we need to pass the status value for each UNION part
@@ -343,12 +335,12 @@ public class UserRepositoryAdapter implements UserRepository {
                 entities = jdbcTemplate.query(sql, new UserEntityRowMapper());
             }
 
-            logger.info("Retrieved {} users from all tenant schemas", entities.size());
+            log.info("Retrieved {} users from all tenant schemas", entities.size());
 
             // 4. Map to domain objects
             return entities.stream().map(mapper::toDomain).collect(Collectors.toList());
         } catch (Exception e) {
-            logger.error("Error executing cross-schema query: {}", e.getMessage(), e);
+            log.error("Error executing cross-schema query: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to query users across tenant schemas", e);
         }
     }
@@ -419,22 +411,22 @@ public class UserRepositoryAdapter implements UserRepository {
 
     @Override
     public List<User> findAllAcrossTenantsWithSearch(UserStatus status, String searchTerm) {
-        logger.info("Finding all users across all tenant schemas with status={} and searchTerm={}", status, searchTerm);
+        log.info("Finding all users across all tenant schemas with status={} and searchTerm={}", status, searchTerm);
 
         try {
             // 1. Get all tenant schemas from information_schema using JdbcTemplate (bypasses Hibernate)
             List<String> tenantSchemas = getTenantSchemas();
-            logger.info("Found {} tenant schemas: {}", tenantSchemas.size(), tenantSchemas);
+            log.info("Found {} tenant schemas: {}", tenantSchemas.size(), tenantSchemas);
 
             if (tenantSchemas.isEmpty()) {
-                logger.warn("No tenant schemas found - returning empty list");
+                log.warn("No tenant schemas found - returning empty list");
                 return List.of();
             }
 
             // 2. Build UNION query dynamically with search
             String sql = buildCrossSchemaQueryWithSearch(tenantSchemas, status);
-            logger.info("Generated cross-schema SQL query with search (length={})", sql.length());
-            logger.debug("SQL query: {}", sql);
+            log.info("Generated cross-schema SQL query with search (length={})", sql.length());
+            log.debug("SQL query: {}", sql);
 
             // 3. Execute query using JdbcTemplate (bypasses Hibernate naming strategy)
             // We need to pass parameters for each UNION part: status (if provided) and searchTerm (twice for username and email)
@@ -459,12 +451,12 @@ public class UserRepositoryAdapter implements UserRepository {
                 entities = jdbcTemplate.query(sql, new UserEntityRowMapper(), params);
             }
 
-            logger.info("Retrieved {} users from all tenant schemas with search term '{}'", entities.size(), searchTerm);
+            log.info("Retrieved {} users from all tenant schemas with search term '{}'", entities.size(), searchTerm);
 
             // 4. Map to domain objects
             return entities.stream().map(mapper::toDomain).collect(Collectors.toList());
         } catch (Exception e) {
-            logger.error("Error executing cross-schema query with search: {}", e.getMessage(), e);
+            log.error("Error executing cross-schema query with search: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to query users across tenant schemas with search", e);
         }
     }
@@ -513,14 +505,14 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
-    public Optional<User> findByIdAcrossTenants(com.ccbsa.common.domain.valueobject.UserId userId) {
-        logger.debug("Finding user by ID across all tenant schemas: userId={}", userId.getValue());
+    public Optional<User> findByIdAcrossTenants(UserId userId) {
+        log.debug("Finding user by ID across all tenant schemas: userId={}", userId.getValue());
 
         try {
             // 1. Get all tenant schemas
             List<String> tenantSchemas = getTenantSchemas();
             if (tenantSchemas.isEmpty()) {
-                logger.warn("No tenant schemas found - returning empty");
+                log.warn("No tenant schemas found - returning empty");
                 return Optional.empty();
             }
 
@@ -536,7 +528,7 @@ public class UserRepositoryAdapter implements UserRepository {
             }
 
             String sql = String.join(" UNION ALL ", unionParts);
-            logger.debug("Generated cross-schema findById SQL query");
+            log.debug("Generated cross-schema findById SQL query");
 
             // 3. Execute query - need to pass userId for each UNION part
             Object[] params = new Object[tenantSchemas.size()];
@@ -547,18 +539,18 @@ public class UserRepositoryAdapter implements UserRepository {
             List<UserEntity> entities = jdbcTemplate.query(sql, new UserEntityRowMapper(), params);
 
             if (entities.isEmpty()) {
-                logger.debug("User not found across any tenant schema: userId={}", userId.getValue());
+                log.debug("User not found across any tenant schema: userId={}", userId.getValue());
                 return Optional.empty();
             }
 
             if (entities.size() > 1) {
-                logger.warn("Found {} users with same ID across schemas (should not happen): userId={}", entities.size(), userId.getValue());
+                log.warn("Found {} users with same ID across schemas (should not happen): userId={}", entities.size(), userId.getValue());
             }
 
             // 4. Map to domain object
             return Optional.of(mapper.toDomain(entities.get(0)));
         } catch (Exception e) {
-            logger.error("Error finding user by ID across tenant schemas: {}", e.getMessage(), e);
+            log.error("Error finding user by ID across tenant schemas: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to find user across tenant schemas", e);
         }
     }
@@ -566,24 +558,24 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public List<User> findByTenantIdAndStatus(TenantId tenantId, UserStatus status) {
         // Verify TenantContext is set (critical for schema resolution)
-        com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
+        TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
+            log.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
             throw new IllegalStateException(
                     String.format("TenantContext must be set before querying users. Expected tenantId: %s", tenantId != null ? tenantId.getValue() : "null"));
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
-        logger.debug("Querying users with status filter - TenantContext: {}, Status: {}", contextTenantId.getValue(), status);
+        log.debug("Querying users with status filter - TenantContext: {}, Status: {}", contextTenantId.getValue(), status);
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -604,24 +596,24 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public List<User> findByTenantIdAndSearchTerm(TenantId tenantId, String searchTerm) {
         // Verify TenantContext is set (critical for schema resolution)
-        com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
+        TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
+            log.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
             throw new IllegalStateException(
                     String.format("TenantContext must be set before querying users. Expected tenantId: %s", tenantId != null ? tenantId.getValue() : "null"));
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
-        logger.debug("Querying users with search term - TenantContext: {}, SearchTerm: {}", contextTenantId.getValue(), searchTerm);
+        log.debug("Querying users with search term - TenantContext: {}, SearchTerm: {}", contextTenantId.getValue(), searchTerm);
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -641,24 +633,24 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public List<User> findByTenantIdAndStatusAndSearchTerm(TenantId tenantId, UserStatus status, String searchTerm) {
         // Verify TenantContext is set (critical for schema resolution)
-        com.ccbsa.common.domain.valueobject.TenantId contextTenantId = com.ccbsa.wms.common.security.TenantContext.getTenantId();
+        TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
+            log.error("TenantContext is not set when querying users! Cannot resolve schema. Requested tenantId: {}", tenantId != null ? tenantId.getValue() : "null");
             throw new IllegalStateException(
                     String.format("TenantContext must be set before querying users. Expected tenantId: %s", tenantId != null ? tenantId.getValue() : "null"));
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
-        logger.debug("Querying users with status and search term - TenantContext: {}, Status: {}, SearchTerm: {}", contextTenantId.getValue(), status, searchTerm);
+        log.debug("Querying users with status and search term - TenantContext: {}, Status: {}, SearchTerm: {}", contextTenantId.getValue(), status, searchTerm);
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);

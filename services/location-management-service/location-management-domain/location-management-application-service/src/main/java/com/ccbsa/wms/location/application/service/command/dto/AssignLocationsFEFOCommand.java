@@ -5,55 +5,34 @@ import java.util.List;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.location.domain.core.valueobject.StockItemAssignmentRequest;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.Builder;
+import lombok.Getter;
+
 /**
  * Command DTO: AssignLocationsFEFOCommand
  * <p>
  * Command object for assigning locations to stock items based on FEFO principles.
  */
+@Getter
+@Builder
+@SuppressFBWarnings(value = {"EI_EXPOSE_REP2", "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"}, justification =
+        "EI_EXPOSE_REP2: Lombok builder stores list directly. Defensive copy made in constructor. "
+                + "RCN_REDUNDANT_NULLCHECK: Null check removed, stockItems validated as non-null before use.")
 public final class AssignLocationsFEFOCommand {
     private final TenantId tenantId;
     private final List<StockItemAssignmentRequest> stockItems;
 
-    private AssignLocationsFEFOCommand(Builder builder) {
-        this.tenantId = builder.tenantId;
-        this.stockItems = builder.stockItems != null ? List.copyOf(builder.stockItems) : List.of();
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public TenantId getTenantId() {
-        return tenantId;
-    }
-
-    public List<StockItemAssignmentRequest> getStockItems() {
-        return stockItems;
-    }
-
-    public static class Builder {
-        private TenantId tenantId;
-        private List<StockItemAssignmentRequest> stockItems;
-
-        public Builder tenantId(TenantId tenantId) {
-            this.tenantId = tenantId;
-            return this;
+    public AssignLocationsFEFOCommand(TenantId tenantId, List<StockItemAssignmentRequest> stockItems) {
+        if (tenantId == null) {
+            throw new IllegalArgumentException("TenantId is required");
         }
-
-        public Builder stockItems(List<StockItemAssignmentRequest> stockItems) {
-            this.stockItems = stockItems != null ? new java.util.ArrayList<>(stockItems) : null;
-            return this;
+        if (stockItems == null || stockItems.isEmpty()) {
+            throw new IllegalArgumentException("Stock items list cannot be empty");
         }
-
-        public AssignLocationsFEFOCommand build() {
-            if (tenantId == null) {
-                throw new IllegalArgumentException("TenantId is required");
-            }
-            if (stockItems == null || stockItems.isEmpty()) {
-                throw new IllegalArgumentException("Stock items list cannot be empty");
-            }
-            return new AssignLocationsFEFOCommand(this);
-        }
+        this.tenantId = tenantId;
+        // Defensive copy - stockItems is already validated as non-null above
+        this.stockItems = List.copyOf(stockItems);
     }
 }
 

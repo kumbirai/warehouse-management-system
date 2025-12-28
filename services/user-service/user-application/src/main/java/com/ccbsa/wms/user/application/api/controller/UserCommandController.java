@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -52,6 +50,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * REST Controller: UserCommandController
@@ -59,8 +58,9 @@ import jakarta.validation.Valid;
  * Handles user management command operations (write operations).
  */
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/v1/users")
 @Tag(name = "User Commands", description = "User management command operations")
+@Slf4j
 public class UserCommandController {
     private final CreateUserCommandHandler createUserCommandHandler;
     private final UpdateUserProfileCommandHandler updateUserProfileCommandHandler;
@@ -124,8 +124,7 @@ public class UserCommandController {
         TenantId previousTenantId = TenantContext.getTenantId();
 
         // Log context setting for debugging
-        Logger logger = LoggerFactory.getLogger(UserCommandController.class);
-        logger.info("Setting TenantContext to '{}' before creating user (previous: {})", tenantIdToSet.getValue(), previousTenantId != null ? previousTenantId.getValue() : "null");
+        log.info("Setting TenantContext to '{}' before creating user (previous: {})", tenantIdToSet.getValue(), previousTenantId != null ? previousTenantId.getValue() : "null");
 
         try {
             TenantContext.setTenantId(tenantIdToSet);
@@ -133,10 +132,10 @@ public class UserCommandController {
             // Verify TenantContext is set correctly
             TenantId verifyTenantId = TenantContext.getTenantId();
             if (verifyTenantId == null || !verifyTenantId.getValue().equals(resolvedTenantId)) {
-                logger.error("TenantContext verification failed! Expected: '{}', Actual: {}", resolvedTenantId, verifyTenantId != null ? verifyTenantId.getValue() : "null");
+                log.error("TenantContext verification failed! Expected: '{}', Actual: {}", resolvedTenantId, verifyTenantId != null ? verifyTenantId.getValue() : "null");
                 throw new IllegalStateException("Failed to set TenantContext correctly");
             }
-            logger.debug("TenantContext verified: '{}'", verifyTenantId.getValue());
+            log.debug("TenantContext verified: '{}'", verifyTenantId.getValue());
 
             CreateUserCommand command = mapper.toCreateUserCommand(request, resolvedTenantId);
             CreateUserResult result = createUserCommandHandler.handle(command);
@@ -146,10 +145,10 @@ public class UserCommandController {
             // Restore previous tenant context or clear if it was null
             if (previousTenantId != null) {
                 TenantContext.setTenantId(previousTenantId);
-                logger.debug("Restored TenantContext to '{}'", previousTenantId.getValue());
+                log.debug("Restored TenantContext to '{}'", previousTenantId.getValue());
             } else {
                 TenantContext.clear();
-                logger.debug("Cleared TenantContext");
+                log.debug("Cleared TenantContext");
             }
         }
     }
@@ -213,7 +212,6 @@ public class UserCommandController {
      */
     private <T> ResponseEntity<ApiResponse<T>> executeWithTenantContext(String tenantId, UserId userId, Supplier<ResponseEntity<ApiResponse<T>>> operation) {
         boolean isTenantAdmin = isTenantAdmin();
-        Logger logger = LoggerFactory.getLogger(UserCommandController.class);
 
         // Resolve tenantId: TENANT_ADMIN uses their own tenant from TenantContext
         String resolvedTenantId = tenantId;
@@ -228,10 +226,10 @@ public class UserCommandController {
             // SYSTEM_ADMIN: If tenantId not provided, find user across schemas to get their tenantId
             if (resolvedTenantId == null || resolvedTenantId.trim().isEmpty()) {
                 if (userId != null) {
-                    logger.debug("TenantId not provided for SYSTEM_ADMIN, finding user across schemas: userId={}", userId.getValue());
+                    log.debug("TenantId not provided for SYSTEM_ADMIN, finding user across schemas: userId={}", userId.getValue());
                     var user = userRepository.findByIdAcrossTenants(userId).orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", userId.getValue())));
                     resolvedTenantId = user.getTenantId().getValue();
-                    logger.debug("Found user tenantId: {}", resolvedTenantId);
+                    log.debug("Found user tenantId: {}", resolvedTenantId);
                 } else {
                     throw new IllegalArgumentException("X-Tenant-Id header is required for SYSTEM_ADMIN operations when userId is not available");
                 }
@@ -242,7 +240,7 @@ public class UserCommandController {
         TenantId tenantIdToSet = TenantId.of(resolvedTenantId);
         TenantId previousTenantId = TenantContext.getTenantId();
 
-        logger.debug("Setting TenantContext to '{}' for operation (previous: {})", tenantIdToSet.getValue(), previousTenantId != null ? previousTenantId.getValue() : "null");
+        log.debug("Setting TenantContext to '{}' for operation (previous: {})", tenantIdToSet.getValue(), previousTenantId != null ? previousTenantId.getValue() : "null");
 
         try {
             TenantContext.setTenantId(tenantIdToSet);

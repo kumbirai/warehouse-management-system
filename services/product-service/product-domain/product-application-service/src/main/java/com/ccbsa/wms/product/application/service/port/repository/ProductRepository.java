@@ -3,11 +3,11 @@ package com.ccbsa.wms.product.application.service.port.repository;
 import java.util.List;
 import java.util.Optional;
 
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.product.domain.core.entity.Product;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductBarcode;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 
 /**
  * Repository Port: ProductRepository

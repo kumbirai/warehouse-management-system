@@ -9,8 +9,10 @@ import com.ccbsa.common.cache.invalidation.CacheInvalidationEventListener;
 import com.ccbsa.common.cache.invalidation.LocalCacheInvalidator;
 import com.ccbsa.common.cache.key.CacheNamespace;
 import com.ccbsa.wms.location.domain.core.event.LocationAssignedEvent;
+import com.ccbsa.wms.location.domain.core.event.LocationBlockedEvent;
 import com.ccbsa.wms.location.domain.core.event.LocationCreatedEvent;
 import com.ccbsa.wms.location.domain.core.event.LocationStatusChangedEvent;
+import com.ccbsa.wms.location.domain.core.event.LocationUnblockedEvent;
 
 /**
  * Location Management Service Cache Invalidation Listener.
@@ -21,6 +23,8 @@ import com.ccbsa.wms.location.domain.core.event.LocationStatusChangedEvent;
  * - LocationCreatedEvent: No invalidation (cache-aside pattern)
  * - LocationStatusChangedEvent: Invalidate entity + collections
  * - LocationAssignedEvent: Invalidate entity + collections
+ * - LocationBlockedEvent: Invalidate entity + collections
+ * - LocationUnblockedEvent: Invalidate entity + collections
  */
 @Component
 public class LocationCacheInvalidationListener extends CacheInvalidationEventListener {
@@ -43,6 +47,12 @@ public class LocationCacheInvalidationListener extends CacheInvalidationEventLis
         } else if (event instanceof LocationAssignedEvent assigned) {
             // Invalidate entity cache and all collection caches
             invalidateForEvent(assigned, CacheNamespace.LOCATIONS.getValue());
+        } else if (event instanceof LocationBlockedEvent blocked) {
+            // Invalidate entity cache and all collection caches
+            invalidateForEvent(blocked, CacheNamespace.LOCATIONS.getValue());
+        } else if (event instanceof LocationUnblockedEvent unblocked) {
+            // Invalidate entity cache and all collection caches
+            invalidateForEvent(unblocked, CacheNamespace.LOCATIONS.getValue());
         }
     }
 }

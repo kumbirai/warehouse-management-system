@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -13,6 +11,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import com.ccbsa.common.domain.DomainEvent;
 import com.ccbsa.common.domain.valueobject.Description;
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.product.application.service.command.dto.ProductCsvError;
 import com.ccbsa.wms.product.application.service.command.dto.ProductCsvRow;
@@ -24,8 +23,11 @@ import com.ccbsa.wms.product.domain.core.entity.Product;
 import com.ccbsa.wms.product.domain.core.exception.BarcodeAlreadyExistsException;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductBarcode;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 import com.ccbsa.wms.product.domain.core.valueobject.UnitOfMeasure;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Command Handler: UploadProductCsvCommandHandler
@@ -36,18 +38,12 @@ import com.ccbsa.wms.product.domain.core.valueobject.UnitOfMeasure;
  * statistics and errors
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class UploadProductCsvCommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger(UploadProductCsvCommandHandler.class);
-
     private final ProductRepository repository;
     private final ProductEventPublisher eventPublisher;
     private final ProductCsvParser csvParser;
-
-    public UploadProductCsvCommandHandler(ProductRepository repository, ProductEventPublisher eventPublisher, ProductCsvParser csvParser) {
-        this.repository = repository;
-        this.eventPublisher = eventPublisher;
-        this.csvParser = csvParser;
-    }
 
     @Transactional
     public UploadProductCsvResult handle(UploadProductCsvCommand command) {
@@ -59,14 +55,16 @@ public class UploadProductCsvCommandHandler {
         try {
             rows = csvParser.parse(command.getCsvContent());
         } catch (IllegalArgumentException e) {
-            logger.error("Failed to parse CSV file: {}", e.getMessage());
+            log.error("Failed to parse CSV file: {}", e.getMessage());
             throw new IllegalArgumentException(String.format("Invalid CSV format: %s", e.getMessage()), e);
         }
 
         // 3. Process rows
         int createdCount = 0;
         int updatedCount = 0;
-        List<ProductCsvError> errors = new ArrayList<>();
+        // Errors list is populated during processing and returned in result
+        @SuppressFBWarnings(value = "UC_USELESS_OBJECT", justification = "errors list is populated in loop and returned in result - SpotBugs false positive") List<ProductCsvError>
+                errors = new ArrayList<>();
         List<DomainEvent<?>> allEvents = new ArrayList<>();
 
         for (ProductCsvRow row : rows) {
@@ -84,12 +82,12 @@ public class UploadProductCsvCommandHandler {
                     product = existingProduct.get();
                     updateProductFromRow(product, row, command.getTenantId());
                     updatedCount++;
-                    logger.debug("Updated product from CSV row {}: {}", row.getRowNumber(), productCode.getValue());
+                    log.debug("Updated product from CSV row {}: {}", row.getRowNumber(), productCode.getValue());
                 } else {
                     // Create new product
                     product = createProductFromRow(row, command.getTenantId());
                     createdCount++;
-                    logger.debug("Created product from CSV row {}: {}", row.getRowNumber(), productCode.getValue());
+                    log.debug("Created product from CSV row {}: {}", row.getRowNumber(), productCode.getValue());
                 }
 
                 // Persist product
@@ -101,7 +99,7 @@ public class UploadProductCsvCommandHandler {
                 savedProduct.clearDomainEvents();
 
             } catch (Exception e) {
-                logger.warn("Error processing CSV row {}: {}", row.getRowNumber(), e.getMessage());
+                log.warn("Error processing CSV row {}: {}", row.getRowNumber(), e.getMessage());
                 errors.add(ProductCsvError.builder().rowNumber(row.getRowNumber()).productCode(row.getProductCode()).errorMessage(e.getMessage()).build());
             }
         }
@@ -268,7 +266,7 @@ public class UploadProductCsvCommandHandler {
      */
     private void publishEventsAfterCommit(List<DomainEvent<?>> domainEvents) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
-            logger.debug("No active transaction - publishing events immediately");
+            log.debug("No active transaction - publishing events immediately");
             eventPublisher.publish(domainEvents);
             return;
         }
@@ -277,10 +275,10 @@ public class UploadProductCsvCommandHandler {
             @Override
             public void afterCommit() {
                 try {
-                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    log.debug("Transaction committed - publishing {} domain events", domainEvents.size());
                     eventPublisher.publish(domainEvents);
                 } catch (Exception e) {
-                    logger.error("Failed to publish domain events after transaction commit", e);
+                    log.error("Failed to publish domain events after transaction commit", e);
                 }
             }
         });

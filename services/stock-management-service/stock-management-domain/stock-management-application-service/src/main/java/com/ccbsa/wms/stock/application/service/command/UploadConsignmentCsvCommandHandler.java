@@ -7,15 +7,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.ccbsa.common.domain.DomainEvent;
+import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.common.domain.valueobject.WarehouseId;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
 import com.ccbsa.wms.stock.application.service.command.dto.ConsignmentCsvError;
 import com.ccbsa.wms.stock.application.service.command.dto.ConsignmentCsvRow;
@@ -23,11 +23,16 @@ import com.ccbsa.wms.stock.application.service.command.dto.UploadConsignmentCsvC
 import com.ccbsa.wms.stock.application.service.command.dto.UploadConsignmentCsvResult;
 import com.ccbsa.wms.stock.application.service.port.messaging.StockManagementEventPublisher;
 import com.ccbsa.wms.stock.application.service.port.repository.StockConsignmentRepository;
+import com.ccbsa.wms.stock.application.service.port.service.LocationServicePort;
 import com.ccbsa.wms.stock.application.service.port.service.ProductServicePort;
 import com.ccbsa.wms.stock.domain.core.entity.StockConsignment;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentLineItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentReference;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Command Handler: UploadConsignmentCsvCommandHandler
@@ -38,21 +43,14 @@ import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentReference;
  * Return upload result with statistics and errors
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class UploadConsignmentCsvCommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger(UploadConsignmentCsvCommandHandler.class);
-
     private final StockConsignmentRepository repository;
     private final StockManagementEventPublisher eventPublisher;
     private final ProductServicePort productServicePort;
+    private final LocationServicePort locationServicePort;
     private final ConsignmentCsvParser csvParser;
-
-    public UploadConsignmentCsvCommandHandler(StockConsignmentRepository repository, StockManagementEventPublisher eventPublisher, ProductServicePort productServicePort,
-                                              ConsignmentCsvParser csvParser) {
-        this.repository = repository;
-        this.eventPublisher = eventPublisher;
-        this.productServicePort = productServicePort;
-        this.csvParser = csvParser;
-    }
 
     @Transactional
     public UploadConsignmentCsvResult handle(UploadConsignmentCsvCommand command) {
@@ -64,10 +62,10 @@ public class UploadConsignmentCsvCommandHandler {
         try {
             rows = csvParser.parse(command.getCsvInputStream());
         } catch (IOException e) {
-            logger.error("Failed to parse CSV file: {}", e.getMessage());
+            log.error("Failed to parse CSV file: {}", e.getMessage());
             throw new IllegalArgumentException(String.format("Failed to parse CSV file: %s", e.getMessage()), e);
         } catch (IllegalArgumentException e) {
-            logger.error("Invalid CSV format: {}", e.getMessage());
+            log.error("Invalid CSV format: {}", e.getMessage());
             throw new IllegalArgumentException(String.format("Invalid CSV format: %s", e.getMessage()), e);
         }
 
@@ -78,6 +76,8 @@ public class UploadConsignmentCsvCommandHandler {
         int processedRows = 0;
         int createdConsignments = 0;
         int errorRows = 0;
+        // Errors list is populated during processing and returned in result
+        @SuppressFBWarnings(value = "UC_USELESS_OBJECT", justification = "errors list is populated in loop and returned in result - SpotBugs false positive")
         List<ConsignmentCsvError> errors = new ArrayList<>();
         List<DomainEvent<?>> allEvents = new ArrayList<>();
 
@@ -101,6 +101,32 @@ public class UploadConsignmentCsvCommandHandler {
                 // Get warehouse ID from first row (all rows should have same warehouse)
                 String warehouseIdStr = consignmentRows.get(0).getWarehouseId();
                 WarehouseId warehouseId = WarehouseId.of(warehouseIdStr);
+
+                // Validate warehouse location exists
+                try {
+                    LocationId locationId = LocationId.of(warehouseIdStr);
+                    LocationServicePort.LocationAvailability availability = locationServicePort.checkLocationAvailability(locationId, Quantity.of(1), command.getTenantId());
+                    if (!availability.isAvailable()) {
+                        // Add error for all rows in this consignment
+                        String errorMsg =
+                                "Warehouse location not found or unavailable: " + (availability.getReason() != null ? availability.getReason() : "Location does not exist");
+                        for (ConsignmentCsvRow row : consignmentRows) {
+                            errors.add(ConsignmentCsvError.builder().rowNumber(row.getRowNumber()).consignmentReference(consignmentRef).productCode(row.getProductCode())
+                                    .errorMessage(errorMsg).build());
+                            errorRows++;
+                        }
+                        continue;
+                    }
+                } catch (Exception e) {
+                    log.warn("Error validating warehouse location {}: {}", warehouseIdStr, e.getMessage());
+                    // Add error for all rows in this consignment
+                    for (ConsignmentCsvRow row : consignmentRows) {
+                        errors.add(ConsignmentCsvError.builder().rowNumber(row.getRowNumber()).consignmentReference(consignmentRef).productCode(row.getProductCode())
+                                .errorMessage("Warehouse location validation failed: " + e.getMessage()).build());
+                        errorRows++;
+                    }
+                    continue;
+                }
 
                 // Get received date from first row
                 LocalDateTime receivedAt = consignmentRows.get(0).getReceivedDate();
@@ -136,17 +162,27 @@ public class UploadConsignmentCsvCommandHandler {
                     // Persist consignment
                     repository.save(consignment);
 
-                    // Collect domain events
+                    // Collect domain events from creation
                     List<DomainEvent<?>> consignmentEvents = new ArrayList<>(consignment.getDomainEvents());
                     allEvents.addAll(consignmentEvents);
                     consignment.clearDomainEvents();
 
+                    // Auto-confirm consignment (CSV upload represents goods already received and verified)
+                    // This triggers StockConsignmentConfirmedEvent which creates stock items
+                    consignment.confirm();
+                    repository.save(consignment);
+
+                    // Collect domain events from confirmation
+                    List<DomainEvent<?>> confirmationEvents = new ArrayList<>(consignment.getDomainEvents());
+                    allEvents.addAll(confirmationEvents);
+                    consignment.clearDomainEvents();
+
                     createdConsignments++;
-                    logger.debug("Created consignment from CSV: {}", consignmentRef);
+                    log.debug("Created and confirmed consignment from CSV: {}", consignmentRef);
                 }
 
             } catch (RuntimeException e) {
-                logger.warn("Error processing consignment {}: {}", consignmentRef, e.getMessage());
+                log.warn("Error processing consignment {}: {}", consignmentRef, e.getMessage());
                 // Add error for all rows in this consignment
                 for (ConsignmentCsvRow row : consignmentRows) {
                     errors.add(ConsignmentCsvError.builder().rowNumber(row.getRowNumber()).consignmentReference(consignmentRef).productCode(row.getProductCode())
@@ -195,7 +231,7 @@ public class UploadConsignmentCsvCommandHandler {
     private void publishEventsAfterCommit(List<DomainEvent<?>> domainEvents) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
             // No active transaction - publish immediately
-            logger.debug("No active transaction - publishing events immediately");
+            log.debug("No active transaction - publishing events immediately");
             eventPublisher.publish(domainEvents);
             return;
         }
@@ -205,10 +241,10 @@ public class UploadConsignmentCsvCommandHandler {
             @Override
             public void afterCommit() {
                 try {
-                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    log.debug("Transaction committed - publishing {} domain events", domainEvents.size());
                     eventPublisher.publish(domainEvents);
                 } catch (Exception e) {
-                    logger.error("Failed to publish domain events after transaction commit", e);
+                    log.error("Failed to publish domain events after transaction commit", e);
                     // Don't throw - transaction already committed, event publishing failure
                     // should be handled by retry mechanisms or dead letter queue
                 }

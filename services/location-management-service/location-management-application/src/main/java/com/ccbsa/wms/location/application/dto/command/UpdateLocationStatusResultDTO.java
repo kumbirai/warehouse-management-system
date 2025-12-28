@@ -2,47 +2,25 @@ package com.ccbsa.wms.location.application.dto.command;
 
 import java.time.LocalDateTime;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 /**
  * Result DTO: UpdateLocationStatusResultDTO
  * <p>
  * Response DTO for location status update operation.
  */
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public final class UpdateLocationStatusResultDTO {
     private String locationId;
     private String status;
     private LocalDateTime lastModifiedAt;
-
-    public UpdateLocationStatusResultDTO() {
-    }
-
-    public UpdateLocationStatusResultDTO(String locationId, String status, LocalDateTime lastModifiedAt) {
-        this.locationId = locationId;
-        this.status = status;
-        this.lastModifiedAt = lastModifiedAt;
-    }
-
-    public String getLocationId() {
-        return locationId;
-    }
-
-    public void setLocationId(String locationId) {
-        this.locationId = locationId;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getLastModifiedAt() {
-        return lastModifiedAt;
-    }
-
-    public void setLastModifiedAt(LocalDateTime lastModifiedAt) {
-        this.lastModifiedAt = lastModifiedAt;
-    }
 }
 

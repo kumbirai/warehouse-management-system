@@ -8,8 +8,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.hibernate.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
@@ -28,6 +26,8 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Repository Adapter: LocationRepositoryAdapter
@@ -35,9 +35,9 @@ import jakarta.persistence.PersistenceContext;
  * Implements LocationRepository port interface. Adapts between domain Location aggregate and JPA LocationEntity.
  */
 @Repository
+@Slf4j
+@RequiredArgsConstructor
 public class LocationRepositoryAdapter implements LocationRepository {
-    private static final Logger logger = LoggerFactory.getLogger(LocationRepositoryAdapter.class);
-
     private final LocationJpaRepository jpaRepository;
     private final LocationEntityMapper mapper;
     private final TenantSchemaResolver schemaResolver;
@@ -46,32 +46,24 @@ public class LocationRepositoryAdapter implements LocationRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public LocationRepositoryAdapter(LocationJpaRepository jpaRepository, LocationEntityMapper mapper, TenantSchemaResolver schemaResolver,
-                                     TenantSchemaProvisioner schemaProvisioner) {
-        this.jpaRepository = jpaRepository;
-        this.mapper = mapper;
-        this.schemaResolver = schemaResolver;
-        this.schemaProvisioner = schemaProvisioner;
-    }
-
     @Override
     public Location save(Location location) {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId tenantId = TenantContext.getTenantId();
         if (tenantId == null) {
-            logger.error("TenantContext is not set when saving location! Cannot resolve schema.");
+            log.error("TenantContext is not set when saving location! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before saving location");
         }
 
         // Verify tenantId matches
         if (!tenantId.getValue().equals(location.getTenantId().getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Location: {}", tenantId.getValue(), location.getTenantId().getValue());
+            log.error("TenantContext mismatch! Context: {}, Location: {}", tenantId.getValue(), location.getTenantId().getValue());
             throw new IllegalStateException("TenantContext tenantId does not match location tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -97,7 +89,7 @@ public class LocationRepositoryAdapter implements LocationRepository {
         }
 
         LocationEntity savedEntity = jpaRepository.save(entity);
-        logger.debug("Location saved successfully to schema: '{}'", schemaName);
+        log.debug("Location saved successfully to schema: '{}'", schemaName);
 
         // Domain events are preserved by the command handler before calling save()
         // The command handler gets domain events from the original location before save()
@@ -197,10 +189,10 @@ public class LocationRepositoryAdapter implements LocationRepository {
     private void executeSetSearchPath(Connection connection, String schemaName) {
         try (Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
-            logger.debug("Setting search_path to: {}", schemaName);
+            log.debug("Setting search_path to: {}", schemaName);
             stmt.execute(setSchemaSql);
         } catch (SQLException e) {
-            logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
+            log.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
             throw new RuntimeException("Failed to set database schema", e);
         }
     }
@@ -224,19 +216,19 @@ public class LocationRepositoryAdapter implements LocationRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying location! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying location! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying location");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -257,19 +249,19 @@ public class LocationRepositoryAdapter implements LocationRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when checking barcode existence! Cannot resolve schema.");
+            log.error("TenantContext is not set when checking barcode existence! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before checking barcode existence");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -290,19 +282,19 @@ public class LocationRepositoryAdapter implements LocationRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying location by barcode! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying location by barcode! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying location by barcode");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -323,13 +315,13 @@ public class LocationRepositoryAdapter implements LocationRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when checking code existence! Cannot resolve schema.");
+            log.error("TenantContext is not set when checking code existence! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before checking code existence");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
@@ -340,7 +332,7 @@ public class LocationRepositoryAdapter implements LocationRepository {
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -361,19 +353,19 @@ public class LocationRepositoryAdapter implements LocationRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying locations! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying locations! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying locations");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -394,19 +386,19 @@ public class LocationRepositoryAdapter implements LocationRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying available locations! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying available locations! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying available locations");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);

@@ -197,3 +197,254 @@ ON COLUMN stock_items.last_modified_at IS 'Timestamp when stock item was last mo
 COMMENT
 ON COLUMN stock_items.version IS 'Optimistic locking version for concurrency control';
 
+-- Create stock_allocations table
+CREATE TABLE IF NOT EXISTS stock_allocations
+(
+    id
+    UUID
+    PRIMARY
+    KEY,
+    tenant_id
+    VARCHAR
+(
+    255
+) NOT NULL,
+    product_id UUID NOT NULL,
+    location_id UUID,
+    stock_item_id UUID NOT NULL,
+    quantity INTEGER NOT NULL CHECK
+(
+    quantity >
+    0
+),
+    allocation_type VARCHAR
+(
+    50
+) NOT NULL,
+    reference_id VARCHAR
+(
+    255
+),
+    status VARCHAR
+(
+    20
+) NOT NULL,
+    allocated_by UUID NOT NULL,
+    allocated_at TIMESTAMP NOT NULL,
+    released_at TIMESTAMP,
+    notes VARCHAR
+(
+    1000
+),
+    created_at TIMESTAMP NOT NULL,
+    last_modified_at TIMESTAMP NOT NULL,
+    version BIGINT NOT NULL DEFAULT 0
+    );
+
+-- Create stock_adjustments table
+CREATE TABLE IF NOT EXISTS stock_adjustments
+(
+    id
+    UUID
+    PRIMARY
+    KEY,
+    tenant_id
+    VARCHAR
+(
+    255
+) NOT NULL,
+    product_id UUID NOT NULL,
+    location_id UUID,
+    stock_item_id UUID,
+    adjustment_type VARCHAR
+(
+    50
+) NOT NULL,
+    quantity INTEGER NOT NULL CHECK
+(
+    quantity >
+    0
+),
+    reason VARCHAR
+(
+    50
+) NOT NULL,
+    notes VARCHAR
+(
+    1000
+),
+    adjusted_by UUID NOT NULL,
+    authorization_code VARCHAR
+(
+    255
+),
+    adjusted_at TIMESTAMP NOT NULL,
+    quantity_before INTEGER NOT NULL,
+    quantity_after INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    last_modified_at TIMESTAMP NOT NULL,
+    version BIGINT NOT NULL DEFAULT 0
+    );
+
+-- Create stock_level_thresholds table
+CREATE TABLE IF NOT EXISTS stock_level_thresholds
+(
+    id
+    UUID
+    PRIMARY
+    KEY,
+    tenant_id
+    VARCHAR
+(
+    255
+) NOT NULL,
+    product_id UUID NOT NULL,
+    location_id UUID,
+    minimum_quantity NUMERIC
+(
+    18,
+    2
+),
+    maximum_quantity NUMERIC
+(
+    18,
+    2
+),
+    enable_auto_restock BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMP NOT NULL,
+    last_modified_at TIMESTAMP NOT NULL,
+    version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT chk_min_max_threshold CHECK
+(
+(
+    minimum_quantity
+    IS
+    NULL
+    AND
+    maximum_quantity
+    IS
+    NULL
+) OR
+(
+    minimum_quantity
+    IS
+    NULL
+) OR
+(
+    maximum_quantity
+    IS
+    NULL
+) OR
+(
+    minimum_quantity <
+    maximum_quantity
+)
+    ),
+    CONSTRAINT uk_stock_level_thresholds_tenant_product_location UNIQUE
+(
+    tenant_id,
+    product_id,
+    location_id
+)
+    );
+
+-- Add table comments for new tables
+COMMENT
+ON TABLE stock_allocations IS 'Validation table for stock allocations. NOT used at runtime - all operations use tenant-specific schemas.';
+COMMENT
+ON TABLE stock_adjustments IS 'Validation table for stock adjustments. NOT used at runtime - all operations use tenant-specific schemas.';
+COMMENT
+ON TABLE stock_level_thresholds IS 'Validation table for stock level thresholds. NOT used at runtime - all operations use tenant-specific schemas.';
+
+-- Add column comments for stock_allocations table
+COMMENT
+ON COLUMN stock_allocations.id IS 'Unique allocation identifier (UUID)';
+COMMENT
+ON COLUMN stock_allocations.tenant_id IS 'Tenant identifier (LDP identifier). Validated at application layer.';
+COMMENT
+ON COLUMN stock_allocations.product_id IS 'Product identifier';
+COMMENT
+ON COLUMN stock_allocations.location_id IS 'Location identifier (nullable)';
+COMMENT
+ON COLUMN stock_allocations.stock_item_id IS 'Stock item identifier';
+COMMENT
+ON COLUMN stock_allocations.quantity IS 'Allocated quantity (must be positive)';
+COMMENT
+ON COLUMN stock_allocations.allocation_type IS 'Allocation type';
+COMMENT
+ON COLUMN stock_allocations.reference_id IS 'Reference identifier (nullable)';
+COMMENT
+ON COLUMN stock_allocations.status IS 'Allocation status';
+COMMENT
+ON COLUMN stock_allocations.allocated_by IS 'User identifier who allocated the stock';
+COMMENT
+ON COLUMN stock_allocations.allocated_at IS 'Timestamp when allocation was made';
+COMMENT
+ON COLUMN stock_allocations.released_at IS 'Timestamp when allocation was released (nullable)';
+COMMENT
+ON COLUMN stock_allocations.notes IS 'Optional notes';
+COMMENT
+ON COLUMN stock_allocations.created_at IS 'Timestamp when allocation was created';
+COMMENT
+ON COLUMN stock_allocations.last_modified_at IS 'Timestamp when allocation was last modified';
+COMMENT
+ON COLUMN stock_allocations.version IS 'Optimistic locking version for concurrency control';
+
+-- Add column comments for stock_adjustments table
+COMMENT
+ON COLUMN stock_adjustments.id IS 'Unique adjustment identifier (UUID)';
+COMMENT
+ON COLUMN stock_adjustments.tenant_id IS 'Tenant identifier (LDP identifier). Validated at application layer.';
+COMMENT
+ON COLUMN stock_adjustments.product_id IS 'Product identifier';
+COMMENT
+ON COLUMN stock_adjustments.location_id IS 'Location identifier (nullable)';
+COMMENT
+ON COLUMN stock_adjustments.stock_item_id IS 'Stock item identifier (nullable)';
+COMMENT
+ON COLUMN stock_adjustments.adjustment_type IS 'Adjustment type';
+COMMENT
+ON COLUMN stock_adjustments.quantity IS 'Adjustment quantity (must be positive)';
+COMMENT
+ON COLUMN stock_adjustments.reason IS 'Adjustment reason';
+COMMENT
+ON COLUMN stock_adjustments.notes IS 'Optional notes';
+COMMENT
+ON COLUMN stock_adjustments.adjusted_by IS 'User identifier who made the adjustment';
+COMMENT
+ON COLUMN stock_adjustments.authorization_code IS 'Authorization code (nullable)';
+COMMENT
+ON COLUMN stock_adjustments.adjusted_at IS 'Timestamp when adjustment was made';
+COMMENT
+ON COLUMN stock_adjustments.quantity_before IS 'Quantity before adjustment';
+COMMENT
+ON COLUMN stock_adjustments.quantity_after IS 'Quantity after adjustment';
+COMMENT
+ON COLUMN stock_adjustments.created_at IS 'Timestamp when adjustment was created';
+COMMENT
+ON COLUMN stock_adjustments.last_modified_at IS 'Timestamp when adjustment was last modified';
+COMMENT
+ON COLUMN stock_adjustments.version IS 'Optimistic locking version for concurrency control';
+
+-- Add column comments for stock_level_thresholds table
+COMMENT
+ON COLUMN stock_level_thresholds.id IS 'Unique threshold identifier (UUID)';
+COMMENT
+ON COLUMN stock_level_thresholds.tenant_id IS 'Tenant identifier (LDP identifier). Validated at application layer.';
+COMMENT
+ON COLUMN stock_level_thresholds.product_id IS 'Product identifier';
+COMMENT
+ON COLUMN stock_level_thresholds.location_id IS 'Location identifier (nullable)';
+COMMENT
+ON COLUMN stock_level_thresholds.minimum_quantity IS 'Minimum quantity threshold (nullable)';
+COMMENT
+ON COLUMN stock_level_thresholds.maximum_quantity IS 'Maximum quantity threshold (nullable)';
+COMMENT
+ON COLUMN stock_level_thresholds.enable_auto_restock IS 'Enable automatic restock when below minimum';
+COMMENT
+ON COLUMN stock_level_thresholds.created_at IS 'Timestamp when threshold was created';
+COMMENT
+ON COLUMN stock_level_thresholds.last_modified_at IS 'Timestamp when threshold was last modified';
+COMMENT
+ON COLUMN stock_level_thresholds.version IS 'Optimistic locking version for concurrency control';
+

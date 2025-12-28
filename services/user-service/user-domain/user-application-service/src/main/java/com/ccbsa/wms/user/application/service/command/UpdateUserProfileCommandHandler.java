@@ -2,8 +2,6 @@ package com.ccbsa.wms.user.application.service.command;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -20,6 +18,9 @@ import com.ccbsa.wms.user.domain.core.entity.User;
 import com.ccbsa.wms.user.domain.core.valueobject.FirstName;
 import com.ccbsa.wms.user.domain.core.valueobject.LastName;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Command Handler: UpdateUserProfileCommandHandler
  * <p>
@@ -27,19 +28,13 @@ import com.ccbsa.wms.user.domain.core.valueobject.LastName;
  * <p>
  * Responsibilities: - Load user aggregate - Update profile information - Persist aggregate changes - Sync with Keycloak - Publish domain events
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class UpdateUserProfileCommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger(UpdateUserProfileCommandHandler.class);
-
     private final UserRepository userRepository;
     private final UserEventPublisher eventPublisher;
     private final AuthenticationServicePort authenticationService;
-
-    public UpdateUserProfileCommandHandler(UserRepository userRepository, UserEventPublisher eventPublisher, AuthenticationServicePort authenticationService) {
-        this.userRepository = userRepository;
-        this.eventPublisher = eventPublisher;
-        this.authenticationService = authenticationService;
-    }
 
     /**
      * Handles the UpdateUserProfileCommand.
@@ -56,7 +51,7 @@ public class UpdateUserProfileCommandHandler {
             throw new IllegalArgumentException("Command cannot be null");
         }
 
-        logger.debug("Updating user profile: userId={}", command.getUserId().getValue());
+        log.debug("Updating user profile: userId={}", command.getUserId().getValue());
         if (command.getUserId() == null) {
             throw new IllegalArgumentException("UserId is required");
         }
@@ -80,7 +75,7 @@ public class UpdateUserProfileCommandHandler {
             } catch (Exception e) {
                 // Log error but don't fail the operation
                 // User data is source of truth, Keycloak sync can be retried
-                logger.error("Failed to sync user profile with Keycloak: {}", e.getMessage(), e);
+                log.error("Failed to sync user profile with Keycloak: {}", e.getMessage(), e);
             }
         }
 
@@ -93,7 +88,7 @@ public class UpdateUserProfileCommandHandler {
             publishEventsAfterCommit(domainEvents);
         }
 
-        logger.info("User profile updated successfully: userId={}", command.getUserId().getValue());
+        log.info("User profile updated successfully: userId={}", command.getUserId().getValue());
     }
 
     /**
@@ -107,7 +102,7 @@ public class UpdateUserProfileCommandHandler {
     private void publishEventsAfterCommit(List<DomainEvent<?>> domainEvents) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
             // No active transaction - publish immediately
-            logger.debug("No active transaction - publishing events immediately");
+            log.debug("No active transaction - publishing events immediately");
             eventPublisher.publish(domainEvents);
             return;
         }
@@ -117,10 +112,10 @@ public class UpdateUserProfileCommandHandler {
             @Override
             public void afterCommit() {
                 try {
-                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    log.debug("Transaction committed - publishing {} domain events", domainEvents.size());
                     eventPublisher.publish(domainEvents);
                 } catch (Exception e) {
-                    logger.error("Failed to publish domain events after transaction commit", e);
+                    log.error("Failed to publish domain events after transaction commit", e);
                     // Don't throw - transaction already committed, event publishing failure
                     // should be handled by retry mechanisms or dead letter queue
                 }

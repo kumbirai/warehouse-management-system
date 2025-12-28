@@ -60,7 +60,7 @@ public class StockConsignmentQueryController {
         ListConsignmentsQueryResult result = listConsignmentsQueryHandler.handle(query);
 
         // Map result to DTOs
-        List<ConsignmentQueryDTO> resultDTOs = mapper.toConsignmentQueryDTOList(result);
+        List<ConsignmentQueryDTO> resultDTOs = mapper.toConsignmentQueryDTOList(result, tenantId);
 
         return ApiResponseBuilder.ok(resultDTOs);
     }
@@ -76,7 +76,7 @@ public class StockConsignmentQueryController {
         ConsignmentQueryResult result = getConsignmentQueryHandler.handle(query);
 
         // Map result to DTO
-        ConsignmentQueryDTO resultDTO = mapper.toQueryResultDTO(result);
+        ConsignmentQueryDTO resultDTO = mapper.toQueryResultDTO(result, tenantId);
 
         return ApiResponseBuilder.ok(resultDTO);
     }

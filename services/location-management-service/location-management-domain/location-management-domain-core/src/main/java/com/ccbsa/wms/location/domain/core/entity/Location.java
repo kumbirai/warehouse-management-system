@@ -5,9 +5,12 @@ import java.time.LocalDateTime;
 
 import com.ccbsa.common.domain.TenantAwareAggregateRoot;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.location.domain.core.event.LocationAssignedEvent;
+import com.ccbsa.wms.location.domain.core.event.LocationBlockedEvent;
 import com.ccbsa.wms.location.domain.core.event.LocationCreatedEvent;
 import com.ccbsa.wms.location.domain.core.event.LocationStatusChangedEvent;
+import com.ccbsa.wms.location.domain.core.event.LocationUnblockedEvent;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationBarcode;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationCapacity;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationCode;
@@ -91,8 +94,14 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
             throw new IllegalArgumentException("LocationStatus cannot be null");
         }
 
+        LocationStatus oldStatus = this.status;
         this.status = newStatus;
         this.lastModifiedAt = LocalDateTime.now();
+
+        // Publish status changed event if status actually changed
+        if (oldStatus != newStatus) {
+            addDomainEvent(new LocationStatusChangedEvent(this.getId(), this.getTenantId(), oldStatus, newStatus));
+        }
     }
 
     /**
@@ -142,8 +151,154 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
         }
 
         LocationCapacity newCapacity = LocationCapacity.of(newQuantity, maxQty);
+        LocationStatus oldStatus = this.status;
         this.capacity = newCapacity;
         this.lastModifiedAt = LocalDateTime.now();
+
+        // Update status based on capacity
+        if (newQuantity.compareTo(BigDecimal.ZERO) == 0) {
+            if (this.status != LocationStatus.BLOCKED) {
+                this.status = LocationStatus.AVAILABLE;
+            }
+        } else if (this.status == LocationStatus.AVAILABLE) {
+            this.status = LocationStatus.OCCUPIED;
+        }
+
+        // Publish status changed event if status changed
+        if (oldStatus != this.status) {
+            addDomainEvent(new LocationStatusChangedEvent(this.getId(), this.getTenantId(), oldStatus, this.status));
+        }
+    }
+
+    /**
+     * Business logic method: Updates location capacity (current and/or maximum).
+     * <p>
+     * Business Rules:
+     * - New maximum capacity cannot be less than current quantity
+     * - Capacity update is allowed for any status
+     * - Updates status based on new capacity (AVAILABLE if empty, OCCUPIED if has stock)
+     *
+     * @param quantityChange Change in quantity (positive for increase, negative for decrease)
+     * @throws IllegalArgumentException if quantityChange would result in negative quantity
+     * @throws IllegalStateException    if capacity would be exceeded
+     */
+    public void updateCapacity(BigDecimal quantityChange) {
+        if (quantityChange == null) {
+            throw new IllegalArgumentException("QuantityChange cannot be null");
+        }
+
+        BigDecimal currentQty = this.capacity != null ? this.capacity.getCurrentQuantity() : BigDecimal.ZERO;
+        BigDecimal newQuantity = currentQty.add(quantityChange);
+
+        if (newQuantity.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative after update");
+        }
+
+        BigDecimal maxQty = this.capacity != null ? this.capacity.getMaximumQuantity() : null;
+        if (maxQty != null && newQuantity.compareTo(maxQty) > 0) {
+            throw new IllegalStateException(String.format("Capacity would be exceeded. Current: %s, Change: %s, Max: %s", currentQty, quantityChange, maxQty));
+        }
+
+        LocationCapacity newCapacity = LocationCapacity.of(newQuantity, maxQty);
+        LocationStatus oldStatus = this.status;
+        this.capacity = newCapacity;
+        this.lastModifiedAt = LocalDateTime.now();
+
+        // Update status based on new capacity (only if not blocked)
+        if (this.status != LocationStatus.BLOCKED) {
+            if (newQuantity.compareTo(BigDecimal.ZERO) == 0) {
+                this.status = LocationStatus.AVAILABLE;
+            } else {
+                this.status = LocationStatus.OCCUPIED;
+            }
+        }
+
+        // Publish status changed event if status changed
+        if (oldStatus != this.status) {
+            addDomainEvent(new LocationStatusChangedEvent(this.getId(), this.getTenantId(), oldStatus, this.status));
+        }
+    }
+
+    /**
+     * Business logic method: Block location.
+     * <p>
+     * Business Rules:
+     * - Location cannot be blocked if already blocked
+     * - Block reason is required
+     * - Blocked locations cannot be used for stock assignment
+     * - Publishes LocationBlockedEvent
+     *
+     * @param blockedBy User who blocked the location
+     * @param reason    Reason for blocking (required)
+     * @throws IllegalStateException    if location is already blocked
+     * @throws IllegalArgumentException if reason is null or empty
+     */
+    public void block(UserId blockedBy, String reason) {
+        if (this.status == LocationStatus.BLOCKED) {
+            throw new IllegalStateException("Location is already blocked");
+        }
+
+        if (blockedBy == null) {
+            throw new IllegalArgumentException("BlockedBy cannot be null");
+        }
+
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new IllegalArgumentException("Block reason is required");
+        }
+
+        LocationStatus oldStatus = this.status;
+        this.status = LocationStatus.BLOCKED;
+        this.lastModifiedAt = LocalDateTime.now();
+
+        // Publish blocked event
+        addDomainEvent(new LocationBlockedEvent(this.getId(), this.getTenantId(), blockedBy, reason.trim(), LocalDateTime.now()));
+
+        // Publish status changed event
+        if (oldStatus != this.status) {
+            addDomainEvent(new LocationStatusChangedEvent(this.getId(), this.getTenantId(), oldStatus, this.status));
+        }
+    }
+
+    /**
+     * Business logic method: Unblock location.
+     * <p>
+     * Business Rules:
+     * - Location cannot be unblocked if not blocked
+     * - Status is set to AVAILABLE if empty, OCCUPIED if has stock
+     * - Publishes LocationUnblockedEvent
+     *
+     * @param unblockedBy User who unblocked the location
+     * @throws IllegalStateException    if location is not blocked
+     * @throws IllegalArgumentException if unblockedBy is null
+     */
+    public void unblock(UserId unblockedBy) {
+        if (this.status != LocationStatus.BLOCKED) {
+            throw new IllegalStateException("Location is not blocked");
+        }
+
+        if (unblockedBy == null) {
+            throw new IllegalArgumentException("UnblockedBy cannot be null");
+        }
+
+        LocationStatus oldStatus = this.status;
+
+        // Determine new status based on current quantity
+        BigDecimal currentQty = this.capacity != null ? this.capacity.getCurrentQuantity() : BigDecimal.ZERO;
+        if (currentQty.compareTo(BigDecimal.ZERO) == 0) {
+            this.status = LocationStatus.AVAILABLE;
+        } else {
+            this.status = LocationStatus.OCCUPIED;
+        }
+
+        this.lastModifiedAt = LocalDateTime.now();
+
+        // Publish unblocked event
+        addDomainEvent(new LocationUnblockedEvent(this.getId(), this.getTenantId(), unblockedBy, this.status, LocalDateTime.now()));
+
+        // Publish status changed event
+        if (oldStatus != this.status) {
+            addDomainEvent(new LocationStatusChangedEvent(this.getId(), this.getTenantId(), oldStatus, this.status));
+        }
     }
 
     /**

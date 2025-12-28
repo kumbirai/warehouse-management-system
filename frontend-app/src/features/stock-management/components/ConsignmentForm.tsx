@@ -1,7 +1,7 @@
-import { Alert, Box, Button, Grid, IconButton, Paper, TextField, Typography } from '@mui/material';
-import { useState } from 'react';
+import { Alert, Box, Button, Grid, IconButton, InputAdornment, Paper, TextField, Typography } from '@mui/material';
+import { useState, useEffect } from 'react';
 import { z } from 'zod';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Add as AddIcon,
@@ -12,6 +12,23 @@ import { CreateConsignmentRequest } from '../types/stockManagement';
 import { BarcodeScanner } from './BarcodeScanner';
 import { useValidateBarcode } from '../hooks/useValidateBarcode';
 import { FormActions } from '../../../components/common';
+import { WarehouseSelector } from './WarehouseSelector';
+import { UserSelector } from './UserSelector';
+import { useAppSelector } from '../../../store/hooks';
+import { selectUser } from '../../../store/authSlice';
+
+/**
+ * Formats a Date object to a local datetime string in the format required by datetime-local input.
+ * This ensures the time is displayed in the user's local timezone, not UTC.
+ */
+const formatLocalDateTime = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
 
 const consignmentSchema = z.object({
   consignmentReference: z
@@ -57,6 +74,7 @@ export const ConsignmentForm = ({
   const [scanningLineIndex, setScanningLineIndex] = useState<number | null>(null);
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
   const validateBarcode = useValidateBarcode();
+  const currentUser = useAppSelector(selectUser);
 
   const {
     register,
@@ -69,8 +87,8 @@ export const ConsignmentForm = ({
     defaultValues: {
       consignmentReference: '',
       warehouseId: '',
-      receivedAt: new Date().toISOString().slice(0, 16), // Default to now
-      receivedBy: '',
+      receivedAt: formatLocalDateTime(new Date()), // Default to now in local time
+      receivedBy: currentUser?.userId || '', // Default to logged-in user
       lineItems: [
         {
           productCode: '',
@@ -81,6 +99,15 @@ export const ConsignmentForm = ({
       ],
     },
   });
+
+  // Update receivedBy when user context is available
+  // Note: UserSelector will only accept the value if it exists in the options,
+  // so this will only take effect once the users list has loaded
+  useEffect(() => {
+    if (currentUser?.userId) {
+      setValue('receivedBy', currentUser.userId);
+    }
+  }, [currentUser?.userId, setValue]);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -120,10 +147,15 @@ export const ConsignmentForm = ({
   };
 
   const onFormSubmit = (values: ConsignmentFormValues) => {
+    // Convert datetime-local format (YYYY-MM-DDTHH:mm) to ISO local datetime format (YYYY-MM-DDTHH:mm:ss)
+    // The datetime-local input gives us local time without timezone, which is what the backend expects
+    // receivedAt is required by form validation, so it will always be present
+    const receivedAtLocal = `${values.receivedAt}:00`;
+    
     const request: CreateConsignmentRequest = {
       consignmentReference: values.consignmentReference,
       warehouseId: values.warehouseId,
-      receivedAt: new Date(values.receivedAt).toISOString(),
+      receivedAt: receivedAtLocal,
       receivedBy: values.receivedBy || undefined,
       lineItems: values.lineItems.map(item => ({
         productCode: item.productCode,
@@ -155,12 +187,18 @@ export const ConsignmentForm = ({
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Warehouse ID"
-                {...register('warehouseId')}
-                error={!!errors.warehouseId}
-                helperText={errors.warehouseId?.message}
+              <Controller
+                name="warehouseId"
+                control={control}
+                render={({ field }) => (
+                  <WarehouseSelector
+                    value={field.value}
+                    onChange={field.onChange}
+                    required
+                    error={!!errors.warehouseId}
+                    helperText={errors.warehouseId?.message}
+                  />
+                )}
               />
             </Grid>
 
@@ -179,12 +217,17 @@ export const ConsignmentForm = ({
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Received By"
-                {...register('receivedBy')}
-                error={!!errors.receivedBy}
-                helperText={errors.receivedBy?.message}
+              <Controller
+                name="receivedBy"
+                control={control}
+                render={({ field }) => (
+                  <UserSelector
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={!!errors.receivedBy}
+                    helperText={errors.receivedBy?.message}
+                  />
+                )}
               />
             </Grid>
 
@@ -214,25 +257,34 @@ export const ConsignmentForm = ({
               )}
 
               {fields.map((field, index) => (
-                <Paper key={field.id} sx={{ p: 2, mb: 2 }}>
+                <Paper key={field.id} sx={{ p: 2, mb: 2, position: 'relative', zIndex: 1 }}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={4}>
-                      <Box display="flex" gap={1}>
-                        <TextField
-                          fullWidth
-                          label="Product Code"
-                          {...register(`lineItems.${index}.productCode`)}
-                          error={!!errors.lineItems?.[index]?.productCode}
-                          helperText={errors.lineItems?.[index]?.productCode?.message}
-                        />
-                        <IconButton
-                          onClick={() => handleOpenScanner(index)}
-                          color="primary"
-                          title="Scan barcode"
-                        >
-                          <QrCodeIcon />
-                        </IconButton>
-                      </Box>
+                      <TextField
+                        fullWidth
+                        label="Product Code"
+                        {...register(`lineItems.${index}.productCode`)}
+                        error={!!errors.lineItems?.[index]?.productCode}
+                        helperText={errors.lineItems?.[index]?.productCode?.message}
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                onClick={() => handleOpenScanner(index)}
+                                color="primary"
+                                title="Scan barcode"
+                                edge="end"
+                                size="small"
+                              >
+                                <QrCodeIcon />
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
                     </Grid>
 
                     <Grid item xs={12} sm={2}>
@@ -303,7 +355,11 @@ export const ConsignmentForm = ({
         </form>
       </Paper>
 
-      <BarcodeScanner open={scannerOpen} onClose={handleCloseScanner} onScan={handleScan} />
+      <BarcodeScanner 
+        open={scannerOpen} 
+        onClose={handleCloseScanner} 
+        onScan={handleScan}
+      />
     </>
   );
 };

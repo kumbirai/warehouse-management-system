@@ -11,6 +11,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * JPA Entity: TenantEntity
@@ -19,6 +22,9 @@ import jakarta.persistence.Version;
  */
 @Entity
 @Table(name = "tenants", schema = "public")
+@Getter
+@Setter
+@NoArgsConstructor
 public class TenantEntity {
     @Id
     @Column(name = "tenant_id", length = 50, nullable = false)
@@ -47,106 +53,5 @@ public class TenantEntity {
     @Version
     @Column(name = "version", nullable = false)
     private int version;
-
-    // JPA requires no-arg constructor
-    public TenantEntity() {
-    }
-
-    // Getters and setters
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public TenantStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(TenantStatus status) {
-        this.status = status;
-    }
-
-    public String getEmailAddress() {
-        return emailAddress;
-    }
-
-    public void setEmailAddress(String emailAddress) {
-        this.emailAddress = emailAddress;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getKeycloakRealmName() {
-        return keycloakRealmName;
-    }
-
-    public void setKeycloakRealmName(String keycloakRealmName) {
-        this.keycloakRealmName = keycloakRealmName;
-    }
-
-    public boolean isUsePerTenantRealm() {
-        return usePerTenantRealm;
-    }
-
-    public void setUsePerTenantRealm(boolean usePerTenantRealm) {
-        this.usePerTenantRealm = usePerTenantRealm;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getActivatedAt() {
-        return activatedAt;
-    }
-
-    public void setActivatedAt(LocalDateTime activatedAt) {
-        this.activatedAt = activatedAt;
-    }
-
-    public LocalDateTime getDeactivatedAt() {
-        return deactivatedAt;
-    }
-
-    public void setDeactivatedAt(LocalDateTime deactivatedAt) {
-        this.deactivatedAt = deactivatedAt;
-    }
-
-    public int getVersion() {
-        return version;
-    }
-
-    public void setVersion(int version) {
-        this.version = version;
-    }
 }
 

@@ -3,8 +3,6 @@ package com.ccbsa.wms.user.application.service.command;
 import java.util.Collections;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -25,6 +23,9 @@ import com.ccbsa.wms.user.domain.core.entity.User;
 import com.ccbsa.wms.user.domain.core.event.UserRoleRemovedEvent;
 import com.ccbsa.wms.user.domain.core.valueobject.RoleConstants;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Command Handler: RemoveUserRoleCommandHandler
  * <p>
@@ -32,24 +33,15 @@ import com.ccbsa.wms.user.domain.core.valueobject.RoleConstants;
  * <p>
  * Validates role removal permissions according to Roles_and_Permissions_Definition.md.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class RemoveUserRoleCommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger(RemoveUserRoleCommandHandler.class);
-
     private final UserRepository userRepository;
     private final UserEventPublisher eventPublisher;
     private final AuthenticationServicePort authenticationService;
     private final RoleAssignmentValidator roleAssignmentValidator;
     private final SecurityContextPort securityContextPort;
-
-    public RemoveUserRoleCommandHandler(UserRepository userRepository, UserEventPublisher eventPublisher, AuthenticationServicePort authenticationService,
-                                        RoleAssignmentValidator roleAssignmentValidator, SecurityContextPort securityContextPort) {
-        this.userRepository = userRepository;
-        this.eventPublisher = eventPublisher;
-        this.authenticationService = authenticationService;
-        this.roleAssignmentValidator = roleAssignmentValidator;
-        this.securityContextPort = securityContextPort;
-    }
 
     /**
      * Handles the RemoveUserRoleCommand.
@@ -63,7 +55,7 @@ public class RemoveUserRoleCommandHandler {
      */
     @Transactional
     public void handle(RemoveUserRoleCommand command) {
-        logger.debug("Removing role from user: userId={}, role={}", command.getUserId().getValue(), command.getRoleName());
+        log.debug("Removing role from user: userId={}, role={}", command.getUserId().getValue(), command.getRoleName());
 
         // 1. Validate role exists
         if (!RoleConstants.isValidRole(command.getRoleName())) {
@@ -86,7 +78,7 @@ public class RemoveUserRoleCommandHandler {
         if (targetUser.getKeycloakUserId().isPresent()) {
             List<String> existingRoles = authenticationService.getUserRoles(targetUser.getKeycloakUserId().get());
             if (!existingRoles.contains(command.getRoleName())) {
-                logger.warn("User does not have role: userId={}, role={}", targetUser.getId().getValue(), command.getRoleName());
+                log.warn("User does not have role: userId={}, role={}", targetUser.getId().getValue(), command.getRoleName());
                 return; // Idempotent: already removed
             }
         }
@@ -96,7 +88,7 @@ public class RemoveUserRoleCommandHandler {
             try {
                 authenticationService.removeRole(targetUser.getKeycloakUserId().get(), command.getRoleName());
             } catch (Exception e) {
-                logger.error("Failed to remove role in Keycloak: {}", e.getMessage(), e);
+                log.error("Failed to remove role in Keycloak: {}", e.getMessage(), e);
                 throw new RoleAssignmentException(String.format("Failed to remove role: %s", e.getMessage()), e);
             }
         } else {
@@ -112,7 +104,7 @@ public class RemoveUserRoleCommandHandler {
         UserRoleRemovedEvent event = new UserRoleRemovedEvent(targetUser.getId(), targetUser.getTenantId(), command.getRoleName(), metadata);
         publishEventsAfterCommit(Collections.singletonList(event));
 
-        logger.info("Role removed successfully: userId={}, role={}, removedBy={}", targetUser.getId().getValue(), command.getRoleName(), currentUserId.getValue());
+        log.info("Role removed successfully: userId={}, role={}, removedBy={}", targetUser.getId().getValue(), command.getRoleName(), currentUserId.getValue());
     }
 
     /**
@@ -126,7 +118,7 @@ public class RemoveUserRoleCommandHandler {
     private void publishEventsAfterCommit(List<com.ccbsa.common.domain.DomainEvent<?>> domainEvents) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
             // No active transaction - publish immediately
-            logger.debug("No active transaction - publishing events immediately");
+            log.debug("No active transaction - publishing events immediately");
             eventPublisher.publish(domainEvents);
             return;
         }
@@ -136,10 +128,10 @@ public class RemoveUserRoleCommandHandler {
             @Override
             public void afterCommit() {
                 try {
-                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    log.debug("Transaction committed - publishing {} domain events", domainEvents.size());
                     eventPublisher.publish(domainEvents);
                 } catch (Exception e) {
-                    logger.error("Failed to publish domain events after transaction commit", e);
+                    log.error("Failed to publish domain events after transaction commit", e);
                     // Don't throw - transaction already committed, event publishing failure
                     // should be handled by retry mechanisms or dead letter queue
                 }

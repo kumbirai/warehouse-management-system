@@ -46,6 +46,21 @@ export const Routes = {
   stockItems: '/stock-management/stock-items',
   stockItemDetail: (id: string) => `/stock-management/stock-items/${id}`,
 
+  // Stock Movements
+  stockMovements: '/stock-movements',
+  stockMovementDetail: (id: string) => `/stock-movements/${id}`,
+  stockMovementCreate: '/stock-movements/create',
+
+  // Stock Allocations
+  stockAllocations: '/stock-management/allocations',
+  stockAllocationDetail: (id: string) => `/stock-management/allocations/${id}`,
+  stockAllocationCreate: '/stock-management/allocations/create',
+
+  // Stock Adjustments
+  stockAdjustments: '/stock-management/adjustments',
+  stockAdjustmentDetail: (id: string) => `/stock-management/adjustments/${id}`,
+  stockAdjustmentCreate: '/stock-management/adjustments/create',
+
   // Future routes (placeholder)
   inventory: '/inventory',
   picking: '/picking',
@@ -147,6 +162,54 @@ export const getBreadcrumbs = {
     { label: 'Dashboard', href: Routes.dashboard },
     { label: 'Stock Items', href: Routes.stockItems },
     { label: stockItemId.substring(0, 8) + '...' },
+  ],
+
+  // Stock Movement Management
+  stockMovementList: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Stock Movements' },
+  ],
+  stockMovementDetail: (movementId: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Stock Movements', href: Routes.stockMovements },
+    { label: movementId.substring(0, 8) + '...' },
+  ],
+  stockMovementCreate: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Stock Movements', href: Routes.stockMovements },
+    { label: 'Create Movement' },
+  ],
+
+  // Stock Allocation Management
+  stockAllocationList: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Stock Allocations' },
+  ],
+  stockAllocationDetail: (allocationId: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Stock Allocations', href: Routes.stockAllocations },
+    { label: allocationId.substring(0, 8) + '...' },
+  ],
+  stockAllocationCreate: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Stock Allocations', href: Routes.stockAllocations },
+    { label: 'Allocate Stock' },
+  ],
+
+  // Stock Adjustment Management
+  stockAdjustmentList: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Stock Adjustments' },
+  ],
+  stockAdjustmentDetail: (adjustmentId: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Stock Adjustments', href: Routes.stockAdjustments },
+    { label: adjustmentId.substring(0, 8) + '...' },
+  ],
+  stockAdjustmentCreate: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Stock Adjustments', href: Routes.stockAdjustments },
+    { label: 'Adjust Stock' },
   ],
 };
 

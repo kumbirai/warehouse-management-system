@@ -4,16 +4,28 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Command DTO: CreateConsignmentCommandDTO
  * <p>
  * API request DTO for creating a new stock consignment.
  */
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Lombok builder stores list directly. Defensive copy made in mapper when converting to domain command.")
 public class CreateConsignmentCommandDTO {
     @NotBlank(message = "Consignment reference is required")
     private String consignmentReference;
@@ -30,52 +42,14 @@ public class CreateConsignmentCommandDTO {
     @Valid
     private List<ConsignmentLineItemDTO> lineItems;
 
-    public CreateConsignmentCommandDTO() {
-    }
-
-    public String getConsignmentReference() {
-        return consignmentReference;
-    }
-
-    public void setConsignmentReference(String consignmentReference) {
-        this.consignmentReference = consignmentReference;
-    }
-
-    public String getWarehouseId() {
-        return warehouseId;
-    }
-
-    public void setWarehouseId(String warehouseId) {
-        this.warehouseId = warehouseId;
-    }
-
-    public LocalDateTime getReceivedAt() {
-        return receivedAt;
-    }
-
-    public void setReceivedAt(LocalDateTime receivedAt) {
-        this.receivedAt = receivedAt;
-    }
-
-    public String getReceivedBy() {
-        return receivedBy;
-    }
-
-    public void setReceivedBy(String receivedBy) {
-        this.receivedBy = receivedBy;
-    }
-
-    public List<ConsignmentLineItemDTO> getLineItems() {
-        return lineItems;
-    }
-
-    public void setLineItems(List<ConsignmentLineItemDTO> lineItems) {
-        this.lineItems = lineItems;
-    }
-
     /**
      * Nested DTO for consignment line items.
      */
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ConsignmentLineItemDTO {
         @NotBlank(message = "Product code is required")
         private String productCode;
@@ -84,33 +58,6 @@ public class CreateConsignmentCommandDTO {
         private Integer quantity;
 
         private LocalDate expirationDate;
-
-        public ConsignmentLineItemDTO() {
-        }
-
-        public String getProductCode() {
-            return productCode;
-        }
-
-        public void setProductCode(String productCode) {
-            this.productCode = productCode;
-        }
-
-        public Integer getQuantity() {
-            return quantity;
-        }
-
-        public void setQuantity(Integer quantity) {
-            this.quantity = quantity;
-        }
-
-        public LocalDate getExpirationDate() {
-            return expirationDate;
-        }
-
-        public void setExpirationDate(LocalDate expirationDate) {
-            this.expirationDate = expirationDate;
-        }
     }
 }
 

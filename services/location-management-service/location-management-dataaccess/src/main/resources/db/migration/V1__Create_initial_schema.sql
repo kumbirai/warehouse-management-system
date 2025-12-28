@@ -144,3 +144,175 @@ COMMENT
 ON COLUMN locations.last_modified_at IS 'Timestamp when location was last modified';
 COMMENT
 ON COLUMN locations.version IS 'Optimistic locking version for concurrency control';
+
+-- Create stock_movements table
+CREATE TABLE IF NOT EXISTS stock_movements
+(
+    id
+    UUID
+    PRIMARY
+    KEY,
+    tenant_id
+    VARCHAR
+(
+    255
+) NOT NULL,
+    stock_item_id VARCHAR
+(
+    255
+) NOT NULL,
+    product_id UUID NOT NULL,
+    source_location_id UUID NOT NULL,
+    destination_location_id UUID NOT NULL,
+    quantity INTEGER NOT NULL CHECK
+(
+    quantity >
+    0
+),
+    movement_type VARCHAR
+(
+    50
+) NOT NULL,
+    reason VARCHAR
+(
+    50
+) NOT NULL,
+    status VARCHAR
+(
+    20
+) NOT NULL,
+    initiated_by UUID NOT NULL,
+    initiated_at TIMESTAMP NOT NULL,
+    completed_by UUID,
+    completed_at TIMESTAMP,
+    cancelled_by UUID,
+    cancelled_at TIMESTAMP,
+    cancellation_reason VARCHAR
+(
+    500
+),
+    created_at TIMESTAMP NOT NULL,
+    last_modified_at TIMESTAMP NOT NULL,
+    version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT chk_different_locations CHECK
+(
+    source_location_id
+    !=
+    destination_location_id
+),
+    CONSTRAINT chk_completed_state CHECK
+(
+(
+    status =
+    'COMPLETED'
+    AND
+    completed_by
+    IS
+    NOT
+    NULL
+    AND
+    completed_at
+    IS
+    NOT
+    NULL
+) OR
+(
+    status
+    !=
+    'COMPLETED'
+    AND
+    completed_by
+    IS
+    NULL
+    AND
+    completed_at
+    IS
+    NULL
+)
+    ),
+    CONSTRAINT chk_cancelled_state CHECK
+(
+(
+    status =
+    'CANCELLED'
+    AND
+    cancelled_by
+    IS
+    NOT
+    NULL
+    AND
+    cancelled_at
+    IS
+    NOT
+    NULL
+    AND
+    cancellation_reason
+    IS
+    NOT
+    NULL
+) OR
+(
+    status
+    !=
+    'CANCELLED'
+    AND
+    cancelled_by
+    IS
+    NULL
+    AND
+    cancelled_at
+    IS
+    NULL
+    AND
+    cancellation_reason
+    IS
+    NULL
+)
+    )
+    );
+
+-- Add table comment for stock_movements table
+COMMENT
+ON TABLE stock_movements IS 'Validation table for stock movements. NOT used at runtime - all operations use tenant-specific schemas.';
+
+-- Add column comments for stock_movements table
+COMMENT
+ON COLUMN stock_movements.id IS 'Unique movement identifier (UUID)';
+COMMENT
+ON COLUMN stock_movements.tenant_id IS 'Tenant identifier (LDP identifier). Validated at application layer.';
+COMMENT
+ON COLUMN stock_movements.stock_item_id IS 'Stock item identifier';
+COMMENT
+ON COLUMN stock_movements.product_id IS 'Product identifier';
+COMMENT
+ON COLUMN stock_movements.source_location_id IS 'Source location identifier';
+COMMENT
+ON COLUMN stock_movements.destination_location_id IS 'Destination location identifier';
+COMMENT
+ON COLUMN stock_movements.quantity IS 'Movement quantity (must be positive)';
+COMMENT
+ON COLUMN stock_movements.movement_type IS 'Movement type';
+COMMENT
+ON COLUMN stock_movements.reason IS 'Movement reason';
+COMMENT
+ON COLUMN stock_movements.status IS 'Movement status';
+COMMENT
+ON COLUMN stock_movements.initiated_by IS 'User identifier who initiated the movement';
+COMMENT
+ON COLUMN stock_movements.initiated_at IS 'Timestamp when movement was initiated';
+COMMENT
+ON COLUMN stock_movements.completed_by IS 'User identifier who completed the movement (nullable)';
+COMMENT
+ON COLUMN stock_movements.completed_at IS 'Timestamp when movement was completed (nullable)';
+COMMENT
+ON COLUMN stock_movements.cancelled_by IS 'User identifier who cancelled the movement (nullable)';
+COMMENT
+ON COLUMN stock_movements.cancelled_at IS 'Timestamp when movement was cancelled (nullable)';
+COMMENT
+ON COLUMN stock_movements.cancellation_reason IS 'Cancellation reason (nullable)';
+COMMENT
+ON COLUMN stock_movements.created_at IS 'Timestamp when movement was created';
+COMMENT
+ON COLUMN stock_movements.last_modified_at IS 'Timestamp when movement was last modified';
+COMMENT
+ON COLUMN stock_movements.version IS 'Optimistic locking version for concurrency control';

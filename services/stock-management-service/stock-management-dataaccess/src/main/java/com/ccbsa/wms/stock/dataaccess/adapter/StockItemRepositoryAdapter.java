@@ -8,11 +8,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.hibernate.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.domain.valueobject.StockClassification;
+import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
 import com.ccbsa.wms.common.security.TenantContext;
@@ -23,11 +22,12 @@ import com.ccbsa.wms.stock.dataaccess.mapper.StockItemEntityMapper;
 import com.ccbsa.wms.stock.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.stock.domain.core.entity.StockItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
-import com.ccbsa.wms.stock.domain.core.valueobject.StockItemId;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Repository Adapter: StockItemRepositoryAdapter
@@ -35,9 +35,9 @@ import jakarta.persistence.PersistenceContext;
  * Implements StockItemRepository port interface. Adapts between domain StockItem aggregate and JPA StockItemEntity.
  */
 @Repository
+@Slf4j
+@RequiredArgsConstructor
 public class StockItemRepositoryAdapter implements StockItemRepository {
-    private static final Logger logger = LoggerFactory.getLogger(StockItemRepositoryAdapter.class);
-
     private final StockItemJpaRepository jpaRepository;
     private final StockItemEntityMapper mapper;
     private final TenantSchemaResolver schemaResolver;
@@ -46,32 +46,24 @@ public class StockItemRepositoryAdapter implements StockItemRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public StockItemRepositoryAdapter(StockItemJpaRepository jpaRepository, StockItemEntityMapper mapper, TenantSchemaResolver schemaResolver,
-                                      TenantSchemaProvisioner schemaProvisioner) {
-        this.jpaRepository = jpaRepository;
-        this.mapper = mapper;
-        this.schemaResolver = schemaResolver;
-        this.schemaProvisioner = schemaProvisioner;
-    }
-
     @Override
     public StockItem save(StockItem stockItem) {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId tenantId = TenantContext.getTenantId();
         if (tenantId == null) {
-            logger.error("TenantContext is not set when saving stock item! Cannot resolve schema.");
+            log.error("TenantContext is not set when saving stock item! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before saving stock item");
         }
 
         // Verify tenantId matches
         if (!tenantId.getValue().equals(stockItem.getTenantId().getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, StockItem: {}", tenantId.getValue(), stockItem.getTenantId().getValue());
+            log.error("TenantContext mismatch! Context: {}, StockItem: {}", tenantId.getValue(), stockItem.getTenantId().getValue());
             throw new IllegalStateException("TenantContext tenantId does not match stock item tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -97,7 +89,7 @@ public class StockItemRepositoryAdapter implements StockItemRepository {
         }
 
         StockItemEntity savedEntity = jpaRepository.save(entity);
-        logger.debug("Stock item saved successfully to schema: '{}'", schemaName);
+        log.debug("Stock item saved successfully to schema: '{}'", schemaName);
 
         // Return domain entity (mapped from saved entity)
         return mapper.toDomain(savedEntity);
@@ -151,10 +143,10 @@ public class StockItemRepositoryAdapter implements StockItemRepository {
     private void executeSetSearchPath(Connection connection, String schemaName) {
         try (Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
-            logger.debug("Setting search_path to: {}", schemaName);
+            log.debug("Setting search_path to: {}", schemaName);
             stmt.execute(setSchemaSql);
         } catch (SQLException e) {
-            logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
+            log.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
             throw new RuntimeException("Failed to set database schema", e);
         }
     }
@@ -180,12 +172,12 @@ public class StockItemRepositoryAdapter implements StockItemRepository {
     private void verifyTenantContext(TenantId tenantId) {
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set! Cannot resolve schema.");
+            log.error("TenantContext is not set! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set");
         }
 
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
     }
@@ -195,7 +187,7 @@ public class StockItemRepositoryAdapter implements StockItemRepository {
      */
     private String prepareSchema(TenantId tenantId) {
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
 
         schemaProvisioner.ensureSchemaReady(schemaName);
         validateSchemaName(schemaName);
@@ -228,6 +220,38 @@ public class StockItemRepositoryAdapter implements StockItemRepository {
         prepareSchema(tenantId);
 
         return jpaRepository.existsByTenantIdAndId(tenantId.getValue(), stockItemId.getValue());
+    }
+
+    @Override
+    public List<StockItem> findByTenantIdAndProductId(TenantId tenantId, com.ccbsa.common.domain.valueobject.ProductId productId) {
+        verifyTenantContext(tenantId);
+        prepareSchema(tenantId);
+
+        return jpaRepository.findByTenantIdAndProductId(tenantId.getValue(), productId.getValue()).stream().map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<StockItem> findByTenantIdAndProductIdAndLocationId(TenantId tenantId, com.ccbsa.common.domain.valueobject.ProductId productId,
+                                                                   com.ccbsa.wms.location.domain.core.valueobject.LocationId locationId) {
+        verifyTenantContext(tenantId);
+        prepareSchema(tenantId);
+
+        return jpaRepository.findByTenantIdAndProductIdAndLocationId(tenantId.getValue(), productId.getValue(), locationId.getValue()).stream().map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<StockItem> findById(StockItemId stockItemId) {
+        // For internal use - requires TenantContext to be set
+        TenantId tenantId = TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("TenantContext is not set! Cannot resolve schema.");
+            throw new IllegalStateException("TenantContext must be set");
+        }
+
+        prepareSchema(tenantId);
+
+        return jpaRepository.findByTenantIdAndId(tenantId.getValue(), stockItemId.getValue()).map(mapper::toDomain);
     }
 }
 

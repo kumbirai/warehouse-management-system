@@ -13,6 +13,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * JPA Entity: StockItemEntity
@@ -25,6 +28,9 @@ import jakarta.persistence.Version;
  */
 @Entity
 @Table(name = "stock_items", schema = "tenant_schema")
+@Getter
+@Setter
+@NoArgsConstructor
 public class StockItemEntity {
     @Id
     @Column(name = "id", nullable = false)
@@ -61,98 +67,5 @@ public class StockItemEntity {
     @Version
     @Column(name = "version", nullable = false)
     private Long version;
-
-    // JPA requires no-arg constructor
-    public StockItemEntity() {
-    }
-
-    // Getters and setters
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public UUID getProductId() {
-        return productId;
-    }
-
-    public void setProductId(UUID productId) {
-        this.productId = productId;
-    }
-
-    public UUID getLocationId() {
-        return locationId;
-    }
-
-    public void setLocationId(UUID locationId) {
-        this.locationId = locationId;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public LocalDate getExpirationDate() {
-        return expirationDate;
-    }
-
-    public void setExpirationDate(LocalDate expirationDate) {
-        this.expirationDate = expirationDate;
-    }
-
-    public StockClassification getClassification() {
-        return classification;
-    }
-
-    public void setClassification(StockClassification classification) {
-        this.classification = classification;
-    }
-
-    public UUID getConsignmentId() {
-        return consignmentId;
-    }
-
-    public void setConsignmentId(UUID consignmentId) {
-        this.consignmentId = consignmentId;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getLastModifiedAt() {
-        return lastModifiedAt;
-    }
-
-    public void setLastModifiedAt(LocalDateTime lastModifiedAt) {
-        this.lastModifiedAt = lastModifiedAt;
-    }
-
-    public Long getVersion() {
-        return version;
-    }
-
-    public void setVersion(Long version) {
-        this.version = version;
-    }
 }
 

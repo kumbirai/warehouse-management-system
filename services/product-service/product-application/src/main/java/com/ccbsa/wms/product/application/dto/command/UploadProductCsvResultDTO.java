@@ -2,56 +2,29 @@ package com.ccbsa.wms.product.application.dto.command;
 
 import java.util.List;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 /**
  * Result DTO: UploadProductCsvResultDTO
  * <p>
  * API response DTO for CSV upload result.
  */
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Lombok builder stores list directly. Lists are immutable when returned from API.")
 public final class UploadProductCsvResultDTO {
     private int totalRows;
     private int createdCount;
     private int updatedCount;
     private int errorCount;
     private List<ProductCsvErrorDTO> errors;
-
-    public int getTotalRows() {
-        return totalRows;
-    }
-
-    public void setTotalRows(int totalRows) {
-        this.totalRows = totalRows;
-    }
-
-    public int getCreatedCount() {
-        return createdCount;
-    }
-
-    public void setCreatedCount(int createdCount) {
-        this.createdCount = createdCount;
-    }
-
-    public int getUpdatedCount() {
-        return updatedCount;
-    }
-
-    public void setUpdatedCount(int updatedCount) {
-        this.updatedCount = updatedCount;
-    }
-
-    public int getErrorCount() {
-        return errorCount;
-    }
-
-    public void setErrorCount(int errorCount) {
-        this.errorCount = errorCount;
-    }
-
-    public List<ProductCsvErrorDTO> getErrors() {
-        return errors;
-    }
-
-    public void setErrors(List<ProductCsvErrorDTO> errors) {
-        this.errors = errors;
-    }
 }
 

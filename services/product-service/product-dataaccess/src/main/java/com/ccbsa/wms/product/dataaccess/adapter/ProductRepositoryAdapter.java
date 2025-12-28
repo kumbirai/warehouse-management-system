@@ -3,16 +3,16 @@ package com.ccbsa.wms.product.dataaccess.adapter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.hibernate.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
 import com.ccbsa.wms.common.security.TenantContext;
@@ -26,11 +26,12 @@ import com.ccbsa.wms.product.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.product.domain.core.entity.Product;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductBarcode;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Repository Adapter: ProductRepositoryAdapter
@@ -38,9 +39,9 @@ import jakarta.persistence.PersistenceContext;
  * Implements ProductRepository port interface. Adapts between domain Product aggregate and JPA ProductEntity.
  */
 @Repository
+@Slf4j
+@RequiredArgsConstructor
 public class ProductRepositoryAdapter implements ProductRepository {
-    private static final Logger logger = LoggerFactory.getLogger(ProductRepositoryAdapter.class);
-
     private final ProductJpaRepository jpaRepository;
     private final ProductBarcodeJpaRepository barcodeJpaRepository;
     private final ProductEntityMapper mapper;
@@ -50,33 +51,24 @@ public class ProductRepositoryAdapter implements ProductRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public ProductRepositoryAdapter(ProductJpaRepository jpaRepository, ProductBarcodeJpaRepository barcodeJpaRepository, ProductEntityMapper mapper,
-                                    TenantSchemaResolver schemaResolver, TenantSchemaProvisioner schemaProvisioner) {
-        this.jpaRepository = jpaRepository;
-        this.barcodeJpaRepository = barcodeJpaRepository;
-        this.mapper = mapper;
-        this.schemaResolver = schemaResolver;
-        this.schemaProvisioner = schemaProvisioner;
-    }
-
     @Override
     public Product save(Product product) {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId tenantId = TenantContext.getTenantId();
         if (tenantId == null) {
-            logger.error("TenantContext is not set when saving product! Cannot resolve schema.");
+            log.error("TenantContext is not set when saving product! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before saving product");
         }
 
         // Verify tenantId matches
         if (!tenantId.getValue().equals(product.getTenantId().getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Product: {}", tenantId.getValue(), product.getTenantId().getValue());
+            log.error("TenantContext mismatch! Context: {}, Product: {}", tenantId.getValue(), product.getTenantId().getValue());
             throw new IllegalStateException("TenantContext tenantId does not match product tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -104,7 +96,7 @@ public class ProductRepositoryAdapter implements ProductRepository {
         ProductEntity savedEntity = jpaRepository.save(entity);
         Product savedProduct = mapper.toDomain(savedEntity);
 
-        logger.debug("Product saved successfully to schema: '{}'", schemaName);
+        log.debug("Product saved successfully to schema: '{}'", schemaName);
 
         // Domain events are preserved by the command handler before calling save()
         // The command handler gets domain events from the original product before save()
@@ -170,15 +162,31 @@ public class ProductRepositoryAdapter implements ProductRepository {
         entity.setBrand(product.getBrand() != null ? product.getBrand().getValue() : null);
         entity.setLastModifiedAt(product.getLastModifiedAt());
 
-        // Update secondary barcodes - remove all existing and add new ones
+        // Update secondary barcodes - properly manage collection to avoid duplicate key violations
+        // Strategy: Match existing barcodes by value, remove those not in new list, add new ones
+        List<ProductBarcodeEntity> existingBarcodes = new ArrayList<>(entity.getSecondaryBarcodes());
+        List<String> newBarcodeValues = product.getSecondaryBarcodes().stream().map(ProductBarcode::getValue).collect(Collectors.toList());
+
+        // Remove barcodes that are no longer in the new list
+        existingBarcodes.removeIf(existing -> !newBarcodeValues.contains(existing.getBarcode()));
+
+        // Find barcodes that need to be added (not in existing list)
+        List<String> existingBarcodeValues = existingBarcodes.stream().map(ProductBarcodeEntity::getBarcode).collect(Collectors.toList());
+
+        // Clear and rebuild the collection properly
         entity.getSecondaryBarcodes().clear();
+        entity.getSecondaryBarcodes().addAll(existingBarcodes);
+
+        // Add new barcodes that don't already exist
         for (ProductBarcode barcode : product.getSecondaryBarcodes()) {
-            ProductBarcodeEntity barcodeEntity = new ProductBarcodeEntity();
-            barcodeEntity.setId(UUID.randomUUID());
-            barcodeEntity.setProduct(entity);
-            barcodeEntity.setBarcode(barcode.getValue());
-            barcodeEntity.setBarcodeType(barcode.getType());
-            entity.getSecondaryBarcodes().add(barcodeEntity);
+            if (!existingBarcodeValues.contains(barcode.getValue())) {
+                ProductBarcodeEntity barcodeEntity = new ProductBarcodeEntity();
+                barcodeEntity.setId(UUID.randomUUID());
+                barcodeEntity.setProduct(entity);
+                barcodeEntity.setBarcode(barcode.getValue());
+                barcodeEntity.setBarcodeType(barcode.getType());
+                entity.getSecondaryBarcodes().add(barcodeEntity);
+            }
         }
 
         // Version is managed by JPA - don't update it manually
@@ -197,10 +205,10 @@ public class ProductRepositoryAdapter implements ProductRepository {
     private void executeSetSearchPath(Connection connection, String schemaName) {
         try (Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
-            logger.debug("Setting search_path to: {}", schemaName);
+            log.debug("Setting search_path to: {}", schemaName);
             stmt.execute(setSchemaSql);
         } catch (SQLException e) {
-            logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
+            log.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
             throw new RuntimeException("Failed to set database schema", e);
         }
     }
@@ -224,19 +232,19 @@ public class ProductRepositoryAdapter implements ProductRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying product! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying product! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying product");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -257,19 +265,19 @@ public class ProductRepositoryAdapter implements ProductRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying product! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying product! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying product");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -290,19 +298,19 @@ public class ProductRepositoryAdapter implements ProductRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when checking product existence! Cannot resolve schema.");
+            log.error("TenantContext is not set when checking product existence! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before checking product existence");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -323,19 +331,19 @@ public class ProductRepositoryAdapter implements ProductRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when checking barcode existence! Cannot resolve schema.");
+            log.error("TenantContext is not set when checking barcode existence! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before checking barcode existence");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -360,19 +368,19 @@ public class ProductRepositoryAdapter implements ProductRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when checking barcode existence! Cannot resolve schema.");
+            log.error("TenantContext is not set when checking barcode existence! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before checking barcode existence");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -397,19 +405,19 @@ public class ProductRepositoryAdapter implements ProductRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying product by barcode! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying product by barcode! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying product by barcode");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -442,19 +450,19 @@ public class ProductRepositoryAdapter implements ProductRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying products! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying products! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying products");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -475,19 +483,19 @@ public class ProductRepositoryAdapter implements ProductRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying products by category! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying products by category! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying products by category");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -508,19 +516,19 @@ public class ProductRepositoryAdapter implements ProductRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying products with filters! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying products with filters! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying products with filters");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -553,19 +561,19 @@ public class ProductRepositoryAdapter implements ProductRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when counting products with filters! Cannot resolve schema.");
+            log.error("TenantContext is not set when counting products with filters! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before counting products with filters");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);

@@ -32,10 +32,12 @@ export interface Consignment {
   consignmentId: string;
   consignmentReference: string;
   warehouseId: string;
+  warehouseName?: string;
   status: ConsignmentStatus;
   receivedAt: string; // ISO date-time string
   confirmedAt?: string; // ISO date-time string
   receivedBy?: string;
+  receivedByName?: string;
   lineItems: ConsignmentLineItem[];
   createdAt: string; // ISO date-time string
   lastModifiedAt: string; // ISO date-time string
@@ -109,53 +111,116 @@ export interface ConsignmentListQueryResult {
 // Stock Allocation Types
 export interface CreateStockAllocationRequest {
   productId: string;
-  sourceLocationId: string;
+  locationId?: string;
   quantity: number;
   allocationType: 'PICKING_ORDER' | 'RESERVATION' | 'OTHER';
-  referenceId?: string;
+  referenceId: string;
+  notes?: string;
 }
 
 export interface CreateStockAllocationResponse {
   allocationId: string;
   productId: string;
-  sourceLocationId: string;
+  locationId?: string;
+  stockItemId: string;
   quantity: number;
   allocationType: string;
+  referenceId: string;
+  status: string;
+  allocatedAt: string;
 }
 
-// Stock Movement Types
-export interface CreateStockMovementRequest {
+export interface StockAllocationResponse {
+  allocationId: string;
   productId: string;
-  sourceLocationId: string;
-  targetLocationId: string;
+  locationId?: string;
+  stockItemId: string;
   quantity: number;
-  movementType: 'RELOCATION' | 'PICKING' | 'PUTAWAY' | 'OTHER';
-  reason?: string;
+  allocationType: string;
+  referenceId?: string;
+  status: string;
+  allocatedAt: string;
+  releasedAt?: string;
+  allocatedBy: string;
+  notes?: string;
 }
 
-export interface CreateStockMovementResponse {
-  movementId: string;
-  productId: string;
-  sourceLocationId: string;
-  targetLocationId: string;
-  quantity: number;
-  movementType: string;
+export type AllocationStatus = 'ALLOCATED' | 'RELEASED' | 'PICKED';
+
+export interface StockAllocationFilters {
+  productId?: string;
+  locationId?: string;
+  referenceId?: string;
+  status?: AllocationStatus;
+  page?: number;
+  size?: number;
+}
+
+export interface StockAllocationListQueryResult {
+  allocations: StockAllocationResponse[];
+  totalCount: number;
+}
+
+export interface ReleaseStockAllocationResponse {
+  allocationId: string;
+  status: string;
+  releasedAt: string;
 }
 
 // Stock Adjustment Types
 export interface CreateStockAdjustmentRequest {
-  consignmentId: string;
-  adjustmentType: 'INCREASE' | 'DECREASE' | 'CORRECTION';
+  productId: string;
+  locationId?: string;
+  stockItemId?: string;
+  adjustmentType: 'INCREASE' | 'DECREASE';
   quantity: number;
-  reason: string;
+  reason: 'STOCK_COUNT' | 'DAMAGE' | 'CORRECTION' | 'THEFT' | 'EXPIRATION' | 'OTHER';
+  notes?: string;
+  authorizationCode?: string;
+}
+
+export type AdjustmentType = 'INCREASE' | 'DECREASE';
+
+export type AdjustmentReason = 'STOCK_COUNT' | 'DAMAGE' | 'CORRECTION' | 'THEFT' | 'EXPIRATION' | 'OTHER';
+
+export interface StockAdjustmentResponse {
+  adjustmentId: string;
+  productId: string;
+  locationId?: string;
+  stockItemId?: string;
+  adjustmentType: AdjustmentType;
+  quantity: number;
+  quantityBefore: number;
+  quantityAfter: number;
+  reason: AdjustmentReason;
+  notes?: string;
+  adjustedBy: string;
+  authorizationCode?: string;
+  adjustedAt: string;
+}
+
+export interface StockAdjustmentFilters {
+  productId?: string;
+  locationId?: string;
+  stockItemId?: string;
+  adjustmentType?: AdjustmentType;
+  reason?: AdjustmentReason;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface StockAdjustmentListQueryResult {
+  adjustments: StockAdjustmentResponse[];
+  totalCount: number;
 }
 
 export interface CreateStockAdjustmentResponse {
   adjustmentId: string;
-  consignmentId: string;
-  adjustmentType: string;
-  quantity: number;
-  newQuantity: number;
+  quantityBefore: number;
+  quantityAfter: number;
+  adjustedAt: string;
 }
 
 // Stock Level Types

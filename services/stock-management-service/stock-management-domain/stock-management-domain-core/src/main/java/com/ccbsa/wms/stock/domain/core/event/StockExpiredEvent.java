@@ -2,9 +2,9 @@ package com.ccbsa.wms.stock.domain.core.event;
 
 import java.time.LocalDate;
 
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
+import com.ccbsa.common.domain.valueobject.ProductId;
+import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.wms.stock.domain.core.entity.StockItem;
-import com.ccbsa.wms.stock.domain.core.valueobject.StockItemId;
 
 /**
  * Domain Event: StockExpiredEvent

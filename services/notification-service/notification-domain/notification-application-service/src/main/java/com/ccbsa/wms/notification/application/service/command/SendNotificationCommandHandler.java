@@ -2,8 +2,6 @@ package com.ccbsa.wms.notification.application.service.command;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -20,24 +18,21 @@ import com.ccbsa.wms.notification.application.service.port.repository.Notificati
 import com.ccbsa.wms.notification.domain.core.entity.Notification;
 import com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Command Handler: SendNotificationCommandHandler
  * <p>
  * Handles sending notifications via delivery channels (email, SMS, WhatsApp). Orchestrates adapter discovery, delivery execution, and status updates.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class SendNotificationCommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger(SendNotificationCommandHandler.class);
-
     private final NotificationRepository repository;
     private final List<NotificationDeliveryPort> deliveryAdapters;
     private final NotificationEventPublisher eventPublisher;
-
-    public SendNotificationCommandHandler(NotificationRepository repository, List<NotificationDeliveryPort> deliveryAdapters, NotificationEventPublisher eventPublisher) {
-        this.repository = repository;
-        this.deliveryAdapters = deliveryAdapters;
-        this.eventPublisher = eventPublisher;
-    }
 
     @Transactional
     public SendNotificationResult handle(SendNotificationCommand command) {
@@ -57,10 +52,10 @@ public class SendNotificationCommandHandler {
         // 5. Update notification status based on result
         if (deliveryResult.isSuccess()) {
             notification.markAsSent();
-            logger.info("Notification sent successfully: notificationId={}, channel={}, externalId={}", notification.getId(), command.getChannel(), deliveryResult.getExternalId());
+            log.info("Notification sent successfully: notificationId={}, channel={}, externalId={}", notification.getId(), command.getChannel(), deliveryResult.getExternalId());
         } else {
             notification.markAsFailed();
-            logger.error("Notification delivery failed: notificationId={}, channel={}, error={}", notification.getId(), command.getChannel(), deliveryResult.getErrorMessage());
+            log.error("Notification delivery failed: notificationId={}, channel={}, error={}", notification.getId(), command.getChannel(), deliveryResult.getErrorMessage());
         }
 
         // 6. Persist updated notification
@@ -110,7 +105,7 @@ public class SendNotificationCommandHandler {
     private void publishEventAfterCommit(NotificationSentEvent event) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
             // No active transaction - publish immediately
-            logger.debug("No active transaction - publishing event immediately");
+            log.debug("No active transaction - publishing event immediately");
             eventPublisher.publish(event);
             return;
         }
@@ -120,10 +115,10 @@ public class SendNotificationCommandHandler {
             @Override
             public void afterCommit() {
                 try {
-                    logger.debug("Transaction committed - publishing NotificationSentEvent");
+                    log.debug("Transaction committed - publishing NotificationSentEvent");
                     eventPublisher.publish(event);
                 } catch (Exception e) {
-                    logger.error("Failed to publish NotificationSentEvent after transaction commit", e);
+                    log.error("Failed to publish NotificationSentEvent after transaction commit", e);
                     // Don't throw - transaction already committed, event publishing failure
                     // should be handled by retry mechanisms or dead letter queue
                 }

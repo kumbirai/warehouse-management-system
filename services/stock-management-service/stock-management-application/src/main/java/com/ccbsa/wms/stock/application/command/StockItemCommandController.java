@@ -46,9 +46,9 @@ public class StockItemCommandController {
                                                                    @Valid @RequestBody AssignLocationToStockCommandDTO commandDTO) {
         // Map DTO to command
         AssignLocationToStockCommand command = AssignLocationToStockCommand.builder().tenantId(com.ccbsa.common.domain.valueobject.TenantId.of(tenantId))
-                .stockItemId(com.ccbsa.wms.stock.domain.core.valueobject.StockItemId.of(stockItemId))
+                .stockItemId(com.ccbsa.common.domain.valueobject.StockItemId.of(stockItemId))
                 .locationId(com.ccbsa.wms.location.domain.core.valueobject.LocationId.of(commandDTO.getLocationId()))
-                .quantity(com.ccbsa.wms.stock.domain.core.valueobject.Quantity.of(commandDTO.getQuantity())).build();
+                .quantity(com.ccbsa.common.domain.valueobject.Quantity.of(commandDTO.getQuantity())).build();
 
         // Execute command
         assignLocationCommandHandler.handle(command);

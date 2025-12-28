@@ -1,5 +1,6 @@
 package com.ccbsa.wms.gateway.api;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -7,6 +8,11 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.KeycloakBuilder;
+import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -21,6 +27,7 @@ import com.ccbsa.wms.gateway.api.dto.TenantResponse;
 import com.ccbsa.wms.gateway.api.dto.UserResponse;
 import com.ccbsa.wms.gateway.api.fixture.TenantTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.TestData;
+import com.ccbsa.wms.gateway.api.fixture.UserTestDataBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -420,6 +427,97 @@ public class TenantManagementTest extends BaseIntegrationTest {
         assertThat(userExists)
                 .as("User 'testuser' with email 'tenantuser@cm-sol.co.za' should exist in the database")
                 .isTrue();
+
+        // Find the created user from the list
+        UserResponse createdUser = users.stream()
+                .filter(u -> "testuser".equals(u.getUsername()) && "tenantuser@cm-sol.co.za".equals(u.getEmailAddress()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Created user not found in the list"));
+
+        // Act - Assign TENANT_ADMIN role to the user
+        WebTestClient.ResponseSpec assignRoleResponse = authenticatedPost(
+                "/api/v1/users/" + createdUser.getUserId() + "/roles",
+                systemAdminAuth.getAccessToken(),
+                activeTenant.getTenantId(),
+                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.TENANT_ADMIN)
+        ).exchange();
+
+        // Assert - Role assignment successful
+        assignRoleResponse.expectStatus().is2xxSuccessful();
+
+        // Verify role was assigned
+        EntityExchangeResult<ApiResponse<UserResponse>> getUserResult = authenticatedGet(
+                "/api/v1/users/" + createdUser.getUserId(),
+                systemAdminAuth.getAccessToken(),
+                activeTenant.getTenantId()
+        ).exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
+                })
+                .returnResult();
+
+        ApiResponse<UserResponse> getUserApiResponse = getUserResult.getResponseBody();
+        assertThat(getUserApiResponse).isNotNull();
+        assertThat(getUserApiResponse.isSuccess()).isTrue();
+
+        UserResponse userWithRole = getUserApiResponse.getData();
+        assertThat(userWithRole).isNotNull();
+        assertThat(userWithRole.getRoles()).isNotNull();
+        assertThat(userWithRole.getRoles())
+                .as("User should have TENANT_ADMIN role assigned")
+                .contains(UserTestDataBuilder.Roles.TENANT_ADMIN);
+
+        // Act - Verify email and clear required actions using Keycloak Admin Client
+        String keycloakServerUrl = System.getProperty("keycloak.server.url",
+                System.getenv().getOrDefault("KEYCLOAK_SERVER_URL", "http://localhost:7080"));
+        String keycloakAdminRealm = System.getProperty("keycloak.admin.realm",
+                System.getenv().getOrDefault("KEYCLOAK_ADMIN_REALM", "master"));
+        String keycloakAdminUsername = System.getProperty("keycloak.admin.username",
+                System.getenv().getOrDefault("KEYCLOAK_ADMIN_USERNAME", "admin"));
+        String keycloakAdminPassword = System.getProperty("keycloak.admin.password",
+                System.getenv().getOrDefault("KEYCLOAK_ADMIN_PASSWORD", "admin"));
+        String keycloakDefaultRealm = System.getProperty("keycloak.default.realm",
+                System.getenv().getOrDefault("KEYCLOAK_DEFAULT_REALM", "wms-realm"));
+
+        try (Keycloak keycloak = KeycloakBuilder.builder()
+                .serverUrl(keycloakServerUrl)
+                .realm(keycloakAdminRealm)
+                .username(keycloakAdminUsername)
+                .password(keycloakAdminPassword)
+                .clientId("admin-cli")
+                .build()) {
+
+            RealmResource realm = keycloak.realm(keycloakDefaultRealm);
+
+            // Find user by username
+            List<UserRepresentation> keycloakUsers = realm.users().searchByUsername("testuser", true);
+            assertThat(keycloakUsers)
+                    .as("User 'testuser' should exist in Keycloak")
+                    .isNotEmpty();
+
+            UserRepresentation keycloakUser = keycloakUsers.get(0);
+            assertThat(keycloakUser.getUsername())
+                    .as("Found user should have username 'testuser'")
+                    .isEqualTo("testuser");
+
+            // Get user resource
+            UserResource userResource = realm.users().get(keycloakUser.getId());
+
+            // Update user: verify email and clear required actions
+            UserRepresentation userToUpdate = userResource.toRepresentation();
+            userToUpdate.setEmailVerified(true);
+            userToUpdate.setRequiredActions(Collections.emptyList());
+            userResource.update(userToUpdate);
+
+            // Verify the changes were applied
+            UserRepresentation updatedUser = userResource.toRepresentation();
+            assertThat(updatedUser.isEmailVerified())
+                    .as("User email should be verified")
+                    .isTrue();
+            assertThat(updatedUser.getRequiredActions())
+                    .as("User should have no required actions")
+                    .isEmpty();
+        }
     }
 }
 

@@ -50,5 +50,24 @@ public interface StockItemJpaRepository extends JpaRepository<StockItemEntity, U
      * @return true if exists
      */
     boolean existsByTenantIdAndId(String tenantId, UUID id);
+
+    /**
+     * Finds stock items by tenant ID and product ID.
+     *
+     * @param tenantId  Tenant identifier
+     * @param productId Product identifier
+     * @return List of StockItemEntity
+     */
+    List<StockItemEntity> findByTenantIdAndProductId(String tenantId, UUID productId);
+
+    /**
+     * Finds stock items by tenant ID, product ID, and location ID.
+     *
+     * @param tenantId   Tenant identifier
+     * @param productId  Product identifier
+     * @param locationId Location identifier
+     * @return List of StockItemEntity
+     */
+    List<StockItemEntity> findByTenantIdAndProductIdAndLocationId(String tenantId, UUID productId, UUID locationId);
 }
 

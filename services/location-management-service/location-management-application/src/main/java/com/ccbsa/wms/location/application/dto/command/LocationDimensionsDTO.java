@@ -1,56 +1,25 @@
 package com.ccbsa.wms.location.application.dto.command;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 /**
  * DTO: LocationDimensionsDTO
  * <p>
  * Represents physical dimensions of a location.
  */
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public final class LocationDimensionsDTO {
     private Double length;
     private Double width;
     private Double height;
     private String unit;
-
-    public LocationDimensionsDTO() {
-    }
-
-    public LocationDimensionsDTO(Double length, Double width, Double height, String unit) {
-        this.length = length;
-        this.width = width;
-        this.height = height;
-        this.unit = unit;
-    }
-
-    public Double getLength() {
-        return length;
-    }
-
-    public void setLength(Double length) {
-        this.length = length;
-    }
-
-    public Double getWidth() {
-        return width;
-    }
-
-    public void setWidth(Double width) {
-        this.width = width;
-    }
-
-    public Double getHeight() {
-        return height;
-    }
-
-    public void setHeight(Double height) {
-        this.height = height;
-    }
-
-    public String getUnit() {
-        return unit;
-    }
-
-    public void setUnit(String unit) {
-        this.unit = unit;
-    }
 }
 

@@ -5,11 +5,24 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 /**
  * Query Result DTO: LocationQueryResultDTO
  * <p>
  * Response DTO for location query operations.
  */
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Lombok builder stores DTO directly. DTOs are immutable when returned from API.")
 public final class LocationQueryResultDTO {
     private String locationId;
     private String code;
@@ -24,53 +37,6 @@ public final class LocationQueryResultDTO {
     private String description;
     private LocalDateTime createdAt;
     private LocalDateTime lastModifiedAt;
-
-    public LocationQueryResultDTO() {
-    }
-
-    public LocationQueryResultDTO(String locationId, String barcode, LocationCoordinatesDTO coordinates, String status, LocationCapacityDTO capacity, String description,
-                                  LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
-        this.locationId = locationId;
-        this.barcode = barcode;
-        this.coordinates = coordinates;
-        this.status = status;
-        this.capacityDTO = capacity;
-        this.description = description;
-        this.createdAt = createdAt;
-        this.lastModifiedAt = lastModifiedAt;
-    }
-
-    public String getLocationId() {
-        return locationId;
-    }
-
-    public void setLocationId(String locationId) {
-        this.locationId = locationId;
-    }
-
-    public String getBarcode() {
-        return barcode;
-    }
-
-    public void setBarcode(String barcode) {
-        this.barcode = barcode;
-    }
-
-    public LocationCoordinatesDTO getCoordinates() {
-        return coordinates;
-    }
-
-    public void setCoordinates(LocationCoordinatesDTO coordinates) {
-        this.coordinates = coordinates;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
 
     @JsonIgnore // Internal use only - not serialized to JSON
     public LocationCapacityDTO getCapacityDTO() {
@@ -100,62 +66,6 @@ public final class LocationQueryResultDTO {
                     java.math.BigDecimal.valueOf(capacity) // maximumQuantity from Integer
             );
         }
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getLastModifiedAt() {
-        return lastModifiedAt;
-    }
-
-    public void setLastModifiedAt(LocalDateTime lastModifiedAt) {
-        this.lastModifiedAt = lastModifiedAt;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
     }
 }
 

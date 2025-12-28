@@ -3,41 +3,42 @@ package com.ccbsa.wms.user.application.service.query;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ccbsa.wms.user.application.service.exception.UserNotFoundException;
 import com.ccbsa.wms.user.application.service.port.auth.AuthenticationServicePort;
-import com.ccbsa.wms.user.application.service.port.repository.UserRepository;
+import com.ccbsa.wms.user.application.service.port.data.UserViewRepository;
+import com.ccbsa.wms.user.application.service.port.data.dto.UserView;
 import com.ccbsa.wms.user.application.service.port.service.TenantServicePort;
 import com.ccbsa.wms.user.application.service.query.dto.GetUserQuery;
 import com.ccbsa.wms.user.application.service.query.dto.GetUserQueryResult;
-import com.ccbsa.wms.user.domain.core.entity.User;
 import com.ccbsa.wms.user.domain.core.valueobject.KeycloakUserId;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Query Handler: GetUserQueryHandler
  * <p>
- * Handles query for user by ID.
+ * Handles query for user read model by ID.
  * <p>
  * For SYSTEM_ADMIN users, searches across all tenant schemas using findByIdAcrossTenants.
  * For other users, searches within the current tenant schema using findById.
+ * <p>
+ * Uses data port (UserViewRepository) instead of repository port for CQRS compliance.
+ * <p>
+ * Note: This handler still calls AuthenticationServicePort and TenantServicePort for additional
+ * data (roles, tenant name) that are not part of the read model. This is acceptable as these
+ * are external service calls, not repository port usage.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class GetUserQueryHandler {
-    private static final Logger logger = LoggerFactory.getLogger(GetUserQueryHandler.class);
-
-    private final UserRepository userRepository;
+    private final UserViewRepository viewRepository;
     private final AuthenticationServicePort authenticationService;
     private final TenantServicePort tenantServicePort;
-
-    public GetUserQueryHandler(UserRepository userRepository, AuthenticationServicePort authenticationService, TenantServicePort tenantServicePort) {
-        this.userRepository = userRepository;
-        this.authenticationService = authenticationService;
-        this.tenantServicePort = tenantServicePort;
-    }
 
     /**
      * Handles the GetUserQuery.
@@ -53,26 +54,20 @@ public class GetUserQueryHandler {
      */
     @Transactional(readOnly = true)
     public GetUserQueryResult handle(GetUserQuery query) {
-        logger.debug("Getting user: userId={}, isSystemAdmin={}", query.getUserId().getValue(), query.isSystemAdmin());
+        log.debug("Getting user: userId={}, isSystemAdmin={}", query.getUserId().getValue(), query.isSystemAdmin());
 
-        // 1. Load user - use cross-tenant search for SYSTEM_ADMIN
-        User user;
-        if (query.isSystemAdmin()) {
-            logger.debug("SYSTEM_ADMIN user detected - searching across all tenant schemas");
-            user = userRepository.findByIdAcrossTenants(query.getUserId())
-                    .orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", query.getUserId().getValue())));
-        } else {
-            logger.debug("Non-SYSTEM_ADMIN user - searching within current tenant schema");
-            user = userRepository.findById(query.getUserId()).orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", query.getUserId().getValue())));
-        }
+        // 1. Load user view - use cross-tenant search for SYSTEM_ADMIN
+        Optional<UserView> userView = query.isSystemAdmin() ? viewRepository.findByIdAcrossTenants(query.getUserId()) : viewRepository.findById(query.getUserId());
+
+        UserView view = userView.orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", query.getUserId().getValue())));
 
         // 2. Get roles from Keycloak
         List<String> roles = List.of();
-        if (user.getKeycloakUserId().isPresent()) {
+        if (view.getKeycloakUserId() != null) {
             try {
-                roles = authenticationService.getUserRoles(user.getKeycloakUserId().get());
+                roles = authenticationService.getUserRoles(KeycloakUserId.of(view.getKeycloakUserId()));
             } catch (Exception e) {
-                logger.warn("Failed to get user roles from Keycloak: {}", e.getMessage());
+                log.warn("Failed to get user roles from Keycloak: {}", e.getMessage());
                 // Continue without roles
             }
         }
@@ -80,22 +75,21 @@ public class GetUserQueryHandler {
         // 3. Get tenant name from tenant service
         String tenantName = null;
         try {
-            Optional<TenantServicePort.TenantInfo> tenantInfo = tenantServicePort.getTenantInfo(user.getTenantId());
+            Optional<TenantServicePort.TenantInfo> tenantInfo = tenantServicePort.getTenantInfo(view.getTenantId());
             if (tenantInfo.isPresent()) {
                 tenantName = tenantInfo.get().name();
-                logger.debug("Retrieved tenant name: tenantId={}, name={}", user.getTenantId().getValue(), tenantName);
+                log.debug("Retrieved tenant name: tenantId={}, name={}", view.getTenantId().getValue(), tenantName);
             } else {
-                logger.warn("Tenant info not found for tenantId: {}", user.getTenantId().getValue());
+                log.warn("Tenant info not found for tenantId: {}", view.getTenantId().getValue());
             }
         } catch (Exception e) {
-            logger.warn("Failed to get tenant name from tenant service: {}", e.getMessage());
+            log.warn("Failed to get tenant name from tenant service: {}", e.getMessage());
             // Continue without tenant name
         }
 
-        // 4. Map to query result
-        return new GetUserQueryResult(user.getId(), user.getTenantId(), tenantName, user.getUsername().getValue(), user.getEmail().getValue(),
-                user.getFirstName().map(fn -> fn.getValue()).orElse(null), user.getLastName().map(ln -> ln.getValue()).orElse(null), user.getStatus(),
-                user.getKeycloakUserId().map(KeycloakUserId::getValue).orElse(null), roles, user.getCreatedAt(), user.getLastModifiedAt());
+        // 4. Map view to query result
+        return new GetUserQueryResult(view.getUserId(), view.getTenantId(), tenantName, view.getUsername(), view.getEmail(), view.getFirstName(), view.getLastName(),
+                view.getStatus(), view.getKeycloakUserId(), roles, view.getCreatedAt(), view.getLastModifiedAt());
     }
 }
 

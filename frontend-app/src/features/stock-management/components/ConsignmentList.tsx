@@ -4,6 +4,7 @@ import { Column, getStatusVariant, ResponsiveTable, StatusBadge } from '../../..
 import { Consignment } from '../types/stockManagement';
 import { Routes } from '../../../utils/navigationUtils';
 import { formatDateTime } from '../../../utils/dateUtils';
+import { useLocationDescriptionMap } from '../hooks/useLocationDescription';
 
 interface ConsignmentListProps {
   consignments: Consignment[];
@@ -12,6 +13,7 @@ interface ConsignmentListProps {
 
 export const ConsignmentList = ({ consignments, error }: ConsignmentListProps) => {
   const navigate = useNavigate();
+  const locationDescriptionMap = useLocationDescriptionMap();
 
   if (error) {
     return <Typography color="error">Error loading consignments: {error.message}</Typography>;
@@ -41,7 +43,11 @@ export const ConsignmentList = ({ consignments, error }: ConsignmentListProps) =
     {
       key: 'warehouseId',
       label: 'Warehouse',
-      render: consignment => <Typography variant="body2">{consignment.warehouseId}</Typography>,
+      render: consignment => (
+        <Typography variant="body2">
+          {locationDescriptionMap.get(consignment.warehouseId) || consignment.warehouseId}
+        </Typography>
+      ),
     },
     {
       key: 'lineItems',

@@ -10,6 +10,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * JPA Entity: ConsignmentLineItemEntity
@@ -22,6 +25,9 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "consignment_line_items", schema = "tenant_schema")
+@Getter
+@Setter
+@NoArgsConstructor
 public class ConsignmentLineItemEntity {
     @Id
     @Column(name = "id", nullable = false)
@@ -42,58 +48,5 @@ public class ConsignmentLineItemEntity {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
-
-    // JPA requires no-arg constructor
-    public ConsignmentLineItemEntity() {
-    }
-
-    // Getters and setters
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public StockConsignmentEntity getConsignment() {
-        return consignment;
-    }
-
-    public void setConsignment(StockConsignmentEntity consignment) {
-        this.consignment = consignment;
-    }
-
-    public String getProductCode() {
-        return productCode;
-    }
-
-    public void setProductCode(String productCode) {
-        this.productCode = productCode;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
-    public LocalDate getExpirationDate() {
-        return expirationDate;
-    }
-
-    public void setExpirationDate(LocalDate expirationDate) {
-        this.expirationDate = expirationDate;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 }
 

@@ -24,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.ccbsa.common.messaging.config.KafkaConfig;
 import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
+import com.ccbsa.wms.common.security.ServiceAccountAuthenticationConfig;
 import com.ccbsa.wms.common.security.ServiceSecurityConfig;
 import com.ccbsa.wms.notification.messaging.listener.PartitionAssignmentLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,16 +33,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * Notification Service Configuration
  * <p>
  * Imports common security configuration for JWT validation and tenant context. Imports Kafka configuration for messaging infrastructure (provides kafkaObjectMapper bean). Imports
- * common data access configuration for multi-tenant schema
- * resolution.
+ * common data access configuration for multi-tenant schema resolution. Imports service account authentication configuration for service-to-service authentication.
  * <p>
  * The {@link MultiTenantDataAccessConfig} provides the {@link com.ccbsa.wms.common.dataaccess.TenantSchemaResolver} bean which implements schema-per-tenant strategy for
  * multi-tenant isolation.
  * <p>
+ * The {@link ServiceAccountAuthenticationConfig} provides service account token provider and RestTemplate interceptor for production-grade service-to-service authentication.
+ * This enables event listeners to make authenticated inter-service calls without HTTP request context.
+ * <p>
  * The naming strategy is configured in application.yml and will be automatically used by Hibernate for dynamic schema resolution.
  */
 @Configuration
-@Import( {ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class})
+@Import( {ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class, ServiceAccountAuthenticationConfig.class})
 public class NotificationServiceConfiguration {
 
     @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
@@ -74,10 +77,11 @@ public class NotificationServiceConfiguration {
     /**
      * RestTemplate bean for external service calls (e.g., Tenant Service, User Service).
      * <p>
-     * Configured with @LoadBalanced to enable Eureka service discovery. Uses service names
-     * (e.g., http://tenant-service) which are resolved via Eureka registry.
+     * Configured with @LoadBalanced to enable Eureka service discovery.
+     * The ServiceAccountAuthenticationConfig automatically adds the authentication interceptor
+     * to this RestTemplate bean via BeanPostProcessor, enabling service-to-service authentication.
      *
-     * @return RestTemplate configured with LoadBalancer for service discovery
+     * @return RestTemplate configured with LoadBalancer and automatic authentication
      */
     @Bean
     @LoadBalanced

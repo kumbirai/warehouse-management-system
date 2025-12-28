@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.Optional;
 
 import com.ccbsa.common.domain.valueobject.StockClassification;
+import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.stock.domain.core.entity.StockItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
-import com.ccbsa.wms.stock.domain.core.valueobject.StockItemId;
 
 /**
  * Repository Port: StockItemRepository
@@ -61,5 +61,33 @@ public interface StockItemRepository {
      * @return true if exists
      */
     boolean existsById(StockItemId stockItemId, TenantId tenantId);
+
+    /**
+     * Finds stock items by tenant and product.
+     *
+     * @param tenantId  Tenant ID
+     * @param productId Product ID
+     * @return List of stock items
+     */
+    List<StockItem> findByTenantIdAndProductId(TenantId tenantId, com.ccbsa.common.domain.valueobject.ProductId productId);
+
+    /**
+     * Finds stock items by tenant, product, and location.
+     *
+     * @param tenantId   Tenant ID
+     * @param productId  Product ID
+     * @param locationId Location ID
+     * @return List of stock items
+     */
+    List<StockItem> findByTenantIdAndProductIdAndLocationId(TenantId tenantId, com.ccbsa.common.domain.valueobject.ProductId productId,
+                                                            com.ccbsa.wms.location.domain.core.valueobject.LocationId locationId);
+
+    /**
+     * Finds a stock item by ID (without tenant check, for internal use).
+     *
+     * @param stockItemId Stock item ID
+     * @return Optional stock item
+     */
+    Optional<StockItem> findById(StockItemId stockItemId);
 }
 

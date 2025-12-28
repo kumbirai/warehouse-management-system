@@ -3,8 +3,6 @@ package com.ccbsa.wms.user.messaging.adapter;
 import java.util.Locale;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -26,6 +24,7 @@ import com.ccbsa.wms.user.application.service.exception.TenantServiceException;
 import com.ccbsa.wms.user.application.service.port.service.TenantServicePort;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Adapter: TenantServiceAdapter
@@ -33,9 +32,8 @@ import jakarta.servlet.http.HttpServletRequest;
  * Implements TenantServicePort for tenant validation operations. Calls tenant-service REST API to validate tenant status.
  */
 @Component
+@Slf4j
 public class TenantServiceAdapter implements TenantServicePort {
-    private static final Logger logger = LoggerFactory.getLogger(TenantServiceAdapter.class);
-
     private static final ParameterizedTypeReference<ApiResponse<String>> TENANT_STATUS_RESPONSE_TYPE = new ParameterizedTypeReference<ApiResponse<String>>() {
     };
     private static final ParameterizedTypeReference<ApiResponse<TenantResponseDto>> TENANT_RESPONSE_TYPE = new ParameterizedTypeReference<ApiResponse<TenantResponseDto>>() {
@@ -51,49 +49,49 @@ public class TenantServiceAdapter implements TenantServicePort {
 
     @Override
     public boolean isTenantActive(TenantId tenantId) {
-        logger.debug("Checking if tenant is active: tenantId={}", tenantId.getValue());
+        log.debug("Checking if tenant is active: tenantId={}", tenantId.getValue());
 
         try {
             String status = getTenantStatus(tenantId);
             boolean isActive = "ACTIVE".equals(status);
-            logger.debug("Tenant status check result: tenantId={}, status={}, isActive={}", tenantId.getValue(), status, isActive);
+            log.debug("Tenant status check result: tenantId={}, status={}, isActive={}", tenantId.getValue(), status, isActive);
             return isActive;
         } catch (TenantNotFoundException e) {
-            logger.warn("Tenant not found: {}", tenantId.getValue());
+            log.warn("Tenant not found: {}", tenantId.getValue());
             throw e;
         } catch (Exception e) {
-            logger.error("Failed to check tenant status: {}", e.getMessage(), e);
+            log.error("Failed to check tenant status: {}", e.getMessage(), e);
             throw new TenantServiceException(String.format("Failed to check tenant status: %s", e.getMessage()), e);
         }
     }
 
     @Override
     public String getTenantStatus(TenantId tenantId) {
-        logger.debug("Getting tenant status: tenantId={}", tenantId.getValue());
+        log.debug("Getting tenant status: tenantId={}", tenantId.getValue());
 
         try {
             String url = String.format("%s/api/v1/tenants/%s/status", tenantServiceUrl, tenantId.getValue());
-            logger.debug("Calling tenant service: {}", url);
+            log.debug("Calling tenant service: {}", url);
 
             // Forward headers from current request for service-to-service authentication
             HttpHeaders headers = new HttpHeaders();
             String authorizationHeader = getAuthorizationHeader();
             if (authorizationHeader != null) {
                 headers.set("Authorization", authorizationHeader);
-                logger.debug("Forwarding Authorization header to tenant service");
+                log.debug("Forwarding Authorization header to tenant service");
             } else {
-                logger.warn("No Authorization header found in current request - tenant service call may fail");
+                log.warn("No Authorization header found in current request - tenant service call may fail");
             }
 
             // Forward X-Tenant-Id header (required by tenant service)
             String tenantIdHeader = getTenantIdHeader();
             if (tenantIdHeader != null) {
                 headers.set("X-Tenant-Id", tenantIdHeader);
-                logger.debug("Forwarding X-Tenant-Id header to tenant service: {}", tenantIdHeader);
+                log.debug("Forwarding X-Tenant-Id header to tenant service: {}", tenantIdHeader);
             } else {
                 // Set the tenantId from the method parameter as fallback
                 headers.set("X-Tenant-Id", tenantId.getValue());
-                logger.debug("Setting X-Tenant-Id header from method parameter: {}", tenantId.getValue());
+                log.debug("Setting X-Tenant-Id header from method parameter: {}", tenantId.getValue());
             }
 
             HttpEntity<Void> entity = new HttpEntity<>(headers);
@@ -103,25 +101,25 @@ public class TenantServiceAdapter implements TenantServicePort {
             ApiResponse<String> responseBody = response.getBody();
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
                 String status = responseBody.getData();
-                logger.debug("Tenant status retrieved: tenantId={}, status={}", tenantId.getValue(), status);
+                log.debug("Tenant status retrieved: tenantId={}, status={}", tenantId.getValue(), status);
                 return status;
             }
 
             throw new TenantServiceException(String.format("Unexpected response from tenant service: %s", response.getStatusCode()));
         } catch (HttpClientErrorException.NotFound e) {
-            logger.warn("Tenant not found: {}", tenantId.getValue());
+            log.warn("Tenant not found: {}", tenantId.getValue());
             throw new TenantNotFoundException(String.format("Tenant not found: %s", tenantId.getValue()), e);
         } catch (HttpClientErrorException.BadRequest e) {
-            logger.error("Bad request when calling tenant service (likely missing X-Tenant-Id header): {}", e.getMessage());
+            log.error("Bad request when calling tenant service (likely missing X-Tenant-Id header): {}", e.getMessage());
             throw new TenantServiceException(String.format("Invalid request to tenant service: %s", e.getMessage()), e);
         } catch (HttpClientErrorException.Unauthorized e) {
-            logger.error("Unauthorized when calling tenant service - authentication token may be missing or invalid: {}", e.getMessage());
+            log.error("Unauthorized when calling tenant service - authentication token may be missing or invalid: {}", e.getMessage());
             throw new TenantServiceException("Failed to authenticate with tenant service. Please ensure you are logged in.", e);
         } catch (RestClientException e) {
-            logger.error("Failed to call tenant service: {}", e.getMessage(), e);
+            log.error("Failed to call tenant service: {}", e.getMessage(), e);
             throw new TenantServiceException(String.format("Failed to call tenant service: %s", e.getMessage()), e);
         } catch (Exception e) {
-            logger.error("Unexpected error getting tenant status: {}", e.getMessage(), e);
+            log.error("Unexpected error getting tenant status: {}", e.getMessage(), e);
             throw new TenantServiceException(String.format("Failed to get tenant status: %s", e.getMessage()), e);
         }
     }
@@ -140,7 +138,7 @@ public class TenantServiceAdapter implements TenantServicePort {
                 return request.getHeader("Authorization");
             }
         } catch (Exception e) {
-            logger.debug("Could not extract Authorization header from request context: {}", e.getMessage());
+            log.debug("Could not extract Authorization header from request context: {}", e.getMessage());
         }
         return null;
     }
@@ -159,38 +157,38 @@ public class TenantServiceAdapter implements TenantServicePort {
                 return request.getHeader("X-Tenant-Id");
             }
         } catch (Exception e) {
-            logger.debug("Could not extract X-Tenant-Id header from request context: {}", e.getMessage());
+            log.debug("Could not extract X-Tenant-Id header from request context: {}", e.getMessage());
         }
         return null;
     }
 
     @Override
     public Optional<TenantInfo> getTenantInfo(TenantId tenantId) {
-        logger.debug("Getting tenant info: tenantId={}", tenantId.getValue());
+        log.debug("Getting tenant info: tenantId={}", tenantId.getValue());
 
         try {
             String url = String.format("%s/api/v1/tenants/%s", tenantServiceUrl, tenantId.getValue());
-            logger.debug("Calling tenant service: {}", url);
+            log.debug("Calling tenant service: {}", url);
 
             // Forward headers from current request for service-to-service authentication
             HttpHeaders headers = new HttpHeaders();
             String authorizationHeader = getAuthorizationHeader();
             if (authorizationHeader != null) {
                 headers.set("Authorization", authorizationHeader);
-                logger.debug("Forwarding Authorization header to tenant service");
+                log.debug("Forwarding Authorization header to tenant service");
             } else {
-                logger.warn("No Authorization header found in current request - tenant service call may fail");
+                log.warn("No Authorization header found in current request - tenant service call may fail");
             }
 
             // Forward X-Tenant-Id header (required by tenant service)
             String tenantIdHeader = getTenantIdHeader();
             if (tenantIdHeader != null) {
                 headers.set("X-Tenant-Id", tenantIdHeader);
-                logger.debug("Forwarding X-Tenant-Id header to tenant service: {}", tenantIdHeader);
+                log.debug("Forwarding X-Tenant-Id header to tenant service: {}", tenantIdHeader);
             } else {
                 // Set the tenantId from the method parameter as fallback
                 headers.set("X-Tenant-Id", tenantId.getValue());
-                logger.debug("Setting X-Tenant-Id header from method parameter: {}", tenantId.getValue());
+                log.debug("Setting X-Tenant-Id header from method parameter: {}", tenantId.getValue());
             }
 
             HttpEntity<Void> entity = new HttpEntity<>(headers);
@@ -202,25 +200,25 @@ public class TenantServiceAdapter implements TenantServicePort {
                 TenantResponseDto tenantResponse = responseBody.getData();
                 TenantServicePort.TenantInfo.TenantStatus status = mapStatus(tenantResponse.getStatus());
                 TenantServicePort.TenantInfo info = new TenantServicePort.TenantInfo(TenantId.of(tenantResponse.getTenantId()), tenantResponse.getName(), status);
-                logger.debug("Tenant info retrieved: tenantId={}, name={}", tenantId.getValue(), tenantResponse.getName());
+                log.debug("Tenant info retrieved: tenantId={}, name={}", tenantId.getValue(), tenantResponse.getName());
                 return Optional.of(info);
             }
 
             return Optional.empty();
         } catch (HttpClientErrorException.NotFound e) {
-            logger.warn("Tenant not found: {}", tenantId.getValue());
+            log.warn("Tenant not found: {}", tenantId.getValue());
             return Optional.empty();
         } catch (HttpClientErrorException.BadRequest e) {
-            logger.error("Bad request when calling tenant service (likely missing X-Tenant-Id header): {}", e.getMessage());
+            log.error("Bad request when calling tenant service (likely missing X-Tenant-Id header): {}", e.getMessage());
             throw new TenantServiceException(String.format("Invalid request to tenant service: %s", e.getMessage()), e);
         } catch (HttpClientErrorException.Unauthorized e) {
-            logger.error("Unauthorized when calling tenant service - authentication token may be missing or invalid: {}", e.getMessage());
+            log.error("Unauthorized when calling tenant service - authentication token may be missing or invalid: {}", e.getMessage());
             throw new TenantServiceException("Failed to authenticate with tenant service. Please ensure you are logged in.", e);
         } catch (RestClientException e) {
-            logger.error("Failed to call tenant service: {}", e.getMessage(), e);
+            log.error("Failed to call tenant service: {}", e.getMessage(), e);
             throw new TenantServiceException(String.format("Failed to call tenant service: %s", e.getMessage()), e);
         } catch (Exception e) {
-            logger.error("Unexpected error getting tenant info: {}", e.getMessage(), e);
+            log.error("Unexpected error getting tenant info: {}", e.getMessage(), e);
             throw new TenantServiceException(String.format("Failed to get tenant info: %s", e.getMessage()), e);
         }
     }
@@ -232,7 +230,7 @@ public class TenantServiceAdapter implements TenantServicePort {
         try {
             return TenantServicePort.TenantInfo.TenantStatus.valueOf(status.toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
-            logger.warn("Unknown tenant status: {}, defaulting to PENDING", status);
+            log.warn("Unknown tenant status: {}, defaulting to PENDING", status);
             return TenantServicePort.TenantInfo.TenantStatus.PENDING;
         }
     }

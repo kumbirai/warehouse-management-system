@@ -31,6 +31,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.ccbsa.common.messaging.config.KafkaConfig;
 import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
+import com.ccbsa.wms.common.security.ServiceAccountAuthenticationConfig;
 import com.ccbsa.wms.common.security.ServiceSecurityConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,16 +39,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * Stock Management Service Configuration
  * <p>
  * Imports common security configuration for JWT validation and tenant context. Imports common data access configuration for multi-tenant schema resolution. Imports Kafka
- * configuration for messaging infrastructure (provides
- * kafkaObjectMapper bean).
+ * configuration for messaging infrastructure (provides kafkaObjectMapper bean). Imports service account authentication configuration for service-to-service authentication.
  * <p>
  * The {@link MultiTenantDataAccessConfig} provides the {@link com.ccbsa.wms.common.dataaccess.TenantSchemaResolver} bean which implements schema-per-tenant strategy for
  * multi-tenant isolation.
  * <p>
  * The {@link KafkaConfig} provides the {@code kafkaObjectMapper} bean used for Kafka message serialization/deserialization with type information.
+ * <p>
+ * The {@link ServiceAccountAuthenticationConfig} provides service account token provider and RestTemplate interceptor for production-grade service-to-service authentication.
+ * This enables event listeners and scheduled jobs to make authenticated inter-service calls without HTTP request context.
  */
 @Configuration
-@Import( {ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class})
+@Import( {ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class, ServiceAccountAuthenticationConfig.class})
 public class StockManagementServiceConfiguration {
 
     @Value("${spring.kafka.bootstrap-servers:localhost:9092}")

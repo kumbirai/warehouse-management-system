@@ -4,8 +4,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -21,6 +19,7 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationStatus;
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Cached Notification Repository Adapter.
@@ -37,11 +36,10 @@ import io.micrometer.core.instrument.MeterRegistry;
  * - @Primary: Ensures this adapter is injected instead of base adapter
  * - @Repository: Marks as Spring Data repository component
  */
+@Slf4j
 @Repository
 @Primary
 public class CachedNotificationRepositoryAdapter extends CachedRepositoryDecorator<Notification, NotificationId> implements NotificationRepository {
-
-    private static final Logger log = LoggerFactory.getLogger(CachedNotificationRepositoryAdapter.class);
 
     private final NotificationRepositoryAdapter baseRepository;
 

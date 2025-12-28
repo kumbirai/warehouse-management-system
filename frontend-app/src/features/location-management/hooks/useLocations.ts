@@ -1,7 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { locationService } from '../services/locationService';
 import { Location, LocationListFilters } from '../types/location';
 import { logger } from '../../../utils/logger';
+
+// Helper to create a stable filters key for comparison
+const getFiltersKey = (filters: LocationListFilters): string => {
+  return JSON.stringify({
+    tenantId: filters.tenantId,
+    page: filters.page,
+    size: filters.size,
+    status: filters.status,
+    zone: filters.zone,
+    search: filters.search,
+  });
+};
 
 export interface UseLocationsResult {
   locations: Location[];
@@ -16,6 +28,7 @@ export const useLocations = (filters: LocationListFilters): UseLocationsResult =
   const [error, setError] = useState<Error | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFetchingRef = useRef(false);
+  const filtersKeyRef = useRef<string>('');
 
   const fetchLocations = useCallback(async () => {
     // Prevent concurrent fetches
@@ -185,7 +198,23 @@ export const useLocations = (filters: LocationListFilters): UseLocationsResult =
     }
   }, [filters]);
 
+  // Memoize filters key to detect actual changes
+  const filtersKey = useMemo(() => getFiltersKey(filters), [
+    filters.tenantId,
+    filters.page,
+    filters.size,
+    filters.status,
+    filters.zone,
+    filters.search,
+  ]);
+
   useEffect(() => {
+    // Only fetch if filters actually changed (avoid infinite loops from object reference changes)
+    if (filtersKeyRef.current === filtersKey) {
+      return;
+    }
+    
+    filtersKeyRef.current = filtersKey;
     fetchLocations();
 
     // Cleanup: abort request on unmount or when filters change
@@ -194,7 +223,7 @@ export const useLocations = (filters: LocationListFilters): UseLocationsResult =
         abortControllerRef.current.abort();
       }
     };
-  }, [fetchLocations]);
+  }, [filtersKey, fetchLocations]);
 
   return { locations, isLoading, error, refetch: fetchLocations };
 };

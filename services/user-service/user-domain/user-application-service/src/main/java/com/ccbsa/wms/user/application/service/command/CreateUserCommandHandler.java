@@ -3,8 +3,6 @@ package com.ccbsa.wms.user.application.service.command;
 import java.util.List;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +31,8 @@ import com.ccbsa.wms.user.domain.core.valueobject.RoleConstants;
 import com.ccbsa.wms.user.domain.core.valueobject.UserStatus;
 import com.ccbsa.wms.user.domain.core.valueobject.Username;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Command Handler: CreateUserCommandHandler
  * <p>
@@ -41,9 +41,9 @@ import com.ccbsa.wms.user.domain.core.valueobject.Username;
  * Responsibilities: - Validate tenant exists and is ACTIVE - Create user domain entity - Persist user aggregate - Create user in Keycloak - Assign roles in Keycloak - Publish
  * domain events
  */
+@Slf4j
 @Component
 public class CreateUserCommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger(CreateUserCommandHandler.class);
 
     private final UserRepository userRepository;
     private final UserEventPublisher eventPublisher;
@@ -77,7 +77,7 @@ public class CreateUserCommandHandler {
             throw new IllegalArgumentException("Command cannot be null");
         }
 
-        logger.debug("Creating user: username={}, tenantId={}", command.getUsername(), command.getTenantId());
+        log.debug("Creating user: username={}, tenantId={}", command.getUsername(), command.getTenantId());
         if (command.getTenantId() == null || command.getTenantId().trim().isEmpty()) {
             throw new IllegalArgumentException("TenantId is required");
         }
@@ -118,7 +118,7 @@ public class CreateUserCommandHandler {
 
             // 7. Assign base USER role to all new users
             authenticationService.assignRole(keycloakUserId, RoleConstants.BASE_ROLE);
-            logger.debug("Base USER role assigned to new user: userId={}", keycloakUserId.getValue());
+            log.debug("Base USER role assigned to new user: userId={}", keycloakUserId.getValue());
 
             // 8. Assign additional roles if provided
             if (!command.getRoles().isEmpty()) {
@@ -135,39 +135,38 @@ public class CreateUserCommandHandler {
             try {
                 String redirectUri = String.format("%s/verify-email", frontendBaseUrl);
                 authenticationService.sendEmailVerificationAndPasswordReset(keycloakUserId, redirectUri);
-                logger.debug("Email verification and password reset email sent: userId={}", keycloakUserId.getValue());
+                log.debug("Email verification and password reset email sent: userId={}", keycloakUserId.getValue());
             } catch (Exception emailException) {
                 // Log error but don't fail user creation - email can be resent later
-                logger.warn("Failed to send email verification and password reset email: userId={}, error={}", keycloakUserId.getValue(), emailException.getMessage(),
-                        emailException);
+                log.warn("Failed to send email verification and password reset email: userId={}, error={}", keycloakUserId.getValue(), emailException.getMessage(), emailException);
             }
         } catch (KeycloakServiceException e) {
             // Check if it's a duplicate user error (HTTP 409)
             if (e.getMessage() != null && e.getMessage().contains("already exists")) {
                 // Rollback: delete user from database
-                logger.warn("Duplicate user detected, rolling back user creation: {}", e.getMessage());
+                log.warn("Duplicate user detected, rolling back user creation: {}", e.getMessage());
                 try {
                     userRepository.deleteById(userId);
                 } catch (Exception deleteException) {
-                    logger.error("Failed to delete user during rollback", deleteException);
+                    log.error("Failed to delete user during rollback", deleteException);
                 }
                 throw new DuplicateUserException(e.getMessage(), e);
             }
             // Other Keycloak errors
-            logger.error("Failed to create user in Keycloak, rolling back user creation", e);
+            log.error("Failed to create user in Keycloak, rolling back user creation", e);
             try {
                 userRepository.deleteById(userId);
             } catch (Exception deleteException) {
-                logger.error("Failed to delete user during rollback", deleteException);
+                log.error("Failed to delete user during rollback", deleteException);
             }
             throw new UserCreationException(String.format("Failed to create user in Keycloak: %s", e.getMessage()), e);
         } catch (Exception e) {
             // Rollback: delete user from database
-            logger.error("Failed to create user in Keycloak, rolling back user creation", e);
+            log.error("Failed to create user in Keycloak, rolling back user creation", e);
             try {
                 userRepository.deleteById(userId);
             } catch (Exception deleteException) {
-                logger.error("Failed to delete user during rollback", deleteException);
+                log.error("Failed to delete user during rollback", deleteException);
             }
             throw new UserCreationException(String.format("Failed to create user in Keycloak: %s", e.getMessage()), e);
         }
@@ -181,7 +180,7 @@ public class CreateUserCommandHandler {
             publishEventsAfterCommit(domainEvents);
         }
 
-        logger.info("User created successfully: userId={}, username={}", userId.getValue(), command.getUsername());
+        log.info("User created successfully: userId={}, username={}", userId.getValue(), command.getUsername());
 
         // 12. Return result
         return new CreateUserResult(userId.getValue(), true, "User created successfully");
@@ -198,7 +197,7 @@ public class CreateUserCommandHandler {
     private void publishEventsAfterCommit(List<DomainEvent<?>> domainEvents) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
             // No active transaction - publish immediately
-            logger.debug("No active transaction - publishing events immediately");
+            log.debug("No active transaction - publishing events immediately");
             eventPublisher.publish(domainEvents);
             return;
         }
@@ -208,10 +207,10 @@ public class CreateUserCommandHandler {
             @Override
             public void afterCommit() {
                 try {
-                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    log.debug("Transaction committed - publishing {} domain events", domainEvents.size());
                     eventPublisher.publish(domainEvents);
                 } catch (Exception e) {
-                    logger.error("Failed to publish domain events after transaction commit", e);
+                    log.error("Failed to publish domain events after transaction commit", e);
                     // Don't throw - transaction already committed, event publishing failure
                     // should be handled by retry mechanisms or dead letter queue
                 }

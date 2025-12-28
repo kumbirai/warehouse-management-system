@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.ccbsa.common.domain.TenantAwareAggregateRoot;
 import com.ccbsa.common.domain.valueobject.Description;
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.product.domain.core.event.ProductCreatedEvent;
 import com.ccbsa.wms.product.domain.core.event.ProductUpdatedEvent;
@@ -14,7 +15,6 @@ import com.ccbsa.wms.product.domain.core.valueobject.ProductBarcode;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductBrand;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCategory;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 import com.ccbsa.wms.product.domain.core.valueobject.UnitOfMeasure;
 
 /**

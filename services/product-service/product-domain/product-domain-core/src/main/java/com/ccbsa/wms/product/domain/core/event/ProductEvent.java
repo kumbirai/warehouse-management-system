@@ -2,7 +2,7 @@ package com.ccbsa.wms.product.domain.core.event;
 
 import com.ccbsa.common.domain.DomainEvent;
 import com.ccbsa.common.domain.EventMetadata;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
+import com.ccbsa.common.domain.valueobject.ProductId;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 

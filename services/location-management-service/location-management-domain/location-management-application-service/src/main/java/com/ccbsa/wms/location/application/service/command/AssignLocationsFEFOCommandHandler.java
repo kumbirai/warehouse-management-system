@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -22,6 +20,9 @@ import com.ccbsa.wms.location.domain.core.service.FEFOAssignmentService;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.location.domain.core.valueobject.StockItemAssignmentRequest;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Command Handler: AssignLocationsFEFOCommandHandler
  * <p>
@@ -34,18 +35,12 @@ import com.ccbsa.wms.location.domain.core.valueobject.StockItemAssignmentRequest
  * - Publish LocationAssignedEvent and LocationStatusChangedEvent
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class AssignLocationsFEFOCommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger(AssignLocationsFEFOCommandHandler.class);
-
     private final LocationRepository locationRepository;
     private final FEFOAssignmentService fefoAssignmentService;
     private final LocationEventPublisher eventPublisher;
-
-    public AssignLocationsFEFOCommandHandler(LocationRepository locationRepository, FEFOAssignmentService fefoAssignmentService, LocationEventPublisher eventPublisher) {
-        this.locationRepository = locationRepository;
-        this.fefoAssignmentService = fefoAssignmentService;
-        this.eventPublisher = eventPublisher;
-    }
 
     @Transactional
     public AssignLocationsFEResult handle(AssignLocationsFEFOCommand command) {
@@ -111,7 +106,8 @@ public class AssignLocationsFEFOCommandHandler {
         if (command.getTenantId() == null) {
             throw new IllegalArgumentException("TenantId is required");
         }
-        if (command.getStockItems() == null || command.getStockItems().isEmpty()) {
+        // StockItems validation is done in DTO constructor - no need to check null again
+        if (command.getStockItems().isEmpty()) {
             throw new IllegalArgumentException("Stock items list cannot be empty");
         }
     }
@@ -123,7 +119,7 @@ public class AssignLocationsFEFOCommandHandler {
      */
     private void publishEventsAfterCommit(List<DomainEvent<?>> domainEvents) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
-            logger.debug("No active transaction - publishing events immediately");
+            log.debug("No active transaction - publishing events immediately");
             eventPublisher.publish(domainEvents);
             return;
         }
@@ -132,10 +128,10 @@ public class AssignLocationsFEFOCommandHandler {
             @Override
             public void afterCommit() {
                 try {
-                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    log.debug("Transaction committed - publishing {} domain events", domainEvents.size());
                     eventPublisher.publish(domainEvents);
                 } catch (Exception e) {
-                    logger.error("Failed to publish domain events after transaction commit", e);
+                    log.error("Failed to publish domain events after transaction commit", e);
                 }
             }
         });

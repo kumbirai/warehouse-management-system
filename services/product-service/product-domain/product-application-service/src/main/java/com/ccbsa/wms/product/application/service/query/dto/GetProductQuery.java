@@ -1,57 +1,31 @@
 package com.ccbsa.wms.product.application.service.query.dto;
 
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.TenantId;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
+
+import lombok.Builder;
+import lombok.Getter;
 
 /**
  * Query DTO: GetProductQuery
  * <p>
  * Query object for retrieving a product by ID.
  */
+@Getter
+@Builder
 public final class GetProductQuery {
     private final ProductId productId;
     private final TenantId tenantId;
 
-    private GetProductQuery(Builder builder) {
-        this.productId = builder.productId;
-        this.tenantId = builder.tenantId;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public ProductId getProductId() {
-        return productId;
-    }
-
-    public TenantId getTenantId() {
-        return tenantId;
-    }
-
-    public static class Builder {
-        private ProductId productId;
-        private TenantId tenantId;
-
-        public Builder productId(ProductId productId) {
-            this.productId = productId;
-            return this;
+    public GetProductQuery(ProductId productId, TenantId tenantId) {
+        if (productId == null) {
+            throw new IllegalArgumentException("ProductId is required");
         }
-
-        public Builder tenantId(TenantId tenantId) {
-            this.tenantId = tenantId;
-            return this;
+        if (tenantId == null) {
+            throw new IllegalArgumentException("TenantId is required");
         }
-
-        public GetProductQuery build() {
-            if (productId == null) {
-                throw new IllegalArgumentException("ProductId is required");
-            }
-            if (tenantId == null) {
-                throw new IllegalArgumentException("TenantId is required");
-            }
-            return new GetProductQuery(this);
-        }
+        this.productId = productId;
+        this.tenantId = tenantId;
     }
 }
 

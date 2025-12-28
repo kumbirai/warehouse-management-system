@@ -9,11 +9,11 @@ import java.util.Set;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.ccbsa.wms.product.application.service.command.dto.ProductCsvRow;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * CSV Parser: ProductCsvParser
@@ -23,8 +23,8 @@ import com.ccbsa.wms.product.application.service.command.dto.ProductCsvRow;
  * Responsibilities: - Parse CSV content using Apache Commons CSV - Validate CSV format - Extract product data from CSV rows - Handle CSV parsing errors
  */
 @Component
+@Slf4j
 public class ProductCsvParser {
-    private static final Logger logger = LoggerFactory.getLogger(ProductCsvParser.class);
     private static final int MAX_ROWS = 10000;
 
     /**
@@ -67,12 +67,12 @@ public class ProductCsvParser {
 
                     rows.add(row);
                 } catch (IllegalArgumentException e) {
-                    logger.warn("Invalid CSV row {}: {}", rowNumber, e.getMessage());
+                    log.warn("Invalid CSV row {}: {}", rowNumber, e.getMessage());
                     throw new IllegalArgumentException(String.format("Row %d: %s", rowNumber, e.getMessage()), e);
                 }
             }
 
-            logger.debug("Parsed {} rows from CSV", rows.size());
+            log.debug("Parsed {} rows from CSV", rows.size());
             return rows;
 
         } catch (IOException e) {

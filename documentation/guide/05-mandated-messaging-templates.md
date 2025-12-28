@@ -2,8 +2,8 @@
 
 ## Warehouse Management System Integration - CCBSA LDP System
 
-**Document Version:** 1.0  
-**Date:** 2025-01  
+**Document Version:** 1.1
+**Date:** 2025-01
 **Status:** Approved
 
 ---
@@ -11,6 +11,56 @@
 ## Overview
 
 Templates for the **Messaging** module (`{service}-messaging`). Handles event-driven choreography.
+
+## Lombok Usage in Messaging Layer
+
+**RECOMMENDED**: Use Lombok for event publishers and listeners to reduce boilerplate.
+
+**Event Publishers**:
+- Use `@Slf4j` for logging
+- Use `@RequiredArgsConstructor` for dependency injection
+- Use `@Component` for Spring bean registration
+
+**Event Listeners**:
+- Use `@Slf4j` for logging
+- Use `@RequiredArgsConstructor` for dependency injection (if needed)
+- Use `@Component` for Spring bean registration
+- Combine with `@KafkaListener` for event consumption
+
+**Configuration Classes**:
+- Use `@Configuration` for Spring configuration
+- Use `@RequiredArgsConstructor` if configuration has dependencies
+
+**Example:**
+```java
+// Event Publisher with Lombok
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class StockManagementEventPublisherImpl implements StockManagementEventPublisher {
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    @Override
+    public void publish(List<DomainEvent<?>> events) {
+        log.info("Publishing {} events", events.size());
+        // implementation...
+    }
+}
+
+// Event Listener with Lombok
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class LocationAssignedEventListener {
+    private final StockItemRepository repository;
+
+    @KafkaListener(topics = "location-events", groupId = "stock-service")
+    public void onLocationAssigned(LocationAssignedEvent event) {
+        log.info("Processing LocationAssignedEvent: {}", event.getLocationId());
+        // implementation...
+    }
+}
+```
 
 ---
 
@@ -461,8 +511,23 @@ public class {Service}Configuration {
 
 ---
 
+## Implementation Checklist
+
+- [ ] Event publishers implement port interfaces from application-service layer
+- [ ] Event listeners annotated with `@KafkaListener` and `@Component`
+- [ ] Kafka configuration uses `@Qualifier("kafkaObjectMapper")` for ObjectMapper injection
+- [ ] Correlation ID extracted from events and set in `CorrelationContext`
+- [ ] Idempotency checks implemented in listeners
+- [ ] **Event publishers use Lombok** (`@Slf4j`, `@RequiredArgsConstructor`, `@Component`)
+- [ ] **Event listeners use Lombok** (`@Slf4j`, `@Component`, optionally `@RequiredArgsConstructor`)
+- [ ] **Configuration classes use Lombok** (`@Configuration`, optionally `@RequiredArgsConstructor`)
+
+---
+
 **Document Control**
 
-- **Version History:** v1.0 (2025-01) - Initial template creation
+- **Version History:**
+  - v1.1 (2025-01) - Added comprehensive Lombok usage guidelines for publishers, listeners, and configuration
+  - v1.0 (2025-01) - Initial template creation
 - **Review Cycle:** Review when messaging patterns change
 

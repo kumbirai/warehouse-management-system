@@ -3,8 +3,6 @@ package com.ccbsa.wms.product.application.service.command;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -21,6 +19,9 @@ import com.ccbsa.wms.product.domain.core.exception.BarcodeAlreadyExistsException
 import com.ccbsa.wms.product.domain.core.exception.ProductNotFoundException;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductBarcode;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Command Handler: UpdateProductCommandHandler
  * <p>
@@ -30,16 +31,11 @@ import com.ccbsa.wms.product.domain.core.valueobject.ProductBarcode;
  * transaction commit
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class UpdateProductCommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger(UpdateProductCommandHandler.class);
-
     private final ProductRepository repository;
     private final ProductEventPublisher eventPublisher;
-
-    public UpdateProductCommandHandler(ProductRepository repository, ProductEventPublisher eventPublisher) {
-        this.repository = repository;
-        this.eventPublisher = eventPublisher;
-    }
 
     @Transactional
     public UpdateProductResult handle(UpdateProductCommand command) {
@@ -73,8 +69,9 @@ public class UpdateProductCommandHandler {
         List<ProductBarcode> existingSecondaryBarcodes = new ArrayList<>(product.getSecondaryBarcodes());
 
         // Collect barcode values that are being kept (present in both existing and new lists)
+        // SecondaryBarcodes is validated as non-null in static factory method, but may be empty
         List<String> barcodesToKeep = new ArrayList<>();
-        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
+        if (!command.getSecondaryBarcodes().isEmpty()) {
             for (ProductBarcode newBarcode : command.getSecondaryBarcodes()) {
                 barcodesToKeep.add(newBarcode.getValue());
             }
@@ -88,7 +85,7 @@ public class UpdateProductCommandHandler {
         }
 
         // Add new secondary barcodes (only those not already present)
-        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
+        if (!command.getSecondaryBarcodes().isEmpty()) {
             for (ProductBarcode newBarcode : command.getSecondaryBarcodes()) {
                 // Only validate and add if not already present (avoid duplicate adds)
                 if (!product.hasBarcode(newBarcode.getValue())) {
@@ -134,7 +131,8 @@ public class UpdateProductCommandHandler {
         if (command.getTenantId() == null) {
             throw new IllegalArgumentException("TenantId is required");
         }
-        if (command.getDescription() == null || command.getDescription().trim().isEmpty()) {
+        // Description validation is done in static factory method - no need to check null again
+        if (command.getDescription().trim().isEmpty()) {
             throw new IllegalArgumentException("Description is required");
         }
         // Validate description length (Description value object will validate, but we validate here for better error messages)
@@ -160,7 +158,7 @@ public class UpdateProductCommandHandler {
      * @throws BarcodeAlreadyExistsException if barcode already exists (excluding the specified product)
      */
     private void validateBarcodeUniquenessExcludingProduct(ProductBarcode barcode, com.ccbsa.common.domain.valueobject.TenantId tenantId,
-                                                           com.ccbsa.wms.product.domain.core.valueobject.ProductId excludeProductId) {
+                                                           com.ccbsa.common.domain.valueobject.ProductId excludeProductId) {
         if (repository.existsByBarcodeAndTenantIdExcludingProduct(barcode, tenantId, excludeProductId)) {
             throw new BarcodeAlreadyExistsException(String.format("Product barcode already exists: %s", barcode.getValue()));
         }
@@ -173,7 +171,7 @@ public class UpdateProductCommandHandler {
      */
     private void publishEventsAfterCommit(List<DomainEvent<?>> domainEvents) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
-            logger.debug("No active transaction - publishing events immediately");
+            log.debug("No active transaction - publishing events immediately");
             eventPublisher.publish(domainEvents);
             return;
         }
@@ -182,10 +180,10 @@ public class UpdateProductCommandHandler {
             @Override
             public void afterCommit() {
                 try {
-                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    log.debug("Transaction committed - publishing {} domain events", domainEvents.size());
                     eventPublisher.publish(domainEvents);
                 } catch (Exception e) {
-                    logger.error("Failed to publish domain events after transaction commit", e);
+                    log.error("Failed to publish domain events after transaction commit", e);
                 }
             }
         });

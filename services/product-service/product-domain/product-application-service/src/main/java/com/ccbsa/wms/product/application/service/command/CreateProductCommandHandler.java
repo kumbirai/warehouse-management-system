@@ -3,8 +3,6 @@ package com.ccbsa.wms.product.application.service.command;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -12,6 +10,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import com.ccbsa.common.domain.DomainEvent;
 import com.ccbsa.common.domain.valueobject.Description;
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.wms.product.application.service.command.dto.CreateProductCommand;
 import com.ccbsa.wms.product.application.service.command.dto.CreateProductResult;
 import com.ccbsa.wms.product.application.service.port.messaging.ProductEventPublisher;
@@ -20,7 +19,10 @@ import com.ccbsa.wms.product.domain.core.entity.Product;
 import com.ccbsa.wms.product.domain.core.exception.BarcodeAlreadyExistsException;
 import com.ccbsa.wms.product.domain.core.exception.ProductCodeAlreadyExistsException;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductBarcode;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Command Handler: CreateProductCommandHandler
@@ -31,18 +33,15 @@ import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
  * events after transaction commit
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class CreateProductCommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger(CreateProductCommandHandler.class);
-
     private final ProductRepository repository;
     private final ProductEventPublisher eventPublisher;
 
-    public CreateProductCommandHandler(ProductRepository repository, ProductEventPublisher eventPublisher) {
-        this.repository = repository;
-        this.eventPublisher = eventPublisher;
-    }
-
     @Transactional
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "Null checks are defensive for optional DTO fields (category, brand). SpotBugs false "
+            + "positive.")
     public CreateProductResult handle(CreateProductCommand command) {
         // 1. Validate command
         validateCommand(command);
@@ -54,7 +53,8 @@ public class CreateProductCommandHandler {
         validateBarcodeUniqueness(command.getPrimaryBarcode(), command.getTenantId());
 
         // 4. Validate secondary barcodes uniqueness
-        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
+        // SecondaryBarcodes is validated as non-null in static factory method, but may be empty
+        if (!command.getSecondaryBarcodes().isEmpty()) {
             for (ProductBarcode barcode : command.getSecondaryBarcodes()) {
                 validateBarcodeUniqueness(barcode, command.getTenantId());
             }
@@ -65,16 +65,19 @@ public class CreateProductCommandHandler {
                 .description(Description.of(command.getDescription())).primaryBarcode(command.getPrimaryBarcode()).unitOfMeasure(command.getUnitOfMeasure());
 
         // Add secondary barcodes if provided
-        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
+        if (!command.getSecondaryBarcodes().isEmpty()) {
             builder.secondaryBarcodes(command.getSecondaryBarcodes());
         }
 
-        // Set optional fields
-        if (command.getCategory() != null && !command.getCategory().trim().isEmpty()) {
-            builder.category(command.getCategory());
+        // Set optional fields (category and brand may be null - they're optional)
+        // SpotBugs flags these as redundant, but they're defensive checks for optional fields
+        @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE") String category = command.getCategory();
+        if (category != null && !category.trim().isEmpty()) {
+            builder.category(category);
         }
-        if (command.getBrand() != null && !command.getBrand().trim().isEmpty()) {
-            builder.brand(command.getBrand());
+        @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE") String brand = command.getBrand();
+        if (brand != null && !brand.trim().isEmpty()) {
+            builder.brand(brand);
         }
 
         Product product = builder.build();
@@ -113,7 +116,8 @@ public class CreateProductCommandHandler {
         if (command.getProductCode() == null) {
             throw new IllegalArgumentException("ProductCode is required");
         }
-        if (command.getDescription() == null || command.getDescription().trim().isEmpty()) {
+        // Description validation is done in static factory method - no need to check null again
+        if (command.getDescription().trim().isEmpty()) {
             throw new IllegalArgumentException("Description is required");
         }
         // Validate description length (Description value object will validate, but we validate here for better error messages)
@@ -162,7 +166,7 @@ public class CreateProductCommandHandler {
     private void publishEventsAfterCommit(List<DomainEvent<?>> domainEvents) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
             // No active transaction - publish immediately
-            logger.debug("No active transaction - publishing events immediately");
+            log.debug("No active transaction - publishing events immediately");
             eventPublisher.publish(domainEvents);
             return;
         }
@@ -172,10 +176,10 @@ public class CreateProductCommandHandler {
             @Override
             public void afterCommit() {
                 try {
-                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    log.debug("Transaction committed - publishing {} domain events", domainEvents.size());
                     eventPublisher.publish(domainEvents);
                 } catch (Exception e) {
-                    logger.error("Failed to publish domain events after transaction commit", e);
+                    log.error("Failed to publish domain events after transaction commit", e);
                     // Don't throw - transaction already committed, event publishing failure
                     // should be handled by retry mechanisms or dead letter queue
                 }

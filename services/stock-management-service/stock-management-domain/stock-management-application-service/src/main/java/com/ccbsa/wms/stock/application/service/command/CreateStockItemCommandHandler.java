@@ -2,20 +2,21 @@ package com.ccbsa.wms.stock.application.service.command;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.ccbsa.common.domain.DomainEvent;
+import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.wms.stock.application.service.command.dto.CreateStockItemCommand;
 import com.ccbsa.wms.stock.application.service.command.dto.CreateStockItemResult;
 import com.ccbsa.wms.stock.application.service.port.messaging.StockManagementEventPublisher;
 import com.ccbsa.wms.stock.application.service.port.repository.StockItemRepository;
 import com.ccbsa.wms.stock.domain.core.entity.StockItem;
-import com.ccbsa.wms.stock.domain.core.valueobject.StockItemId;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Command Handler: CreateStockItemCommandHandler
@@ -29,15 +30,11 @@ import com.ccbsa.wms.stock.domain.core.valueobject.StockItemId;
  * - Publish StockClassifiedEvent (if classification assigned)
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class CreateStockItemCommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger(CreateStockItemCommandHandler.class);
     private final StockItemRepository repository;
     private final StockManagementEventPublisher eventPublisher;
-
-    public CreateStockItemCommandHandler(StockItemRepository repository, StockManagementEventPublisher eventPublisher) {
-        this.repository = repository;
-        this.eventPublisher = eventPublisher;
-    }
 
     @Transactional
     public CreateStockItemResult handle(CreateStockItemCommand command) {
@@ -97,7 +94,7 @@ public class CreateStockItemCommandHandler {
     private void publishEventsAfterCommit(List<DomainEvent<?>> domainEvents) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
             // No active transaction - publish immediately
-            logger.debug("No active transaction - publishing events immediately");
+            log.debug("No active transaction - publishing events immediately");
             eventPublisher.publish(domainEvents);
             return;
         }
@@ -107,10 +104,10 @@ public class CreateStockItemCommandHandler {
             @Override
             public void afterCommit() {
                 try {
-                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    log.debug("Transaction committed - publishing {} domain events", domainEvents.size());
                     eventPublisher.publish(domainEvents);
                 } catch (Exception e) {
-                    logger.error("Failed to publish domain events after transaction commit", e);
+                    log.error("Failed to publish domain events after transaction commit", e);
                     // Don't throw - transaction already committed, event publishing failure
                     // should be handled by retry mechanisms or dead letter queue
                 }

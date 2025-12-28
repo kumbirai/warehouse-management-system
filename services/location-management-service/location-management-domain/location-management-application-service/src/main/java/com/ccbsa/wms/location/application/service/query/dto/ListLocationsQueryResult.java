@@ -1,74 +1,41 @@
 package com.ccbsa.wms.location.application.service.query.dto;
 
+import java.util.Collections;
 import java.util.List;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.Builder;
+import lombok.Getter;
 
 /**
  * Query Result DTO: ListLocationsQueryResult
  * <p>
  * Result object returned from list locations query. Contains a list of location query results.
  */
+@Getter
+@Builder
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Lombok builder stores list directly. Defensive copy made in constructor and getter returns immutable view.")
 public final class ListLocationsQueryResult {
     private final List<LocationQueryResult> locations;
     private final Integer totalCount;
     private final Integer page;
     private final Integer size;
 
-    private ListLocationsQueryResult(Builder builder) {
-        this.locations = builder.locations != null ? List.copyOf(builder.locations) : List.of();
-        this.totalCount = builder.totalCount;
-        this.page = builder.page;
-        this.size = builder.size;
+    public ListLocationsQueryResult(List<LocationQueryResult> locations, Integer totalCount, Integer page, Integer size) {
+        // Defensive copy to prevent external modification
+        this.locations = locations != null ? List.copyOf(locations) : List.of();
+        this.totalCount = totalCount;
+        this.page = page;
+        this.size = size;
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
+    /**
+     * Returns an unmodifiable view of the locations list.
+     *
+     * @return Unmodifiable list of locations
+     */
     public List<LocationQueryResult> getLocations() {
-        return locations;
-    }
-
-    public Integer getTotalCount() {
-        return totalCount;
-    }
-
-    public Integer getPage() {
-        return page;
-    }
-
-    public Integer getSize() {
-        return size;
-    }
-
-    public static class Builder {
-        private List<LocationQueryResult> locations;
-        private Integer totalCount;
-        private Integer page;
-        private Integer size;
-
-        public Builder locations(List<LocationQueryResult> locations) {
-            this.locations = locations != null ? List.copyOf(locations) : null;
-            return this;
-        }
-
-        public Builder totalCount(Integer totalCount) {
-            this.totalCount = totalCount;
-            return this;
-        }
-
-        public Builder page(Integer page) {
-            this.page = page;
-            return this;
-        }
-
-        public Builder size(Integer size) {
-            this.size = size;
-            return this;
-        }
-
-        public ListLocationsQueryResult build() {
-            return new ListLocationsQueryResult(this);
-        }
+        return Collections.unmodifiableList(locations);
     }
 }
 

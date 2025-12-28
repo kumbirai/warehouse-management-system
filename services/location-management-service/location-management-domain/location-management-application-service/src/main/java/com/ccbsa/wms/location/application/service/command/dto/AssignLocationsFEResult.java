@@ -1,43 +1,40 @@
 package com.ccbsa.wms.location.application.service.command.dto;
 
+import java.util.Collections;
 import java.util.Map;
 
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.Builder;
+import lombok.Getter;
 
 /**
  * Result DTO: AssignLocationsFEResult
  * <p>
  * Result object returned after FEFO location assignment.
  */
+@Getter
+@Builder
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Lombok builder stores map directly. Defensive copy made in constructor and getter returns immutable view.")
 public final class AssignLocationsFEResult {
     private final Map<String, LocationId> assignments; // Map of StockItemId (String) to LocationId
 
-    private AssignLocationsFEResult(Builder builder) {
-        this.assignments = builder.assignments != null ? Map.copyOf(builder.assignments) : Map.of();
+    public AssignLocationsFEResult(Map<String, LocationId> assignments) {
+        if (assignments == null) {
+            throw new IllegalArgumentException("Assignments map is required");
+        }
+        // Defensive copy to prevent external modification
+        this.assignments = Map.copyOf(assignments);
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
+    /**
+     * Returns an unmodifiable view of the assignments map.
+     *
+     * @return Unmodifiable map of assignments
+     */
     public Map<String, LocationId> getAssignments() {
-        return assignments;
-    }
-
-    public static class Builder {
-        private Map<String, LocationId> assignments;
-
-        public Builder assignments(Map<String, LocationId> assignments) {
-            this.assignments = assignments != null ? new java.util.HashMap<>(assignments) : null;
-            return this;
-        }
-
-        public AssignLocationsFEResult build() {
-            if (assignments == null) {
-                throw new IllegalArgumentException("Assignments map is required");
-            }
-            return new AssignLocationsFEResult(this);
-        }
+        return Collections.unmodifiableMap(assignments);
     }
 }
 

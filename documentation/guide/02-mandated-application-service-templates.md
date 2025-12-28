@@ -2,9 +2,9 @@
 
 ## Warehouse Management System Integration - CCBSA LDP System
 
-**Document Version:** 1.0  
-**Date:** 2025-01  
-**Status:** Approved  
+**Document Version:** 1.1
+**Date:** 2025-01
+**Status:** Approved
 **Related Documents:**
 
 - [Mandated Implementation Template Guide](mandated-Implementation-template-guide.md)
@@ -24,6 +24,26 @@ defines port interfaces.
 - CQRS separation (command vs query handlers)
 - Event publishing after successful commits
 - Transaction management (one transaction per use case)
+- **Lombok recommended for Command/Query/Result DTOs to reduce boilerplate**
+
+## Lombok Usage in Application Service Layer
+
+**RECOMMENDED**: Use Lombok for all DTOs (Commands, Queries, Results) in this layer.
+
+**Handlers (Command/Query)**:
+- Use `@Slf4j` for logging instead of manual logger declaration
+- Use `@RequiredArgsConstructor` for dependency injection (fields marked `final`)
+
+**DTOs (Commands, Queries, Results)**:
+- Use `@Getter` for field accessors
+- Use `@Builder` for fluent object construction
+- Use `@ToString` for debugging (avoid for sensitive data)
+- Use `@EqualsAndHashCode` for value comparison (if needed)
+
+**Anti-Patterns to Avoid:**
+- `@Data` - Too broad, prefer specific annotations
+- `@Value` - Only for truly immutable value objects
+- Avoid Lombok if DTOs contain complex validation logic
 
 ---
 
@@ -144,8 +164,8 @@ import com.ccbsa.wms.{service}.domain.core.entity.{DomainObject};
 import com.ccbsa.wms.{service}.domain.core.valueobject.{DomainObject}Id;
 import com.ccbsa.wms.{service}.domain.core.exception.{DomainObject}NotFoundException;
 import com.ccbsa.common.domain.DomainEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -155,9 +175,9 @@ import java.util.List;
 
 /**
  * Command Handler: {Action}{DomainObject}CommandHandler
- * 
+ *
  * Handles {action description} use case for {DomainObject}.
- * 
+ *
  * Responsibilities:
  * - Load aggregate from repository
  * - Execute business logic via aggregate
@@ -165,26 +185,13 @@ import java.util.List;
  * - Publish domain events
  * - Return command result
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class {Action}{DomainObject}CommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger({Action}{DomainObject}CommandHandler.class);
-    
+
     private final {DomainObject}Repository repository;
     private final {Service}EventPublisher eventPublisher;
-    
-    /**
-     * Constructor for dependency injection.
-     * 
-     * @param repository Repository port
-     * @param eventPublisher Event publisher port
-     */
-    public {Action}{DomainObject}CommandHandler(
-            {DomainObject}Repository repository,
-            {Service}EventPublisher eventPublisher
-    ) {
-        this.repository = repository;
-        this.eventPublisher = eventPublisher;
-    }
     
     /**
      * Handles the {Action}{DomainObject}Command.
@@ -862,6 +869,50 @@ public class {Action}{DomainObject}Command {
 }
 ```
 
+### Command DTO Template (Lombok Version - RECOMMENDED)
+
+**NOTE**: Use this Lombok-based approach for new code to reduce boilerplate.
+
+```java
+package com.ccbsa.wms.{service}.application.service.command.dto;
+
+import com.ccbsa.wms.{service}.domain.core.valueobject.{DomainObject}Id;
+import com.ccbsa.wms.{service}.domain.core.valueobject.{Attribute};
+import com.ccbsa.common.domain.valueobject.TenantId;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+/**
+ * Command DTO: {Action}{DomainObject}Command
+ *
+ * Represents command to {action description}.
+ */
+@Getter
+@Builder
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+public class {Action}{DomainObject}Command {
+
+    @EqualsAndHashCode.Include
+    private final {DomainObject}Id {domainObject}Id;
+
+    @EqualsAndHashCode.Include
+    private final TenantId tenantId;
+
+    private final {Attribute} {attribute};
+}
+```
+
+**Key Lombok Annotations Explained:**
+- `@Getter` - Generates getters for all fields
+- `@Builder` - Generates builder pattern (use: `Command.builder().field(value).build()`)
+- `@ToString` - Generates toString() for debugging
+- `@EqualsAndHashCode` - Generates equals/hashCode based on included fields only
+
+---
+
 ### Command Result DTO Template
 
 ```java
@@ -933,6 +984,36 @@ public class {Action}{DomainObject}Result {
     }
 }
 ```
+
+### Command Result DTO Template (Lombok Version - RECOMMENDED)
+
+**NOTE**: Use this Lombok-based approach for new code to reduce boilerplate.
+
+```java
+package com.ccbsa.wms.{service}.application.service.command.dto;
+
+import com.ccbsa.wms.{service}.domain.core.valueobject.{DomainObject}Id;
+import lombok.Builder;
+import lombok.Getter;
+import java.time.LocalDateTime;
+
+/**
+ * Command Result DTO: {Action}{DomainObject}Result
+ *
+ * Represents result of {action} command execution.
+ * Contains only essential information, not full domain entity.
+ */
+@Getter
+@Builder
+public class {Action}{DomainObject}Result {
+
+    private final {DomainObject}Id {domainObject}Id;
+    private final {DomainObject}Status status;
+    private final LocalDateTime {timestamp};
+}
+```
+
+---
 
 ### Query Result DTO Template
 
@@ -1100,6 +1181,7 @@ public class {Action}{DomainObject}CommandHandler {
 
 - [ ] Command handlers annotated with `@Component` and `@Transactional`
 - [ ] Query handlers annotated with `@Component` and `@Transactional(readOnly = true)`
+- [ ] **Command/Query handlers use `@Slf4j` and `@RequiredArgsConstructor` (Lombok)**
 - [ ] Repository interfaces defined in `port.repository` package (for aggregates)
 - [ ] Data interfaces defined in `port.data` package (for read models)
 - [ ] Service port interfaces defined in `port.service` package
@@ -1110,14 +1192,16 @@ public class {Action}{DomainObject}CommandHandler {
 - [ ] Domain events cleared after publishing
 - [ ] Command results return DTOs, not domain entities
 - [ ] Query results return optimized DTOs
-- [ ] All DTOs use builder pattern
+- [ ] **All DTOs use Lombok** (`@Getter`, `@Builder`, etc.) - **RECOMMENDED**
 - [ ] Validation in command/query handlers
 
 ---
 
 **Document Control**
 
-- **Version History:** v1.0 (2025-01) - Initial template creation
+- **Version History:**
+  - v1.1 (2025-01) - Added Lombok usage guidelines and templates for DTOs and handlers
+  - v1.0 (2025-01) - Initial template creation
 - **Review Cycle:** Review when application service patterns change
 - **Distribution:** All development team members
 

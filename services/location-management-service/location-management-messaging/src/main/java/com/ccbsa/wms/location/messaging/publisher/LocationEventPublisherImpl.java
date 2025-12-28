@@ -13,9 +13,14 @@ import com.ccbsa.common.domain.EventMetadata;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.location.application.service.port.messaging.LocationEventPublisher;
 import com.ccbsa.wms.location.domain.core.event.LocationAssignedEvent;
+import com.ccbsa.wms.location.domain.core.event.LocationBlockedEvent;
 import com.ccbsa.wms.location.domain.core.event.LocationCreatedEvent;
 import com.ccbsa.wms.location.domain.core.event.LocationManagementEvent;
 import com.ccbsa.wms.location.domain.core.event.LocationStatusChangedEvent;
+import com.ccbsa.wms.location.domain.core.event.LocationUnblockedEvent;
+import com.ccbsa.wms.location.domain.core.event.StockMovementCancelledEvent;
+import com.ccbsa.wms.location.domain.core.event.StockMovementCompletedEvent;
+import com.ccbsa.wms.location.domain.core.event.StockMovementInitiatedEvent;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -105,6 +110,42 @@ public class LocationEventPublisherImpl implements LocationEventPublisher {
             LocationStatusChangedEvent locationStatusChangedEvent = (LocationStatusChangedEvent) event;
             return new LocationStatusChangedEvent(locationId, locationStatusChangedEvent.getTenantId(), locationStatusChangedEvent.getOldStatus(),
                     locationStatusChangedEvent.getNewStatus(), metadata);
+        }
+
+        if (event instanceof StockMovementInitiatedEvent) {
+            StockMovementInitiatedEvent stockMovementInitiatedEvent = (StockMovementInitiatedEvent) event;
+            return new StockMovementInitiatedEvent(stockMovementInitiatedEvent.getMovementId(), stockMovementInitiatedEvent.getTenantId(),
+                    stockMovementInitiatedEvent.getStockItemId(), stockMovementInitiatedEvent.getProductId(), stockMovementInitiatedEvent.getSourceLocationId(),
+                    stockMovementInitiatedEvent.getDestinationLocationId(), stockMovementInitiatedEvent.getQuantity(), stockMovementInitiatedEvent.getMovementType(),
+                    stockMovementInitiatedEvent.getReason(), stockMovementInitiatedEvent.getInitiatedBy(), stockMovementInitiatedEvent.getInitiatedAt(), metadata);
+        }
+
+        if (event instanceof StockMovementCompletedEvent) {
+            StockMovementCompletedEvent stockMovementCompletedEvent = (StockMovementCompletedEvent) event;
+            return new StockMovementCompletedEvent(stockMovementCompletedEvent.getMovementId(), stockMovementCompletedEvent.getTenantId(),
+                    stockMovementCompletedEvent.getStockItemId(), stockMovementCompletedEvent.getProductId(), stockMovementCompletedEvent.getSourceLocationId(),
+                    stockMovementCompletedEvent.getDestinationLocationId(), stockMovementCompletedEvent.getQuantity(), stockMovementCompletedEvent.getMovementType(),
+                    stockMovementCompletedEvent.getReason(), stockMovementCompletedEvent.getInitiatedBy(), stockMovementCompletedEvent.getInitiatedAt(),
+                    stockMovementCompletedEvent.getCompletedBy(), stockMovementCompletedEvent.getCompletedAt(), metadata);
+        }
+
+        if (event instanceof StockMovementCancelledEvent) {
+            StockMovementCancelledEvent stockMovementCancelledEvent = (StockMovementCancelledEvent) event;
+            return new StockMovementCancelledEvent(stockMovementCancelledEvent.getMovementId(), stockMovementCancelledEvent.getTenantId(),
+                    stockMovementCancelledEvent.getStockItemId(), stockMovementCancelledEvent.getSourceLocationId(), stockMovementCancelledEvent.getDestinationLocationId(),
+                    stockMovementCancelledEvent.getCancelledBy(), stockMovementCancelledEvent.getCancelledAt(), stockMovementCancelledEvent.getCancellationReason(), metadata);
+        }
+
+        if (event instanceof LocationBlockedEvent) {
+            LocationBlockedEvent locationBlockedEvent = (LocationBlockedEvent) event;
+            return new LocationBlockedEvent(locationBlockedEvent.getLocationId(), locationBlockedEvent.getTenantId(), locationBlockedEvent.getBlockedBy(),
+                    locationBlockedEvent.getReason(), locationBlockedEvent.getBlockedAt(), metadata);
+        }
+
+        if (event instanceof LocationUnblockedEvent) {
+            LocationUnblockedEvent locationUnblockedEvent = (LocationUnblockedEvent) event;
+            return new LocationUnblockedEvent(locationUnblockedEvent.getLocationId(), locationUnblockedEvent.getTenantId(), locationUnblockedEvent.getUnblockedBy(),
+                    locationUnblockedEvent.getNewStatus(), locationUnblockedEvent.getUnblockedAt(), metadata);
         }
 
         // Unknown event type, return original

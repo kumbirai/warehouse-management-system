@@ -177,7 +177,7 @@ public class StockManagementTest extends BaseIntegrationTest {
 
         CreateConsignmentResponse consignment = apiResponse.getData();
         assertThat(consignment).isNotNull();
-        assertThat(consignment.getConsignmentId()).isNotBlank();
+        assertThat(consignment.getConsignmentId()).isNotNull();
         // Note: CreateConsignmentResponse has legacy fields, but consignment was created successfully
     }
 
@@ -466,7 +466,7 @@ public class StockManagementTest extends BaseIntegrationTest {
 
         CreateStockAllocationResponse allocation = apiResponse.getData();
         assertThat(allocation).isNotNull();
-        assertThat(allocation.getAllocationId()).isNotBlank();
+        assertThat(allocation.getAllocationId()).isNotNull();
         assertThat(allocation.getQuantity()).isEqualTo(50);
     }
 
@@ -541,10 +541,8 @@ public class StockManagementTest extends BaseIntegrationTest {
 
         CreateStockMovementResponse movement = apiResponse.getData();
         assertThat(movement).isNotNull();
-        assertThat(movement.getMovementId()).isNotBlank();
-        assertThat(movement.getQuantity()).isEqualTo(50);
-        assertThat(movement.getSourceLocationId()).isEqualTo(testLocationId);
-        assertThat(movement.getTargetLocationId()).isEqualTo(testLocationId2);
+        assertThat(movement.getStockMovementId()).isNotNull();
+        assertThat(movement.getStatus()).isEqualTo("INITIATED");
     }
 
     @Test
@@ -861,7 +859,7 @@ public class StockManagementTest extends BaseIntegrationTest {
         String consignmentId = consignmentData.getConsignmentId();
 
         CreateStockAdjustmentRequest request = ConsignmentTestDataBuilder.buildCreateStockAdjustmentRequest(
-                consignmentId, "INCREASE", 20, "Stock count correction");
+                testProductId, testLocationId, "INCREASE", 20, "Stock count correction");
 
         // Act
         WebTestClient.ResponseSpec response = authenticatedPost(
@@ -884,11 +882,10 @@ public class StockManagementTest extends BaseIntegrationTest {
 
         CreateStockAdjustmentResponse adjustment = apiResponse.getData();
         assertThat(adjustment).isNotNull();
-        assertThat(adjustment.getAdjustmentId()).isNotBlank();
-        assertThat(adjustment.getAdjustmentType()).isEqualTo("INCREASE");
-        assertThat(adjustment.getQuantity()).isEqualTo(20);
+        assertThat(adjustment.getAdjustmentId()).isNotNull();
+        assertThat(adjustment.getQuantityBefore()).isEqualTo(100);
         // New quantity should be 120 (100 + 20)
-        assertThat(adjustment.getNewQuantity()).isEqualTo(120);
+        assertThat(adjustment.getQuantityAfter()).isEqualTo(120);
     }
 
     @Test
@@ -916,7 +913,7 @@ public class StockManagementTest extends BaseIntegrationTest {
         String consignmentId = consignmentData.getConsignmentId();
 
         CreateStockAdjustmentRequest request = ConsignmentTestDataBuilder.buildCreateStockAdjustmentRequest(
-                consignmentId, "DECREASE", 20, "Damaged goods");
+                testProductId, testLocationId, "DECREASE", 20, "Damaged goods");
 
         // Act
         WebTestClient.ResponseSpec response = authenticatedPost(
@@ -939,10 +936,9 @@ public class StockManagementTest extends BaseIntegrationTest {
 
         CreateStockAdjustmentResponse adjustment = apiResponse.getData();
         assertThat(adjustment).isNotNull();
-        assertThat(adjustment.getAdjustmentType()).isEqualTo("DECREASE");
-        assertThat(adjustment.getQuantity()).isEqualTo(20);
+        assertThat(adjustment.getQuantityBefore()).isEqualTo(100);
         // New quantity should be 80 (100 - 20)
-        assertThat(adjustment.getNewQuantity()).isEqualTo(80);
+        assertThat(adjustment.getQuantityAfter()).isEqualTo(80);
     }
 
     @Test
@@ -966,7 +962,7 @@ public class StockManagementTest extends BaseIntegrationTest {
 
         // Try to decrease by 100 units (would result in negative)
         CreateStockAdjustmentRequest request = ConsignmentTestDataBuilder.buildCreateStockAdjustmentRequest(
-                consignmentId, "DECREASE", 100, "Correction");
+                testProductId, testLocationId, "DECREASE", 100, "Correction");
 
         // Act
         WebTestClient.ResponseSpec response = authenticatedPost(

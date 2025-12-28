@@ -2,22 +2,22 @@ package com.ccbsa.wms.product.messaging.publisher;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.application.context.CorrelationContext;
 import com.ccbsa.common.domain.DomainEvent;
 import com.ccbsa.common.domain.EventMetadata;
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.product.application.service.port.messaging.ProductEventPublisher;
 import com.ccbsa.wms.product.domain.core.event.ProductCreatedEvent;
 import com.ccbsa.wms.product.domain.core.event.ProductEvent;
 import com.ccbsa.wms.product.domain.core.event.ProductUpdatedEvent;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Event Publisher Adapter: ProductEventPublisherAdapter
@@ -29,14 +29,11 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @Component
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is a managed bean and treated as immutable port")
+@Slf4j
+@RequiredArgsConstructor
 public class ProductEventPublisherAdapter implements ProductEventPublisher {
-    private static final Logger logger = LoggerFactory.getLogger(ProductEventPublisherAdapter.class);
     private static final String PRODUCT_EVENTS_TOPIC = "product-events";
     private final KafkaTemplate<String, Object> kafkaTemplate;
-
-    public ProductEventPublisherAdapter(KafkaTemplate<String, Object> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
-    }
 
     @Override
     public void publish(List<DomainEvent<?>> events) {
@@ -60,10 +57,10 @@ public class ProductEventPublisherAdapter implements ProductEventPublisher {
 
             String key = enrichedEvent.getAggregateId();
             kafkaTemplate.send(PRODUCT_EVENTS_TOPIC, key, enrichedEvent);
-            logger.debug("Published product event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
+            log.debug("Published product event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
                     enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
         } catch (Exception e) {
-            logger.error("Failed to publish product event: {}", event.getClass().getSimpleName(), e);
+            log.error("Failed to publish product event: {}", event.getClass().getSimpleName(), e);
             throw new RuntimeException("Failed to publish product event", e);
         }
     }
@@ -104,7 +101,7 @@ public class ProductEventPublisherAdapter implements ProductEventPublisher {
         }
 
         // Unknown event type, return original
-        logger.warn("Unknown product event type: {}. Event will be published without metadata.", event.getClass().getName());
+        log.warn("Unknown product event type: {}. Event will be published without metadata.", event.getClass().getName());
         return event;
     }
 

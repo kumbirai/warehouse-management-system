@@ -6,40 +6,39 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ccbsa.wms.stock.application.service.port.repository.StockItemRepository;
+import com.ccbsa.wms.stock.application.service.port.data.StockItemViewRepository;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemQueryResult;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemsByClassificationQuery;
-import com.ccbsa.wms.stock.domain.core.entity.StockItem;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Query Handler: GetStockItemsByClassificationQueryHandler
  * <p>
- * Handles retrieval of stock items by classification.
+ * Handles retrieval of stock item views by classification.
  * <p>
  * Responsibilities:
- * - Load stock items from repository by classification
- * - Map aggregates to query result DTOs
+ * - Load stock item views from data port (read model) by classification
+ * - Map views to query result DTOs
  * - Return optimized read model
+ * <p>
+ * Uses data port (StockItemViewRepository) instead of repository port for CQRS compliance.
  */
 @Component
+@RequiredArgsConstructor
 public class GetStockItemsByClassificationQueryHandler {
-    private final StockItemRepository repository;
-
-    public GetStockItemsByClassificationQueryHandler(StockItemRepository repository) {
-        this.repository = repository;
-    }
+    private final StockItemViewRepository viewRepository;
 
     @Transactional(readOnly = true)
     public List<GetStockItemQueryResult> handle(GetStockItemsByClassificationQuery query) {
-        // 1. Load aggregates
-        List<StockItem> stockItems = repository.findByClassification(query.getClassification(), query.getTenantId());
+        // 1. Load read models (views) from data port
+        var stockItemViews = viewRepository.findByTenantIdAndClassification(query.getTenantId(), query.getClassification());
 
-        // 2. Map to query results
-        return stockItems.stream()
-                .map(stockItem -> GetStockItemQueryResult.builder().stockItemId(stockItem.getId()).productId(stockItem.getProductId()).locationId(stockItem.getLocationId())
-                        .quantity(stockItem.getQuantity()).expirationDate(stockItem.getExpirationDate()).classification(stockItem.getClassification())
-                        .consignmentId(stockItem.getConsignmentId()).createdAt(stockItem.getCreatedAt()).lastModifiedAt(stockItem.getLastModifiedAt()).build())
-                .collect(Collectors.toList());
+        // 2. Map views to query results
+        return stockItemViews.stream()
+                .map(view -> GetStockItemQueryResult.builder().stockItemId(view.getStockItemId()).productId(view.getProductId()).locationId(view.getLocationId())
+                        .quantity(view.getQuantity()).expirationDate(view.getExpirationDate()).classification(view.getClassification()).consignmentId(view.getConsignmentId())
+                        .createdAt(view.getCreatedAt()).lastModifiedAt(view.getLastModifiedAt()).build()).collect(Collectors.toList());
     }
 }
 

@@ -121,17 +121,19 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: gateway-api-tests/target/surefire-reports/
+          if-no-files-found: ignore
 
       - name: Upload Test Reports
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-reports
           path: gateway-api-tests/target/site/
+          if-no-files-found: ignore
 
       - name: Publish Test Results
         if: always()
@@ -148,8 +150,9 @@ jobs:
 
       - name: Upload Service Logs
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: service-logs
           path: logs/
+          if-no-files-found: ignore
 

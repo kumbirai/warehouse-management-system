@@ -22,6 +22,8 @@ spring:
       hibernate:
         # Dialect is auto-detected, no need to specify explicitly
         format_sql: true
+        # Configure tenant-aware physical naming strategy for dynamic schema resolution
+        physical_naming_strategy: com.ccbsa.wms.common.dataaccess.naming.TenantAwarePhysicalNamingStrategy
   
   # Flyway Configuration
   flyway:
@@ -84,7 +86,14 @@ spring:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:7080/realms/wms-realm}
           jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:7080/realms/wms-realm/protocol/openid-connect/certs}
-  
+
+# Keycloak Service Account Configuration (for service-to-service authentication)
+keycloak:
+  service-account:
+    token-endpoint: ${KEYCLOAK_TOKEN_ENDPOINT:http://localhost:7080/realms/wms-realm/protocol/openid-connect/token}
+    client-id: ${SERVICE_ACCOUNT_CLIENT_ID:wms-service-account}
+    client-secret: ${SERVICE_ACCOUNT_CLIENT_SECRET:0y9HDRzWQE0FP7SlDBwmmj2EeVJ0tTC9}
+
   # Cache Configuration
   cache:
     type: redis
@@ -172,6 +181,9 @@ logging:
     root: INFO
     com.ccbsa.wms.stockmanagement: INFO
     com.ccbsa.wms.stockmanagement.application: DEBUG
+    com.ccbsa.wms.stock.messaging: DEBUG
+    com.ccbsa.wms.stock.messaging.listener: DEBUG
+    com.ccbsa.wms.stock.messaging.publisher: INFO
     org.springframework.security: WARN
     org.springframework.web: INFO
     org.keycloak: WARN

@@ -2,8 +2,8 @@
 
 ## Warehouse Management System Integration - CCBSA LDP System
 
-**Document Version:** 1.0  
-**Date:** 2025-01  
+**Document Version:** 1.1
+**Date:** 2025-01
 **Status:** Approved
 
 ---
@@ -11,6 +11,57 @@
 ## Overview
 
 Templates for the **Application Layer** module (`{service}-application`). Provides REST API endpoints with CQRS compliance.
+
+## Lombok Usage in Application Layer
+
+**MANDATORY**: Use Lombok for all DTOs and recommended for controllers in this layer.
+
+**Controllers (Command/Query)**:
+- Use `@Slf4j` for logging instead of manual logger declaration
+- Use `@RequiredArgsConstructor` for dependency injection (fields marked `final`)
+- Use `@RestController`, `@RequestMapping`, `@Tag` for REST API configuration
+
+**DTOs (Command/Query/Result)**:
+- Use `@Getter` / `@Setter` for field accessors
+- Use `@Builder` for complex object construction (optional, simpler than application-service DTOs)
+- Use `@NoArgsConstructor` for Jackson deserialization (required for request DTOs)
+- Use `@AllArgsConstructor` for builder pattern support
+- Use Jakarta Validation annotations (`@NotNull`, `@NotBlank`, etc.)
+
+**Mappers**:
+- Use `@Component` for Spring bean registration
+- Use `@RequiredArgsConstructor` if mapper has dependencies
+
+**Example:**
+```java
+// DTO with Lombok
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class CreateConsignmentCommandDTO {
+    @NotNull(message = "Batch number is required")
+    private String batchNumber;
+
+    @NotNull(message = "Quantity is required")
+    @Positive(message = "Quantity must be positive")
+    private Integer quantity;
+}
+
+// Controller with Lombok
+@Slf4j
+@RestController
+@RequestMapping("/api/v1/stock/consignments")
+@Tag(name = "Stock Consignment Commands")
+@RequiredArgsConstructor
+public class StockConsignmentCommandController {
+    private final CreateConsignmentCommandHandler commandHandler;
+    private final StockConsignmentDTOMapper mapper;
+
+    // endpoint methods...
+}
+```
 
 ---
 
@@ -355,11 +406,17 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
 - [ ] Correlation ID set in `CorrelationContext` at request entry point
 - [ ] Correlation context cleared after request completion
 - [ ] Correlation ID available to event publishers via `CorrelationContext`
+- [ ] **Controllers use Lombok** (`@Slf4j`, `@RequiredArgsConstructor`)
+- [ ] **All DTOs use Lombok** (`@Getter`, `@Setter`, `@NoArgsConstructor`, `@AllArgsConstructor`, `@Builder`)
+- [ ] **Mappers use `@Component` and optionally `@RequiredArgsConstructor`**
+- [ ] Request DTOs have `@NoArgsConstructor` for Jackson deserialization
 
 ---
 
 **Document Control**
 
-- **Version History:** v1.0 (2025-01) - Initial template creation
+- **Version History:**
+  - v1.1 (2025-01) - Added comprehensive Lombok usage guidelines for DTOs, controllers, and mappers
+  - v1.0 (2025-01) - Initial template creation
 - **Review Cycle:** Review when application layer patterns change
 

@@ -6,17 +6,17 @@ import java.time.temporal.ChronoUnit;
 
 import com.ccbsa.common.domain.TenantAwareAggregateRoot;
 import com.ccbsa.common.domain.valueobject.ExpirationDate;
+import com.ccbsa.common.domain.valueobject.ProductId;
+import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.common.domain.valueobject.StockClassification;
+import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 import com.ccbsa.wms.stock.domain.core.event.LocationAssignedEvent;
 import com.ccbsa.wms.stock.domain.core.event.StockClassifiedEvent;
 import com.ccbsa.wms.stock.domain.core.event.StockExpiredEvent;
 import com.ccbsa.wms.stock.domain.core.event.StockExpiringAlertEvent;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
-import com.ccbsa.wms.stock.domain.core.valueobject.Quantity;
-import com.ccbsa.wms.stock.domain.core.valueobject.StockItemId;
 
 /**
  * Aggregate Root: StockItem
@@ -35,6 +35,7 @@ public class StockItem extends TenantAwareAggregateRoot<StockItemId> {
     private ProductId productId;
     private LocationId locationId; // May be null initially
     private Quantity quantity;
+    private Quantity allocatedQuantity; // Quantity allocated for picking orders
     private ExpirationDate expirationDate; // May be null for non-perishable
     private StockClassification classification;
     private ConsignmentId consignmentId; // Reference to source consignment
@@ -167,12 +168,129 @@ public class StockItem extends TenantAwareAggregateRoot<StockItemId> {
     }
 
     /**
+     * Business logic method: Updates allocated quantity.
+     * <p>
+     * Business Rules:
+     * - Allocated quantity cannot exceed total quantity
+     * - Allocated quantity cannot be negative
+     *
+     * @param newAllocatedQuantity New allocated quantity
+     * @throws IllegalArgumentException if allocated quantity is invalid
+     */
+    public void updateAllocatedQuantity(Quantity newAllocatedQuantity) {
+        if (newAllocatedQuantity == null) {
+            throw new IllegalArgumentException("AllocatedQuantity cannot be null");
+        }
+        if (this.quantity == null) {
+            throw new IllegalStateException("Cannot set allocated quantity before total quantity is set");
+        }
+        if (newAllocatedQuantity.getValue() > this.quantity.getValue()) {
+            throw new IllegalArgumentException(
+                    String.format("Allocated quantity (%d) cannot exceed total quantity (%d)", newAllocatedQuantity.getValue(), this.quantity.getValue()));
+        }
+
+        this.allocatedQuantity = newAllocatedQuantity;
+        this.lastModifiedAt = LocalDateTime.now();
+    }
+
+    /**
      * Business logic method: Checks if stock can be picked.
      *
      * @return true if stock can be picked
      */
     public boolean canBePicked() {
-        return classification != StockClassification.EXPIRED && quantity != null && quantity.getValue() > 0;
+        return classification != StockClassification.EXPIRED && quantity != null && quantity.getValue() > 0 && getAvailableQuantity().getValue() > 0;
+    }
+
+    /**
+     * Business logic method: Gets available quantity (total - allocated).
+     *
+     * @return Available quantity
+     */
+    public Quantity getAvailableQuantity() {
+        if (this.quantity == null) {
+            return Quantity.of(0);
+        }
+        int allocated = this.allocatedQuantity != null ? this.allocatedQuantity.getValue() : 0;
+        int available = this.quantity.getValue() - allocated;
+        return Quantity.of(Math.max(0, available));
+    }
+
+    /**
+     * Business logic method: Increases stock quantity.
+     * <p>
+     * Business Rules:
+     * - Quantity must be positive
+     * - Updates lastModifiedAt timestamp
+     *
+     * @param additionalQuantity Additional quantity to add
+     * @throws IllegalArgumentException if additionalQuantity is null or non-positive
+     */
+    public void increaseQuantity(Quantity additionalQuantity) {
+        if (additionalQuantity == null) {
+            throw new IllegalArgumentException("AdditionalQuantity cannot be null");
+        }
+        if (additionalQuantity.getValue() <= 0) {
+            throw new IllegalArgumentException("AdditionalQuantity must be positive");
+        }
+        if (this.quantity == null) {
+            this.quantity = additionalQuantity;
+        } else {
+            this.quantity = this.quantity.add(additionalQuantity);
+        }
+        this.lastModifiedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Business logic method: Decreases stock quantity.
+     * <p>
+     * Business Rules:
+     * - Quantity must be positive
+     * - Resulting quantity cannot be negative
+     * - Updates lastModifiedAt timestamp
+     *
+     * @param quantityToSubtract Quantity to subtract
+     * @throws IllegalArgumentException if quantityToSubtract is null or non-positive
+     * @throws IllegalStateException    if resulting quantity would be negative
+     */
+    public void decreaseQuantity(Quantity quantityToSubtract) {
+        if (quantityToSubtract == null) {
+            throw new IllegalArgumentException("QuantityToSubtract cannot be null");
+        }
+        if (quantityToSubtract.getValue() <= 0) {
+            throw new IllegalArgumentException("QuantityToSubtract must be positive");
+        }
+        if (this.quantity == null) {
+            throw new IllegalStateException("Cannot decrease quantity when current quantity is null");
+        }
+        if (quantityToSubtract.getValue() > this.quantity.getValue()) {
+            throw new IllegalStateException(String.format("Cannot decrease quantity by %d when current quantity is %d", quantityToSubtract.getValue(), this.quantity.getValue()));
+        }
+        this.quantity = this.quantity.subtract(quantityToSubtract);
+        this.lastModifiedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Business logic method: Updates stock quantity to a specific value.
+     * <p>
+     * Business Rules:
+     * - Quantity must be non-negative (can be zero)
+     * - Updates lastModifiedAt timestamp
+     * <p>
+     * Used for stock adjustments where the exact quantity after adjustment is known.
+     *
+     * @param newQuantity New quantity value
+     * @throws IllegalArgumentException if newQuantity is null or negative
+     */
+    public void updateQuantity(Quantity newQuantity) {
+        if (newQuantity == null) {
+            throw new IllegalArgumentException("NewQuantity cannot be null");
+        }
+        if (newQuantity.getValue() < 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative");
+        }
+        this.quantity = newQuantity;
+        this.lastModifiedAt = LocalDateTime.now();
     }
 
     // Getters
@@ -187,6 +305,10 @@ public class StockItem extends TenantAwareAggregateRoot<StockItemId> {
 
     public Quantity getQuantity() {
         return quantity;
+    }
+
+    public Quantity getAllocatedQuantity() {
+        return allocatedQuantity != null ? allocatedQuantity : Quantity.of(0);
     }
 
     public ExpirationDate getExpirationDate() {
@@ -237,6 +359,11 @@ public class StockItem extends TenantAwareAggregateRoot<StockItemId> {
 
         public Builder quantity(Quantity quantity) {
             stockItem.quantity = quantity;
+            return this;
+        }
+
+        public Builder allocatedQuantity(Quantity allocatedQuantity) {
+            stockItem.allocatedQuantity = allocatedQuantity;
             return this;
         }
 

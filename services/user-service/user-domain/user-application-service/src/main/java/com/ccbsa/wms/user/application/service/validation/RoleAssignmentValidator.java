@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
@@ -14,6 +12,8 @@ import com.ccbsa.wms.user.application.service.exception.InsufficientPrivilegesEx
 import com.ccbsa.wms.user.application.service.exception.TenantMismatchException;
 import com.ccbsa.wms.user.domain.core.entity.User;
 import com.ccbsa.wms.user.domain.core.valueobject.RoleConstants;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Validator for role assignment operations.
@@ -29,9 +29,9 @@ import com.ccbsa.wms.user.domain.core.valueobject.RoleConstants;
  *   <li>Tenant-scoped roles can only be assigned to users within the same tenant</li>
  * </ul>
  */
+@Slf4j
 @Component
 public class RoleAssignmentValidator {
-    private static final Logger logger = LoggerFactory.getLogger(RoleAssignmentValidator.class);
 
     // Roles that WAREHOUSE_MANAGER can assign
     private static final Set<String> WAREHOUSE_MANAGER_ASSIGNABLE_ROLES =
@@ -86,7 +86,7 @@ public class RoleAssignmentValidator {
      */
     public void validateRoleAssignment(UserId currentUserId, List<String> currentUserRoles, TenantId currentUserTenantId, User targetUser, String roleToAssign) {
 
-        logger.debug("Validating role assignment: currentUserId={}, currentUserRoles={}, targetUserId={}, targetTenantId={}, role={}", currentUserId.getValue(), currentUserRoles,
+        log.debug("Validating role assignment: currentUserId={}, currentUserRoles={}, targetUserId={}, targetTenantId={}, role={}", currentUserId.getValue(), currentUserRoles,
                 targetUser.getId().getValue(), targetUser.getTenantId().getValue(), roleToAssign);
 
         // Rule 1: SYSTEM_ADMIN can assign any role to any user
@@ -95,7 +95,7 @@ public class RoleAssignmentValidator {
             if (RoleConstants.SYSTEM_ADMIN.equals(roleToAssign) && !currentUserRoles.contains(RoleConstants.SYSTEM_ADMIN)) {
                 throw new InsufficientPrivilegesException("SYSTEM_ADMIN role can only be assigned by existing SYSTEM_ADMIN");
             }
-            logger.debug("SYSTEM_ADMIN can assign any role");
+            log.debug("SYSTEM_ADMIN can assign any role");
             return; // SYSTEM_ADMIN can assign any role
         }
 
@@ -112,7 +112,7 @@ public class RoleAssignmentValidator {
                 throw new InsufficientPrivilegesException("TENANT_ADMIN cannot assign SYSTEM_ADMIN role");
             }
 
-            logger.debug("TENANT_ADMIN can assign role within own tenant");
+            log.debug("TENANT_ADMIN can assign role within own tenant");
             return; // TENANT_ADMIN can assign any other role within own tenant
         }
 
@@ -127,7 +127,7 @@ public class RoleAssignmentValidator {
                 throw new InsufficientPrivilegesException(String.format("WAREHOUSE_MANAGER cannot assign role: %s", roleToAssign));
             }
 
-            logger.debug("WAREHOUSE_MANAGER can assign operational role");
+            log.debug("WAREHOUSE_MANAGER can assign operational role");
             return;
         }
 
@@ -145,7 +145,7 @@ public class RoleAssignmentValidator {
                     throw new InsufficientPrivilegesException(String.format("%s cannot assign role: %s", managerRole, roleToAssign));
                 }
 
-                logger.debug("{} can assign clerk role", managerRole);
+                log.debug("{} can assign clerk role", managerRole);
                 return;
             }
         }

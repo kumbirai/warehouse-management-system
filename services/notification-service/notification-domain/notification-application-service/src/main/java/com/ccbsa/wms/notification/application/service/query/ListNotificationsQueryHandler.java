@@ -6,7 +6,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ccbsa.wms.notification.application.service.port.repository.NotificationRepository;
+import com.ccbsa.wms.notification.application.service.port.data.NotificationViewRepository;
+import com.ccbsa.wms.notification.application.service.port.data.dto.NotificationView;
 import com.ccbsa.wms.notification.application.service.query.dto.GetNotificationQueryResult;
 import com.ccbsa.wms.notification.application.service.query.dto.ListNotificationsQuery;
 import com.ccbsa.wms.notification.application.service.query.dto.ListNotificationsQueryResult;
@@ -14,15 +15,17 @@ import com.ccbsa.wms.notification.application.service.query.dto.ListNotification
 /**
  * Query Handler: ListNotificationsQueryHandler
  * <p>
- * Handles query for list of notifications with filtering. Uses repository port for MVP (read model can be added later).
+ * Handles query for list of notification read models with filtering.
+ * <p>
+ * Uses data port (NotificationViewRepository) instead of repository port for CQRS compliance.
  */
 @Component
 public class ListNotificationsQueryHandler {
 
-    private final NotificationRepository repository;
+    private final NotificationViewRepository viewRepository;
 
-    public ListNotificationsQueryHandler(NotificationRepository repository) {
-        this.repository = repository;
+    public ListNotificationsQueryHandler(NotificationViewRepository viewRepository) {
+        this.viewRepository = viewRepository;
     }
 
     /**
@@ -38,21 +41,21 @@ public class ListNotificationsQueryHandler {
         // 1. Validate query
         validateQuery(query);
 
-        // 2. Load from repository based on filters
-        List<com.ccbsa.wms.notification.domain.core.entity.Notification> notifications;
+        // 2. Load read models (views) from data port based on filters
+        List<NotificationView> notificationViews;
         if (query.getRecipientUserId() != null && query.getStatus() != null) {
-            notifications = repository.findByRecipientUserIdAndStatus(query.getTenantId(), query.getRecipientUserId(), query.getStatus());
+            notificationViews = viewRepository.findByRecipientUserIdAndStatus(query.getTenantId(), query.getRecipientUserId(), query.getStatus());
         } else if (query.getRecipientUserId() != null) {
-            notifications = repository.findByRecipientUserId(query.getTenantId(), query.getRecipientUserId());
+            notificationViews = viewRepository.findByRecipientUserId(query.getTenantId(), query.getRecipientUserId());
         } else if (query.getType() != null) {
-            notifications = repository.findByType(query.getTenantId(), query.getType());
+            notificationViews = viewRepository.findByType(query.getTenantId(), query.getType());
         } else {
             // For MVP, if no filters, return empty (can be extended later)
-            notifications = List.of();
+            notificationViews = List.of();
         }
 
-        // 3. Map to query results
-        List<GetNotificationQueryResult> results = notifications.stream().map(this::toQueryResult).collect(Collectors.toList());
+        // 3. Map views to query results
+        List<GetNotificationQueryResult> results = notificationViews.stream().map(this::toQueryResult).collect(Collectors.toList());
 
         // 4. Return result
         return ListNotificationsQueryResult.builder().items(results).totalCount(results.size()).build();
@@ -67,10 +70,10 @@ public class ListNotificationsQueryHandler {
         }
     }
 
-    private GetNotificationQueryResult toQueryResult(com.ccbsa.wms.notification.domain.core.entity.Notification notification) {
-        return GetNotificationQueryResult.builder().notificationId(notification.getId()).tenantId(notification.getTenantId()).recipientUserId(notification.getRecipientUserId())
-                .title(notification.getTitle().getValue()).message(notification.getMessage().getValue()).type(notification.getType()).status(notification.getStatus())
-                .createdAt(notification.getCreatedAt()).lastModifiedAt(notification.getLastModifiedAt()).sentAt(notification.getSentAt()).readAt(notification.getReadAt()).build();
+    private GetNotificationQueryResult toQueryResult(NotificationView view) {
+        return GetNotificationQueryResult.builder().notificationId(view.getNotificationId()).tenantId(view.getTenantId()).recipientUserId(view.getRecipientUserId())
+                .title(view.getTitle()).message(view.getMessage()).type(view.getType()).status(view.getStatus()).createdAt(view.getCreatedAt())
+                .lastModifiedAt(view.getLastModifiedAt()).sentAt(view.getSentAt()).readAt(view.getReadAt()).build();
     }
 }
 

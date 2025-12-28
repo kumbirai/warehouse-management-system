@@ -5,16 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateStockMovementResponse {
-    private String movementId;
-    private String productId;
-    private String sourceLocationId;
-    private String targetLocationId;
-    private Integer quantity;
-    private String movementType;
+    private UUID stockMovementId;
+    private String status; // INITIATED, IN_PROGRESS, COMPLETED, CANCELLED
+    private LocalDateTime initiatedAt;
 }
 

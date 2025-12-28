@@ -27,7 +27,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * Handles user verification operations (email verification, password reset).
  */
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/v1/users")
 @Tag(name = "User Verification", description = "User verification and password reset operations")
 public class UserVerificationController {
     private final UserRepository userRepository;

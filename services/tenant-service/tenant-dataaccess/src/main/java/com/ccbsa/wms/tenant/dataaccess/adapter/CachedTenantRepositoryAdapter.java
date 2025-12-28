@@ -4,8 +4,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -18,6 +16,7 @@ import com.ccbsa.wms.tenant.domain.core.entity.Tenant;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Cached Tenant Repository Adapter.
@@ -40,10 +39,8 @@ import io.micrometer.core.instrument.MeterRegistry;
  */
 @Repository
 @Primary
+@Slf4j
 public class CachedTenantRepositoryAdapter implements TenantRepository {
-
-    private static final Logger log = LoggerFactory.getLogger(CachedTenantRepositoryAdapter.class);
-
     private final TenantRepositoryAdapter baseRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final Duration cacheTtl;

@@ -10,11 +10,15 @@ import {
   CreateStockAdjustmentResponse,
   CreateStockAllocationRequest,
   CreateStockAllocationResponse,
-  CreateStockMovementRequest,
-  CreateStockMovementResponse,
   GetConsignmentApiResponse,
   GetStockItemApiResponse,
   GetStockItemsByClassificationApiResponse,
+  StockAdjustmentFilters,
+  StockAdjustmentListQueryResult,
+  StockAdjustmentResponse,
+  StockAllocationFilters,
+  StockAllocationListQueryResult,
+  StockAllocationResponse,
   StockClassification,
   StockLevelFilters,
   StockLevelResponse,
@@ -24,7 +28,7 @@ import {
   ValidateConsignmentRequest,
 } from '../types/stockManagement';
 
-const STOCK_MANAGEMENT_BASE_PATH = '/api/v1/stock-management';
+const STOCK_MANAGEMENT_BASE_PATH = '/stock-management';
 
 export const stockManagementService = {
   /**
@@ -155,15 +159,15 @@ export const stockManagementService = {
   },
 
   /**
-   * Creates a stock movement.
+   * Releases a stock allocation.
    */
-  async createStockMovement(
-    request: CreateStockMovementRequest,
+  async releaseStockAllocation(
+    allocationId: string,
     tenantId: string
-  ): Promise<ApiResponse<CreateStockMovementResponse>> {
-    const response = await apiClient.post<ApiResponse<CreateStockMovementResponse>>(
-      `${STOCK_MANAGEMENT_BASE_PATH}/movements`,
-      request,
+  ): Promise<ApiResponse<{ allocationId: string; status: string; releasedAt: string }>> {
+    const response = await apiClient.put<ApiResponse<{ allocationId: string; status: string; releasedAt: string }>>(
+      `${STOCK_MANAGEMENT_BASE_PATH}/allocations/${allocationId}/release`,
+      {},
       {
         headers: {
           'X-Tenant-Id': tenantId,
@@ -274,6 +278,97 @@ export const stockManagementService = {
     const response = await apiClient.put<ApiResponse<void>>(
       `${STOCK_MANAGEMENT_BASE_PATH}/consignments/${consignmentId}/confirm`,
       {},
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Gets a stock allocation by ID.
+   */
+  async getStockAllocation(
+    allocationId: string,
+    tenantId: string
+  ): Promise<ApiResponse<StockAllocationResponse>> {
+    const response = await apiClient.get<ApiResponse<StockAllocationResponse>>(
+      `${STOCK_MANAGEMENT_BASE_PATH}/allocations/${allocationId}`,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Lists stock allocations with filters and pagination.
+   */
+  async listStockAllocations(
+    filters: StockAllocationFilters,
+    tenantId: string
+  ): Promise<ApiResponse<StockAllocationListQueryResult>> {
+    const params = new URLSearchParams();
+    if (filters.productId) params.append('productId', filters.productId);
+    if (filters.locationId) params.append('locationId', filters.locationId);
+    if (filters.referenceId) params.append('referenceId', filters.referenceId);
+    if (filters.status) params.append('status', filters.status);
+    if (filters.page) params.append('page', filters.page.toString());
+    if (filters.size) params.append('size', filters.size.toString());
+
+    const response = await apiClient.get<ApiResponse<StockAllocationListQueryResult>>(
+      `${STOCK_MANAGEMENT_BASE_PATH}/allocations?${params.toString()}`,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Gets a stock adjustment by ID.
+   */
+  async getStockAdjustment(
+    adjustmentId: string,
+    tenantId: string
+  ): Promise<ApiResponse<StockAdjustmentResponse>> {
+    const response = await apiClient.get<ApiResponse<StockAdjustmentResponse>>(
+      `${STOCK_MANAGEMENT_BASE_PATH}/adjustments/${adjustmentId}`,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Lists stock adjustments with filters and pagination.
+   */
+  async listStockAdjustments(
+    filters: StockAdjustmentFilters,
+    tenantId: string
+  ): Promise<ApiResponse<StockAdjustmentListQueryResult>> {
+    const params = new URLSearchParams();
+    if (filters.productId) params.append('productId', filters.productId);
+    if (filters.locationId) params.append('locationId', filters.locationId);
+    if (filters.stockItemId) params.append('stockItemId', filters.stockItemId);
+    if (filters.adjustmentType) params.append('adjustmentType', filters.adjustmentType);
+    if (filters.reason) params.append('reason', filters.reason);
+    if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters.dateTo) params.append('dateTo', filters.dateTo);
+    if (filters.page) params.append('page', filters.page.toString());
+    if (filters.size) params.append('size', filters.size.toString());
+
+    const response = await apiClient.get<ApiResponse<StockAdjustmentListQueryResult>>(
+      `${STOCK_MANAGEMENT_BASE_PATH}/adjustments?${params.toString()}`,
       {
         headers: {
           'X-Tenant-Id': tenantId,

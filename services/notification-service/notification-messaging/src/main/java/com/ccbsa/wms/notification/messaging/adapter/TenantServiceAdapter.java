@@ -2,8 +2,6 @@ package com.ccbsa.wms.notification.messaging.adapter;
 
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -15,25 +13,28 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.domain.valueobject.EmailAddress;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.notification.application.service.port.service.TenantServicePort;
 
-import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Adapter: TenantServiceAdapter
  * <p>
- * Implements TenantServicePort for retrieving tenant information from tenant-service. Calls tenant-service REST API to get tenant email address.
+ * Implements TenantServicePort for retrieving tenant information from tenant-service.
+ * Calls tenant-service REST API to get tenant email address.
+ * <p>
+ * <b>Service-to-Service Authentication:</b> This adapter uses a RestTemplate configured
+ * with {@link com.ccbsa.wms.common.security.ServiceAccountAuthenticationInterceptor} that
+ * automatically handles authentication for both HTTP request context (forwards user token)
+ * and event-driven calls (uses service account token).
  */
 @Component
+@Slf4j
 public class TenantServiceAdapter implements TenantServicePort {
-    private static final Logger logger = LoggerFactory.getLogger(TenantServiceAdapter.class);
-
     private static final ParameterizedTypeReference<ApiResponse<TenantResponse>> TENANT_RESPONSE_TYPE = new ParameterizedTypeReference<ApiResponse<TenantResponse>>() {
     };
 
@@ -47,7 +48,7 @@ public class TenantServiceAdapter implements TenantServicePort {
 
     @Override
     public EmailAddress getTenantEmail(TenantId tenantId) {
-        logger.debug("Getting tenant email from tenant-service: tenantId={}", tenantId.getValue());
+        log.debug("Getting tenant email from tenant-service: tenantId={}", tenantId.getValue());
 
         try {
             Optional<TenantServicePort.TenantDetails> details = getTenantDetails(tenantId);
@@ -56,42 +57,31 @@ public class TenantServiceAdapter implements TenantServicePort {
             }
             throw new RuntimeException(String.format("Tenant email not found for tenantId: %s", tenantId.getValue()));
         } catch (RestClientException e) {
-            logger.error("Failed to get tenant email from tenant-service: tenantId={}", tenantId.getValue(), e);
+            log.error("Failed to get tenant email from tenant-service: tenantId={}", tenantId.getValue(), e);
             throw new RuntimeException(String.format("Failed to retrieve tenant email: %s", e.getMessage()), e);
         } catch (Exception e) {
-            logger.error("Unexpected error getting tenant email: tenantId={}", tenantId.getValue(), e);
+            log.error("Unexpected error getting tenant email: tenantId={}", tenantId.getValue(), e);
             throw new RuntimeException(String.format("Failed to get tenant email: %s", e.getMessage()), e);
         }
     }
 
     @Override
     public Optional<TenantServicePort.TenantDetails> getTenantDetails(TenantId tenantId) {
-        logger.debug("Getting tenant details from tenant-service: tenantId={}", tenantId.getValue());
+        log.debug("Getting tenant details from tenant-service: tenantId={}", tenantId.getValue());
 
         try {
             String url = String.format("%s/api/v1/tenants/%s", tenantServiceUrl, tenantId.getValue());
-            logger.debug("Calling tenant service: {}", url);
+            log.debug("Calling tenant service: {}", url);
 
-            // Forward headers from current request for service-to-service authentication
+            // Service-to-service authentication is handled automatically by ServiceAccountAuthenticationInterceptor
+            // The interceptor will:
+            // 1. Forward Authorization header from HTTP request context (if available)
+            // 2. Use service account token for event-driven calls (no HTTP context)
             HttpHeaders headers = new HttpHeaders();
-            String authorizationHeader = getAuthorizationHeader();
-            if (authorizationHeader != null) {
-                headers.set("Authorization", authorizationHeader);
-                logger.debug("Forwarding Authorization header to tenant service");
-            } else {
-                logger.warn("No Authorization header found in current request - tenant service call may fail");
-            }
 
-            // Forward X-Tenant-Id header (required by tenant service)
-            String tenantIdHeader = getTenantIdHeader();
-            if (tenantIdHeader != null) {
-                headers.set("X-Tenant-Id", tenantIdHeader);
-                logger.debug("Forwarding X-Tenant-Id header to tenant service: {}", tenantIdHeader);
-            } else {
-                // Set the tenantId from the method parameter as fallback
-                headers.set("X-Tenant-Id", tenantId.getValue());
-                logger.debug("Setting X-Tenant-Id header from method parameter: {}", tenantId.getValue());
-            }
+            // Set X-Tenant-Id header (required by tenant service)
+            headers.set("X-Tenant-Id", tenantId.getValue());
+            log.debug("Setting X-Tenant-Id header: {}", tenantId.getValue());
 
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
@@ -103,57 +93,24 @@ public class TenantServiceAdapter implements TenantServicePort {
                 TenantServicePort.TenantDetails details =
                         new TenantServicePort.TenantDetails(tenantResponse.getTenantId(), tenantResponse.getName(), tenantResponse.getStatus(), tenantResponse.getEmailAddress(),
                                 tenantResponse.getPhone(), tenantResponse.getAddress());
-                logger.debug("Tenant details retrieved: tenantId={}, name={}", tenantId.getValue(), tenantResponse.getName());
+                log.debug("Tenant details retrieved: tenantId={}, name={}", tenantId.getValue(), tenantResponse.getName());
                 return Optional.of(details);
             }
 
             return Optional.empty();
         } catch (HttpClientErrorException.NotFound e) {
-            logger.warn("Tenant not found: {}", tenantId.getValue());
+            log.warn("Tenant not found: {}", tenantId.getValue());
             return Optional.empty();
+        } catch (HttpClientErrorException.Unauthorized e) {
+            log.error("Unauthorized when calling tenant-service: tenantId={}. " + "Check service account configuration or user token validity.", tenantId.getValue());
+            throw new RuntimeException(String.format("Failed to retrieve tenant details: Unauthorized. " + "Error: %s", e.getMessage()), e);
         } catch (RestClientException e) {
-            logger.error("Failed to get tenant details from tenant-service: tenantId={}", tenantId.getValue(), e);
+            log.error("Failed to get tenant details from tenant-service: tenantId={}", tenantId.getValue(), e);
             throw new RuntimeException(String.format("Failed to retrieve tenant details: %s", e.getMessage()), e);
         } catch (Exception e) {
-            logger.error("Unexpected error getting tenant details: tenantId={}", tenantId.getValue(), e);
+            log.error("Unexpected error getting tenant details: tenantId={}", tenantId.getValue(), e);
             throw new RuntimeException(String.format("Failed to get tenant details: %s", e.getMessage()), e);
         }
-    }
-
-    /**
-     * Extracts the Authorization header from the current HTTP request. This allows service-to-service calls to forward the JWT token.
-     *
-     * @return Authorization header value or null if not available
-     */
-    private String getAuthorizationHeader() {
-        try {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                return request.getHeader("Authorization");
-            }
-        } catch (Exception e) {
-            logger.debug("Could not extract Authorization header from request context: {}", e.getMessage());
-        }
-        return null;
-    }
-
-    /**
-     * Extracts the X-Tenant-Id header from the current HTTP request. This allows service-to-service calls to forward the tenant context.
-     *
-     * @return X-Tenant-Id header value or null if not available
-     */
-    private String getTenantIdHeader() {
-        try {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                return request.getHeader("X-Tenant-Id");
-            }
-        } catch (Exception e) {
-            logger.debug("Could not extract X-Tenant-Id header from request context: {}", e.getMessage());
-        }
-        return null;
     }
 
     /**

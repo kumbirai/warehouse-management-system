@@ -96,7 +96,13 @@ export const BarcodeScanner = ({ open, onClose, onScan }: BarcodeScannerProps) =
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog 
+      open={open} 
+      onClose={handleClose} 
+      maxWidth="sm" 
+      fullWidth
+      sx={{ zIndex: 1300 }} // Ensure Dialog is above other content
+    >
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6">Scan Barcode</Typography>

@@ -4,22 +4,21 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.cache.decorator.CachedRepositoryDecorator;
 import com.ccbsa.common.cache.key.CacheNamespace;
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.product.application.service.port.repository.ProductRepository;
 import com.ccbsa.wms.product.domain.core.entity.Product;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductBarcode;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Cached Product Repository Adapter.
@@ -38,10 +37,8 @@ import io.micrometer.core.instrument.MeterRegistry;
  */
 @Repository
 @Primary
+@Slf4j
 public class CachedProductRepositoryAdapter extends CachedRepositoryDecorator<Product, ProductId> implements ProductRepository {
-
-    private static final Logger log = LoggerFactory.getLogger(CachedProductRepositoryAdapter.class);
-
     private final ProductRepositoryAdapter baseRepository;
 
     public CachedProductRepositoryAdapter(ProductRepositoryAdapter baseRepository, RedisTemplate<String, Object> redisTemplate, MeterRegistry meterRegistry) {

@@ -6,31 +6,35 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ccbsa.wms.product.application.service.port.repository.ProductRepository;
+import com.ccbsa.wms.product.application.service.port.data.ProductViewRepository;
+import com.ccbsa.wms.product.application.service.port.data.dto.ProductView;
 import com.ccbsa.wms.product.application.service.query.dto.ListProductsQuery;
 import com.ccbsa.wms.product.application.service.query.dto.ListProductsQueryResult;
 import com.ccbsa.wms.product.application.service.query.dto.ProductQueryResult;
-import com.ccbsa.wms.product.domain.core.entity.Product;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Query Handler: ListProductsQueryHandler
  * <p>
- * Handles listing of Product aggregates with optional filtering.
+ * Handles listing of Product read models with optional filtering.
  * <p>
  * Responsibilities:
- * - Load Product aggregates from repository
+ * - Load Product views from data port (read model)
  * - Apply filters (category, brand, search)
- * - Map aggregates to query result DTOs
+ * - Map views to query result DTOs
  * - Return paginated results
+ * <p>
+ * Uses data port (ProductViewRepository) instead of repository port for CQRS compliance.
  */
 @Component
+@RequiredArgsConstructor
+@SuppressFBWarnings(value = {"DLS_DEAD_LOCAL_STORE", "UPM_UNCALLED_PRIVATE_METHOD"}, justification =
+        "DLS_DEAD_LOCAL_STORE: Variables are used in builder - SpotBugs false positive. "
+                + "UPM_UNCALLED_PRIVATE_METHOD: Method called via method reference - SpotBugs false positive.")
 public class ListProductsQueryHandler {
-
-    private final ProductRepository repository;
-
-    public ListProductsQueryHandler(ProductRepository repository) {
-        this.repository = repository;
-    }
+    private final ProductViewRepository viewRepository;
 
     @Transactional(readOnly = true)
     public ListProductsQueryResult handle(ListProductsQuery query) {
@@ -38,25 +42,24 @@ public class ListProductsQueryHandler {
         int page = query.getPage() != null ? query.getPage() : 0;
         int size = query.getSize() != null ? query.getSize() : 100;
 
-        // 2. Query products with database-level filtering and pagination
+        // 2. Query product views with database-level filtering and pagination
         // This is much more efficient than loading all products into memory
-        List<Product> paginatedProducts = repository.findByTenantIdWithFilters(query.getTenantId(), query.getCategory(), query.getBrand(), query.getSearch(), page, size);
+        List<ProductView> paginatedViews = viewRepository.findByTenantIdWithFilters(query.getTenantId(), query.getCategory(), query.getBrand(), query.getSearch(), page, size);
 
         // 3. Get total count for pagination metadata
-        long totalCount = repository.countByTenantIdWithFilters(query.getTenantId(), query.getCategory(), query.getBrand(), query.getSearch());
+        long totalCount = viewRepository.countByTenantIdWithFilters(query.getTenantId(), query.getCategory(), query.getBrand(), query.getSearch());
 
-        // 4. Map to query results
-        List<ProductQueryResult> productResults = paginatedProducts.stream().map(this::toProductQueryResult).collect(Collectors.toList());
+        // 4. Map views to query results
+        List<ProductQueryResult> productResults = paginatedViews.stream().map(this::toProductQueryResult).collect(Collectors.toList());
 
         // 5. Build result with pagination metadata
         return ListProductsQueryResult.builder().products(productResults).totalCount((int) totalCount).page(page).size(size).build();
     }
 
-    private ProductQueryResult toProductQueryResult(Product product) {
-        return ProductQueryResult.builder().productId(product.getId()).productCode(product.getProductCode()).description(product.getDescription().getValue())
-                .primaryBarcode(product.getPrimaryBarcode()).secondaryBarcodes(product.getSecondaryBarcodes()).unitOfMeasure(product.getUnitOfMeasure())
-                .category(product.getCategory() != null ? product.getCategory().getValue() : null).brand(product.getBrand() != null ? product.getBrand().getValue() : null)
-                .createdAt(product.getCreatedAt()).lastModifiedAt(product.getLastModifiedAt()).build();
+    private ProductQueryResult toProductQueryResult(ProductView view) {
+        return ProductQueryResult.builder().productId(view.getProductId()).productCode(view.getProductCode()).description(view.getDescription())
+                .primaryBarcode(view.getPrimaryBarcode()).secondaryBarcodes(view.getSecondaryBarcodes()).unitOfMeasure(view.getUnitOfMeasure()).category(view.getCategory())
+                .brand(view.getBrand()).createdAt(view.getCreatedAt()).lastModifiedAt(view.getLastModifiedAt()).build();
     }
 }
 

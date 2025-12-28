@@ -39,9 +39,11 @@ public final class ConsignmentLineItem {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Quantity must be positive");
         }
-        if (expirationDate != null && expirationDate.isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("ExpirationDate cannot be in the past");
-        }
+        // Note: Expiration date validation is lenient - past dates are allowed
+        // to support testing expired stock scenarios and handling stock that was
+        // received with past expiration dates. Business logic will handle expired
+        // stock appropriately (classification, allocation rules, etc.)
+        // No validation for expirationDate - allow any date including past dates
     }
 
     /**

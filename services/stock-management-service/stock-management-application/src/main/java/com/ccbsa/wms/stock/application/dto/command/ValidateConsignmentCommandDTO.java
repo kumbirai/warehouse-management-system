@@ -3,16 +3,28 @@ package com.ccbsa.wms.stock.application.dto.command;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Command DTO: ValidateConsignmentCommandDTO
  * <p>
  * API request DTO for validating consignment data.
  */
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Lombok builder stores list directly. Defensive copy made in mapper when converting to domain command.")
 public class ValidateConsignmentCommandDTO {
     @NotBlank(message = "Consignment reference is required")
     private String consignmentReference;
@@ -26,40 +38,5 @@ public class ValidateConsignmentCommandDTO {
     @NotEmpty(message = "At least one line item is required")
     @Valid
     private List<CreateConsignmentCommandDTO.ConsignmentLineItemDTO> lineItems;
-
-    public ValidateConsignmentCommandDTO() {
-    }
-
-    public String getConsignmentReference() {
-        return consignmentReference;
-    }
-
-    public void setConsignmentReference(String consignmentReference) {
-        this.consignmentReference = consignmentReference;
-    }
-
-    public String getWarehouseId() {
-        return warehouseId;
-    }
-
-    public void setWarehouseId(String warehouseId) {
-        this.warehouseId = warehouseId;
-    }
-
-    public LocalDateTime getReceivedAt() {
-        return receivedAt;
-    }
-
-    public void setReceivedAt(LocalDateTime receivedAt) {
-        this.receivedAt = receivedAt;
-    }
-
-    public List<CreateConsignmentCommandDTO.ConsignmentLineItemDTO> getLineItems() {
-        return lineItems;
-    }
-
-    public void setLineItems(List<CreateConsignmentCommandDTO.ConsignmentLineItemDTO> lineItems) {
-        this.lineItems = lineItems;
-    }
 }
 

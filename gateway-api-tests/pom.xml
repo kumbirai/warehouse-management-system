@@ -116,6 +116,14 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Keycloak Admin Client for direct Keycloak operations in tests -->
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-admin-client</artifactId>
+            <version>25.0.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

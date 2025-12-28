@@ -1,8 +1,10 @@
 package com.ccbsa.wms.stock.application.service.port.service;
 
+import java.util.Optional;
+
+import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
-import com.ccbsa.wms.stock.domain.core.valueobject.Quantity;
 
 /**
  * Port: LocationServicePort
@@ -23,6 +25,15 @@ public interface LocationServicePort {
      * @return LocationAvailability result
      */
     LocationAvailability checkLocationAvailability(LocationId locationId, Quantity requiredQuantity, TenantId tenantId);
+
+    /**
+     * Gets location information by location ID.
+     *
+     * @param locationId Location ID
+     * @param tenantId   Tenant ID
+     * @return Optional LocationInfo containing location details
+     */
+    Optional<LocationInfo> getLocationInfo(LocationId locationId, TenantId tenantId);
 
     /**
      * Result object for location availability check.
@@ -66,6 +77,30 @@ public interface LocationServicePort {
 
         public String getReason() {
             return reason;
+        }
+    }
+
+    /**
+     * Location information result object.
+     */
+    record LocationInfo(String locationId, String name, String description, String code) {
+        /**
+         * Gets the display name for the location.
+         * Prefers description, then name, then code, finally locationId.
+         *
+         * @return Display name string
+         */
+        public String getDisplayName() {
+            if (description != null && !description.trim().isEmpty()) {
+                return description.trim();
+            }
+            if (name != null && !name.trim().isEmpty()) {
+                return name.trim();
+            }
+            if (code != null && !code.trim().isEmpty()) {
+                return code.trim();
+            }
+            return locationId;
         }
     }
 }

@@ -2,8 +2,8 @@
 
 ## Warehouse Management System Integration - CCBSA LDP System
 
-**Document Version:** 1.0  
-**Date:** 2025-01  
+**Document Version:** 1.1
+**Date:** 2025-01
 **Status:** Approved
 
 ---
@@ -11,6 +11,58 @@
 ## Overview
 
 Templates for the **Container** module (`{service}-container`). Bootstraps application and manages configuration.
+
+## Lombok Usage in Container Layer
+
+**RECOMMENDED**: Use Lombok for configuration classes to reduce boilerplate.
+
+**Configuration Classes**:
+- Use `@Configuration` for Spring configuration
+- Use `@RequiredArgsConstructor` for dependency injection (if needed)
+- Use `@ConditionalOnProperty` or `@ConditionalOnMissingBean` for conditional beans
+- Configuration classes are typically simple, use Lombok sparingly
+
+**Bean Factory Classes**:
+- Use `@Configuration` for bean factory registration
+- Use `@RequiredArgsConstructor` if factory has dependencies
+- Use `@Bean` methods for explicit bean creation
+
+**Health Indicators**:
+- Usually simple enough without Lombok
+- Implement `HealthIndicator` interface directly
+
+**Example:**
+```java
+// Configuration with Lombok
+@Configuration
+@RequiredArgsConstructor
+public class CacheConfiguration {
+    private final CacheProperties cacheProperties;
+
+    @Bean
+    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+            .entryTtl(Duration.ofMillis(cacheProperties.getTtl()));
+        return RedisCacheManager.builder(connectionFactory)
+            .cacheDefaults(config)
+            .build();
+    }
+}
+
+// Bean Factory with Lombok
+@Configuration
+@RequiredArgsConstructor
+public class RepositoryBeanFactory {
+    private final StockConsignmentRepositoryAdapter baseAdapter;
+    private final RedisCacheManager cacheManager;
+
+    @Bean
+    @Primary
+    public StockConsignmentRepository cachedRepository() {
+        return new CachedStockConsignmentRepositoryAdapter(baseAdapter, cacheManager);
+    }
+}
+```
 
 ---
 
@@ -270,8 +322,23 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
 ---
 
+## Implementation Checklist
+
+- [ ] Main application class annotated with `@SpringBootApplication`
+- [ ] Configuration classes in `config` package annotated with `@Configuration`
+- [ ] Kafka configuration imports `KafkaConfig` from `common-messaging`
+- [ ] All Kafka beans use `@Qualifier("kafkaObjectMapper")` for ObjectMapper injection
+- [ ] `WebMvcConfig` configures `@Primary` ObjectMapper without type information
+- [ ] **Configuration classes use Lombok** (`@Configuration`, optionally `@RequiredArgsConstructor`)
+- [ ] **Bean factories use Lombok** (`@Configuration`, `@RequiredArgsConstructor` if needed)
+- [ ] Health indicators implemented (simple, typically without Lombok)
+
+---
+
 **Document Control**
 
-- **Version History:** v1.0 (2025-01) - Initial template creation
+- **Version History:**
+  - v1.1 (2025-01) - Added Lombok usage guidelines for configuration and bean factory classes
+  - v1.0 (2025-01) - Initial template creation
 - **Review Cycle:** Review when container patterns change
 

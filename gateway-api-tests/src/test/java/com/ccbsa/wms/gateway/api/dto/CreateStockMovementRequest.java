@@ -5,16 +5,19 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateStockMovementRequest {
-    private String productId;
-    private String sourceLocationId;
-    private String targetLocationId;
+    private String stockItemId;
+    private UUID productId;
+    private UUID sourceLocationId;
+    private UUID destinationLocationId;
     private Integer quantity;
-    private String movementType;
-    private String reason;
+    private String movementType; // RECEIVING_TO_STORAGE, STORAGE_TO_PICKING, INTER_STORAGE, PICKING_TO_SHIPPING, OTHER
+    private String reason; // MovementReason enum value
 }
 

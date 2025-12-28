@@ -4,22 +4,25 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ccbsa.wms.notification.application.service.exception.NotificationNotFoundException;
-import com.ccbsa.wms.notification.application.service.port.repository.NotificationRepository;
+import com.ccbsa.wms.notification.application.service.port.data.NotificationViewRepository;
+import com.ccbsa.wms.notification.application.service.port.data.dto.NotificationView;
 import com.ccbsa.wms.notification.application.service.query.dto.GetNotificationQuery;
 import com.ccbsa.wms.notification.application.service.query.dto.GetNotificationQueryResult;
 
 /**
  * Query Handler: GetNotificationQueryHandler
  * <p>
- * Handles query for Notification by ID. Uses repository port for MVP (read model can be added later).
+ * Handles query for Notification read model by ID.
+ * <p>
+ * Uses data port (NotificationViewRepository) instead of repository port for CQRS compliance.
  */
 @Component
 public class GetNotificationQueryHandler {
 
-    private final NotificationRepository repository;
+    private final NotificationViewRepository viewRepository;
 
-    public GetNotificationQueryHandler(NotificationRepository repository) {
-        this.repository = repository;
+    public GetNotificationQueryHandler(NotificationViewRepository viewRepository) {
+        this.viewRepository = viewRepository;
     }
 
     /**
@@ -36,9 +39,12 @@ public class GetNotificationQueryHandler {
         // 1. Validate query
         validateQuery(query);
 
-        // 2. Load from repository
-        return repository.findById(query.getNotificationId()).map(this::toQueryResult)
+        // 2. Load read model (view) from data port
+        var notificationView = viewRepository.findById(query.getNotificationId())
                 .orElseThrow(() -> new NotificationNotFoundException(query.getNotificationId().getValueAsString(), "Notification not found"));
+
+        // 3. Map view to query result
+        return toQueryResult(notificationView);
     }
 
     private void validateQuery(GetNotificationQuery query) {
@@ -50,10 +56,10 @@ public class GetNotificationQueryHandler {
         }
     }
 
-    private GetNotificationQueryResult toQueryResult(com.ccbsa.wms.notification.domain.core.entity.Notification notification) {
-        return GetNotificationQueryResult.builder().notificationId(notification.getId()).tenantId(notification.getTenantId()).recipientUserId(notification.getRecipientUserId())
-                .title(notification.getTitle().getValue()).message(notification.getMessage().getValue()).type(notification.getType()).status(notification.getStatus())
-                .createdAt(notification.getCreatedAt()).lastModifiedAt(notification.getLastModifiedAt()).sentAt(notification.getSentAt()).readAt(notification.getReadAt()).build();
+    private GetNotificationQueryResult toQueryResult(NotificationView view) {
+        return GetNotificationQueryResult.builder().notificationId(view.getNotificationId()).tenantId(view.getTenantId()).recipientUserId(view.getRecipientUserId())
+                .title(view.getTitle()).message(view.getMessage()).type(view.getType()).status(view.getStatus()).createdAt(view.getCreatedAt())
+                .lastModifiedAt(view.getLastModifiedAt()).sentAt(view.getSentAt()).readAt(view.getReadAt()).build();
     }
 }
 

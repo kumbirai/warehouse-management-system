@@ -17,6 +17,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * JPA Entity: ProductEntity
@@ -29,6 +32,9 @@ import jakarta.persistence.Version;
  */
 @Entity
 @Table(name = "products", schema = "tenant_schema")
+@Getter
+@Setter
+@NoArgsConstructor
 public class ProductEntity {
     @Id
     @Column(name = "id", nullable = false)
@@ -72,114 +78,5 @@ public class ProductEntity {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductBarcodeEntity> secondaryBarcodes = new ArrayList<>();
-
-    // JPA requires no-arg constructor
-    public ProductEntity() {
-    }
-
-    // Getters and setters
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public String getProductCode() {
-        return productCode;
-    }
-
-    public void setProductCode(String productCode) {
-        this.productCode = productCode;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getPrimaryBarcode() {
-        return primaryBarcode;
-    }
-
-    public void setPrimaryBarcode(String primaryBarcode) {
-        this.primaryBarcode = primaryBarcode;
-    }
-
-    public BarcodeType getPrimaryBarcodeType() {
-        return primaryBarcodeType;
-    }
-
-    public void setPrimaryBarcodeType(BarcodeType primaryBarcodeType) {
-        this.primaryBarcodeType = primaryBarcodeType;
-    }
-
-    public UnitOfMeasure getUnitOfMeasure() {
-        return unitOfMeasure;
-    }
-
-    public void setUnitOfMeasure(UnitOfMeasure unitOfMeasure) {
-        this.unitOfMeasure = unitOfMeasure;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getBrand() {
-        return brand;
-    }
-
-    public void setBrand(String brand) {
-        this.brand = brand;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getLastModifiedAt() {
-        return lastModifiedAt;
-    }
-
-    public void setLastModifiedAt(LocalDateTime lastModifiedAt) {
-        this.lastModifiedAt = lastModifiedAt;
-    }
-
-    public Long getVersion() {
-        return version;
-    }
-
-    public void setVersion(Long version) {
-        this.version = version;
-    }
-
-    public List<ProductBarcodeEntity> getSecondaryBarcodes() {
-        return secondaryBarcodes;
-    }
-
-    public void setSecondaryBarcodes(List<ProductBarcodeEntity> secondaryBarcodes) {
-        this.secondaryBarcodes = secondaryBarcodes;
-    }
 }
 

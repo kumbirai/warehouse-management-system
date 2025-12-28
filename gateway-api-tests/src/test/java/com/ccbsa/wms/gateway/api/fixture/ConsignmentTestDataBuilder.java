@@ -74,8 +74,8 @@ public class ConsignmentTestDataBuilder {
     public static CreateStockAllocationRequest buildCreateStockAllocationRequest(
             String productId, String sourceLocationId, int quantity, String referenceId) {
         return CreateStockAllocationRequest.builder()
-                .productId(productId)
-                .sourceLocationId(sourceLocationId)
+                .productId(UUID.fromString(productId))
+                .locationId(sourceLocationId != null ? UUID.fromString(sourceLocationId) : null)
                 .quantity(quantity)
                 .allocationType("PICKING_ORDER")
                 .referenceId(referenceId)
@@ -85,9 +85,9 @@ public class ConsignmentTestDataBuilder {
     public static CreateStockMovementRequest buildCreateStockMovementRequest(
             String productId, String sourceLocationId, String targetLocationId, int quantity) {
         return CreateStockMovementRequest.builder()
-                .productId(productId)
-                .sourceLocationId(sourceLocationId)
-                .targetLocationId(targetLocationId)
+                .productId(UUID.fromString(productId))
+                .sourceLocationId(UUID.fromString(sourceLocationId))
+                .destinationLocationId(UUID.fromString(targetLocationId))
                 .quantity(quantity)
                 .movementType("RELOCATION")
                 .reason("Optimization")
@@ -95,9 +95,11 @@ public class ConsignmentTestDataBuilder {
     }
 
     public static CreateStockAdjustmentRequest buildCreateStockAdjustmentRequest(
-            String consignmentId, String adjustmentType, int quantity, String reason) {
+            String productId, String locationId, String adjustmentType, int quantity, String reason) {
         return CreateStockAdjustmentRequest.builder()
-                .consignmentId(consignmentId)
+                .productId(UUID.fromString(productId))
+                .locationId(locationId != null ? UUID.fromString(locationId) : null)
+                .stockItemId(null)
                 .adjustmentType(adjustmentType)
                 .quantity(quantity)
                 .reason(reason)

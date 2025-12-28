@@ -1,0 +1,30 @@
+package com.ccbsa.wms.location.application.dto.command;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import com.ccbsa.wms.location.domain.core.valueobject.MovementStatus;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * Result DTO: CancelStockMovementResultDTO
+ * <p>
+ * Response DTO for canceling a stock movement.
+ */
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CancelStockMovementResultDTO {
+    private UUID stockMovementId;
+    private MovementStatus status;
+    private LocalDateTime cancelledAt;
+    private String cancellationReason;
+}
+

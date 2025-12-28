@@ -87,6 +87,13 @@ spring:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:7080/realms/wms-realm}
           jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:7080/realms/wms-realm/protocol/openid-connect/certs}
 
+# Keycloak Service Account Configuration (for service-to-service authentication)
+keycloak:
+  service-account:
+    token-endpoint: ${KEYCLOAK_TOKEN_ENDPOINT:http://localhost:7080/realms/wms-realm/protocol/openid-connect/token}
+    client-id: ${SERVICE_ACCOUNT_CLIENT_ID:wms-service-account}
+    client-secret: ${SERVICE_ACCOUNT_CLIENT_SECRET:0y9HDRzWQE0FP7SlDBwmmj2EeVJ0tTC9}
+
 # Eureka Client Configuration
 eureka:
   client:

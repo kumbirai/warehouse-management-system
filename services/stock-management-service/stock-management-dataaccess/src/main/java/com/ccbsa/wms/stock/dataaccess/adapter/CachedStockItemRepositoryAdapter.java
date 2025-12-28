@@ -4,8 +4,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -13,13 +11,14 @@ import org.springframework.stereotype.Repository;
 import com.ccbsa.common.cache.decorator.CachedRepositoryDecorator;
 import com.ccbsa.common.cache.key.CacheNamespace;
 import com.ccbsa.common.domain.valueobject.StockClassification;
+import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.stock.application.service.port.repository.StockItemRepository;
 import com.ccbsa.wms.stock.domain.core.entity.StockItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
-import com.ccbsa.wms.stock.domain.core.valueobject.StockItemId;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Cached Stock Item Repository Adapter.
@@ -38,10 +37,8 @@ import io.micrometer.core.instrument.MeterRegistry;
  */
 @Repository
 @Primary
+@Slf4j
 public class CachedStockItemRepositoryAdapter extends CachedRepositoryDecorator<StockItem, StockItemId> implements StockItemRepository {
-
-    private static final Logger log = LoggerFactory.getLogger(CachedStockItemRepositoryAdapter.class);
-
     private final StockItemRepositoryAdapter baseRepository;
 
     public CachedStockItemRepositoryAdapter(StockItemRepositoryAdapter baseRepository, RedisTemplate<String, Object> redisTemplate, MeterRegistry meterRegistry) {
@@ -84,6 +81,25 @@ public class CachedStockItemRepositoryAdapter extends CachedRepositoryDecorator<
     public boolean existsById(StockItemId stockItemId, TenantId tenantId) {
         // Existence checks are fast, not cached
         return baseRepository.existsById(stockItemId, tenantId);
+    }
+
+    @Override
+    public List<StockItem> findByTenantIdAndProductId(TenantId tenantId, com.ccbsa.common.domain.valueobject.ProductId productId) {
+        // Collections NOT cached to avoid cache bloat
+        return baseRepository.findByTenantIdAndProductId(tenantId, productId);
+    }
+
+    @Override
+    public List<StockItem> findByTenantIdAndProductIdAndLocationId(TenantId tenantId, com.ccbsa.common.domain.valueobject.ProductId productId,
+                                                                   com.ccbsa.wms.location.domain.core.valueobject.LocationId locationId) {
+        // Collections NOT cached to avoid cache bloat
+        return baseRepository.findByTenantIdAndProductIdAndLocationId(tenantId, productId, locationId);
+    }
+
+    @Override
+    public Optional<StockItem> findById(StockItemId stockItemId) {
+        // For internal use - not cached (requires TenantContext)
+        return baseRepository.findById(stockItemId);
     }
 }
 

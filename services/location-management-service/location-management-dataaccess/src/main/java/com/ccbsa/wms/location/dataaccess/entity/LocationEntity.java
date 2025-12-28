@@ -13,6 +13,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * JPA Entity: LocationEntity
@@ -29,6 +32,9 @@ import jakarta.persistence.Version;
  */
 @Entity
 @Table(name = "locations", schema = "tenant_schema")
+@Getter
+@Setter
+@NoArgsConstructor
 public class LocationEntity {
     @Id
     @Column(name = "id", nullable = false)
@@ -86,154 +92,5 @@ public class LocationEntity {
 
     @Column(name = "parent_location_id")
     private UUID parentLocationId;
-
-    // JPA requires no-arg constructor
-    public LocationEntity() {
-    }
-
-    // Getters and setters
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public String getBarcode() {
-        return barcode;
-    }
-
-    public void setBarcode(String barcode) {
-        this.barcode = barcode;
-    }
-
-    public String getZone() {
-        return zone;
-    }
-
-    public void setZone(String zone) {
-        this.zone = zone;
-    }
-
-    public String getAisle() {
-        return aisle;
-    }
-
-    public void setAisle(String aisle) {
-        this.aisle = aisle;
-    }
-
-    public String getRack() {
-        return rack;
-    }
-
-    public void setRack(String rack) {
-        this.rack = rack;
-    }
-
-    public String getLevel() {
-        return level;
-    }
-
-    public void setLevel(String level) {
-        this.level = level;
-    }
-
-    public LocationStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(LocationStatus status) {
-        this.status = status;
-    }
-
-    public BigDecimal getCurrentQuantity() {
-        return currentQuantity;
-    }
-
-    public void setCurrentQuantity(BigDecimal currentQuantity) {
-        this.currentQuantity = currentQuantity;
-    }
-
-    public BigDecimal getMaximumQuantity() {
-        return maximumQuantity;
-    }
-
-    public void setMaximumQuantity(BigDecimal maximumQuantity) {
-        this.maximumQuantity = maximumQuantity;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getLastModifiedAt() {
-        return lastModifiedAt;
-    }
-
-    public void setLastModifiedAt(LocalDateTime lastModifiedAt) {
-        this.lastModifiedAt = lastModifiedAt;
-    }
-
-    public Long getVersion() {
-        return version;
-    }
-
-    public void setVersion(Long version) {
-        this.version = version;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public UUID getParentLocationId() {
-        return parentLocationId;
-    }
-
-    public void setParentLocationId(UUID parentLocationId) {
-        this.parentLocationId = parentLocationId;
-    }
 }
 

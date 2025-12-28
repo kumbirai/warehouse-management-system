@@ -17,17 +17,103 @@ This document provides comprehensive clean code guidelines and things to look ou
 
 ## Table of Contents
 
-1. [Domain Core Module](#domain-core-module)
-2. [Application Service Module](#application-service-module)
-3. [Data Access Module](#data-access-module)
-4. [Application Module](#application-module)
-5. [Messaging Module](#messaging-module)
-6. [Container Module](#container-module)
-7. [Frontend Module](#frontend-module)
-8. [General Clean Code Principles](#general-clean-code-principles)
+1. [Lombok Usage Policy](#lombok-usage-policy)
+2. [Domain Core Module](#domain-core-module)
+3. [Application Service Module](#application-service-module)
+4. [Data Access Module](#data-access-module)
+5. [Application Module](#application-module)
+6. [Messaging Module](#messaging-module)
+7. [Container Module](#container-module)
+8. [Frontend Module](#frontend-module)
+9. [General Clean Code Principles](#general-clean-code-principles)
 
 ---
 
+## Lombok Usage Policy
+
+**CRITICAL DISTINCTION**: This project mandates a clear separation between domain core (pure Java) and infrastructure layers (Spring-enabled).
+
+### Domain Core Modules (`*-domain-core`)
+
+**NO LOMBOK** - Pure Java implementation required:
+- Domain core must remain framework-agnostic
+- Manual builder patterns required
+- Manual getters/setters required
+- Manual `equals()`, `hashCode()`, and `toString()` implementations
+- Rationale: Domain purity, framework independence, explicit business logic
+
+### All Other Modules
+
+**LOMBOK RECOMMENDED** - Use Lombok to reduce boilerplate:
+- Application Service (`*-application-service`) - Commands, queries, results
+- Application Layer (`*-application`) - DTOs, mappers
+- Data Access (`*-dataaccess`) - JPA entities, adapters
+- Messaging (`*-messaging`) - Event listeners, publishers
+- Container (`*-container`) - Configuration classes
+
+**Recommended Lombok Annotations:**
+- `@Getter` / `@Setter` - For fields requiring accessors
+- `@Builder` - For complex object construction
+- `@NoArgsConstructor` / `@AllArgsConstructor` - For constructors
+- `@ToString` - For debugging and logging
+- `@EqualsAndHashCode` - For value comparison (use with caution for entities)
+- `@Slf4j` - For logging (preferred over manual logger declaration)
+- `@RequiredArgsConstructor` - For dependency injection
+
+**Lombok Anti-Patterns to Avoid:**
+- `@Data` - Too broad, use specific annotations instead
+- `@Value` - Use for truly immutable classes only
+- Avoid Lombok in classes with complex business logic validation
+
+**Example Comparison:**
+
+```java
+// Domain Core (NO Lombok)
+public class CreateConsignmentResult {
+    private final ConsignmentId consignmentId;
+    private final ConsignmentStatus status;
+
+    private CreateConsignmentResult(Builder builder) {
+        this.consignmentId = builder.consignmentId;
+        this.status = builder.status;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public ConsignmentId getConsignmentId() { return consignmentId; }
+    public ConsignmentStatus getStatus() { return status; }
+
+    public static class Builder {
+        private ConsignmentId consignmentId;
+        private ConsignmentStatus status;
+
+        public Builder consignmentId(ConsignmentId id) {
+            this.consignmentId = id;
+            return this;
+        }
+
+        public CreateConsignmentResult build() {
+            return new CreateConsignmentResult(this);
+        }
+    }
+}
+
+// Application Layer (USE Lombok)
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class CreateConsignmentResultDTO {
+    private final UUID consignmentId;
+    private final String status;
+    private final LocalDateTime createdAt;
+}
+```
+
+---
 ## Domain Core Module
 
 ### Module Purpose
@@ -467,6 +553,49 @@ com.ccbsa.wms.{service}.application.service/
 
 ### Clean Code Principles
 
+#### ✅ **DO: Lombok Usage (RECOMMENDED)**
+- **Use Lombok for all DTOs** (Commands, Queries, Results) to reduce boilerplate
+- **Handlers**: Use `@Slf4j` for logging and `@RequiredArgsConstructor` for dependency injection
+- **DTOs**: Use `@Getter`, `@Builder`, `@ToString`, `@EqualsAndHashCode` as appropriate
+- **Anti-Patterns**: Avoid `@Data` (too broad), avoid `@Value` (only for truly immutable classes)
+
+**Example:**
+```java
+// ✅ CORRECT: Command handler with Lombok
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class ConfirmConsignmentCommandHandler {
+
+    private final StockConsignmentRepository repository;
+    private final StockManagementEventPublisher eventPublisher;
+
+    @Transactional
+    public ConfirmConsignmentResult handle(ConfirmConsignmentCommand command) {
+        // Handler implementation
+    }
+}
+
+// ✅ CORRECT: Command DTO with Lombok
+@Getter
+@Builder
+@ToString
+@EqualsAndHashCode
+public class ConfirmConsignmentCommand {
+    private final ConsignmentId consignmentId;
+    private final TenantId tenantId;
+}
+
+// ✅ CORRECT: Result DTO with Lombok
+@Getter
+@Builder
+public class ConfirmConsignmentResult {
+    private final ConsignmentId consignmentId;
+    private final ConsignmentStatus status;
+    private final LocalDateTime confirmedAt;
+}
+```
+
 #### ✅ **DO: Single Responsibility**
 - Each handler should handle one use case
 - Clear separation of concerns (command vs query)
@@ -762,6 +891,46 @@ com.ccbsa.wms.{service}.dataaccess/
 ```
 
 ### Clean Code Principles
+
+#### ✅ **DO: Lombok Usage (RECOMMENDED)**
+- **JPA Entities**: Use `@Getter`, `@Setter`, `@NoArgsConstructor` for JPA entities
+- **Adapters and Mappers**: Use `@Slf4j` for logging and `@RequiredArgsConstructor` for dependency injection
+- **Anti-Patterns**: Avoid `@Data` on JPA entities (can cause issues with lazy loading and equals/hashCode)
+
+**Example:**
+```java
+// ✅ CORRECT: JPA entity with Lombok
+@Entity
+@Table(name = "stock_consignments", schema = "tenant_schema")
+@Getter
+@Setter
+@NoArgsConstructor
+public class StockConsignmentEntity {
+    @Id
+    @Column(name = "id", nullable = false)
+    private UUID id;
+
+    @Column(name = "tenant_id", nullable = false)
+    private String tenantId;
+}
+
+// ✅ CORRECT: Repository adapter with Lombok
+@Slf4j
+@Repository
+@RequiredArgsConstructor
+public class StockConsignmentRepositoryAdapter implements StockConsignmentRepository {
+    private final StockConsignmentJpaRepository jpaRepository;
+    private final StockConsignmentEntityMapper mapper;
+}
+
+// ✅ CORRECT: Entity mapper with Lombok
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class StockConsignmentEntityMapper {
+    // Mapper implementation
+}
+```
 
 #### ✅ **DO: Repository Pattern**
 - Implement repository interfaces from application service layer
@@ -1066,6 +1235,47 @@ com.ccbsa.wms.{service}.application/
 
 ### Clean Code Principles
 
+#### ✅ **DO: Lombok Usage (MANDATORY)**
+- **Controllers**: Use `@Slf4j` for logging and `@RequiredArgsConstructor` for dependency injection
+- **DTOs**: Use `@Getter`, `@Setter`, `@NoArgsConstructor`, `@AllArgsConstructor`, `@Builder` for all DTOs
+- **Mappers**: Use `@Component` and `@RequiredArgsConstructor` if mapper has dependencies
+- **Anti-Patterns**: Avoid `@Data` (too broad), prefer specific annotations
+
+**Example:**
+```java
+// ✅ CORRECT: Controller with Lombok
+@Slf4j
+@RestController
+@RequestMapping("/api/v1/stock/consignments")
+@Tag(name = "Stock Consignment Commands")
+@RequiredArgsConstructor
+public class StockConsignmentCommandController {
+    private final ConfirmConsignmentCommandHandler confirmHandler;
+    private final StockConsignmentDTOMapper mapper;
+}
+
+// ✅ CORRECT: DTO with Lombok
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ConfirmConsignmentCommandDTO {
+    @NotNull(message = "Consignment ID is required")
+    private String consignmentId;
+    
+    @NotNull(message = "Tenant ID is required")
+    private String tenantId;
+}
+
+// ✅ CORRECT: Mapper with Lombok
+@Component
+@RequiredArgsConstructor
+public class StockConsignmentDTOMapper {
+    private final ObjectMapper objectMapper;
+}
+```
+
 #### ✅ **DO: CQRS Separation**
 - Separate command and query controllers
 - Use appropriate HTTP methods (POST/PUT/DELETE for commands, GET for queries)
@@ -1296,6 +1506,45 @@ com.ccbsa.wms.{service}.messaging/
 ```
 
 ### Clean Code Principles
+
+#### ✅ **DO: Lombok Usage (RECOMMENDED)**
+- **Event Listeners and Publishers**: Use `@Slf4j` for logging and `@RequiredArgsConstructor` for dependency injection
+- **Event Mappers**: Use `@Component` and `@RequiredArgsConstructor` if mapper has dependencies
+- **Configuration Classes**: Use `@Configuration` with `@RequiredArgsConstructor` for dependency injection
+
+**Example:**
+```java
+// ✅ CORRECT: Event listener with Lombok
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class LocationAssignedEventListener {
+    private final StockConsignmentRepository repository;
+    private final EventStore eventStore;
+
+    @KafkaListener(topics = "location-events", groupId = "stock-service")
+    public void handle(LocationAssignedEvent event, Acknowledgment acknowledgment) {
+        // Listener implementation
+    }
+}
+
+// ✅ CORRECT: Event publisher with Lombok
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class StockManagementEventPublisherImpl implements StockManagementEventPublisher {
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+}
+
+// ✅ CORRECT: Configuration with Lombok
+@Configuration
+@Import({KafkaConfig.class})
+@RequiredArgsConstructor
+public class StockManagementConfiguration {
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+}
+```
 
 #### ✅ **DO: Event-Driven Design**
 - Use domain events for communication between services
@@ -1551,6 +1800,41 @@ com.ccbsa.wms.{service}.container/
 ```
 
 ### Clean Code Principles
+
+#### ✅ **DO: Lombok Usage (RECOMMENDED)**
+- **Configuration Classes**: Use `@Configuration` with `@RequiredArgsConstructor` for dependency injection
+- **Health Indicators**: Use `@Component` with `@RequiredArgsConstructor` for dependency injection
+- **Anti-Patterns**: Avoid field injection, prefer constructor injection via `@RequiredArgsConstructor`
+
+**Example:**
+```java
+// ✅ CORRECT: Configuration with Lombok
+@Configuration
+@Import({ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class})
+@RequiredArgsConstructor
+public class StockManagementConfiguration {
+    @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
+    private String bootstrapServers;
+
+    @Bean
+    public ConsumerFactory<String, Object> externalEventConsumerFactory(
+            @Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+        // Configuration implementation
+    }
+}
+
+// ✅ CORRECT: Health indicator with Lombok
+@Component
+@RequiredArgsConstructor
+public class DatabaseHealthIndicator implements HealthIndicator {
+    private final DataSource dataSource;
+
+    @Override
+    public Health health() {
+        // Health check implementation
+    }
+}
+```
 
 #### ✅ **DO: Configuration Management**
 - Use centralized configuration
@@ -1996,6 +2280,9 @@ These clean code guidelines ensure that each module in the microservice architec
 - [ ] Query results return optimized DTOs
 - [ ] Command handlers use repository ports (NOT data ports)
 - [ ] Query handlers use data ports (NOT repository ports)
+- [ ] **Lombok used for Command/Query/Result DTOs** (`@Getter`, `@Builder`, etc.)
+- [ ] **Handlers use `@Slf4j` for logging** (instead of manual logger declaration)
+- [ ] **Handlers use `@RequiredArgsConstructor` for dependency injection**
 
 #### Application Layer Module
 - [ ] Command controllers separate from query controllers
@@ -2006,6 +2293,9 @@ These clean code guidelines ensure that each module in the microservice architec
 - [ ] DTOs used for all API communication
 - [ ] DTO mappers convert between DTOs and domain objects
 - [ ] Global exception handler extends `BaseGlobalExceptionHandler`
+- [ ] **Lombok used for all DTOs** (`@Getter`, `@Setter`, `@Builder`, etc.)
+- [ ] **Controllers use `@Slf4j` for logging** (instead of manual logger declaration)
+- [ ] **Controllers use `@RequiredArgsConstructor` for dependency injection**
 
 #### Data Access Module
 - [ ] Repository adapters implement application service repository interfaces
@@ -2015,6 +2305,8 @@ These clean code guidelines ensure that each module in the microservice architec
 - [ ] All repository adapters have cached decorators with `@Primary`
 - [ ] Cache invalidation listeners implemented
 - [ ] Version field handled correctly (never set to 0 for new entities)
+- [ ] **Lombok used for JPA entities** (`@Getter`, `@Setter`, `@NoArgsConstructor`)
+- [ ] **Lombok used for adapters and mappers** (`@Slf4j`, `@RequiredArgsConstructor`)
 
 #### Messaging Module
 - [ ] Event publisher implements `EventPublisher` interface
@@ -2027,6 +2319,7 @@ These clean code guidelines ensure that each module in the microservice architec
 - [ ] Cache invalidation listeners implemented
 - [ ] Kafka configuration imports `KafkaConfig`
 - [ ] All Kafka beans use `@Qualifier("kafkaObjectMapper")`
+- [ ] **Lombok used for event listeners and publishers** (`@Slf4j`, `@RequiredArgsConstructor`)
 
 #### Container Module
 - [ ] Main application class annotated with `@SpringBootApplication`
@@ -2037,14 +2330,16 @@ These clean code guidelines ensure that each module in the microservice architec
 - [ ] All Kafka beans use `@Qualifier("kafkaObjectMapper")`
 - [ ] Metrics exposed via Actuator
 - [ ] Multi-tenant configuration resolver
+- [ ] **Lombok used for configuration classes** (`@Configuration` with `@RequiredArgsConstructor`)
 
 ---
 
-**Document Version:** 1.0  
-**Date:** 2025-12-22  
+**Document Version:** 1.1  
+**Date:** 2025-01-22  
 **Status:** Approved  
 
 **Version History:**
+- v1.1 (2025-01-22): Added comprehensive Lombok usage policy and guidelines for all modules
 - v1.0 (2025-12-22): Initial creation based on warehouse management system templates
 
 **Review Cycle:** This document will be reviewed quarterly or when patterns change

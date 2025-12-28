@@ -1,6 +1,7 @@
 package com.ccbsa.wms.stock.messaging.listener;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -16,18 +17,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ccbsa.common.application.context.CorrelationContext;
 import com.ccbsa.common.domain.valueobject.ExpirationDate;
+import com.ccbsa.common.domain.valueobject.ProductId;
+import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 import com.ccbsa.wms.stock.application.service.command.CreateStockItemCommandHandler;
 import com.ccbsa.wms.stock.application.service.command.dto.CreateStockItemCommand;
 import com.ccbsa.wms.stock.application.service.port.repository.StockConsignmentRepository;
+import com.ccbsa.wms.stock.application.service.port.repository.StockItemRepository;
 import com.ccbsa.wms.stock.application.service.port.service.ProductServicePort;
 import com.ccbsa.wms.stock.domain.core.entity.StockConsignment;
+import com.ccbsa.wms.stock.domain.core.entity.StockItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentLineItem;
-import com.ccbsa.wms.stock.domain.core.valueobject.Quantity;
 
 /**
  * Event Listener: StockConsignmentConfirmedEventListener
@@ -49,12 +52,14 @@ public class StockConsignmentConfirmedEventListener {
     private static final String STOCK_CONSIGNMENT_CONFIRMED_EVENT = "StockConsignmentConfirmedEvent";
 
     private final StockConsignmentRepository consignmentRepository;
+    private final StockItemRepository stockItemRepository;
     private final CreateStockItemCommandHandler createStockItemCommandHandler;
     private final ProductServicePort productServicePort;
 
-    public StockConsignmentConfirmedEventListener(StockConsignmentRepository consignmentRepository, CreateStockItemCommandHandler createStockItemCommandHandler,
-                                                  ProductServicePort productServicePort) {
+    public StockConsignmentConfirmedEventListener(StockConsignmentRepository consignmentRepository, StockItemRepository stockItemRepository,
+                                                  CreateStockItemCommandHandler createStockItemCommandHandler, ProductServicePort productServicePort) {
         this.consignmentRepository = consignmentRepository;
+        this.stockItemRepository = stockItemRepository;
         this.createStockItemCommandHandler = createStockItemCommandHandler;
         this.productServicePort = productServicePort;
     }
@@ -68,10 +73,15 @@ public class StockConsignmentConfirmedEventListener {
 
             String detectedEventType = detectEventType(eventData, eventType);
             if (!isStockConsignmentConfirmedEvent(detectedEventType, eventData)) {
-                logger.debug("Skipping event - not StockConsignmentConfirmedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
+                logger.debug("Skipping event - not StockConsignmentConfirmedEvent: detectedType={}, headerType={}, eventDataKeys={}", detectedEventType, eventType,
+                        eventData.keySet());
                 acknowledgment.acknowledge();
                 return;
             }
+
+            // Log event structure for debugging (at DEBUG level to avoid noise)
+            logger.debug("Processing StockConsignmentConfirmedEvent: detectedType={}, headerType={}, eventDataKeys={}, eventData={}", detectedEventType, eventType,
+                    eventData.keySet(), eventData);
 
             // Extract consignment ID
             String consignmentIdString = extractConsignmentId(eventData);
@@ -87,17 +97,40 @@ public class StockConsignmentConfirmedEventListener {
             StockConsignment consignment = consignmentRepository.findByIdAndTenantId(consignmentId, tenantId)
                     .orElseThrow(() -> new IllegalStateException(String.format("Consignment not found: %s", consignmentId.getValueAsString())));
 
-            // Check if stock items already exist (idempotency check)
-            // Note: We'll check this in the command handler or create a separate check
-            // For now, we'll create stock items for each line item
-
-            // Create stock items for each line item
-            for (ConsignmentLineItem lineItem : consignment.getLineItems()) {
-                createStockItemFromLineItem(consignment, lineItem, tenantId);
+            // Check if stock items already exist for this consignment (idempotency check)
+            // This prevents duplicate stock item creation if the event is processed multiple times
+            List<StockItem> existingStockItems = stockItemRepository.findByConsignmentId(consignmentId, tenantId);
+            if (!existingStockItems.isEmpty()) {
+                logger.info("Stock items already exist for consignment: consignmentId={}, existingCount={}. " + "Skipping stock item creation (idempotency).",
+                        consignmentId.getValueAsString(), existingStockItems.size());
+                acknowledgment.acknowledge();
+                return;
             }
 
-            logger.info("Successfully created stock items for consignment: consignmentId={}, lineItemsCount={}", consignmentId.getValueAsString(),
-                    consignment.getLineItems().size());
+            // Create stock items for each line item
+            int createdCount = 0;
+            int errorCount = 0;
+            for (ConsignmentLineItem lineItem : consignment.getLineItems()) {
+                try {
+                    createStockItemFromLineItem(consignment, lineItem, tenantId);
+                    createdCount++;
+                    logger.info("Created stock item for consignment: consignmentId={}, productCode={}, quantity={}", consignmentId.getValueAsString(),
+                            lineItem.getProductCode().getValue(), lineItem.getQuantity());
+                } catch (Exception e) {
+                    errorCount++;
+                    logger.error("Failed to create stock item for consignment: consignmentId={}, productCode={}, error={}", consignmentId.getValueAsString(),
+                            lineItem.getProductCode().getValue(), e.getMessage(), e);
+                    // Continue processing other line items even if one fails
+                }
+            }
+
+            if (errorCount > 0) {
+                logger.warn("Partially processed consignment: consignmentId={}, created={}, errors={}, total={}", consignmentId.getValueAsString(), createdCount, errorCount,
+                        consignment.getLineItems().size());
+            } else {
+                logger.info("Successfully created stock items for consignment: consignmentId={}, lineItemsCount={}, createdCount={}", consignmentId.getValueAsString(),
+                        consignment.getLineItems().size(), createdCount);
+            }
 
             acknowledgment.acknowledge();
         } catch (Exception e) {
@@ -121,12 +154,14 @@ public class StockConsignmentConfirmedEventListener {
 
     private String detectEventType(Map<String, Object> eventData, String headerType) {
         if (headerType != null && !headerType.isEmpty()) {
+            logger.debug("Event type detected from header: {}", headerType);
             return headerType;
         }
 
         Object classObj = eventData.get("@class");
         if (classObj != null) {
             String className = classObj.toString();
+            logger.debug("Event type detected from @class property: {}", className);
             int lastDot = className.lastIndexOf('.');
             if (lastDot >= 0) {
                 return className.substring(lastDot + 1);
@@ -136,14 +171,17 @@ public class StockConsignmentConfirmedEventListener {
 
         Object eventTypeObj = eventData.get("eventType");
         if (eventTypeObj != null) {
+            logger.debug("Event type detected from eventType property: {}", eventTypeObj);
             return eventTypeObj.toString();
         }
 
         Object aggregateTypeObj = eventData.get("aggregateType");
         if (aggregateTypeObj != null) {
+            logger.debug("Event type detected from aggregateType property: {}", aggregateTypeObj);
             return aggregateTypeObj.toString();
         }
 
+        logger.warn("Could not detect event type from event data. Header: {}, EventData keys: {}", headerType, eventData.keySet());
         return "Unknown";
     }
 
@@ -206,7 +244,7 @@ public class StockConsignmentConfirmedEventListener {
         ProductId productId = ProductId.of(productInfo.getProductId());
 
         // Create stock item command
-        CreateStockItemCommand.Builder commandBuilder =
+        var commandBuilder =
                 CreateStockItemCommand.builder().tenantId(tenantId).productId(productId).quantity(Quantity.of(lineItem.getQuantity())).consignmentId(consignment.getId());
 
         // Set expiration date if present

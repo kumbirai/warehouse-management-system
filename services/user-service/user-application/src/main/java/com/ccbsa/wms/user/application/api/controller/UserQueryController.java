@@ -27,6 +27,7 @@ import com.ccbsa.wms.user.application.service.query.dto.ListUsersQueryResult;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * REST Controller: UserQueryController
@@ -34,8 +35,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * Handles user management query operations (read operations).
  */
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/v1/users")
 @Tag(name = "User Queries", description = "User management query operations")
+@Slf4j
 public class UserQueryController {
     private final GetUserQueryHandler getUserQueryHandler;
     private final ListUsersQueryHandler listUsersQueryHandler;
@@ -139,9 +141,7 @@ public class UserQueryController {
             TenantId tenantIdToSet = TenantId.of(resolvedTenantId);
             TenantContext.setTenantId(tenantIdToSet);
 
-            org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserQueryController.class);
-            logger.debug("Set TenantContext to '{}' for SYSTEM_ADMIN query (previous: {})", tenantIdToSet.getValue(),
-                    previousTenantId != null ? previousTenantId.getValue() : "null");
+            log.debug("Set TenantContext to '{}' for SYSTEM_ADMIN query (previous: {})", tenantIdToSet.getValue(), previousTenantId != null ? previousTenantId.getValue() : "null");
         }
 
         try {
@@ -149,9 +149,7 @@ public class UserQueryController {
             List<UserResponse> responses = mapper.toUserResponseList(result);
 
             // Log result for debugging
-            org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(UserQueryController.class);
-            logger.info("ListUsers query result: tenantId={}, totalCount={}, itemsCount={}, page={}, size={}", resolvedTenantId, result.getTotalCount(), responses.size(), page,
-                    size);
+            log.info("ListUsers query result: tenantId={}, totalCount={}, itemsCount={}, page={}, size={}", resolvedTenantId, result.getTotalCount(), responses.size(), page, size);
 
             // Build pagination metadata (using 1-indexed page for response)
             ApiMeta.Pagination pagination = ApiMeta.Pagination.of(page != null && page > 0 ? page : 1, size != null && size > 0 ? size : 20, result.getTotalCount());

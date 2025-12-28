@@ -3,14 +3,14 @@ package com.ccbsa.wms.stock.dataaccess.mapper;
 import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.domain.valueobject.ExpirationDate;
+import com.ccbsa.common.domain.valueobject.ProductId;
+import com.ccbsa.common.domain.valueobject.Quantity;
+import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 import com.ccbsa.wms.stock.dataaccess.entity.StockItemEntity;
 import com.ccbsa.wms.stock.domain.core.entity.StockItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
-import com.ccbsa.wms.stock.domain.core.valueobject.Quantity;
-import com.ccbsa.wms.stock.domain.core.valueobject.StockItemId;
 
 /**
  * Mapper: StockItemEntityMapper

@@ -253,11 +253,19 @@ public class TenantSchemaCreatedEventListener {
     private void runFlywayMigrations(String schemaName) {
         logger.info("Running Flyway migrations in tenant schema: schemaName={}", schemaName);
         try {
-            Flyway flyway = Flyway.configure().dataSource(dataSource).schemas(schemaName).locations("classpath:db/migration").baselineOnMigrate(true).load();
+            // Configure Flyway to skip validation warnings when no migrations are found
+            // This is expected for services that don't have migration files
+            Flyway flyway = Flyway.configure().dataSource(dataSource).schemas(schemaName).locations("classpath:db/migration").baselineOnMigrate(true)
+                    .validateOnMigrate(false) // Skip validation to avoid warnings when no migrations exist
+                    .load();
 
             var migrateResult = flyway.migrate();
             int migrationsApplied = migrateResult.migrationsExecuted;
-            logger.info("Flyway migrations completed in tenant schema: schemaName={}, migrationsApplied={}", schemaName, migrationsApplied);
+            if (migrationsApplied > 0) {
+                logger.info("Flyway migrations completed in tenant schema: schemaName={}, migrationsApplied={}", schemaName, migrationsApplied);
+            } else {
+                logger.debug("No Flyway migrations found for reconciliation-service (expected - this service may not have migrations): schemaName={}", schemaName);
+            }
         } catch (Exception e) {
             logger.error("Failed to run Flyway migrations in tenant schema: schemaName={}, error={}", schemaName, e.getMessage(), e);
             throw new RuntimeException(String.format("Failed to run Flyway migrations in schema: %s", schemaName), e);

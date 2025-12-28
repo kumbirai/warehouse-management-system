@@ -16,6 +16,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * JPA Entity: StockConsignmentEntity
@@ -28,6 +31,9 @@ import jakarta.persistence.Version;
  */
 @Entity
 @Table(name = "stock_consignments", schema = "tenant_schema")
+@Getter
+@Setter
+@NoArgsConstructor
 public class StockConsignmentEntity {
     @Id
     @Column(name = "id", nullable = false)
@@ -67,106 +73,5 @@ public class StockConsignmentEntity {
 
     @OneToMany(mappedBy = "consignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ConsignmentLineItemEntity> lineItems = new ArrayList<>();
-
-    // JPA requires no-arg constructor
-    public StockConsignmentEntity() {
-    }
-
-    // Getters and setters
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public String getConsignmentReference() {
-        return consignmentReference;
-    }
-
-    public void setConsignmentReference(String consignmentReference) {
-        this.consignmentReference = consignmentReference;
-    }
-
-    public String getWarehouseId() {
-        return warehouseId;
-    }
-
-    public void setWarehouseId(String warehouseId) {
-        this.warehouseId = warehouseId;
-    }
-
-    public ConsignmentStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ConsignmentStatus status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getReceivedAt() {
-        return receivedAt;
-    }
-
-    public void setReceivedAt(LocalDateTime receivedAt) {
-        this.receivedAt = receivedAt;
-    }
-
-    public LocalDateTime getConfirmedAt() {
-        return confirmedAt;
-    }
-
-    public void setConfirmedAt(LocalDateTime confirmedAt) {
-        this.confirmedAt = confirmedAt;
-    }
-
-    public String getReceivedBy() {
-        return receivedBy;
-    }
-
-    public void setReceivedBy(String receivedBy) {
-        this.receivedBy = receivedBy;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getLastModifiedAt() {
-        return lastModifiedAt;
-    }
-
-    public void setLastModifiedAt(LocalDateTime lastModifiedAt) {
-        this.lastModifiedAt = lastModifiedAt;
-    }
-
-    public Long getVersion() {
-        return version;
-    }
-
-    public void setVersion(Long version) {
-        this.version = version;
-    }
-
-    public List<ConsignmentLineItemEntity> getLineItems() {
-        return lineItems;
-    }
-
-    public void setLineItems(List<ConsignmentLineItemEntity> lineItems) {
-        this.lineItems = lineItems;
-    }
 }
 

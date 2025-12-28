@@ -3,47 +3,52 @@ package com.ccbsa.wms.location.application.service.query;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ccbsa.wms.location.application.service.port.repository.LocationRepository;
+import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.wms.location.application.service.port.data.LocationViewRepository;
+import com.ccbsa.wms.location.application.service.port.data.dto.LocationView;
 import com.ccbsa.wms.location.application.service.query.dto.GetLocationQuery;
 import com.ccbsa.wms.location.application.service.query.dto.LocationQueryResult;
-import com.ccbsa.wms.location.domain.core.entity.Location;
 import com.ccbsa.wms.location.domain.core.exception.LocationNotFoundException;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Query Handler: GetLocationQueryHandler
  * <p>
- * Handles retrieval of Location aggregate by ID.
+ * Handles retrieval of Location read model by ID.
  * <p>
- * Responsibilities: - Load Location aggregate from repository - Map aggregate to query result DTO - Return optimized read model
+ * Responsibilities:
+ * - Load Location view from data port (read model)
+ * - Generate hierarchical path by traversing parent locations
+ * - Map view to query result DTO
+ * - Return optimized read model
+ * <p>
+ * Uses data port (LocationViewRepository) instead of repository port for CQRS compliance.
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class GetLocationQueryHandler {
-    private static final Logger logger = LoggerFactory.getLogger(GetLocationQueryHandler.class);
-
-    private final LocationRepository repository;
-
-    public GetLocationQueryHandler(LocationRepository repository) {
-        this.repository = repository;
-    }
+    private final LocationViewRepository viewRepository;
 
     @Transactional(readOnly = true)
     public LocationQueryResult handle(GetLocationQuery query) {
-        // 1. Load aggregate
-        Location location = repository.findByIdAndTenantId(query.getLocationId(), query.getTenantId())
+        // 1. Load read model (view) from data port
+        var locationView = viewRepository.findByTenantIdAndId(query.getTenantId(), query.getLocationId())
                 .orElseThrow(() -> new LocationNotFoundException(String.format("Location not found: %s", query.getLocationId().getValueAsString())));
 
-        // 2. Map to query result
-        return LocationQueryResult.builder().locationId(location.getId()).barcode(location.getBarcode()).coordinates(location.getCoordinates()).status(location.getStatus())
-                .capacity(location.getCapacity()).code(location.getCode() != null ? location.getCode().getValue() : null)
-                .name(location.getName() != null ? location.getName().getValue() : null).type(location.getType() != null ? location.getType().getValue() : null)
-                .path(generatePath(location)).description(location.getDescription() != null ? location.getDescription().getValue() : null).createdAt(location.getCreatedAt())
-                .lastModifiedAt(location.getLastModifiedAt()).build();
+        // 2. Generate hierarchical path
+        String path = generatePath(locationView, query.getTenantId());
+
+        // 3. Map view to query result
+        return LocationQueryResult.builder().locationId(locationView.getLocationId()).barcode(locationView.getBarcode()).coordinates(locationView.getCoordinates())
+                .status(locationView.getStatus()).capacity(locationView.getCapacity()).code(locationView.getCode()).name(locationView.getName()).type(locationView.getType())
+                .path(path).description(locationView.getDescription()).createdAt(locationView.getCreatedAt()).lastModifiedAt(locationView.getLastModifiedAt()).build();
     }
 
     /**
@@ -51,26 +56,27 @@ public class GetLocationQueryHandler {
      * For warehouses, returns "/{code}".
      * For child locations, returns "/{warehouseCode}/{zoneCode}/{aisleCode}/{rackCode}/{binCode}" by recursively loading parents.
      *
-     * @param location Location aggregate (with stored parentLocationId)
+     * @param locationView Location view (with stored parentLocationId)
+     * @param tenantId     Tenant identifier
      * @return Path string with full hierarchy
      */
-    private String generatePath(Location location) {
-        String locationCode = location.getCode() != null ? location.getCode().getValue() : null;
+    private String generatePath(LocationView locationView, TenantId tenantId) {
+        String locationCode = locationView.getCode();
         if (locationCode == null || locationCode.trim().isEmpty()) {
-            locationCode = location.getBarcode().getValue();
+            locationCode = locationView.getBarcode().getValue();
         }
 
         // If this is a warehouse (no parent), return "/{code}"
-        if (location.getParentLocationId() == null) {
+        if (locationView.getParentLocationId() == null) {
             return String.format("/%s", locationCode);
         }
 
         // For child locations, recursively build path by traversing up the hierarchy using stored parentLocationId
         Set<LocationId> visitedIds = new HashSet<>();
-        String parentPath = buildParentPathRecursively(location.getParentLocationId(), location.getTenantId(), visitedIds);
+        String parentPath = buildParentPathRecursively(locationView.getParentLocationId(), tenantId, visitedIds);
         // Build hierarchical path: /{parentPath}/{childCode}
         String hierarchicalPath = String.format("%s/%s", parentPath, locationCode);
-        logger.debug("Generated hierarchical path: {} for location: {}", hierarchicalPath, location.getId().getValueAsString());
+        log.debug("Generated hierarchical path: {} for location: {}", hierarchicalPath, locationView.getLocationId().getValueAsString());
         return hierarchicalPath;
     }
 
@@ -83,30 +89,30 @@ public class GetLocationQueryHandler {
      * @param visitedIds       Set of visited location IDs to prevent infinite loops
      * @return Path string (e.g., "/WH-12/ZONE-X" for a zone)
      */
-    private String buildParentPathRecursively(LocationId parentLocationId, com.ccbsa.common.domain.valueobject.TenantId tenantId, Set<LocationId> visitedIds) {
+    private String buildParentPathRecursively(LocationId parentLocationId, TenantId tenantId, Set<LocationId> visitedIds) {
         // Prevent infinite loops
         if (visitedIds.contains(parentLocationId)) {
-            logger.warn("Circular reference detected in location hierarchy: {}", parentLocationId.getValueAsString());
+            log.warn("Circular reference detected in location hierarchy: {}", parentLocationId.getValueAsString());
             return "";
         }
         visitedIds.add(parentLocationId);
 
-        Location parentLocation = repository.findByIdAndTenantId(parentLocationId, tenantId)
+        var parentLocationView = viewRepository.findByTenantIdAndId(tenantId, parentLocationId)
                 .orElseThrow(() -> new LocationNotFoundException(String.format("Parent location not found during path generation: %s", parentLocationId.getValueAsString())));
 
-        String locationCode = parentLocation.getCode() != null ? parentLocation.getCode().getValue() : null;
+        String locationCode = parentLocationView.getCode();
         if (locationCode == null || locationCode.trim().isEmpty()) {
-            locationCode = parentLocation.getBarcode().getValue();
+            locationCode = parentLocationView.getBarcode().getValue();
         }
 
         // If this is a warehouse (type is WAREHOUSE or no parent), return "/{code}"
-        String locationType = parentLocation.getType() != null ? parentLocation.getType().getValue() : null;
-        if ((locationType != null && "WAREHOUSE".equalsIgnoreCase(locationType.trim())) || parentLocation.getParentLocationId() == null) {
+        String locationType = parentLocationView.getType();
+        if ((locationType != null && "WAREHOUSE".equalsIgnoreCase(locationType.trim())) || parentLocationView.getParentLocationId() == null) {
             return String.format("/%s", locationCode);
         }
 
         // Recursively build path for parent's parent
-        String parentPath = buildParentPathRecursively(parentLocation.getParentLocationId(), tenantId, visitedIds);
+        String parentPath = buildParentPathRecursively(parentLocationView.getParentLocationId(), tenantId, visitedIds);
         return String.format("%s/%s", parentPath, locationCode);
     }
 }

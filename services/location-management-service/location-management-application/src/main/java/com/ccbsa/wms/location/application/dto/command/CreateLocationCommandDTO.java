@@ -1,6 +1,12 @@
 package com.ccbsa.wms.location.application.dto.command;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Command DTO: CreateLocationCommandDTO
@@ -8,6 +14,12 @@ import jakarta.validation.constraints.Size;
  * Request DTO for creating a new warehouse location.
  * Supports both hierarchical model (code, name, type, parentLocationId) and coordinate-based model (zone, aisle, rack, level).
  */
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Lombok builder stores DTO directly. DTOs are immutable when returned from API.")
 public final class CreateLocationCommandDTO {
     // Hierarchical model fields
     @Size(max = 100, message = "Code must not exceed 100 characters")
@@ -44,114 +56,6 @@ public final class CreateLocationCommandDTO {
 
     @Size(max = 500, message = "Description must not exceed 500 characters")
     private String description;
-
-    public CreateLocationCommandDTO() {
-    }
-
-    public CreateLocationCommandDTO(String zone, String aisle, String rack, String level, String barcode, String description) {
-        this.zone = zone;
-        this.aisle = aisle;
-        this.rack = rack;
-        this.level = level;
-        this.barcode = barcode;
-        this.description = description;
-    }
-
-    public String getZone() {
-        return zone;
-    }
-
-    public void setZone(String zone) {
-        this.zone = zone;
-    }
-
-    public String getAisle() {
-        return aisle;
-    }
-
-    public void setAisle(String aisle) {
-        this.aisle = aisle;
-    }
-
-    public String getRack() {
-        return rack;
-    }
-
-    public void setRack(String rack) {
-        this.rack = rack;
-    }
-
-    public String getLevel() {
-        return level;
-    }
-
-    public void setLevel(String level) {
-        this.level = level;
-    }
-
-    public String getBarcode() {
-        return barcode;
-    }
-
-    public void setBarcode(String barcode) {
-        this.barcode = barcode;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getParentLocationId() {
-        return parentLocationId;
-    }
-
-    public void setParentLocationId(String parentLocationId) {
-        this.parentLocationId = parentLocationId;
-    }
-
-    public Integer getCapacity() {
-        return capacity;
-    }
-
-    public void setCapacity(Integer capacity) {
-        this.capacity = capacity;
-    }
-
-    public LocationDimensionsDTO getDimensions() {
-        return dimensions;
-    }
-
-    public void setDimensions(LocationDimensionsDTO dimensions) {
-        this.dimensions = dimensions;
-    }
 
     /**
      * Checks if this DTO uses the hierarchical model (has code/type).

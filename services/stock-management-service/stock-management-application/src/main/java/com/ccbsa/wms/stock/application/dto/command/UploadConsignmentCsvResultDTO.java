@@ -2,11 +2,24 @@ package com.ccbsa.wms.stock.application.dto.command;
 
 import java.util.List;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 /**
  * Command Result DTO: UploadConsignmentCsvResultDTO
  * <p>
  * API response DTO for CSV upload operation.
  */
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Lombok builder stores list directly. Lists are immutable when returned from API.")
 public class UploadConsignmentCsvResultDTO {
     private int totalRows;
     private int processedRows;
@@ -14,92 +27,19 @@ public class UploadConsignmentCsvResultDTO {
     private int errorRows;
     private List<ConsignmentCsvErrorDTO> errors;
 
-    public UploadConsignmentCsvResultDTO() {
-    }
-
-    public int getTotalRows() {
-        return totalRows;
-    }
-
-    public void setTotalRows(int totalRows) {
-        this.totalRows = totalRows;
-    }
-
-    public int getProcessedRows() {
-        return processedRows;
-    }
-
-    public void setProcessedRows(int processedRows) {
-        this.processedRows = processedRows;
-    }
-
-    public int getCreatedConsignments() {
-        return createdConsignments;
-    }
-
-    public void setCreatedConsignments(int createdConsignments) {
-        this.createdConsignments = createdConsignments;
-    }
-
-    public int getErrorRows() {
-        return errorRows;
-    }
-
-    public void setErrorRows(int errorRows) {
-        this.errorRows = errorRows;
-    }
-
-    public List<ConsignmentCsvErrorDTO> getErrors() {
-        return errors;
-    }
-
-    public void setErrors(List<ConsignmentCsvErrorDTO> errors) {
-        this.errors = errors;
-    }
-
     /**
      * Nested DTO for CSV errors.
      */
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ConsignmentCsvErrorDTO {
         private long rowNumber;
         private String consignmentReference;
         private String productCode;
         private String errorMessage;
-
-        public ConsignmentCsvErrorDTO() {
-        }
-
-        public long getRowNumber() {
-            return rowNumber;
-        }
-
-        public void setRowNumber(long rowNumber) {
-            this.rowNumber = rowNumber;
-        }
-
-        public String getConsignmentReference() {
-            return consignmentReference;
-        }
-
-        public void setConsignmentReference(String consignmentReference) {
-            this.consignmentReference = consignmentReference;
-        }
-
-        public String getProductCode() {
-            return productCode;
-        }
-
-        public void setProductCode(String productCode) {
-            this.productCode = productCode;
-        }
-
-        public String getErrorMessage() {
-            return errorMessage;
-        }
-
-        public void setErrorMessage(String errorMessage) {
-            this.errorMessage = errorMessage;
-        }
     }
 }
 

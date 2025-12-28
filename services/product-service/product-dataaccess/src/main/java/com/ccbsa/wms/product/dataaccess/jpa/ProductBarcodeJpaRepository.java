@@ -1,5 +1,6 @@
 package com.ccbsa.wms.product.dataaccess.jpa;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,5 +52,14 @@ public interface ProductBarcodeJpaRepository extends JpaRepository<ProductBarcod
      */
     @Query("SELECT COUNT(pb) > 0 FROM ProductBarcodeEntity pb " + "JOIN pb.product p " + "WHERE pb.barcode = :barcode AND p.tenantId = :tenantId AND p.id != :excludeProductId")
     boolean existsByBarcodeAndTenantIdExcludingProduct(@Param("barcode") String barcode, @Param("tenantId") String tenantId, @Param("excludeProductId") UUID excludeProductId);
+
+    /**
+     * Finds all barcode entities for a product.
+     *
+     * @param productId Product ID
+     * @return List of ProductBarcodeEntity
+     */
+    @Query("SELECT pb FROM ProductBarcodeEntity pb WHERE pb.product.id = :productId")
+    List<ProductBarcodeEntity> findByProductId(@Param("productId") UUID productId);
 }
 

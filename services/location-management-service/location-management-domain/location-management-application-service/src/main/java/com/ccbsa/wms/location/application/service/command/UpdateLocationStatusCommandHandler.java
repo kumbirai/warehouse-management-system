@@ -3,8 +3,6 @@ package com.ccbsa.wms.location.application.service.command;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -19,6 +17,9 @@ import com.ccbsa.wms.location.domain.core.entity.Location;
 import com.ccbsa.wms.location.domain.core.exception.LocationNotFoundException;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Command Handler: UpdateLocationStatusCommandHandler
  * <p>
@@ -27,16 +28,11 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
  * Responsibilities: - Loads existing location - Updates location status - Persists aggregate - Publishes domain events after transaction commit
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class UpdateLocationStatusCommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger(UpdateLocationStatusCommandHandler.class);
-
     private final LocationRepository repository;
     private final LocationEventPublisher eventPublisher;
-
-    public UpdateLocationStatusCommandHandler(LocationRepository repository, LocationEventPublisher eventPublisher) {
-        this.repository = repository;
-        this.eventPublisher = eventPublisher;
-    }
 
     @Transactional
     public UpdateLocationStatusResult handle(UpdateLocationStatusCommand command) {
@@ -96,7 +92,7 @@ public class UpdateLocationStatusCommandHandler {
      */
     private void publishEventsAfterCommit(List<DomainEvent<?>> domainEvents) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
-            logger.debug("No active transaction - publishing events immediately");
+            log.debug("No active transaction - publishing events immediately");
             eventPublisher.publish(domainEvents);
             return;
         }
@@ -105,10 +101,10 @@ public class UpdateLocationStatusCommandHandler {
             @Override
             public void afterCommit() {
                 try {
-                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    log.debug("Transaction committed - publishing {} domain events", domainEvents.size());
                     eventPublisher.publish(domainEvents);
                 } catch (Exception e) {
-                    logger.error("Failed to publish domain events after transaction commit", e);
+                    log.error("Failed to publish domain events after transaction commit", e);
                 }
             }
         });

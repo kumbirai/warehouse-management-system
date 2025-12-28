@@ -1,13 +1,20 @@
 package com.ccbsa.wms.stock.application.service.command.dto;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.Builder;
+import lombok.Getter;
 
 /**
  * Command Result DTO: UploadConsignmentCsvResult
  * <p>
  * Result object returned from UploadConsignmentCsvCommand execution.
  */
+@Getter
+@Builder
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Lombok builder stores list directly. Defensive copy made in constructor and getter returns immutable view.")
 public final class UploadConsignmentCsvResult {
     private final int totalRows;
     private final int processedRows;
@@ -15,73 +22,22 @@ public final class UploadConsignmentCsvResult {
     private final int errorRows;
     private final List<ConsignmentCsvError> errors;
 
-    private UploadConsignmentCsvResult(Builder builder) {
-        this.totalRows = builder.totalRows;
-        this.processedRows = builder.processedRows;
-        this.createdConsignments = builder.createdConsignments;
-        this.errorRows = builder.errorRows;
-        this.errors = builder.errors != null ? List.copyOf(builder.errors) : List.of();
+    public UploadConsignmentCsvResult(int totalRows, int processedRows, int createdConsignments, int errorRows, List<ConsignmentCsvError> errors) {
+        this.totalRows = totalRows;
+        this.processedRows = processedRows;
+        this.createdConsignments = createdConsignments;
+        this.errorRows = errorRows;
+        // Defensive copy to prevent external modification
+        this.errors = errors != null ? List.copyOf(errors) : List.of();
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public int getTotalRows() {
-        return totalRows;
-    }
-
-    public int getProcessedRows() {
-        return processedRows;
-    }
-
-    public int getCreatedConsignments() {
-        return createdConsignments;
-    }
-
-    public int getErrorRows() {
-        return errorRows;
-    }
-
+    /**
+     * Returns an unmodifiable view of the errors list.
+     *
+     * @return Unmodifiable list of errors
+     */
     public List<ConsignmentCsvError> getErrors() {
-        return errors;
-    }
-
-    public static class Builder {
-        private int totalRows;
-        private int processedRows;
-        private int createdConsignments;
-        private int errorRows;
-        private List<ConsignmentCsvError> errors;
-
-        public Builder totalRows(int totalRows) {
-            this.totalRows = totalRows;
-            return this;
-        }
-
-        public Builder processedRows(int processedRows) {
-            this.processedRows = processedRows;
-            return this;
-        }
-
-        public Builder createdConsignments(int createdConsignments) {
-            this.createdConsignments = createdConsignments;
-            return this;
-        }
-
-        public Builder errorRows(int errorRows) {
-            this.errorRows = errorRows;
-            return this;
-        }
-
-        public Builder errors(List<ConsignmentCsvError> errors) {
-            this.errors = errors != null ? new ArrayList<>(errors) : null;
-            return this;
-        }
-
-        public UploadConsignmentCsvResult build() {
-            return new UploadConsignmentCsvResult(this);
-        }
+        return Collections.unmodifiableList(errors);
     }
 }
 

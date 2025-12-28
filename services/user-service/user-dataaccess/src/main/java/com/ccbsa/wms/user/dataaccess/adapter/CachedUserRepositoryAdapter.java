@@ -4,8 +4,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -20,6 +18,7 @@ import com.ccbsa.wms.user.domain.core.valueobject.UserStatus;
 import com.ccbsa.wms.user.domain.core.valueobject.Username;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Cached User Repository Adapter.
@@ -32,10 +31,8 @@ import io.micrometer.core.instrument.MeterRegistry;
  */
 @Repository
 @Primary
+@Slf4j
 public class CachedUserRepositoryAdapter extends CachedRepositoryDecorator<User, UserId> implements UserRepository {
-
-    private static final Logger log = LoggerFactory.getLogger(CachedUserRepositoryAdapter.class);
-
     private final UserRepositoryAdapter baseRepository;
 
     public CachedUserRepositoryAdapter(UserRepositoryAdapter baseRepository, RedisTemplate<String, Object> redisTemplate, MeterRegistry meterRegistry) {

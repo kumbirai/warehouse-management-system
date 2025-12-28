@@ -7,11 +7,16 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationCoordinates;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
 
+import lombok.Builder;
+import lombok.Getter;
+
 /**
  * Result DTO: CreateLocationResult
  * <p>
  * Result object returned after creating a location. Contains only the information needed by the caller (not the full domain entity).
  */
+@Getter
+@Builder
 public final class CreateLocationResult {
     private final LocationId locationId;
     private final LocationBarcode barcode;
@@ -23,129 +28,29 @@ public final class CreateLocationResult {
     private final String type; // Location type
     private final String path; // Hierarchical path
 
-    private CreateLocationResult(Builder builder) {
-        this.locationId = builder.locationId;
-        this.barcode = builder.barcode;
-        this.coordinates = builder.coordinates;
-        this.status = builder.status;
-        this.createdAt = builder.createdAt;
-        this.code = builder.code;
-        this.name = builder.name;
-        this.type = builder.type;
-        this.path = builder.path;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public LocationId getLocationId() {
-        return locationId;
-    }
-
-    public LocationBarcode getBarcode() {
-        return barcode;
-    }
-
-    public LocationCoordinates getCoordinates() {
-        return coordinates;
-    }
-
-    public LocationStatus getStatus() {
-        return status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public static class Builder {
-        private LocationId locationId;
-        private LocationBarcode barcode;
-        private LocationCoordinates coordinates;
-        private LocationStatus status;
-        private LocalDateTime createdAt;
-        private String code;
-        private String name;
-        private String type;
-        private String path;
-
-        public Builder locationId(LocationId locationId) {
-            this.locationId = locationId;
-            return this;
+    public CreateLocationResult(LocationId locationId, LocationBarcode barcode, LocationCoordinates coordinates, LocationStatus status, LocalDateTime createdAt, String code,
+                                String name, String type, String path) {
+        if (locationId == null) {
+            throw new IllegalArgumentException("LocationId is required");
         }
-
-        public Builder barcode(LocationBarcode barcode) {
-            this.barcode = barcode;
-            return this;
+        if (barcode == null) {
+            throw new IllegalArgumentException("LocationBarcode is required");
         }
-
-        public Builder coordinates(LocationCoordinates coordinates) {
-            this.coordinates = coordinates;
-            return this;
+        if (coordinates == null) {
+            throw new IllegalArgumentException("LocationCoordinates is required");
         }
-
-        public Builder status(LocationStatus status) {
-            this.status = status;
-            return this;
+        if (status == null) {
+            throw new IllegalArgumentException("LocationStatus is required");
         }
-
-        public Builder createdAt(LocalDateTime createdAt) {
-            this.createdAt = createdAt;
-            return this;
-        }
-
-        public Builder code(String code) {
-            this.code = code;
-            return this;
-        }
-
-        public Builder name(String name) {
-            this.name = name;
-            return this;
-        }
-
-        public Builder type(String type) {
-            this.type = type;
-            return this;
-        }
-
-        public Builder path(String path) {
-            this.path = path;
-            return this;
-        }
-
-        public CreateLocationResult build() {
-            if (locationId == null) {
-                throw new IllegalArgumentException("LocationId is required");
-            }
-            if (barcode == null) {
-                throw new IllegalArgumentException("LocationBarcode is required");
-            }
-            if (coordinates == null) {
-                throw new IllegalArgumentException("LocationCoordinates is required");
-            }
-            if (status == null) {
-                throw new IllegalArgumentException("LocationStatus is required");
-            }
-            return new CreateLocationResult(this);
-        }
+        this.locationId = locationId;
+        this.barcode = barcode;
+        this.coordinates = coordinates;
+        this.status = status;
+        this.createdAt = createdAt;
+        this.code = code;
+        this.name = name;
+        this.type = type;
+        this.path = path;
     }
 }
 

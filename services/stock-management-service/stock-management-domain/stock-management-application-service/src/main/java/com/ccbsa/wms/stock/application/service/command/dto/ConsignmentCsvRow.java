@@ -3,11 +3,16 @@ package com.ccbsa.wms.stock.application.service.command.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import lombok.Builder;
+import lombok.Getter;
+
 /**
  * CSV Row DTO: ConsignmentCsvRow
  * <p>
  * Represents a single row from a consignment CSV file.
  */
+@Getter
+@Builder
 public final class ConsignmentCsvRow {
     private final long rowNumber;
     private final String consignmentReference;
@@ -17,107 +22,27 @@ public final class ConsignmentCsvRow {
     private final LocalDateTime receivedDate;
     private final String warehouseId;
 
-    private ConsignmentCsvRow(Builder builder) {
-        this.rowNumber = builder.rowNumber;
-        this.consignmentReference = builder.consignmentReference;
-        this.productCode = builder.productCode;
-        this.quantity = builder.quantity;
-        this.expirationDate = builder.expirationDate;
-        this.receivedDate = builder.receivedDate;
-        this.warehouseId = builder.warehouseId;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public long getRowNumber() {
-        return rowNumber;
-    }
-
-    public String getConsignmentReference() {
-        return consignmentReference;
-    }
-
-    public String getProductCode() {
-        return productCode;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public LocalDate getExpirationDate() {
-        return expirationDate;
-    }
-
-    public LocalDateTime getReceivedDate() {
-        return receivedDate;
-    }
-
-    public String getWarehouseId() {
-        return warehouseId;
-    }
-
-    public static class Builder {
-        private long rowNumber;
-        private String consignmentReference;
-        private String productCode;
-        private int quantity;
-        private LocalDate expirationDate;
-        private LocalDateTime receivedDate;
-        private String warehouseId;
-
-        public Builder rowNumber(long rowNumber) {
-            this.rowNumber = rowNumber;
-            return this;
+    public ConsignmentCsvRow(long rowNumber, String consignmentReference, String productCode, int quantity, LocalDate expirationDate, LocalDateTime receivedDate,
+                             String warehouseId) {
+        if (consignmentReference == null || consignmentReference.trim().isEmpty()) {
+            throw new IllegalArgumentException("ConsignmentReference is required");
         }
-
-        public Builder consignmentReference(String consignmentReference) {
-            this.consignmentReference = consignmentReference;
-            return this;
+        if (productCode == null || productCode.trim().isEmpty()) {
+            throw new IllegalArgumentException("ProductCode is required");
         }
-
-        public Builder productCode(String productCode) {
-            this.productCode = productCode;
-            return this;
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
         }
-
-        public Builder quantity(int quantity) {
-            this.quantity = quantity;
-            return this;
+        if (warehouseId == null || warehouseId.trim().isEmpty()) {
+            throw new IllegalArgumentException("WarehouseId is required");
         }
-
-        public Builder expirationDate(LocalDate expirationDate) {
-            this.expirationDate = expirationDate;
-            return this;
-        }
-
-        public Builder receivedDate(LocalDateTime receivedDate) {
-            this.receivedDate = receivedDate;
-            return this;
-        }
-
-        public Builder warehouseId(String warehouseId) {
-            this.warehouseId = warehouseId;
-            return this;
-        }
-
-        public ConsignmentCsvRow build() {
-            if (consignmentReference == null || consignmentReference.trim().isEmpty()) {
-                throw new IllegalArgumentException("ConsignmentReference is required");
-            }
-            if (productCode == null || productCode.trim().isEmpty()) {
-                throw new IllegalArgumentException("ProductCode is required");
-            }
-            if (quantity <= 0) {
-                throw new IllegalArgumentException("Quantity must be positive");
-            }
-            if (warehouseId == null || warehouseId.trim().isEmpty()) {
-                throw new IllegalArgumentException("WarehouseId is required");
-            }
-            return new ConsignmentCsvRow(this);
-        }
+        this.rowNumber = rowNumber;
+        this.consignmentReference = consignmentReference;
+        this.productCode = productCode;
+        this.quantity = quantity;
+        this.expirationDate = expirationDate;
+        this.receivedDate = receivedDate;
+        this.warehouseId = warehouseId;
     }
 }
 

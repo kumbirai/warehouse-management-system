@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { UserContext } from '../services/authService';
+import { RootState } from './index';
 
 interface AuthState {
   user: UserContext | null;
@@ -34,4 +35,8 @@ const authSlice = createSlice({
 });
 
 export const { setUser, clearUser, setLoading } = authSlice.actions;
+
+// Selector for getting the current user
+export const selectUser = (state: RootState) => state.auth.user;
+
 export default authSlice.reducer;

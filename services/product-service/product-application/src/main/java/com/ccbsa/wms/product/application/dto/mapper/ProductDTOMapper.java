@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.product.application.dto.command.CreateProductCommandDTO;
 import com.ccbsa.wms.product.application.dto.command.CreateProductResultDTO;
@@ -39,7 +40,6 @@ import com.ccbsa.wms.product.application.service.query.dto.ValidateProductBarcod
 import com.ccbsa.wms.product.application.service.query.dto.ValidateProductBarcodeResult;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductBarcode;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 import com.ccbsa.wms.product.domain.core.valueobject.UnitOfMeasure;
 
 /**
@@ -58,9 +58,8 @@ public class ProductDTOMapper {
      * @return CreateProductCommand
      */
     public CreateProductCommand toCreateCommand(CreateProductCommandDTO dto, String tenantId) {
-        CreateProductCommand.Builder builder =
-                CreateProductCommand.builder().tenantId(TenantId.of(tenantId)).productCode(ProductCode.of(dto.getProductCode())).description(dto.getDescription())
-                        .primaryBarcode(ProductBarcode.of(dto.getPrimaryBarcode())).unitOfMeasure(UnitOfMeasure.valueOf(dto.getUnitOfMeasure()));
+        var builder = CreateProductCommand.builder().tenantId(TenantId.of(tenantId)).productCode(ProductCode.of(dto.getProductCode())).description(dto.getDescription())
+                .primaryBarcode(ProductBarcode.of(dto.getPrimaryBarcode())).unitOfMeasure(UnitOfMeasure.valueOf(dto.getUnitOfMeasure()));
 
         // Add secondary barcodes if provided
         if (dto.getSecondaryBarcodes() != null && !dto.getSecondaryBarcodes().isEmpty()) {
@@ -104,9 +103,8 @@ public class ProductDTOMapper {
      * @return UpdateProductCommand
      */
     public UpdateProductCommand toUpdateCommand(UpdateProductCommandDTO dto, String productId, String tenantId) {
-        UpdateProductCommand.Builder builder =
-                UpdateProductCommand.builder().productId(ProductId.of(UUID.fromString(productId))).tenantId(TenantId.of(tenantId)).description(dto.getDescription())
-                        .primaryBarcode(ProductBarcode.of(dto.getPrimaryBarcode())).unitOfMeasure(UnitOfMeasure.valueOf(dto.getUnitOfMeasure()));
+        var builder = UpdateProductCommand.builder().productId(ProductId.of(UUID.fromString(productId))).tenantId(TenantId.of(tenantId)).description(dto.getDescription())
+                .primaryBarcode(ProductBarcode.of(dto.getPrimaryBarcode())).unitOfMeasure(UnitOfMeasure.valueOf(dto.getUnitOfMeasure()));
 
         // Add secondary barcodes if provided
         if (dto.getSecondaryBarcodes() != null && !dto.getSecondaryBarcodes().isEmpty()) {
@@ -301,7 +299,7 @@ public class ProductDTOMapper {
      * @return ListProductsQuery
      */
     public ListProductsQuery toListProductsQuery(String tenantId, Integer page, Integer size, String category, String brand, String search) {
-        ListProductsQuery.Builder builder = ListProductsQuery.builder().tenantId(TenantId.of(tenantId));
+        var builder = ListProductsQuery.builder().tenantId(TenantId.of(tenantId));
 
         if (page != null) {
             builder.page(page);

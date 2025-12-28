@@ -15,3 +15,16 @@ CREATE INDEX IF NOT EXISTS idx_locations_type ON locations (tenant_id, type) WHE
 
 -- Index for parent_location_id to improve query performance for hierarchy traversal
 CREATE INDEX IF NOT EXISTS idx_locations_parent_location_id ON locations (parent_location_id) WHERE parent_location_id IS NOT NULL;
+
+-- Indexes for stock_movements table
+CREATE INDEX IF NOT EXISTS idx_stock_movements_tenant ON stock_movements(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_stock_item ON stock_movements(stock_item_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_source_location ON stock_movements(source_location_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_destination_location ON stock_movements(destination_location_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_status ON stock_movements(status);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_initiated_at ON stock_movements(initiated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_tenant_status ON stock_movements(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_tenant_stock_item ON stock_movements(tenant_id, stock_item_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_tenant_source_location ON stock_movements(tenant_id, source_location_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_tenant_destination_location ON stock_movements(tenant_id, destination_location_id);

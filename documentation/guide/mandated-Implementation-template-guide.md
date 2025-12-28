@@ -2,9 +2,9 @@
 
 ## Warehouse Management System Integration - CCBSA LDP System
 
-**Document Version:** 2.0  
-**Date:** 2025-01  
-**Status:** Approved  
+**Document Version:** 2.1
+**Date:** 2025-01
+**Status:** Approved
 **Related Documents:**
 
 - [Service Architecture Document](../01-project-planning/architecture/Service_Architecture_Document.md)
@@ -16,8 +16,93 @@
 
 ## Overview
 
-This document provides the overarching guide for implementing production-grade microservices following **Domain-Driven Design**, **Clean Hexagonal Architecture**, **CQRS**, and *
-*Event-Driven Choreography** principles. All templates have been systematically designed to ensure strict adherence to these principles.
+This document provides the overarching guide for implementing production-grade microservices following **Domain-Driven Design**, **Clean Hexagonal Architecture**, **CQRS**, and **Event-Driven Choreography** principles. All templates have been systematically designed to ensure strict adherence to these principles.
+
+## Lombok Usage Policy
+
+**CRITICAL DISTINCTION**: This project mandates a clear separation between domain core (pure Java) and infrastructure layers (Spring-enabled).
+
+### Domain Core Modules (`*-domain-core`)
+
+**NO LOMBOK** - Pure Java implementation required:
+- Domain core must remain framework-agnostic
+- Manual builder patterns required
+- Manual getters/setters required
+- Manual `equals()`, `hashCode()`, and `toString()` implementations
+- Rationale: Domain purity, framework independence, explicit business logic
+
+### All Other Modules
+
+**LOMBOK RECOMMENDED** - Use Lombok to reduce boilerplate:
+- Application Service (`*-application-service`) - Commands, queries, results
+- Application Layer (`*-application`) - DTOs, mappers
+- Data Access (`*-dataaccess`) - JPA entities, adapters
+- Messaging (`*-messaging`) - Event listeners, publishers
+- Container (`*-container`) - Configuration classes
+
+**Recommended Lombok Annotations:**
+- `@Getter` / `@Setter` - For fields requiring accessors
+- `@Builder` - For complex object construction
+- `@NoArgsConstructor` / `@AllArgsConstructor` - For constructors
+- `@ToString` - For debugging and logging
+- `@EqualsAndHashCode` - For value comparison (use with caution for entities)
+- `@Slf4j` - For logging (preferred over manual logger declaration)
+- `@RequiredArgsConstructor` - For dependency injection
+
+**Lombok Anti-Patterns to Avoid:**
+- `@Data` - Too broad, use specific annotations instead
+- `@Value` - Use for truly immutable classes only
+- Avoid Lombok in classes with complex business logic validation
+
+**Example Comparison:**
+
+```java
+// Domain Core (NO Lombok)
+public class CreateConsignmentResult {
+    private final ConsignmentId consignmentId;
+    private final ConsignmentStatus status;
+
+    private CreateConsignmentResult(Builder builder) {
+        this.consignmentId = builder.consignmentId;
+        this.status = builder.status;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public ConsignmentId getConsignmentId() { return consignmentId; }
+    public ConsignmentStatus getStatus() { return status; }
+
+    public static class Builder {
+        private ConsignmentId consignmentId;
+        private ConsignmentStatus status;
+
+        public Builder consignmentId(ConsignmentId id) {
+            this.consignmentId = id;
+            return this;
+        }
+
+        public CreateConsignmentResult build() {
+            return new CreateConsignmentResult(this);
+        }
+    }
+}
+
+// Application Layer (USE Lombok)
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class CreateConsignmentResultDTO {
+    private final UUID consignmentId;
+    private final String status;
+    private final LocalDateTime createdAt;
+}
+```
+
+---
 
 ## Template Document Structure
 
@@ -25,7 +110,7 @@ This guide references comprehensive implementation templates for each layer of t
 
 ### Domain Core (Pure Java, No Dependencies) (`{service}-domain/{service}-domain-core`)
 
-**Template Document**: `@01-mandated-domain-core-templates.md`
+**Template Document**: `01-mandated-domain-core-templates.md`
 
 The domain core contains pure business logic with no external dependencies. This layer implements:
 
@@ -33,11 +118,11 @@ The domain core contains pure business logic with no external dependencies. This
 - Value objects for complex data types
 - Domain events for state changes
 - Business rule validation and invariants
-- Manual Builder pattern (NO Lombok annotations)
+- **Manual Builder pattern (NO Lombok annotations)**
 
 ### Application Service (`{service}-domain/{service}-application-service`)
 
-**Template Document**: `@02-mandated-application-service-templates.md`
+**Template Document**: `02-mandated-application-service-templates.md`
 
 The application service layer orchestrates use cases and defines port interfaces. This layer implements:
 
@@ -46,10 +131,11 @@ The application service layer orchestrates use cases and defines port interfaces
 - Command and query separation
 - Event publishing after successful commits
 - Centralized validation and error handling
+- **Lombok recommended for DTOs and result objects**
 
 ### Application Layer (`{service}-application`)
 
-**Template Document**: `@03-mandated-application-layer-templates.md`
+**Template Document**: `03-mandated-application-layer-templates.md`
 
 The application layer provides REST API endpoints with CQRS compliance. This layer implements:
 
@@ -58,10 +144,11 @@ The application layer provides REST API endpoints with CQRS compliance. This lay
 - Input validation and error handling
 - Security annotations and tenant context
 - OpenAPI documentation
+- **Lombok recommended for all DTOs**
 
 ### Data Access (`{service}-dataaccess`)
 
-**Template Document**: `@04-mandated-data-access-templates.md`
+**Template Document**: `04-mandated-data-access-templates.md`
 
 The data access layer implements repository adapters with caching. This layer implements:
 
@@ -70,10 +157,11 @@ The data access layer implements repository adapters with caching. This layer im
 - Mappers between JPA and domain entities
 - Decorator pattern for Redis caching
 - Multi-tenant data isolation
+- **Lombok recommended for JPA entities and adapters**
 
 ### Messaging (`{service}-messaging`)
 
-**Template Document**: `@05-mandated-messaging-templates.md`
+**Template Document**: `05-mandated-messaging-templates.md`
 
 The messaging layer handles event-driven choreography. This layer implements:
 
@@ -82,10 +170,11 @@ The messaging layer handles event-driven choreography. This layer implements:
 - Event correlation and causation tracking
 - Idempotency support and compensation events
 - Kafka integration for event choreography
+- **Lombok recommended for event listeners and publishers**
 
 ### Container (`{service}-container`)
 
-**Template Document**: `@06-mandated-container-templates.md`
+**Template Document**: `06-mandated-container-templates.md`
 
 The container layer bootstraps the application and manages configuration. This layer implements:
 
@@ -94,10 +183,11 @@ The container layer bootstraps the application and manages configuration. This l
 - Health monitoring and metrics
 - Gateway-centric security model
 - Multi-tenant configuration management
+- **Lombok recommended for configuration classes**
 
 ### Front End (`frontend-app`)
 
-**Template Document**: `@07-mandated-frontend-templates.md`
+**Template Document**: `07-mandated-frontend-templates.md`
 
 The frontend application provides the user interface with CQRS compliance. This layer implements:
 
@@ -107,6 +197,20 @@ The frontend application provides the user interface with CQRS compliance. This 
 - Event correlation tracking
 - Comprehensive error handling and user feedback
 
+### Service-to-Service Authentication
+
+**Template Document**: `08-mandated-service-authentication-templates.md`
+
+Production-grade service account authentication for event-driven and background service calls. This infrastructure implements:
+
+- OAuth2 client_credentials grant for service accounts
+- Automatic token management with caching and refresh
+- RestTemplate interceptor for transparent authentication injection
+- Dual-mode authentication (user token forwarding OR service account token)
+- Support for event listeners without HTTP request context
+- **Lombok recommended for configuration and adapter classes**
+
+---
 ## Critical Architectural Principles
 
 ### 1. Repository Interface Placement
@@ -215,6 +319,7 @@ The frontend application provides the user interface with CQRS compliance. This 
 - [ ] Correlation ID available via `CorrelationContext` for event publishing
 - [ ] Command results return DTOs, not domain entities
 - [ ] Query results return optimized DTOs
+- [ ] **Lombok used for Command/Query/Result DTOs** (`@Getter`, `@Builder`, etc.)
 
 ### Application Layer Module
 
@@ -226,6 +331,8 @@ The frontend application provides the user interface with CQRS compliance. This 
 - [ ] DTOs used for all API communication
 - [ ] DTO mappers convert between DTOs and domain objects
 - [ ] Global exception handler for consistent error responses
+- [ ] **Lombok used for all DTOs** (`@Getter`, `@Setter`, `@Builder`, etc.)
+- [ ] **Controllers use `@Slf4j` for logging** (instead of manual logger declaration)
 
 ### Data Access Module
 
@@ -235,6 +342,8 @@ The frontend application provides the user interface with CQRS compliance. This 
 - [ ] Multi-tenant schema resolution using `@Table(schema = "tenant_schema")` with `TenantAwarePhysicalNamingStrategy` configured in `application.yml`
 - [ ] Cache decorators use decorator pattern
 - [ ] Repository methods handle tenant isolation
+- [ ] **Lombok used for JPA entities** (`@Getter`, `@Setter`, `@NoArgsConstructor`)
+- [ ] **Lombok used for adapters and mappers** (`@Slf4j`, `@RequiredArgsConstructor`)
 
 ### Messaging Module
 
@@ -246,6 +355,7 @@ The frontend application provides the user interface with CQRS compliance. This 
 - [ ] Idempotency checks before processing events
 - [ ] Error handling with dead letter queue
 - [ ] Event versioning support
+- [ ] **Lombok used for event listeners and publishers** (`@Slf4j`, `@RequiredArgsConstructor`)
 
 ### Container Module
 
@@ -259,6 +369,7 @@ The frontend application provides the user interface with CQRS compliance. This 
 - [ ] Metrics exposed via Actuator
 - [ ] Multi-tenant configuration resolver
 - [ ] Dependency injection configured properly
+- [ ] **Lombok used for configuration classes** (`@Configuration` with `@RequiredArgsConstructor`)
 
 ### Frontend Module
 
@@ -285,6 +396,7 @@ The frontend application provides the user interface with CQRS compliance. This 
 - **[Messaging Templates](@05-mandated-messaging-templates.md)** - Event publishers, listeners, projections
 - **[Container Templates](@06-mandated-container-templates.md)** - Application bootstrap, configuration
 - **[Frontend Templates](@07-mandated-frontend-templates.md)** - API clients, React components
+- **[Service Authentication Templates](@08-mandated-service-authentication-templates.md)** - Service account authentication, inter-service calls
 
 The template files above are the **single source of truth** for all code templates. This guide provides architectural principles and references to those templates.
 
@@ -966,8 +1078,9 @@ structure.
 **Document Control**
 
 - **Version History:**
+    - v2.1 (2025-01): Added comprehensive Lombok usage policy distinguishing domain-core (NO Lombok) from infrastructure layers (Lombok recommended)
     - v2.0 (2025-01): Updated to reference separate template files, removed inline templates
-    - v1.0 (2025-11): Initial draft
+    - v1.0 (2024-11): Initial draft
 - **Review Cycle:** This document will be reviewed monthly or when patterns change
 - **Distribution:** This document will be distributed to all development team members
 

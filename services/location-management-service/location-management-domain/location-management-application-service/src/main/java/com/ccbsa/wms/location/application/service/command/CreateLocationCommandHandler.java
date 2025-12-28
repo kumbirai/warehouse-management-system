@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -25,6 +23,9 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationBarcode;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Command Handler: CreateLocationCommandHandler
  * <p>
@@ -33,16 +34,11 @@ import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
  * Responsibilities: - Validates barcode uniqueness - Creates Location aggregate - Persists aggregate - Publishes domain events after transaction commit
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class CreateLocationCommandHandler {
-    private static final Logger logger = LoggerFactory.getLogger(CreateLocationCommandHandler.class);
-
     private final LocationRepository repository;
     private final LocationEventPublisher eventPublisher;
-
-    public CreateLocationCommandHandler(LocationRepository repository, LocationEventPublisher eventPublisher) {
-        this.repository = repository;
-        this.eventPublisher = eventPublisher;
-    }
 
     @Transactional
     public CreateLocationResult handle(CreateLocationCommand command) {
@@ -205,7 +201,7 @@ public class CreateLocationCommandHandler {
     private void publishEventsAfterCommit(List<DomainEvent<?>> domainEvents) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
             // No active transaction - publish immediately
-            logger.debug("No active transaction - publishing events immediately");
+            log.debug("No active transaction - publishing events immediately");
             eventPublisher.publish(domainEvents);
             return;
         }
@@ -215,10 +211,10 @@ public class CreateLocationCommandHandler {
             @Override
             public void afterCommit() {
                 try {
-                    logger.debug("Transaction committed - publishing {} domain events", domainEvents.size());
+                    log.debug("Transaction committed - publishing {} domain events", domainEvents.size());
                     eventPublisher.publish(domainEvents);
                 } catch (Exception e) {
-                    logger.error("Failed to publish domain events after transaction commit", e);
+                    log.error("Failed to publish domain events after transaction commit", e);
                     // Don't throw - transaction already committed, event publishing failure
                     // should be handled by retry mechanisms or dead letter queue
                 }
@@ -251,7 +247,7 @@ public class CreateLocationCommandHandler {
         String parentPath = buildParentPathRecursively(location.getParentLocationId(), command.getTenantId(), visitedIds);
         // Build hierarchical path: /{parentPath}/{childCode}
         String hierarchicalPath = String.format("%s/%s", parentPath, locationCode);
-        logger.debug("Generated hierarchical path: {} for location with parent: {}", hierarchicalPath, location.getParentLocationId().getValueAsString());
+        log.debug("Generated hierarchical path: {} for location with parent: {}", hierarchicalPath, location.getParentLocationId().getValueAsString());
         return hierarchicalPath;
     }
 
@@ -267,7 +263,7 @@ public class CreateLocationCommandHandler {
     private String buildParentPathRecursively(LocationId parentLocationId, com.ccbsa.common.domain.valueobject.TenantId tenantId, Set<LocationId> visitedIds) {
         // Prevent infinite loops
         if (visitedIds.contains(parentLocationId)) {
-            logger.warn("Circular reference detected in location hierarchy: {}", parentLocationId.getValueAsString());
+            log.warn("Circular reference detected in location hierarchy: {}", parentLocationId.getValueAsString());
             return "";
         }
         visitedIds.add(parentLocationId);

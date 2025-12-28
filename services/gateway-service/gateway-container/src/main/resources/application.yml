@@ -59,7 +59,7 @@ spring:
               predicates:
                 - Path=/api/v1/users/**
               filters:
-                - StripPrefix=2
+                - StripPrefix=0
                 - name: TenantValidationFilter
                 - name: TenantContextFilter
                 - name: RequestRateLimiter
@@ -74,6 +74,7 @@ spring:
               predicates:
                 - Path=/api/v1/tenants/**
               filters:
+                - StripPrefix=0
                 - name: TenantValidationFilter
                 - name: TenantContextFilter
                 - name: RequestRateLimiter
@@ -98,13 +99,30 @@ spring:
                     redis-rate-limiter.requestedTokens: 1
                     key-resolver: "#{@keyResolver}"
             
+            # Stock Movement endpoints (proxied to Location Management Service)
+            # Note: Stock movements are logically part of stock management API but implemented in location-management-service
+            - id: stock-management-movements
+              uri: lb://location-management-service
+              predicates:
+                - Path=/api/v1/stock-management/movements/**
+              filters:
+                - RewritePath=/api/v1/stock-management/movements, /api/v1/location-management/stock-movements
+                - name: TenantValidationFilter
+                - name: TenantContextFilter
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 100
+                    redis-rate-limiter.burstCapacity: 200
+                    redis-rate-limiter.requestedTokens: 1
+                    key-resolver: "#{@keyResolver}"
+            
             # Location Management Service
             - id: location-management-service
               uri: lb://location-management-service
               predicates:
                 - Path=/api/v1/location-management/**
               filters:
-                - StripPrefix=3
+                - StripPrefix=0
                 - name: TenantValidationFilter
                 - name: TenantContextFilter
                 - name: RequestRateLimiter
@@ -119,7 +137,7 @@ spring:
               predicates:
                 - Path=/api/v1/products/**
               filters:
-                - StripPrefix=2
+                - StripPrefix=0
                 - name: TenantValidationFilter
                 - name: TenantContextFilter
                 - name: RequestRateLimiter
@@ -134,7 +152,7 @@ spring:
               predicates:
                 - Path=/api/v1/picking/**
               filters:
-                - StripPrefix=2
+                - StripPrefix=0
                 - name: TenantValidationFilter
                 - name: TenantContextFilter
                 - name: RequestRateLimiter
@@ -149,7 +167,7 @@ spring:
               predicates:
                 - Path=/api/v1/returns/**
               filters:
-                - StripPrefix=2
+                - StripPrefix=0
                 - name: TenantValidationFilter
                 - name: TenantContextFilter
                 - name: RequestRateLimiter
@@ -164,7 +182,7 @@ spring:
               predicates:
                 - Path=/api/v1/reconciliation/**
               filters:
-                - StripPrefix=2
+                - StripPrefix=0
                 - name: TenantValidationFilter
                 - name: TenantContextFilter
                 - name: RequestRateLimiter
@@ -179,7 +197,7 @@ spring:
               predicates:
                 - Path=/api/v1/integration/**
               filters:
-                - StripPrefix=2
+                - StripPrefix=0
                 - name: TenantValidationFilter
                 - name: TenantContextFilter
       
@@ -220,6 +238,13 @@ spring:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:7080/realms/wms-realm}
           jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:7080/realms/wms-realm/protocol/openid-connect/certs}
+
+# Keycloak Service Account Configuration (for service-to-service authentication)
+keycloak:
+  service-account:
+    token-endpoint: ${KEYCLOAK_TOKEN_ENDPOINT:http://localhost:7080/realms/wms-realm/protocol/openid-connect/token}
+    client-id: ${SERVICE_ACCOUNT_CLIENT_ID:wms-service-account}
+    client-secret: ${SERVICE_ACCOUNT_CLIENT_SECRET:0y9HDRzWQE0FP7SlDBwmmj2EeVJ0tTC9}
   
   # Redis Configuration for Rate Limiting
   # Note: Rate limiting will gracefully degrade when Redis is unavailable

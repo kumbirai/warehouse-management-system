@@ -1,7 +1,7 @@
 package com.ccbsa.wms.stock.domain.core.exception;
 
 import com.ccbsa.common.domain.exception.DomainException;
-import com.ccbsa.wms.stock.domain.core.valueobject.StockItemId;
+import com.ccbsa.common.domain.valueobject.StockItemId;
 
 /**
  * Domain Exception: StockItemNotFoundException

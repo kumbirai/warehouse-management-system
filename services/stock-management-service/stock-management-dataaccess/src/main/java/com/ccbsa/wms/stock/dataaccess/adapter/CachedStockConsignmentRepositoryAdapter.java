@@ -4,8 +4,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -19,6 +17,7 @@ import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentReference;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Cached Stock Consignment Repository Adapter.
@@ -37,10 +36,8 @@ import io.micrometer.core.instrument.MeterRegistry;
  */
 @Repository
 @Primary
+@Slf4j
 public class CachedStockConsignmentRepositoryAdapter extends CachedRepositoryDecorator<StockConsignment, ConsignmentId> implements StockConsignmentRepository {
-
-    private static final Logger log = LoggerFactory.getLogger(CachedStockConsignmentRepositoryAdapter.class);
-
     private final StockConsignmentRepositoryAdapter baseRepository;
 
     public CachedStockConsignmentRepositoryAdapter(StockConsignmentRepositoryAdapter baseRepository, RedisTemplate<String, Object> redisTemplate, MeterRegistry meterRegistry) {

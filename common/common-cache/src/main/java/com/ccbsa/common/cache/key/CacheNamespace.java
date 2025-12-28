@@ -26,10 +26,11 @@ public enum CacheNamespace {
     PRODUCTS("products"), PRODUCT_CATEGORIES("product-categories"),
 
     // Stock Management Service
-    STOCK_CONSIGNMENTS("stock-consignments"), STOCK_ITEMS("stock-items"), STOCK_LEVELS("stock-levels"),
+    STOCK_CONSIGNMENTS("stock-consignments"), STOCK_ITEMS("stock-items"), STOCK_LEVELS("stock-levels"), STOCK_ALLOCATIONS("stock-allocations"),
+    STOCK_ADJUSTMENTS("stock-adjustments"), STOCK_LEVEL_THRESHOLDS("stock-level-thresholds"),
 
     // Location Management Service
-    LOCATIONS("locations"), ZONES("zones"),
+    LOCATIONS("locations"), ZONES("zones"), STOCK_MOVEMENTS("stock-movements"),
 
     // Notification Service
     NOTIFICATIONS("notifications"),

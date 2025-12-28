@@ -18,6 +18,7 @@ import { Consignment } from '../types/stockManagement';
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { getStatusVariant, StatusBadge } from '../../../components/common';
 import { formatDateTime } from '../../../utils/dateUtils';
+import { useLocationDescription } from '../hooks/useLocationDescription';
 
 interface ConsignmentDetailProps {
   consignment: Consignment | null;
@@ -36,6 +37,10 @@ export const ConsignmentDetail = ({
   onConfirm,
   canConfirm = false,
 }: ConsignmentDetailProps) => {
+  // Always call hook (React rules), but prefer backend value if available
+  const fallbackWarehouseDescription = useLocationDescription(consignment?.warehouseId);
+  const warehouseDescription = consignment?.warehouseName || fallbackWarehouseDescription;
+
   if (!consignment) {
     return (
       <Paper sx={{ p: 3 }}>
@@ -75,9 +80,9 @@ export const ConsignmentDetail = ({
 
             <Box>
               <Typography variant="caption" color="text.secondary">
-                Warehouse ID
+                Warehouse
               </Typography>
-              <Typography variant="body1">{consignment.warehouseId}</Typography>
+              <Typography variant="body1">{warehouseDescription || consignment.warehouseId}</Typography>
             </Box>
 
             <Box>
@@ -97,7 +102,9 @@ export const ConsignmentDetail = ({
                 <Typography variant="caption" color="text.secondary">
                   Received By
                 </Typography>
-                <Typography variant="body1">{consignment.receivedBy}</Typography>
+                <Typography variant="body1">
+                  {consignment.receivedByName || consignment.receivedBy}
+                </Typography>
               </Box>
             )}
           </Stack>

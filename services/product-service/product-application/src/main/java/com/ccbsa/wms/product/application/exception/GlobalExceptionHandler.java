@@ -1,5 +1,6 @@
 package com.ccbsa.wms.product.application.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -95,6 +96,69 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         logger.warn("Product code already exists: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
         ApiError error = ApiError.builder("PRODUCT_CODE_ALREADY_EXISTS", ex.getMessage()).path(path).requestId(requestId).build();
+        return ApiResponseBuilder.error(HttpStatus.CONFLICT, error);
+    }
+
+    /**
+     * Handles DataIntegrityViolationException. Returns 409 Conflict.
+     * <p>
+     * This exception is thrown when a database constraint violation occurs (e.g., duplicate key, foreign key violation).
+     * We extract meaningful error messages from the exception and return appropriate error codes.
+     * <p>
+     * Common scenarios:
+     * <ul>
+     *   <li>Duplicate barcode constraint violation - converted to BarcodeAlreadyExistsException</li>
+     *   <li>Duplicate product code constraint violation - converted to ProductCodeAlreadyExistsException</li>
+     *   <li>Other constraint violations - returned as generic data integrity error</li>
+     * </ul>
+     *
+     * @param ex      The exception
+     * @param request The HTTP request
+     * @return Error response with 409 Conflict
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(DataIntegrityViolationException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        String message = ex.getMessage();
+        String errorCode = "DATA_INTEGRITY_VIOLATION";
+        String errorMessage = "A data integrity constraint violation occurred";
+
+        // Extract meaningful error information from the exception
+        if (message != null) {
+            // Check for duplicate barcode constraint
+            if (message.contains("uk_product_barcodes_barcode") || message.contains("duplicate key value") && message.contains("barcode")) {
+                errorCode = "BARCODE_ALREADY_EXISTS";
+                // Try to extract barcode value from message
+                if (message.contains("Key (barcode)=(")) {
+                    int start = message.indexOf("Key (barcode)=(") + 15;
+                    int end = message.indexOf(")", start);
+                    if (end > start) {
+                        String barcode = message.substring(start, end);
+                        errorMessage = String.format("Product barcode already exists: %s", barcode);
+                    } else {
+                        errorMessage = "Product barcode already exists";
+                    }
+                } else {
+                    errorMessage = "Product barcode already exists";
+                }
+            }
+            // Check for duplicate product code constraint
+            else if (message.contains("uk_products_tenant_product_code") || message.contains("duplicate key value") && message.contains("product_code")) {
+                errorCode = "PRODUCT_CODE_ALREADY_EXISTS";
+                errorMessage = "Product code already exists for this tenant";
+            }
+            // Check for duplicate primary barcode constraint
+            else if (message.contains("uk_products_tenant_primary_barcode") || message.contains("duplicate key value") && message.contains("primary_barcode")) {
+                errorCode = "BARCODE_ALREADY_EXISTS";
+                errorMessage = "Primary barcode already exists for this tenant";
+            }
+        }
+
+        logger.warn("Data integrity violation: {} - RequestId: {}, Path: {}", errorMessage, requestId, path);
+
+        ApiError error = ApiError.builder(errorCode, errorMessage).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.CONFLICT, error);
     }
 }

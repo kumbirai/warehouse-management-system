@@ -6,8 +6,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,6 +34,7 @@ import com.ccbsa.wms.tenant.domain.core.valueobject.TenantStatus;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * REST Controller: TenantQueryController
@@ -45,8 +44,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/v1/tenants")
 @Tag(name = "Tenant Queries", description = "Tenant query operations")
+@Slf4j
 public class TenantQueryController {
-    private static final Logger logger = LoggerFactory.getLogger(TenantQueryController.class);
     private final GetTenantQueryHandler getTenantHandler;
     private final GetTenantRealmQueryHandler getTenantRealmHandler;
     private final ListTenantsQueryHandler listTenantsHandler;
@@ -67,17 +66,17 @@ public class TenantQueryController {
                                                                                 @RequestParam(value = "size", required = false) Integer size,
                                                                                 @RequestParam(value = "status", required = false) String status,
                                                                                 @RequestParam(value = "search", required = false) String search) {
-        logger.debug("Listing tenants - page: {}, size: {}, status: {}, search: {}", page, size, status, search);
+        log.debug("Listing tenants - page: {}, size: {}, status: {}, search: {}", page, size, status, search);
 
         TenantStatus tenantStatus = parseStatus(status);
         TenantListQuery query = TenantListQuery.of(page, size, tenantStatus, search);
         TenantListResult result = listTenantsHandler.handle(query);
 
-        logger.debug("Query result - totalElements: {}, totalPages: {}, tenants count: {}", result.getTotalElements(), result.getTotalPages(), result.getTenants().size());
+        log.debug("Query result - totalElements: {}, totalPages: {}, tenants count: {}", result.getTotalElements(), result.getTotalPages(), result.getTenants().size());
 
         List<TenantSummaryResponse> responses = result.getTenants().stream().map(mapper::toTenantSummaryResponse).collect(Collectors.toList());
 
-        logger.debug("Mapped {} tenant responses", responses.size());
+        log.debug("Mapped {} tenant responses", responses.size());
 
         ApiMeta meta = ApiMeta.builder()
                 .pagination(new ApiMeta.Pagination(result.getPage(), result.getSize(), result.getTotalElements(), result.getTotalPages(), result.hasNext(), result.hasPrevious()))

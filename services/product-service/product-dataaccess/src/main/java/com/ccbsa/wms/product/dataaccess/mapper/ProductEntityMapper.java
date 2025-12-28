@@ -7,13 +7,13 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.domain.valueobject.Description;
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.product.dataaccess.entity.ProductBarcodeEntity;
 import com.ccbsa.wms.product.dataaccess.entity.ProductEntity;
 import com.ccbsa.wms.product.domain.core.entity.Product;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductBarcode;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
-import com.ccbsa.wms.product.domain.core.valueobject.ProductId;
 
 /**
  * Mapper: ProductEntityMapper

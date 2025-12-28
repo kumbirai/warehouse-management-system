@@ -37,7 +37,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * Responsibilities: - Get location by ID endpoint - Map queries to DTOs - Return standardized API responses
  */
 @RestController
-@RequestMapping("/locations")
+@RequestMapping("/api/v1/location-management/locations")
 @Tag(name = "Location Queries", description = "Location query operations")
 public class LocationQueryController {
     private final GetLocationQueryHandler getLocationQueryHandler;

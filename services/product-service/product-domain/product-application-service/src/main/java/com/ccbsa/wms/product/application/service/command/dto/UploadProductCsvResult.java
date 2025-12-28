@@ -1,13 +1,21 @@
 package com.ccbsa.wms.product.application.service.command.dto;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.Builder;
+import lombok.Getter;
 
 /**
  * Result DTO: UploadProductCsvResult
  * <p>
  * Result object returned after uploading a CSV file. Contains summary statistics and error details.
  */
+@Getter
+@Builder
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Lombok builder stores list directly. Defensive copy made in constructor and getter returns immutable view.")
 public final class UploadProductCsvResult {
     private final int totalRows;
     private final int createdCount;
@@ -15,63 +23,26 @@ public final class UploadProductCsvResult {
     private final int errorCount;
     private final List<ProductCsvError> errors;
 
-    private UploadProductCsvResult(Builder builder) {
-        this.totalRows = builder.totalRows;
-        this.createdCount = builder.createdCount;
-        this.updatedCount = builder.updatedCount;
-        this.errorCount = builder.errors != null ? builder.errors.size() : 0;
-        this.errors = builder.errors != null ? List.copyOf(builder.errors) : List.of();
+    public UploadProductCsvResult(int totalRows, int createdCount, int updatedCount, int errorCount, List<ProductCsvError> errors) {
+        this.totalRows = totalRows;
+        this.createdCount = createdCount;
+        this.updatedCount = updatedCount;
+        this.errorCount = errors != null ? errors.size() : 0;
+        // Defensive copy to prevent external modification
+        this.errors = errors != null ? List.copyOf(errors) : List.of();
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public int getTotalRows() {
-        return totalRows;
-    }
-
-    public int getCreatedCount() {
-        return createdCount;
-    }
-
-    public int getUpdatedCount() {
-        return updatedCount;
-    }
-
-    public int getErrorCount() {
-        return errorCount;
-    }
-
+    /**
+     * Returns an unmodifiable view of the errors list.
+     *
+     * @return Unmodifiable list of errors
+     */
     public List<ProductCsvError> getErrors() {
-        return errors;
+        return Collections.unmodifiableList(errors);
     }
 
     public static class Builder {
-        private int totalRows;
-        private int createdCount;
-        private int updatedCount;
         private List<ProductCsvError> errors;
-
-        public Builder totalRows(int totalRows) {
-            this.totalRows = totalRows;
-            return this;
-        }
-
-        public Builder createdCount(int createdCount) {
-            this.createdCount = createdCount;
-            return this;
-        }
-
-        public Builder updatedCount(int updatedCount) {
-            this.updatedCount = updatedCount;
-            return this;
-        }
-
-        public Builder errors(List<ProductCsvError> errors) {
-            this.errors = errors != null ? List.copyOf(errors) : null;
-            return this;
-        }
 
         public Builder addError(ProductCsvError error) {
             if (this.errors == null) {
@@ -79,10 +50,6 @@ public final class UploadProductCsvResult {
             }
             this.errors.add(error);
             return this;
-        }
-
-        public UploadProductCsvResult build() {
-            return new UploadProductCsvResult(this);
         }
     }
 }

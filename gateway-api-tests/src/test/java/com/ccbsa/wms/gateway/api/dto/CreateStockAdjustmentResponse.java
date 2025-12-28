@@ -5,15 +5,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateStockAdjustmentResponse {
-    private String adjustmentId;
-    private String consignmentId;
-    private String adjustmentType;
-    private Integer quantity;
-    private Integer newQuantity;
+    private UUID adjustmentId;
+    private Integer quantityBefore;
+    private Integer quantityAfter;
+    private LocalDateTime adjustedAt;
 }
 

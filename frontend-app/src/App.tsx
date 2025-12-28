@@ -22,6 +22,15 @@ import { LocationListPage } from './features/location-management/pages/LocationL
 import { LocationCreatePage } from './features/location-management/pages/LocationCreatePage';
 import { LocationDetailPage } from './features/location-management/pages/LocationDetailPage';
 import { LocationEditPage } from './features/location-management/pages/LocationEditPage';
+import { StockMovementListPage } from './features/location-management/pages/StockMovementListPage';
+import { StockMovementCreatePage } from './features/location-management/pages/StockMovementCreatePage';
+import { StockMovementDetailPage } from './features/location-management/pages/StockMovementDetailPage';
+import { StockAllocationCreatePage } from './features/stock-management/pages/StockAllocationCreatePage';
+import { StockAllocationListPage } from './features/stock-management/pages/StockAllocationListPage';
+import { StockAllocationDetailPage } from './features/stock-management/pages/StockAllocationDetailPage';
+import { StockAdjustmentCreatePage } from './features/stock-management/pages/StockAdjustmentCreatePage';
+import { StockAdjustmentListPage } from './features/stock-management/pages/StockAdjustmentListPage';
+import { StockAdjustmentDetailPage } from './features/stock-management/pages/StockAdjustmentDetailPage';
 import { ProductListPage } from './features/product-management/pages/ProductListPage';
 import { ProductCreatePage } from './features/product-management/pages/ProductCreatePage';
 import { ProductDetailPage } from './features/product-management/pages/ProductDetailPage';
@@ -316,6 +325,159 @@ function App() {
             ]}
           >
             <StockItemDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-movements"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              LOCATION_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+              VIEWER,
+            ]}
+          >
+            <StockMovementListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-movements/create"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              LOCATION_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+            ]}
+          >
+            <StockMovementCreatePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-movements/:movementId"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              LOCATION_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+              VIEWER,
+            ]}
+          >
+            <StockMovementDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/allocations/create"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+            ]}
+          >
+            <StockAllocationCreatePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/adjustments/create"
+        element={
+          <ProtectedRoute
+            requiredRoles={[SYSTEM_ADMIN, TENANT_ADMIN, WAREHOUSE_MANAGER, STOCK_MANAGER, OPERATOR]}
+          >
+            <StockAdjustmentCreatePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/allocations"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+              VIEWER,
+            ]}
+          >
+            <StockAllocationListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/allocations/:allocationId"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+              VIEWER,
+            ]}
+          >
+            <StockAllocationDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/adjustments"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              VIEWER,
+            ]}
+          >
+            <StockAdjustmentListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/adjustments/:adjustmentId"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              VIEWER,
+            ]}
+          >
+            <StockAdjustmentDetailPage />
           </ProtectedRoute>
         }
       />
