@@ -17,7 +17,9 @@ import lombok.Getter;
 @Getter
 @Builder
 @EqualsAndHashCode
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Lombok builder stores list directly. Defensive copy made in constructor and getter returns immutable view.")
+@SuppressFBWarnings(value = {"EI_EXPOSE_REP2", "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"},
+        justification = "EI_EXPOSE_REP2: Lombok builder stores list directly. Defensive copy made in constructor and getter returns immutable view. "
+                + "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE: Lombok-generated equals() and hashCode() include null checks, but movements is validated as non-null in constructor.")
 public final class ListStockMovementsQueryResult {
     private final List<StockMovementQueryResult> movements;
     private final int totalCount;
