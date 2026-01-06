@@ -323,14 +323,15 @@ public class StockAllocation extends TenantAwareAggregateRoot<StockAllocationId>
 
         /**
          * Initializes default values for optional fields.
+         * Note: status is NOT set here - it should be set by calling allocate() method after building.
+         * This allows allocate() to properly validate that the allocation doesn't already exist.
+         * allocatedAt is also set by allocate() method, not here.
          */
         private void initializeDefaults() {
-            if (allocation.status == null) {
-                allocation.status = AllocationStatus.ALLOCATED;
-            }
-            if (allocation.allocatedAt == null) {
-                allocation.allocatedAt = LocalDateTime.now();
-            }
+            // Do NOT set status here - allocate() method will set it
+            // Status should only be set when loading from database (via buildWithoutEvents)
+            // allocatedAt will be set by allocate() method for new allocations
+            // No default initialization needed - all required fields are validated in validate()
         }
 
         /**

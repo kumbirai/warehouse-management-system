@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { productService } from '../services/productService';
 import { CreateProductRequest } from '../types/product';
 import { logger } from '../../../utils/logger';
+import { useToast } from '../../../hooks/useToast';
 
 export interface UseCreateProductResult {
   createProduct: (request: CreateProductRequest, tenantId: string) => Promise<void>;
@@ -14,6 +15,7 @@ export const useCreateProduct = (): UseCreateProductResult => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const navigate = useNavigate();
+  const { success, error: showErrorToast } = useToast();
 
   const createProduct = async (request: CreateProductRequest, tenantId: string) => {
     setIsLoading(true);
@@ -31,11 +33,13 @@ export const useCreateProduct = (): UseCreateProductResult => {
       }
 
       logger.info('Product created successfully', { productId: response.data.productId });
+      success('Product created successfully');
       navigate(`/products/${response.data.productId}`);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to create product');
       logger.error('Error creating product:', error);
       setError(error);
+      showErrorToast(error.message);
       throw error;
     } finally {
       setIsLoading(false);

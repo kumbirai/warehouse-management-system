@@ -10,6 +10,8 @@ import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.dataaccess.entity.StockAdjustmentEntity;
 import com.ccbsa.wms.stock.domain.core.entity.StockAdjustment;
+import com.ccbsa.wms.stock.domain.core.valueobject.AuthorizationCode;
+import com.ccbsa.wms.stock.domain.core.valueobject.Notes;
 import com.ccbsa.wms.stock.domain.core.valueobject.StockAdjustmentId;
 
 /**
@@ -47,17 +49,17 @@ public class StockAdjustmentEntityMapper {
         entity.setReason(stockAdjustment.getReason());
         entity.setAdjustedBy(java.util.UUID.fromString(stockAdjustment.getAdjustedBy().getValue()));
         entity.setAdjustedAt(stockAdjustment.getAdjustedAt());
-        entity.setQuantityBefore(stockAdjustment.getQuantityBefore());
-        entity.setQuantityAfter(stockAdjustment.getQuantityAfter());
+        entity.setQuantityBefore(stockAdjustment.getQuantityBefore() != null ? stockAdjustment.getQuantityBefore().getValue() : null);
+        entity.setQuantityAfter(stockAdjustment.getQuantityAfter() != null ? stockAdjustment.getQuantityAfter().getValue() : null);
         entity.setCreatedAt(stockAdjustment.getAdjustedAt()); // Use adjustedAt as createdAt
         entity.setLastModifiedAt(stockAdjustment.getAdjustedAt());
 
         // Set optional fields
-        if (stockAdjustment.getNotes() != null) {
-            entity.setNotes(stockAdjustment.getNotes());
+        if (stockAdjustment.getNotes() != null && !stockAdjustment.getNotes().isEmpty()) {
+            entity.setNotes(stockAdjustment.getNotes().getValue());
         }
-        if (stockAdjustment.getAuthorizationCode() != null) {
-            entity.setAuthorizationCode(stockAdjustment.getAuthorizationCode());
+        if (stockAdjustment.getAuthorizationCode() != null && !stockAdjustment.getAuthorizationCode().isEmpty()) {
+            entity.setAuthorizationCode(stockAdjustment.getAuthorizationCode().getValue());
         }
 
         // For new entities, version will be set by Hibernate when persisting
@@ -86,7 +88,9 @@ public class StockAdjustmentEntityMapper {
 
         StockAdjustment.Builder builder = StockAdjustment.builder().stockAdjustmentId(StockAdjustmentId.of(entity.getId())).tenantId(TenantId.of(entity.getTenantId()))
                 .productId(ProductId.of(entity.getProductId())).adjustmentType(entity.getAdjustmentType()).quantity(Quantity.of(entity.getQuantity())).reason(entity.getReason())
-                .adjustedBy(UserId.of(entity.getAdjustedBy().toString())).adjustedAt(entity.getAdjustedAt()).quantityBefore(entity.getQuantityBefore())
+                .adjustedBy(UserId.of(entity.getAdjustedBy().toString())).adjustedAt(entity.getAdjustedAt())
+                .quantityBefore(entity.getQuantityBefore() != null ? Quantity.of(entity.getQuantityBefore()) : null)
+                .quantityAfter(entity.getQuantityAfter() != null ? Quantity.of(entity.getQuantityAfter()) : null)
                 .version(entity.getVersion() != null ? entity.getVersion().intValue() : 0);
 
         // Set optional location ID
@@ -101,10 +105,10 @@ public class StockAdjustmentEntityMapper {
 
         // Set optional fields
         if (entity.getNotes() != null) {
-            builder.notes(entity.getNotes());
+            builder.notes(Notes.ofNullable(entity.getNotes()));
         }
         if (entity.getAuthorizationCode() != null) {
-            builder.authorizationCode(entity.getAuthorizationCode());
+            builder.authorizationCode(AuthorizationCode.ofNullable(entity.getAuthorizationCode()));
         }
 
         return builder.buildWithoutEvents();

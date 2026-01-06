@@ -69,6 +69,11 @@ export const StockAllocationForm = ({
               required
               error={!!errors.productId}
               helperText={errors.productId?.message}
+              aria-label="Product ID input field"
+              aria-required="true"
+              aria-describedby="product-id-helper"
+              FormHelperTextProps={{ id: 'product-id-helper' }}
+              autoFocus
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -78,6 +83,9 @@ export const StockAllocationForm = ({
               fullWidth
               error={!!errors.locationId}
               helperText={errors.locationId?.message}
+              aria-label="Location ID input field (optional)"
+              aria-describedby="location-id-helper"
+              FormHelperTextProps={{ id: 'location-id-helper' }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -89,6 +97,10 @@ export const StockAllocationForm = ({
               required
               error={!!errors.quantity}
               helperText={errors.quantity?.message}
+              aria-label="Quantity input field"
+              aria-required="true"
+              aria-describedby="quantity-helper"
+              FormHelperTextProps={{ id: 'quantity-helper' }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -104,6 +116,10 @@ export const StockAllocationForm = ({
                   required
                   error={!!errors.allocationType}
                   helperText={errors.allocationType?.message}
+                  aria-label="Select allocation type"
+                  aria-required="true"
+                  aria-describedby="allocation-type-helper"
+                  FormHelperTextProps={{ id: 'allocation-type-helper' }}
                 >
                   <MenuItem value="PICKING_ORDER">Picking Order</MenuItem>
                   <MenuItem value="RESERVATION">Reservation</MenuItem>
@@ -120,6 +136,10 @@ export const StockAllocationForm = ({
               required
               error={!!errors.referenceId}
               helperText={errors.referenceId?.message}
+              aria-label="Reference ID input field"
+              aria-required="true"
+              aria-describedby="reference-id-helper"
+              FormHelperTextProps={{ id: 'reference-id-helper' }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -131,6 +151,9 @@ export const StockAllocationForm = ({
               rows={3}
               error={!!errors.notes}
               helperText={errors.notes?.message}
+              aria-label="Notes input field (optional)"
+              aria-describedby="notes-helper"
+              FormHelperTextProps={{ id: 'notes-helper' }}
             />
           </Grid>
         </Grid>

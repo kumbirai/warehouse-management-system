@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -25,6 +23,9 @@ import com.ccbsa.wms.location.application.service.command.AssignLocationsFEFOCom
 import com.ccbsa.wms.location.application.service.command.dto.AssignLocationsFEFOCommand;
 import com.ccbsa.wms.location.domain.core.valueobject.StockItemAssignmentRequest;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Event Listener: StockClassifiedEventListener
  * <p>
@@ -37,29 +38,25 @@ import com.ccbsa.wms.location.domain.core.valueobject.StockItemAssignmentRequest
  * <p>
  * Idempotency: This listener is idempotent - checks if stock item already has a location assigned.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class StockClassifiedEventListener {
-    private static final Logger logger = LoggerFactory.getLogger(StockClassifiedEventListener.class);
-
     private static final String STOCK_CLASSIFIED_EVENT = "StockClassifiedEvent";
 
     private final AssignLocationsFEFOCommandHandler fefoCommandHandler;
 
-    public StockClassifiedEventListener(AssignLocationsFEFOCommandHandler fefoCommandHandler) {
-        this.fefoCommandHandler = fefoCommandHandler;
-    }
-
     @KafkaListener(topics = "stock-management-events", groupId = "location-management-service", containerFactory = "externalEventKafkaListenerContainerFactory")
-    @Transactional
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
                        @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
+        boolean shouldAcknowledge = false;
         try {
             extractAndSetCorrelationId(eventData);
 
             String detectedEventType = detectEventType(eventData, eventType);
             if (!isStockClassifiedEvent(detectedEventType, eventData)) {
-                logger.debug("Skipping event - not StockClassifiedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
-                acknowledgment.acknowledge();
+                log.debug("Skipping event - not StockClassifiedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
+                shouldAcknowledge = true;
                 return;
             }
 
@@ -70,9 +67,9 @@ public class StockClassifiedEventListener {
             // Only trigger FEFO for newly classified stock (initial classification)
             StockClassification oldClassification = extractClassification(eventData, "oldClassification");
             if (oldClassification != null) {
-                logger.debug("Skipping FEFO assignment - stock item already classified: stockItemId={}, oldClassification={}, newClassification={}", stockItemIdString,
+                log.debug("Skipping FEFO assignment - stock item already classified: stockItemId={}, oldClassification={}, newClassification={}", stockItemIdString,
                         oldClassification, newClassification);
-                acknowledgment.acknowledge();
+                shouldAcknowledge = true;
                 return;
             }
 
@@ -80,30 +77,30 @@ public class StockClassifiedEventListener {
             TenantId tenantId = extractTenantId(eventData);
             TenantContext.setTenantId(tenantId);
 
-            logger.info("Received StockClassifiedEvent: stockItemId={}, classification={}, tenantId={}", stockItemIdString, newClassification, tenantId.getValue());
+            log.info("Received StockClassifiedEvent: stockItemId={}, classification={}, tenantId={}", stockItemIdString, newClassification, tenantId.getValue());
 
-            // Extract expiration date and quantity from event
-            ExpirationDate expirationDate = extractExpirationDate(eventData);
-            BigDecimal quantity = extractQuantity(eventData);
+            // Skip FEFO assignment for expired stock - expired stock cannot be assigned locations
+            if (newClassification == StockClassification.EXPIRED) {
+                log.debug("Skipping FEFO assignment for expired stock item: stockItemId={}, tenantId={}. " + "Expired stock cannot be assigned locations.", stockItemIdString,
+                        tenantId.getValue());
+                shouldAcknowledge = true;
+                return;
+            }
 
-            // Create stock item assignment request
-            StockItemAssignmentRequest assignmentRequest =
-                    StockItemAssignmentRequest.builder().stockItemId(stockItemIdString).quantity(quantity).expirationDate(expirationDate).classification(newClassification).build();
+            // Process event in a separate transactional method to ensure proper connection management
+            shouldAcknowledge = processStockClassifiedEvent(stockItemIdString, newClassification, tenantId, eventData);
 
-            // Trigger FEFO assignment
-            List<StockItemAssignmentRequest> stockItems = List.of(assignmentRequest);
-            AssignLocationsFEFOCommand command = AssignLocationsFEFOCommand.builder().tenantId(tenantId).stockItems(stockItems).build();
-
-            fefoCommandHandler.handle(command);
-
-            logger.info("Successfully triggered FEFO assignment for stock item: stockItemId={}", stockItemIdString);
-
-            acknowledgment.acknowledge();
         } catch (Exception e) {
-            logger.error("Error processing StockClassifiedEvent: eventId={}, error={}", extractEventId(eventData), e.getMessage(), e);
-            acknowledgment.acknowledge();
+            log.error("Error processing StockClassifiedEvent: eventId={}, error={}", extractEventId(eventData), e.getMessage(), e);
+            // Acknowledge even on error to prevent infinite reprocessing
+            // Stock item remains unassigned, which is acceptable
+            shouldAcknowledge = true;
         } finally {
             TenantContext.clear();
+            // Acknowledge only after transaction completes and context is cleared
+            if (shouldAcknowledge) {
+                acknowledgment.acknowledge();
+            }
         }
     }
 
@@ -184,7 +181,7 @@ public class StockClassifiedEventListener {
                 try {
                     return StockClassification.valueOf((String) classificationObj);
                 } catch (IllegalArgumentException e) {
-                    logger.warn("Invalid classification value: {}", classificationObj);
+                    log.warn("Invalid classification value: {}", classificationObj);
                     return null;
                 }
             }
@@ -195,7 +192,7 @@ public class StockClassifiedEventListener {
                     try {
                         return StockClassification.valueOf(nameObj.toString());
                     } catch (IllegalArgumentException e) {
-                        logger.warn("Invalid classification name: {}", nameObj);
+                        log.warn("Invalid classification name: {}", nameObj);
                         return null;
                     }
                 }
@@ -219,6 +216,69 @@ public class StockClassifiedEventListener {
         throw new IllegalArgumentException("tenantId not found in event data");
     }
 
+    /**
+     * Processes the StockClassifiedEvent in a transactional context.
+     * This ensures proper connection management and transaction commit/rollback.
+     *
+     * @param stockItemIdString the stock item ID
+     * @param newClassification the new classification
+     * @param tenantId          the tenant ID
+     * @param eventData         the event data for extracting additional information
+     * @return true if the event should be acknowledged, false otherwise
+     */
+    @Transactional
+    private boolean processStockClassifiedEvent(String stockItemIdString, StockClassification newClassification, TenantId tenantId, Map<String, Object> eventData) {
+        // Extract expiration date and quantity from event
+        ExpirationDate expirationDate = extractExpirationDate(eventData);
+        BigDecimal quantity = extractQuantity(eventData);
+
+        // Create stock item assignment request
+        StockItemAssignmentRequest assignmentRequest =
+                StockItemAssignmentRequest.builder().stockItemId(stockItemIdString).quantity(quantity).expirationDate(expirationDate).classification(newClassification).build();
+
+        // Trigger FEFO assignment
+        List<StockItemAssignmentRequest> stockItems = List.of(assignmentRequest);
+        AssignLocationsFEFOCommand command = AssignLocationsFEFOCommand.builder().tenantId(tenantId).stockItems(stockItems).build();
+
+        try {
+            com.ccbsa.wms.location.application.service.command.dto.AssignLocationsFEResult result = fefoCommandHandler.handle(command);
+
+            // Check if assignment was successful
+            if (result.getAssignments().containsKey(stockItemIdString)) {
+                log.info("Successfully assigned location via FEFO for stock item: stockItemId={}, locationId={}", stockItemIdString,
+                        result.getAssignments().get(stockItemIdString).getValueAsString());
+            } else {
+                // Assignment failed - no available locations or insufficient capacity
+                // This is acceptable - stock item remains unassigned and can be:
+                // 1. Assigned later when locations become available
+                // 2. Allocated from unassigned items (handled in allocation logic)
+                log.warn("FEFO assignment did not assign location for stock item: stockItemId={}, tenantId={}. "
+                        + "Stock item will remain unassigned until locations become available or manual assignment.", stockItemIdString, tenantId.getValue());
+            }
+        } catch (Exception e) {
+            // Handle assignment failures gracefully
+            // Stock item remains unassigned, which is acceptable behavior
+            log.warn("FEFO assignment failed for stock item: stockItemId={}, tenantId={}, error={}. "
+                    + "Stock item will remain unassigned until locations become available or manual assignment.", stockItemIdString, tenantId.getValue(), e.getMessage());
+        }
+
+        // Always acknowledge the event to prevent infinite reprocessing
+        // Stock items can remain unassigned - they can be assigned later or allocated from unassigned items
+        return true;
+    }
+
+    private String extractEventId(Map<String, Object> eventData) {
+        Object eventIdObj = eventData.get("eventId");
+        if (eventIdObj != null) {
+            return eventIdObj.toString();
+        }
+        Object idObj = eventData.get("id");
+        if (idObj != null) {
+            return idObj.toString();
+        }
+        return "unknown";
+    }
+
     private ExpirationDate extractExpirationDate(Map<String, Object> eventData) {
         Object expirationDateObj = eventData.get("expirationDate");
         if (expirationDateObj != null) {
@@ -227,7 +287,7 @@ public class StockClassifiedEventListener {
                     LocalDate date = LocalDate.parse((String) expirationDateObj);
                     return ExpirationDate.of(date);
                 } catch (Exception e) {
-                    logger.warn("Invalid expiration date format: {}", expirationDateObj);
+                    log.warn("Invalid expiration date format: {}", expirationDateObj);
                     return null;
                 }
             }
@@ -239,7 +299,7 @@ public class StockClassifiedEventListener {
                         LocalDate date = LocalDate.parse(valueObj.toString());
                         return ExpirationDate.of(date);
                     } catch (Exception e) {
-                        logger.warn("Invalid expiration date value: {}", valueObj);
+                        log.warn("Invalid expiration date value: {}", valueObj);
                         return null;
                     }
                 }
@@ -258,7 +318,7 @@ public class StockClassifiedEventListener {
                 try {
                     return new BigDecimal((String) quantityObj);
                 } catch (NumberFormatException e) {
-                    logger.warn("Invalid quantity format: {}", quantityObj);
+                    log.warn("Invalid quantity format: {}", quantityObj);
                     return BigDecimal.ONE; // Fallback to 1
                 }
             }
@@ -272,26 +332,14 @@ public class StockClassifiedEventListener {
                     try {
                         return new BigDecimal(valueObj.toString());
                     } catch (NumberFormatException e) {
-                        logger.warn("Invalid quantity value: {}", valueObj);
+                        log.warn("Invalid quantity value: {}", valueObj);
                         return BigDecimal.ONE; // Fallback to 1
                     }
                 }
             }
         }
-        logger.warn("Quantity not found in event data, using default value of 1");
+        log.warn("Quantity not found in event data, using default value of 1");
         return BigDecimal.ONE; // Fallback to 1 if quantity not found
-    }
-
-    private String extractEventId(Map<String, Object> eventData) {
-        Object eventIdObj = eventData.get("eventId");
-        if (eventIdObj != null) {
-            return eventIdObj.toString();
-        }
-        Object idObj = eventData.get("id");
-        if (idObj != null) {
-            return idObj.toString();
-        }
-        return "unknown";
     }
 }
 

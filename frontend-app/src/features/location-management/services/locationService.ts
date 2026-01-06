@@ -1,6 +1,7 @@
 import apiClient from '../../../services/apiClient';
 import { ApiResponse } from '../../../types/api';
 import {
+  AssignLocationsFEFORequest,
   CreateLocationRequest,
   CreateLocationResponse,
   Location,
@@ -122,6 +123,25 @@ export const locationService = {
   ): Promise<ApiResponse<Location>> {
     const response = await apiClient.put<ApiResponse<Location>>(
       `${LOCATION_BASE_PATH}/${locationId}/status`,
+      request,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Assigns locations to stock items using FEFO (First-Expiring-First-Out) algorithm.
+   */
+  async assignLocationsFEFO(
+    request: AssignLocationsFEFORequest,
+    tenantId: string
+  ): Promise<ApiResponse<void>> {
+    const response = await apiClient.post<ApiResponse<void>>(
+      `${LOCATION_BASE_PATH}/assign-fefo`,
       request,
       {
         headers: {

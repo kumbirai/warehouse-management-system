@@ -55,7 +55,7 @@ public class LocationQueryController {
 
     @GetMapping
     @Operation(summary = "List Locations", description = "Retrieves a list of locations with optional filtering and pagination")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER', 'SERVICE')")
     public ResponseEntity<ApiResponse<ListLocationsQueryResultDTO>> listLocations(@RequestHeader("X-Tenant-Id") String tenantId, @RequestParam(required = false) Integer page,
                                                                                   @RequestParam(required = false) Integer size, @RequestParam(required = false) String zone,
                                                                                   @RequestParam(required = false) String status, @RequestParam(required = false) String search) {
@@ -80,7 +80,7 @@ public class LocationQueryController {
 
     @GetMapping("/{locationId}")
     @Operation(summary = "Get Location by ID", description = "Retrieves a location by ID")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER', 'SERVICE')")
     public ResponseEntity<ApiResponse<LocationQueryResultDTO>> getLocation(@PathVariable String locationId, @RequestHeader("X-Tenant-Id") String tenantId) {
         // Map to query
         GetLocationQuery query = mapper.toGetLocationQuery(locationId, tenantId);
@@ -96,7 +96,7 @@ public class LocationQueryController {
 
     @GetMapping("/{locationId}/check-availability")
     @Operation(summary = "Check Location Availability", description = "Checks if a location has capacity for the required quantity")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'STOCK_MANAGER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'STOCK_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<LocationAvailabilityQueryResultDTO>> checkLocationAvailability(@PathVariable String locationId, @RequestHeader("X-Tenant-Id") String tenantId,
                                                                                                      @RequestParam("requiredQuantity") Integer requiredQuantity) {
         // Map to query

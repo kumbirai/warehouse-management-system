@@ -2,8 +2,6 @@ package com.ccbsa.wms.gateway.filter;
 
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -11,6 +9,7 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 /**
@@ -28,6 +27,7 @@ import reactor.core.publisher.Mono;
  *   <li>/api/v1/bff/auth/logout</li>
  * </ul>
  */
+@Slf4j
 @Component
 @Order(-100) // Run before Spring Security filters
 public class PublicEndpointFilter implements WebFilter {
@@ -35,7 +35,6 @@ public class PublicEndpointFilter implements WebFilter {
      * Attribute key to mark public endpoints.
      */
     public static final String IS_PUBLIC_ENDPOINT_ATTR = "IS_PUBLIC_ENDPOINT";
-    private static final Logger logger = LoggerFactory.getLogger(PublicEndpointFilter.class);
     /**
      * Public endpoints that do not require authentication.
      */
@@ -48,7 +47,7 @@ public class PublicEndpointFilter implements WebFilter {
         String path = exchange.getRequest().getPath().value();
 
         if (isPublicEndpoint(path)) {
-            logger.debug("Marking public endpoint: {}", path);
+            log.debug("Marking public endpoint: {}", path);
             // Set attribute to indicate this is a public endpoint
             exchange.getAttributes().put(IS_PUBLIC_ENDPOINT_ATTR, true);
         }

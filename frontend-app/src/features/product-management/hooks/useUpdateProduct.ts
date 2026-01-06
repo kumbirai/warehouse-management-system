@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { productService } from '../services/productService';
 import { UpdateProductRequest } from '../types/product';
 import { logger } from '../../../utils/logger';
+import { useToast } from '../../../hooks/useToast';
 
 export interface UseUpdateProductResult {
   updateProduct: (
@@ -18,6 +19,7 @@ export const useUpdateProduct = (): UseUpdateProductResult => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const navigate = useNavigate();
+  const { success, error: showErrorToast } = useToast();
 
   const updateProduct = async (
     productId: string,
@@ -39,11 +41,13 @@ export const useUpdateProduct = (): UseUpdateProductResult => {
       }
 
       logger.info('Product updated successfully', { productId: response.data.productId });
+      success('Product updated successfully');
       navigate(`/products/${productId}`);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to update product');
       logger.error('Error updating product:', error);
       setError(error);
+      showErrorToast(error.message);
       throw error;
     } finally {
       setIsLoading(false);

@@ -1,7 +1,5 @@
 package com.ccbsa.wms.product.messaging.listener;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +8,8 @@ import com.ccbsa.common.cache.invalidation.LocalCacheInvalidator;
 import com.ccbsa.common.cache.key.CacheNamespace;
 import com.ccbsa.wms.product.domain.core.event.ProductCreatedEvent;
 import com.ccbsa.wms.product.domain.core.event.ProductUpdatedEvent;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Product Service Cache Invalidation Listener.
@@ -20,11 +20,9 @@ import com.ccbsa.wms.product.domain.core.event.ProductUpdatedEvent;
  * - ProductCreatedEvent: No invalidation (cache-aside pattern)
  * - ProductUpdatedEvent: Invalidate entity + collections
  */
+@Slf4j
 @Component
 public class ProductCacheInvalidationListener extends CacheInvalidationEventListener {
-
-    private static final Logger log = LoggerFactory.getLogger(ProductCacheInvalidationListener.class);
-
     public ProductCacheInvalidationListener(LocalCacheInvalidator cacheInvalidator) {
         super(cacheInvalidator);
     }

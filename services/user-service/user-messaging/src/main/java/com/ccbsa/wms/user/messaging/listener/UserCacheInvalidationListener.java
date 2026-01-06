@@ -1,7 +1,5 @@
 package com.ccbsa.wms.user.messaging.listener;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +12,8 @@ import com.ccbsa.wms.user.domain.core.event.UserRoleAssignedEvent;
 import com.ccbsa.wms.user.domain.core.event.UserRoleRemovedEvent;
 import com.ccbsa.wms.user.domain.core.event.UserUpdatedEvent;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * User Service Cache Invalidation Listener.
  * <p>
@@ -23,11 +23,9 @@ import com.ccbsa.wms.user.domain.core.event.UserUpdatedEvent;
  * Invalidate user entity + all user collections -
  * UserRoleAssignedEvent: Invalidate user roles + permissions - UserRoleRemovedEvent: Invalidate user roles + permissions
  */
+@Slf4j
 @Component
 public class UserCacheInvalidationListener extends CacheInvalidationEventListener {
-
-    private static final Logger log = LoggerFactory.getLogger(UserCacheInvalidationListener.class);
-
     public UserCacheInvalidationListener(LocalCacheInvalidator cacheInvalidator) {
         super(cacheInvalidator);
     }

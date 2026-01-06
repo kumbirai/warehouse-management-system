@@ -59,6 +59,8 @@ public class AdjustStockCommandHandler {
 
         // 2. Get current quantity
         int currentQuantity = getCurrentQuantity(command);
+        log.debug("Current quantity for adjustment: productId={}, locationId={}, currentQuantity={}", command.getProductId().getValueAsString(),
+                command.getLocationId() != null ? command.getLocationId().getValueAsString() : "all locations", currentQuantity);
 
         // 3. Validate stock items exist for adjustment
         if (currentQuantity == 0 && command.getAdjustmentType() == AdjustmentType.DECREASE) {
@@ -74,13 +76,13 @@ public class AdjustStockCommandHandler {
         }
 
         // 5. Create adjustment aggregate using builder
+        // Note: quantityBefore is not set in builder - it will be set by adjust() method
         StockAdjustment adjustment = StockAdjustment.builder().stockAdjustmentId(StockAdjustmentId.generate()).tenantId(command.getTenantId()).productId(command.getProductId())
                 .locationId(command.getLocationId()).stockItemId(command.getStockItemId()).adjustmentType(command.getAdjustmentType()).quantity(command.getQuantity())
-                .reason(command.getReason()).notes(command.getNotes()).adjustedBy(command.getUserId()).authorizationCode(command.getAuthorizationCode())
-                .quantityBefore(currentQuantity).build();
+                .reason(command.getReason()).notes(command.getNotes()).adjustedBy(command.getUserId()).authorizationCode(command.getAuthorizationCode()).build();
 
-        // 6. Adjust (publishes domain event and calculates quantityAfter)
-        adjustment.adjust(currentQuantity);
+        // 6. Adjust (publishes domain event and calculates quantityBefore and quantityAfter)
+        adjustment.adjust(Quantity.of(currentQuantity));
 
         // 7. Update stock item quantity
         updateStockItemQuantity(command, adjustment);
@@ -100,8 +102,9 @@ public class AdjustStockCommandHandler {
         // 11. Return result
         return AdjustStockResult.builder().adjustmentId(savedAdjustment.getId()).productId(savedAdjustment.getProductId()).locationId(savedAdjustment.getLocationId())
                 .stockItemId(savedAdjustment.getStockItemId()).adjustmentType(savedAdjustment.getAdjustmentType()).quantity(savedAdjustment.getQuantity())
-                .quantityBefore(savedAdjustment.getQuantityBefore()).quantityAfter(savedAdjustment.getQuantityAfter()).reason(savedAdjustment.getReason())
-                .notes(savedAdjustment.getNotes()).adjustedAt(savedAdjustment.getAdjustedAt()).build();
+                .quantityBefore(savedAdjustment.getQuantityBefore() != null ? savedAdjustment.getQuantityBefore().getValue() : 0)
+                .quantityAfter(savedAdjustment.getQuantityAfter() != null ? savedAdjustment.getQuantityAfter().getValue() : 0).reason(savedAdjustment.getReason())
+                .notes(savedAdjustment.getNotes() != null ? savedAdjustment.getNotes().getValue() : null).adjustedAt(savedAdjustment.getAdjustedAt()).build();
     }
 
     /**
@@ -152,26 +155,32 @@ public class AdjustStockCommandHandler {
             // Adjust specific stock item
             StockItem stockItem = stockItemRepository.findById(command.getStockItemId())
                     .orElseThrow(() -> new IllegalArgumentException("Stock item not found: " + command.getStockItemId().getValueAsString()));
-            return stockItem.getQuantity().getValue();
+            Quantity quantity = stockItem.getQuantity();
+            return quantity != null ? quantity.getValue() : 0;
         } else if (command.getLocationId() != null) {
             // Adjust at product/location level
             // First try to find stock items with the specified location
             int quantityByLocation = stockItemRepository.findByTenantIdAndProductIdAndLocationId(command.getTenantId(), command.getProductId(), command.getLocationId()).stream()
-                    .mapToInt(item -> item.getQuantity().getValue()).sum();
+                    .filter(item -> item.getQuantity() != null).mapToInt(item -> item.getQuantity().getValue()).sum();
 
-            // If no stock items found at the location, also check for stock items without location assignment
+            // Also check for stock items without location assignment
             // (stock items created from consignments but not yet assigned via FEFO)
-            if (quantityByLocation == 0) {
-                int quantityWithoutLocation =
-                        stockItemRepository.findByTenantIdAndProductId(command.getTenantId(), command.getProductId()).stream().filter(item -> item.getLocationId() == null)
-                                .mapToInt(item -> item.getQuantity().getValue()).sum();
-                return quantityWithoutLocation;
-            }
+            // We include both to allow adjustment of stock at the location AND unassigned stock
+            // Exclude expired stock items - they cannot have locations assigned
+            int quantityWithoutLocation = stockItemRepository.findByTenantIdAndProductId(command.getTenantId(), command.getProductId()).stream()
+                    .filter(item -> item.getLocationId() == null && item.getQuantity() != null)
+                    .filter(item -> item.getClassification() != com.ccbsa.common.domain.valueobject.StockClassification.EXPIRED).mapToInt(item -> item.getQuantity().getValue())
+                    .sum();
 
-            return quantityByLocation;
+            int totalQuantity = quantityByLocation + quantityWithoutLocation;
+            log.debug("Current quantity for adjustment: productId={}, locationId={}, quantityAtLocation={}, quantityWithoutLocation={}, total={}",
+                    command.getProductId().getValueAsString(), command.getLocationId().getValueAsString(), quantityByLocation, quantityWithoutLocation, totalQuantity);
+
+            return totalQuantity;
         } else {
             // Adjust at product level (all locations)
-            return stockItemRepository.findByTenantIdAndProductId(command.getTenantId(), command.getProductId()).stream().mapToInt(item -> item.getQuantity().getValue()).sum();
+            return stockItemRepository.findByTenantIdAndProductId(command.getTenantId(), command.getProductId()).stream().filter(item -> item.getQuantity() != null)
+                    .mapToInt(item -> item.getQuantity().getValue()).sum();
         }
     }
 
@@ -186,14 +195,16 @@ public class AdjustStockCommandHandler {
      */
     private void updateStockItemQuantity(AdjustStockCommand command, StockAdjustment adjustment) {
         if (command.getStockItemId() != null) {
-            // Update specific stock item
+            // Update specific stock item - use quantityAfter since we're updating a single item
             StockItem stockItem = stockItemRepository.findById(command.getStockItemId())
                     .orElseThrow(() -> new IllegalArgumentException("Stock item not found: " + command.getStockItemId().getValueAsString()));
 
-            stockItem.updateQuantity(Quantity.of(adjustment.getQuantityAfter()));
+            stockItem.updateQuantity(adjustment.getQuantityAfter());
             stockItemRepository.save(stockItem);
         } else {
             // Update first stock item found (for product/location or product-wide adjustments)
+            // When multiple stock items exist, we add/subtract the adjustment amount to/from the first item
+            // rather than setting it to the total quantityAfter (which includes all stock items)
             Optional<StockItem> stockItemOpt;
             if (command.getLocationId() != null) {
                 // First try to find stock items with the specified location
@@ -202,10 +213,11 @@ public class AdjustStockCommandHandler {
 
                 // If no stock items found at the location, try to find stock items without location assignment
                 // (stock items created from consignments but not yet assigned via FEFO)
+                // Exclude expired stock items - they cannot have locations assigned
                 if (stockItemOpt.isEmpty()) {
                     stockItemOpt =
                             stockItemRepository.findByTenantIdAndProductId(command.getTenantId(), command.getProductId()).stream().filter(item -> item.getLocationId() == null)
-                                    .findFirst();
+                                    .filter(item -> item.getClassification() != com.ccbsa.common.domain.valueobject.StockClassification.EXPIRED).findFirst();
 
                     if (stockItemOpt.isPresent()) {
                         log.debug("Found stock item without location assignment for adjustment. " + "Location will be assigned via FEFO or during the adjustment process.");
@@ -217,7 +229,67 @@ public class AdjustStockCommandHandler {
 
             if (stockItemOpt.isPresent()) {
                 StockItem stockItem = stockItemOpt.get();
-                stockItem.updateQuantity(Quantity.of(adjustment.getQuantityAfter()));
+                // If stock item doesn't have location assigned and command specifies a location, assign it
+                if (command.getLocationId() != null && stockItem.getLocationId() == null) {
+                    log.debug("Assigning location {} to stock item {} during adjustment", command.getLocationId().getValueAsString(), stockItem.getId().getValueAsString());
+                    Quantity stockItemQuantity = stockItem.getQuantity();
+                    if (stockItemQuantity == null || stockItemQuantity.getValue() <= 0) {
+                        throw new IllegalStateException(
+                                String.format("Cannot assign location to stock item with invalid quantity: stockItemId=%s, quantity=%s", stockItem.getId().getValueAsString(),
+                                        stockItemQuantity));
+                    }
+                    stockItem.assignLocation(command.getLocationId(), stockItemQuantity);
+                }
+
+                // Apply adjustment by adding/subtracting the adjustment amount, not setting to total
+                if (command.getAdjustmentType() == AdjustmentType.INCREASE) {
+                    stockItem.increaseQuantity(command.getQuantity());
+                    log.debug("Increased stock item quantity: stockItemId={}, adjustmentAmount={}, newQuantity={}", stockItem.getId().getValueAsString(),
+                            command.getQuantity().getValue(), stockItem.getQuantity().getValue());
+                } else {
+                    // For DECREASE, distribute the decrease across stock items
+                    int remainingDecrease = command.getQuantity().getValue();
+
+                    // Get all stock items to distribute the decrease
+                    List<StockItem> stockItems;
+                    if (command.getLocationId() != null) {
+                        stockItems = new ArrayList<>(
+                                stockItemRepository.findByTenantIdAndProductIdAndLocationId(command.getTenantId(), command.getProductId(), command.getLocationId()));
+                        // Also include unassigned stock items (exclude expired - they cannot have locations assigned)
+                        stockItems.addAll(
+                                stockItemRepository.findByTenantIdAndProductId(command.getTenantId(), command.getProductId()).stream().filter(item -> item.getLocationId() == null)
+                                        .filter(item -> item.getClassification() != com.ccbsa.common.domain.valueobject.StockClassification.EXPIRED).toList());
+                    } else {
+                        stockItems = new ArrayList<>(stockItemRepository.findByTenantIdAndProductId(command.getTenantId(), command.getProductId()));
+                    }
+
+                    // Distribute decrease across stock items (FIFO - first item first)
+                    for (StockItem item : stockItems) {
+                        if (remainingDecrease <= 0) {
+                            break;
+                        }
+
+                        Quantity itemQuantity = item.getQuantity();
+                        if (itemQuantity == null || itemQuantity.getValue() <= 0) {
+                            continue;
+                        }
+
+                        int decreaseFromItem = Math.min(remainingDecrease, itemQuantity.getValue());
+                        item.decreaseQuantity(Quantity.of(decreaseFromItem));
+                        stockItemRepository.save(item);
+                        remainingDecrease -= decreaseFromItem;
+
+                        log.debug("Decreased stock item quantity: stockItemId={}, decreaseAmount={}, remainingDecrease={}, newQuantity={}", item.getId().getValueAsString(),
+                                decreaseFromItem, remainingDecrease, item.getQuantity().getValue());
+                    }
+
+                    if (remainingDecrease > 0) {
+                        throw new IllegalStateException(
+                                String.format("Insufficient stock for decrease. Requested: %d, Available: %d, Remaining: %d", command.getQuantity().getValue(),
+                                        command.getQuantity().getValue() - remainingDecrease, remainingDecrease));
+                    }
+                }
+
                 stockItemRepository.save(stockItem);
             } else {
                 // No stock items found
@@ -227,7 +299,7 @@ public class AdjustStockCommandHandler {
                             command.getLocationId() != null ? command.getLocationId().getValueAsString() : "all locations");
 
                     CreateStockItemCommand createCommand =
-                            CreateStockItemCommand.builder().tenantId(command.getTenantId()).productId(command.getProductId()).quantity(Quantity.of(adjustment.getQuantityAfter()))
+                            CreateStockItemCommand.builder().tenantId(command.getTenantId()).productId(command.getProductId()).quantity(command.getQuantity())
                                     .locationId(command.getLocationId()).expirationDate(null) // No expiration date for adjustments
                                     .consignmentId(null) // No consignment for manual adjustments
                                     .build();

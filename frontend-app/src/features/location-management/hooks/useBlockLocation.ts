@@ -3,7 +3,7 @@ import { locationStatusService } from '../services/locationStatusService';
 import { logger } from '../../../utils/logger';
 
 export interface UseBlockLocationResult {
-  blockLocation: (locationId: string, tenantId: string) => Promise<void>;
+  blockLocation: (locationId: string, reason: string, tenantId: string) => Promise<void>;
   isLoading: boolean;
   error: Error | null;
 }
@@ -12,12 +12,12 @@ export const useBlockLocation = (): UseBlockLocationResult => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const blockLocation = async (locationId: string, tenantId: string) => {
+  const blockLocation = async (locationId: string, reason: string, tenantId: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await locationStatusService.blockLocation(locationId, tenantId);
+      const response = await locationStatusService.blockLocation(locationId, reason, tenantId);
 
       if (response.error) {
         throw new Error(response.error.message || 'Failed to block location');

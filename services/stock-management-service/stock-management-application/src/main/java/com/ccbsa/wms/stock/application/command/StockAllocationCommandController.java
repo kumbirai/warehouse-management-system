@@ -53,7 +53,7 @@ public class StockAllocationCommandController {
 
     @PostMapping
     @Operation(summary = "Allocate Stock", description = "Allocates stock for picking orders or reservations using FEFO")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'SERVICE')")
     public ResponseEntity<ApiResponse<AllocateStockResultDTO>> allocateStock(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                              @Valid @RequestBody AllocateStockCommandDTO commandDTO) {
         // Map DTO to command
@@ -70,7 +70,7 @@ public class StockAllocationCommandController {
 
     @PutMapping("/{allocationId}/release")
     @Operation(summary = "Release Stock Allocation", description = "Releases a previously allocated stock")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'SERVICE')")
     public ResponseEntity<ApiResponse<ReleaseStockAllocationResultDTO>> releaseStockAllocation(@PathVariable String allocationId, @RequestHeader("X-Tenant-Id") String tenantId,
                                                                                                @Valid @RequestBody(required = false) ReleaseStockAllocationCommandDTO commandDTO) {
         // Map DTO to command

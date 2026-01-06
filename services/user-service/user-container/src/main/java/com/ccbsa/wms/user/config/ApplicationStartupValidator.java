@@ -1,10 +1,7 @@
 package com.ccbsa.wms.user.config;
 
-import java.util.Objects;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -12,44 +9,46 @@ import com.ccbsa.common.keycloak.config.KeycloakConfig;
 import com.ccbsa.common.keycloak.port.KeycloakClientPort;
 import com.ccbsa.common.keycloak.util.KeycloakClientSecretRetriever;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Application startup validator. Validates critical configuration on application startup. Optionally attempts to retrieve client secret from Keycloak if not configured.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class ApplicationStartupValidator implements CommandLineRunner {
-    private static final Logger logger = LoggerFactory.getLogger(ApplicationStartupValidator.class);
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "KeycloakConfig is a Spring-managed @ConfigurationProperties bean that is not modified after initialization. "
+            + "The reference is safe to store.")
     private final KeycloakConfig keycloakConfig;
     private final KeycloakClientPort keycloakClientPort;
 
-    public ApplicationStartupValidator(KeycloakConfig keycloakConfig, KeycloakClientPort keycloakClientPort) {
-        this.keycloakConfig = Objects.requireNonNull(keycloakConfig, "KeycloakConfig must not be null");
-        this.keycloakClientPort = Objects.requireNonNull(keycloakClientPort, "KeycloakClientPort must not be null");
-    }
-
     @Override
     public void run(String... args) {
-        logger.info("Validating application configuration...");
+        log.info("Validating application configuration...");
 
         boolean isValid = true;
 
         // Validate Keycloak configuration
         if (keycloakConfig.getServerUrl() == null || keycloakConfig.getServerUrl().isEmpty()) {
-            logger.error("❌ Keycloak server URL is not configured");
+            log.error("❌ Keycloak server URL is not configured");
             isValid = false;
         } else {
-            logger.info("✓ Keycloak server URL: {}", keycloakConfig.getServerUrl());
+            log.info("✓ Keycloak server URL: {}", keycloakConfig.getServerUrl());
         }
 
         if (keycloakConfig.getDefaultRealm() == null || keycloakConfig.getDefaultRealm().isEmpty()) {
-            logger.error("❌ Keycloak default realm is not configured");
+            log.error("❌ Keycloak default realm is not configured");
             isValid = false;
         } else {
-            logger.info("✓ Keycloak default realm: {}", keycloakConfig.getDefaultRealm());
+            log.info("✓ Keycloak default realm: {}", keycloakConfig.getDefaultRealm());
         }
 
         // Check client secret configuration
         if (keycloakConfig.getClientSecret() == null || keycloakConfig.getClientSecret().isEmpty()) {
-            logger.warn("⚠ Keycloak client secret is not configured - attempting to retrieve from Keycloak...");
+            log.warn("⚠ Keycloak client secret is not configured - attempting to retrieve from Keycloak...");
 
             try {
                 KeycloakClientSecretRetriever retriever = new KeycloakClientSecretRetriever(keycloakClientPort, keycloakConfig);
@@ -57,25 +56,25 @@ public class ApplicationStartupValidator implements CommandLineRunner {
 
                 if (secret.isPresent()) {
                     keycloakConfig.setClientSecret(secret.get());
-                    logger.info("✓ Keycloak client secret retrieved from Keycloak and configured");
+                    log.info("✓ Keycloak client secret retrieved from Keycloak and configured");
                 } else {
-                    logger.warn("⚠ Could not retrieve client secret from Keycloak - BFF may not work with confidential clients");
-                    logger.warn("  To configure manually, run: ./scripts/get-keycloak-client-secret.sh");
-                    logger.warn("  Or set environment variable: KEYCLOAK_CLIENT_SECRET=<secret>");
+                    log.warn("⚠ Could not retrieve client secret from Keycloak - BFF may not work with confidential clients");
+                    log.warn("  To configure manually, run: ./scripts/get-keycloak-client-secret.sh");
+                    log.warn("  Or set environment variable: KEYCLOAK_CLIENT_SECRET=<secret>");
                 }
             } catch (Exception e) {
-                logger.warn("⚠ Failed to retrieve client secret from Keycloak: {}", e.getMessage());
-                logger.warn("  To configure manually, run: ./scripts/get-keycloak-client-secret.sh");
-                logger.warn("  Or set environment variable: KEYCLOAK_CLIENT_SECRET=<secret>");
+                log.warn("⚠ Failed to retrieve client secret from Keycloak: {}", e.getMessage());
+                log.warn("  To configure manually, run: ./scripts/get-keycloak-client-secret.sh");
+                log.warn("  Or set environment variable: KEYCLOAK_CLIENT_SECRET=<secret>");
             }
         } else {
-            logger.info("✓ Keycloak client secret: [CONFIGURED]");
+            log.info("✓ Keycloak client secret: [CONFIGURED]");
         }
 
         if (isValid) {
-            logger.info("✅ Application configuration validation passed");
+            log.info("✅ Application configuration validation passed");
         } else {
-            logger.error("❌ Application configuration validation failed - please check configuration");
+            log.error("❌ Application configuration validation failed - please check configuration");
             throw new IllegalStateException("Application configuration validation failed");
         }
     }

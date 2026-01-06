@@ -80,3 +80,18 @@ export interface UpdateLocationStatusRequest {
   status: LocationStatus;
   reason?: string;
 }
+
+export interface BlockLocationRequest {
+  reason: string;
+}
+
+export interface StockItemAssignmentRequest {
+  stockItemId: string;
+  quantity: number;
+  expirationDate?: string; // ISO date string (YYYY-MM-DD)
+  classification?: string;
+}
+
+export interface AssignLocationsFEFORequest {
+  stockItems: StockItemAssignmentRequest[];
+}

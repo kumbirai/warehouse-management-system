@@ -2,6 +2,7 @@ package com.ccbsa.wms.stock.application.service.port.service;
 
 import java.util.Optional;
 
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
 
@@ -30,6 +31,15 @@ public interface ProductServicePort {
      * @return Optional ProductInfo if product found, empty otherwise
      */
     Optional<ProductInfo> getProductByCode(ProductCode productCode, TenantId tenantId);
+
+    /**
+     * Gets product information by product ID.
+     *
+     * @param productId Product ID
+     * @param tenantId  Tenant identifier
+     * @return Optional ProductInfo if product found, empty otherwise
+     */
+    Optional<ProductInfo> getProductById(ProductId productId, TenantId tenantId);
 
     /**
      * Product information DTO. Lightweight representation of product data for validation.

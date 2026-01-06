@@ -8,38 +8,66 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.domain.valueobject.ExpirationDate;
+import com.ccbsa.common.domain.valueobject.ProductId;
+import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.common.domain.valueobject.StockClassification;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.common.security.TenantContext;
+import com.ccbsa.wms.location.application.dto.command.AssignLocationsFEFOCommandDTO;
+import com.ccbsa.wms.location.application.dto.command.BlockLocationCommandDTO;
+import com.ccbsa.wms.location.application.dto.command.BlockLocationResultDTO;
+import com.ccbsa.wms.location.application.dto.command.CancelStockMovementCommandDTO;
+import com.ccbsa.wms.location.application.dto.command.CancelStockMovementResultDTO;
+import com.ccbsa.wms.location.application.dto.command.CompleteStockMovementResultDTO;
 import com.ccbsa.wms.location.application.dto.command.CreateLocationCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.CreateLocationResultDTO;
+import com.ccbsa.wms.location.application.dto.command.CreateStockMovementCommandDTO;
+import com.ccbsa.wms.location.application.dto.command.CreateStockMovementResultDTO;
 import com.ccbsa.wms.location.application.dto.command.LocationCoordinatesDTO;
+import com.ccbsa.wms.location.application.dto.command.UnblockLocationResultDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationStatusCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationStatusResultDTO;
 import com.ccbsa.wms.location.application.dto.query.ListLocationsQueryResultDTO;
+import com.ccbsa.wms.location.application.dto.query.ListStockMovementsQueryResultDTO;
 import com.ccbsa.wms.location.application.dto.query.LocationAvailabilityQueryResultDTO;
 import com.ccbsa.wms.location.application.dto.query.LocationCapacityDTO;
 import com.ccbsa.wms.location.application.dto.query.LocationQueryResultDTO;
+import com.ccbsa.wms.location.application.dto.query.StockMovementQueryResultDTO;
 import com.ccbsa.wms.location.application.service.command.dto.AssignLocationsFEFOCommand;
+import com.ccbsa.wms.location.application.service.command.dto.BlockLocationCommand;
+import com.ccbsa.wms.location.application.service.command.dto.BlockLocationResult;
+import com.ccbsa.wms.location.application.service.command.dto.CancelStockMovementCommand;
+import com.ccbsa.wms.location.application.service.command.dto.CancelStockMovementResult;
+import com.ccbsa.wms.location.application.service.command.dto.CompleteStockMovementCommand;
+import com.ccbsa.wms.location.application.service.command.dto.CompleteStockMovementResult;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationCommand;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationResult;
+import com.ccbsa.wms.location.application.service.command.dto.CreateStockMovementCommand;
+import com.ccbsa.wms.location.application.service.command.dto.CreateStockMovementResult;
+import com.ccbsa.wms.location.application.service.command.dto.UnblockLocationCommand;
+import com.ccbsa.wms.location.application.service.command.dto.UnblockLocationResult;
 import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationCommand;
 import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationStatusCommand;
 import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationStatusResult;
 import com.ccbsa.wms.location.application.service.query.dto.CheckLocationAvailabilityQuery;
 import com.ccbsa.wms.location.application.service.query.dto.GetLocationQuery;
+import com.ccbsa.wms.location.application.service.query.dto.GetStockMovementQuery;
 import com.ccbsa.wms.location.application.service.query.dto.ListLocationsQuery;
 import com.ccbsa.wms.location.application.service.query.dto.ListLocationsQueryResult;
+import com.ccbsa.wms.location.application.service.query.dto.ListStockMovementsQuery;
+import com.ccbsa.wms.location.application.service.query.dto.ListStockMovementsQueryResult;
 import com.ccbsa.wms.location.application.service.query.dto.LocationAvailabilityResult;
 import com.ccbsa.wms.location.application.service.query.dto.LocationQueryResult;
+import com.ccbsa.wms.location.application.service.query.dto.StockMovementQueryResult;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationBarcode;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationCapacity;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationCoordinates;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
 import com.ccbsa.wms.location.domain.core.valueobject.StockItemAssignmentRequest;
+import com.ccbsa.wms.location.domain.core.valueobject.StockMovementId;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -419,7 +447,7 @@ public class LocationDTOMapper {
      */
     @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "Null checks are defensive for optional DTO fields (expirationDate, classification). "
             + "SpotBugs false positive.")
-    public AssignLocationsFEFOCommand toAssignLocationsFEFOCommand(com.ccbsa.wms.location.application.dto.command.AssignLocationsFEFOCommandDTO dto, String tenantId) {
+    public AssignLocationsFEFOCommand toAssignLocationsFEFOCommand(AssignLocationsFEFOCommandDTO dto, String tenantId) {
         List<StockItemAssignmentRequest> stockItems = dto.getStockItems().stream()
                 .map(item -> StockItemAssignmentRequest.builder().stockItemId(item.getStockItemId()).quantity(item.getQuantity())
                         .expirationDate(item.getExpirationDate() != null ? ExpirationDate.of(item.getExpirationDate()) : null)
@@ -466,17 +494,15 @@ public class LocationDTOMapper {
      * @param tenantId Tenant identifier string
      * @return CreateStockMovementCommand
      */
-    public com.ccbsa.wms.location.application.service.command.dto.CreateStockMovementCommand toCreateStockMovementCommand(
-            com.ccbsa.wms.location.application.dto.command.CreateStockMovementCommandDTO dto, String tenantId) {
+    public CreateStockMovementCommand toCreateStockMovementCommand(CreateStockMovementCommandDTO dto, String tenantId) {
         UserId userId = TenantContext.getUserId();
         if (userId == null) {
             throw new IllegalStateException("User ID not found in TenantContext");
         }
 
-        return com.ccbsa.wms.location.application.service.command.dto.CreateStockMovementCommand.builder().tenantId(TenantId.of(tenantId)).stockItemId(dto.getStockItemId())
-                .productId(com.ccbsa.common.domain.valueobject.ProductId.of(dto.getProductId())).sourceLocationId(LocationId.of(dto.getSourceLocationId()))
-                .destinationLocationId(LocationId.of(dto.getDestinationLocationId())).quantity(com.ccbsa.common.domain.valueobject.Quantity.of(dto.getQuantity()))
-                .movementType(dto.getMovementType()).reason(dto.getReason()).initiatedBy(userId).build();
+        return CreateStockMovementCommand.builder().tenantId(TenantId.of(tenantId)).stockItemId(dto.getStockItemId()).productId(ProductId.of(dto.getProductId()))
+                .sourceLocationId(LocationId.of(dto.getSourceLocationId())).destinationLocationId(LocationId.of(dto.getDestinationLocationId()))
+                .quantity(Quantity.of(dto.getQuantity())).movementType(dto.getMovementType()).reason(dto.getReason()).initiatedBy(userId).build();
     }
 
     /**
@@ -485,9 +511,8 @@ public class LocationDTOMapper {
      * @param result Command result
      * @return CreateStockMovementResultDTO
      */
-    public com.ccbsa.wms.location.application.dto.command.CreateStockMovementResultDTO toCreateStockMovementResultDTO(
-            com.ccbsa.wms.location.application.service.command.dto.CreateStockMovementResult result) {
-        com.ccbsa.wms.location.application.dto.command.CreateStockMovementResultDTO dto = new com.ccbsa.wms.location.application.dto.command.CreateStockMovementResultDTO();
+    public CreateStockMovementResultDTO toCreateStockMovementResultDTO(CreateStockMovementResult result) {
+        CreateStockMovementResultDTO dto = new CreateStockMovementResultDTO();
         dto.setStockMovementId(result.getStockMovementId().getValue());
         dto.setStatus(result.getStatus());
         dto.setInitiatedAt(result.getInitiatedAt());
@@ -500,9 +525,8 @@ public class LocationDTOMapper {
      * @param result Command result
      * @return CompleteStockMovementResultDTO
      */
-    public com.ccbsa.wms.location.application.dto.command.CompleteStockMovementResultDTO toCompleteStockMovementResultDTO(
-            com.ccbsa.wms.location.application.service.command.dto.CompleteStockMovementResult result) {
-        com.ccbsa.wms.location.application.dto.command.CompleteStockMovementResultDTO dto = new com.ccbsa.wms.location.application.dto.command.CompleteStockMovementResultDTO();
+    public CompleteStockMovementResultDTO toCompleteStockMovementResultDTO(CompleteStockMovementResult result) {
+        CompleteStockMovementResultDTO dto = new CompleteStockMovementResultDTO();
         dto.setStockMovementId(result.getStockMovementId().getValue());
         dto.setStatus(result.getStatus());
         dto.setCompletedAt(result.getCompletedAt());
@@ -517,15 +541,13 @@ public class LocationDTOMapper {
      * @param tenantId   Tenant identifier string
      * @return CancelStockMovementCommand
      */
-    public com.ccbsa.wms.location.application.service.command.dto.CancelStockMovementCommand toCancelStockMovementCommand(
-            com.ccbsa.wms.location.application.dto.command.CancelStockMovementCommandDTO dto, String movementId, String tenantId) {
+    public CancelStockMovementCommand toCancelStockMovementCommand(CancelStockMovementCommandDTO dto, String movementId, String tenantId) {
         UserId userId = TenantContext.getUserId();
         if (userId == null) {
             throw new IllegalStateException("User ID not found in TenantContext");
         }
 
-        return com.ccbsa.wms.location.application.service.command.dto.CancelStockMovementCommand.builder()
-                .stockMovementId(com.ccbsa.wms.location.domain.core.valueobject.StockMovementId.of(UUID.fromString(movementId))).tenantId(TenantId.of(tenantId))
+        return CancelStockMovementCommand.builder().stockMovementId(StockMovementId.of(UUID.fromString(movementId))).tenantId(TenantId.of(tenantId))
                 .cancellationReason(dto.getCancellationReason()).cancelledBy(userId).build();
     }
 
@@ -536,9 +558,8 @@ public class LocationDTOMapper {
      * @param result Command result
      * @return CancelStockMovementResultDTO
      */
-    public com.ccbsa.wms.location.application.dto.command.CancelStockMovementResultDTO toCancelStockMovementResultDTO(
-            com.ccbsa.wms.location.application.service.command.dto.CancelStockMovementResult result) {
-        com.ccbsa.wms.location.application.dto.command.CancelStockMovementResultDTO dto = new com.ccbsa.wms.location.application.dto.command.CancelStockMovementResultDTO();
+    public CancelStockMovementResultDTO toCancelStockMovementResultDTO(CancelStockMovementResult result) {
+        CancelStockMovementResultDTO dto = new CancelStockMovementResultDTO();
         dto.setStockMovementId(result.getStockMovementId().getValue());
         dto.setStatus(result.getStatus());
         dto.setCancelledAt(result.getCancelledAt());
@@ -553,15 +574,13 @@ public class LocationDTOMapper {
      * @param tenantId   Tenant identifier string
      * @return CompleteStockMovementCommand
      */
-    public com.ccbsa.wms.location.application.service.command.dto.CompleteStockMovementCommand toCompleteStockMovementCommand(String movementId, String tenantId) {
+    public CompleteStockMovementCommand toCompleteStockMovementCommand(String movementId, String tenantId) {
         UserId userId = TenantContext.getUserId();
         if (userId == null) {
             throw new IllegalStateException("User ID not found in TenantContext");
         }
 
-        return com.ccbsa.wms.location.application.service.command.dto.CompleteStockMovementCommand.builder()
-                .stockMovementId(com.ccbsa.wms.location.domain.core.valueobject.StockMovementId.of(UUID.fromString(movementId))).tenantId(TenantId.of(tenantId)).completedBy(userId)
-                .build();
+        return CompleteStockMovementCommand.builder().stockMovementId(StockMovementId.of(UUID.fromString(movementId))).tenantId(TenantId.of(tenantId)).completedBy(userId).build();
     }
 
     /**
@@ -571,9 +590,8 @@ public class LocationDTOMapper {
      * @param tenantId   Tenant identifier string
      * @return GetStockMovementQuery
      */
-    public com.ccbsa.wms.location.application.service.query.dto.GetStockMovementQuery toGetStockMovementQuery(String movementId, String tenantId) {
-        return com.ccbsa.wms.location.application.service.query.dto.GetStockMovementQuery.builder()
-                .stockMovementId(com.ccbsa.wms.location.domain.core.valueobject.StockMovementId.of(UUID.fromString(movementId))).tenantId(TenantId.of(tenantId)).build();
+    public GetStockMovementQuery toGetStockMovementQuery(String movementId, String tenantId) {
+        return GetStockMovementQuery.builder().stockMovementId(StockMovementId.of(UUID.fromString(movementId))).tenantId(TenantId.of(tenantId)).build();
     }
 
     /**
@@ -584,8 +602,8 @@ public class LocationDTOMapper {
      * @param sourceLocationId Optional source location ID string
      * @return ListStockMovementsQuery
      */
-    public com.ccbsa.wms.location.application.service.query.dto.ListStockMovementsQuery toListStockMovementsQuery(String tenantId, String stockItemId, String sourceLocationId) {
-        var builder = com.ccbsa.wms.location.application.service.query.dto.ListStockMovementsQuery.builder().tenantId(TenantId.of(tenantId));
+    public ListStockMovementsQuery toListStockMovementsQuery(String tenantId, String stockItemId, String sourceLocationId) {
+        var builder = ListStockMovementsQuery.builder().tenantId(TenantId.of(tenantId));
 
         if (stockItemId != null && !stockItemId.trim().isEmpty()) {
             builder.stockItemId(stockItemId);
@@ -603,12 +621,10 @@ public class LocationDTOMapper {
      * @param result Query result
      * @return ListStockMovementsQueryResultDTO
      */
-    public com.ccbsa.wms.location.application.dto.query.ListStockMovementsQueryResultDTO toListStockMovementsQueryResultDTO(
-            com.ccbsa.wms.location.application.service.query.dto.ListStockMovementsQueryResult result) {
-        List<com.ccbsa.wms.location.application.dto.query.StockMovementQueryResultDTO> movements =
-                result.getMovements().stream().map(this::toStockMovementQueryResultDTO).collect(Collectors.toList());
+    public ListStockMovementsQueryResultDTO toListStockMovementsQueryResultDTO(ListStockMovementsQueryResult result) {
+        List<StockMovementQueryResultDTO> movements = result.getMovements().stream().map(this::toStockMovementQueryResultDTO).collect(Collectors.toList());
 
-        com.ccbsa.wms.location.application.dto.query.ListStockMovementsQueryResultDTO dto = new com.ccbsa.wms.location.application.dto.query.ListStockMovementsQueryResultDTO();
+        ListStockMovementsQueryResultDTO dto = new ListStockMovementsQueryResultDTO();
         dto.setMovements(movements);
         dto.setTotalCount((long) result.getTotalCount());
         return dto;
@@ -620,9 +636,8 @@ public class LocationDTOMapper {
      * @param result Query result
      * @return StockMovementQueryResultDTO
      */
-    public com.ccbsa.wms.location.application.dto.query.StockMovementQueryResultDTO toStockMovementQueryResultDTO(
-            com.ccbsa.wms.location.application.service.query.dto.StockMovementQueryResult result) {
-        com.ccbsa.wms.location.application.dto.query.StockMovementQueryResultDTO dto = new com.ccbsa.wms.location.application.dto.query.StockMovementQueryResultDTO();
+    public StockMovementQueryResultDTO toStockMovementQueryResultDTO(StockMovementQueryResult result) {
+        StockMovementQueryResultDTO dto = new StockMovementQueryResultDTO();
         dto.setStockMovementId(result.getStockMovementId().getValue());
         dto.setStockItemId(result.getStockItemId());
         dto.setProductId(result.getProductId().getValue());
@@ -645,20 +660,25 @@ public class LocationDTOMapper {
     // Location status mapping methods
 
     /**
-     * Converts parameters to BlockLocationCommand.
+     * Converts parameters and DTO to BlockLocationCommand.
      *
      * @param locationId Location ID string
      * @param tenantId   Tenant identifier string
+     * @param commandDTO Command DTO containing reason
      * @return BlockLocationCommand
      */
-    public com.ccbsa.wms.location.application.service.command.dto.BlockLocationCommand toBlockLocationCommand(String locationId, String tenantId) {
+    public BlockLocationCommand toBlockLocationCommand(String locationId, String tenantId, BlockLocationCommandDTO commandDTO) {
         UserId userId = TenantContext.getUserId();
         if (userId == null) {
             throw new IllegalStateException("User ID not found in TenantContext");
         }
 
-        return com.ccbsa.wms.location.application.service.command.dto.BlockLocationCommand.builder().locationId(LocationId.of(UUID.fromString(locationId)))
-                .tenantId(TenantId.of(tenantId)).blockedBy(userId).build();
+        if (commandDTO == null || commandDTO.getReason() == null || commandDTO.getReason().trim().isEmpty()) {
+            throw new IllegalArgumentException("Block reason is required");
+        }
+
+        return BlockLocationCommand.builder().locationId(LocationId.of(UUID.fromString(locationId))).tenantId(TenantId.of(tenantId)).blockedBy(userId)
+                .reason(commandDTO.getReason().trim()).build();
     }
 
     /**
@@ -667,9 +687,8 @@ public class LocationDTOMapper {
      * @param result Command result
      * @return BlockLocationResultDTO
      */
-    public com.ccbsa.wms.location.application.dto.command.BlockLocationResultDTO toBlockLocationResultDTO(
-            com.ccbsa.wms.location.application.service.command.dto.BlockLocationResult result) {
-        com.ccbsa.wms.location.application.dto.command.BlockLocationResultDTO dto = new com.ccbsa.wms.location.application.dto.command.BlockLocationResultDTO();
+    public BlockLocationResultDTO toBlockLocationResultDTO(BlockLocationResult result) {
+        BlockLocationResultDTO dto = new BlockLocationResultDTO();
         dto.setLocationId(result.getLocationId().getValue());
         dto.setStatus(result.getStatus());
         return dto;
@@ -682,14 +701,13 @@ public class LocationDTOMapper {
      * @param tenantId   Tenant identifier string
      * @return UnblockLocationCommand
      */
-    public com.ccbsa.wms.location.application.service.command.dto.UnblockLocationCommand toUnblockLocationCommand(String locationId, String tenantId) {
+    public UnblockLocationCommand toUnblockLocationCommand(String locationId, String tenantId) {
         UserId userId = TenantContext.getUserId();
         if (userId == null) {
             throw new IllegalStateException("User ID not found in TenantContext");
         }
 
-        return com.ccbsa.wms.location.application.service.command.dto.UnblockLocationCommand.builder().locationId(LocationId.of(UUID.fromString(locationId)))
-                .tenantId(TenantId.of(tenantId)).unblockedBy(userId).build();
+        return UnblockLocationCommand.builder().locationId(LocationId.of(UUID.fromString(locationId))).tenantId(TenantId.of(tenantId)).unblockedBy(userId).build();
     }
 
     /**
@@ -698,9 +716,8 @@ public class LocationDTOMapper {
      * @param result Command result
      * @return UnblockLocationResultDTO
      */
-    public com.ccbsa.wms.location.application.dto.command.UnblockLocationResultDTO toUnblockLocationResultDTO(
-            com.ccbsa.wms.location.application.service.command.dto.UnblockLocationResult result) {
-        com.ccbsa.wms.location.application.dto.command.UnblockLocationResultDTO dto = new com.ccbsa.wms.location.application.dto.command.UnblockLocationResultDTO();
+    public UnblockLocationResultDTO toUnblockLocationResultDTO(UnblockLocationResult result) {
+        UnblockLocationResultDTO dto = new UnblockLocationResultDTO();
         dto.setLocationId(result.getLocationId().getValue());
         dto.setStatus(result.getStatus());
         return dto;

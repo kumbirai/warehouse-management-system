@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.domain.valueobject.StockClassification;
 import com.ccbsa.wms.stock.dataaccess.entity.StockItemViewEntity;
@@ -17,7 +16,6 @@ import com.ccbsa.wms.stock.dataaccess.entity.StockItemViewEntity;
  * <p>
  * Provides optimized read-only queries for stock item views.
  */
-@Repository
 public interface StockItemViewJpaRepository extends JpaRepository<StockItemViewEntity, UUID> {
 
     /**
@@ -45,5 +43,24 @@ public interface StockItemViewJpaRepository extends JpaRepository<StockItemViewE
      * @return List of StockItemViewEntity
      */
     List<StockItemViewEntity> findByTenantIdAndClassification(String tenantId, StockClassification classification);
+
+    /**
+     * Finds stock item views by tenant ID and product ID.
+     *
+     * @param tenantId  Tenant ID
+     * @param productId Product ID
+     * @return List of StockItemViewEntity
+     */
+    List<StockItemViewEntity> findByTenantIdAndProductId(String tenantId, UUID productId);
+
+    /**
+     * Finds stock item views by tenant ID, product ID, and location ID.
+     *
+     * @param tenantId   Tenant ID
+     * @param productId  Product ID
+     * @param locationId Location ID
+     * @return List of StockItemViewEntity
+     */
+    List<StockItemViewEntity> findByTenantIdAndProductIdAndLocationId(String tenantId, UUID productId, UUID locationId);
 }
 

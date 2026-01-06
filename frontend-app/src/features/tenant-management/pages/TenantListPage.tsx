@@ -1,11 +1,11 @@
-import { Box, Button, MenuItem, Pagination, Stack, TextField } from '@mui/material';
+import { Box, Button, MenuItem, Stack, TextField } from '@mui/material';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTenants } from '../hooks/useTenants';
 import { Tenant } from '../types/tenant';
 import { TenantList } from '../components/TenantList';
 import { ListPageLayout } from '../../../components/layouts';
-import { FilterBar } from '../../../components/common';
+import { FilterBar, Pagination } from '../../../components/common';
 import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 
 const statusOptions: (Tenant['status'] | 'ALL')[] = [
@@ -113,12 +113,13 @@ export const TenantListPage = () => {
       />
 
       {pagination && pagination.totalPages > 1 && (
-        <Box display="flex" justifyContent="center" mt={3}>
+        <Box sx={{ mt: 3 }}>
           <Pagination
-            count={pagination.totalPages}
-            page={pagination.page}
-            onChange={(_, page) => updatePage(page)}
-            color="primary"
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalElements || 0}
+            itemsPerPage={pagination.size || 10}
+            onPageChange={(page) => updatePage(page)}
           />
         </Box>
       )}

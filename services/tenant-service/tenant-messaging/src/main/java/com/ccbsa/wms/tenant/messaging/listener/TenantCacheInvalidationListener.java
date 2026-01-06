@@ -1,7 +1,5 @@
 package com.ccbsa.wms.tenant.messaging.listener;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +13,8 @@ import com.ccbsa.wms.tenant.domain.core.event.TenantConfigurationUpdatedEvent;
 import com.ccbsa.wms.tenant.domain.core.event.TenantCreatedEvent;
 import com.ccbsa.wms.tenant.domain.core.event.TenantDeactivatedEvent;
 import com.ccbsa.wms.tenant.domain.core.event.TenantSuspendedEvent;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Tenant Service Cache Invalidation Listener.
@@ -30,11 +30,9 @@ import com.ccbsa.wms.tenant.domain.core.event.TenantSuspendedEvent;
  * - TenantSuspendedEvent: Invalidate tenant entity
  * - TenantConfigurationUpdatedEvent: Invalidate tenant entity
  */
+@Slf4j
 @Component
 public class TenantCacheInvalidationListener extends CacheInvalidationEventListener {
-
-    private static final Logger log = LoggerFactory.getLogger(TenantCacheInvalidationListener.class);
-
     public TenantCacheInvalidationListener(LocalCacheInvalidator cacheInvalidator) {
         super(cacheInvalidator);
     }

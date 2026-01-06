@@ -11,8 +11,12 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.util.List;
+
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
+import com.ccbsa.wms.gateway.api.dto.CreateProductResponse;
+import com.ccbsa.wms.gateway.api.dto.StockLevelResponse;
 import com.ccbsa.wms.gateway.api.helper.AuthenticationHelper;
 import com.ccbsa.wms.gateway.api.util.CookieExtractor;
 import com.ccbsa.wms.gateway.api.util.RequestHeaderHelper;
@@ -525,6 +529,188 @@ public abstract class BaseIntegrationTest {
     protected void assertCorrelationIdPresent(HttpHeaders headers, String expectedCorrelationId) {
         String correlationId = headers.getFirst("X-Correlation-Id");
         assertThat(correlationId).isEqualTo(expectedCorrelationId);
+    }
+
+    // ==================== STOCK ITEM WAITING HELPERS ====================
+
+    /**
+     * Wait for stock items to be created for a product after consignment creation.
+     * Polls the stock-levels endpoint until stock items are available or timeout is reached.
+     * 
+     * <p>This is necessary because stock items are created asynchronously via Kafka events
+     * after a consignment is created. Tests should use this method instead of Thread.sleep
+     * to ensure stock items are available before attempting allocations.</p>
+     *
+     * @param productId      the product ID to check stock for (as String)
+     * @param accessToken    the JWT access token for authentication
+     * @param tenantId       the tenant ID for X-Tenant-Id header
+     * @param maxWaitSeconds maximum number of seconds to wait
+     * @param pollIntervalMs polling interval in milliseconds
+     * @return true if stock items were found, false if timeout was reached
+     */
+    protected boolean waitForStockItems(String productId, String accessToken, String tenantId, 
+                                       int maxWaitSeconds, long pollIntervalMs) {
+        long endTime = System.currentTimeMillis() + (maxWaitSeconds * 1000L);
+        int attemptCount = 0;
+        
+        while (System.currentTimeMillis() < endTime) {
+            attemptCount++;
+            try {
+                EntityExchangeResult<ApiResponse<List<StockLevelResponse>>> result = authenticatedGet(
+                        "/api/v1/stock-management/stock-levels?productId=" + productId,
+                        accessToken,
+                        tenantId
+                ).exchange()
+                        .expectStatus().isOk()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<List<StockLevelResponse>>>() {
+                        })
+                        .returnResult();
+                
+                ApiResponse<List<StockLevelResponse>> apiResponse = result.getResponseBody();
+                if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null) {
+                    List<StockLevelResponse> stockLevels = apiResponse.getData();
+                    // Check if we have stock items with quantity > 0
+                    boolean hasStock = stockLevels.stream()
+                            .anyMatch(level -> level.getTotalQuantity() != null && level.getTotalQuantity() > 0);
+                    if (hasStock) {
+                        int totalQuantity = stockLevels.stream()
+                                .filter(level -> level.getTotalQuantity() != null)
+                                .mapToInt(StockLevelResponse::getTotalQuantity)
+                                .sum();
+                        System.out.println("Stock items found after " + attemptCount + " attempts. Total quantity: " + totalQuantity);
+                        return true;
+                    }
+                }
+                
+                if (attemptCount % 4 == 0) { // Log every 2 seconds (4 attempts * 500ms)
+                    System.out.println("Waiting for stock items... attempt " + attemptCount);
+                }
+                
+                Thread.sleep(pollIntervalMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            } catch (Exception e) {
+                // Continue polling on error
+                System.err.println("Error polling for stock items (attempt " + attemptCount + "): " + e.getMessage());
+                try {
+                    Thread.sleep(pollIntervalMs);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return false;
+                }
+            }
+        }
+        
+        System.err.println("Timeout waiting for stock items after " + attemptCount + " attempts (" + maxWaitSeconds + " seconds)");
+        return false;
+    }
+
+    // ==================== TEST DATA SETUP HELPERS ====================
+
+    /**
+     * Create a product via the API and return the response.
+     * 
+     * @param accessToken the JWT access token
+     * @param tenantId the tenant ID
+     * @return CreateProductResponse containing the created product details
+     */
+    protected CreateProductResponse createProduct(String accessToken, String tenantId) {
+        com.ccbsa.wms.gateway.api.dto.CreateProductRequest productRequest = 
+                com.ccbsa.wms.gateway.api.fixture.ProductTestDataBuilder.buildCreateProductRequest();
+        
+        EntityExchangeResult<ApiResponse<com.ccbsa.wms.gateway.api.dto.CreateProductResponse>> productResult = authenticatedPost(
+                "/api/v1/products",
+                accessToken,
+                tenantId,
+                productRequest
+        ).exchange()
+                .expectStatus().isCreated()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<com.ccbsa.wms.gateway.api.dto.CreateProductResponse>>() {
+                })
+                .returnResult();
+
+        ApiResponse<com.ccbsa.wms.gateway.api.dto.CreateProductResponse> productApiResponse = productResult.getResponseBody();
+        assertThat(productApiResponse).isNotNull();
+        assertThat(productApiResponse.isSuccess()).isTrue();
+        com.ccbsa.wms.gateway.api.dto.CreateProductResponse product = productApiResponse.getData();
+        assertThat(product).isNotNull();
+        return product;
+    }
+
+    /**
+     * Create a location (warehouse) via the API and return the response.
+     * 
+     * @param accessToken the JWT access token
+     * @param tenantId the tenant ID
+     * @return CreateLocationResponse containing the created location details
+     */
+    protected com.ccbsa.wms.gateway.api.dto.CreateLocationResponse createLocation(String accessToken, String tenantId) {
+        com.ccbsa.wms.gateway.api.dto.CreateLocationRequest locationRequest = 
+                com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder.buildWarehouseRequest();
+        
+        EntityExchangeResult<ApiResponse<com.ccbsa.wms.gateway.api.dto.CreateLocationResponse>> locationResult = authenticatedPost(
+                "/api/v1/location-management/locations",
+                accessToken,
+                tenantId,
+                locationRequest
+        ).exchange()
+                .expectStatus().isCreated()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<com.ccbsa.wms.gateway.api.dto.CreateLocationResponse>>() {
+                })
+                .returnResult();
+
+        ApiResponse<com.ccbsa.wms.gateway.api.dto.CreateLocationResponse> locationApiResponse = locationResult.getResponseBody();
+        assertThat(locationApiResponse).isNotNull();
+        assertThat(locationApiResponse.isSuccess()).isTrue();
+        com.ccbsa.wms.gateway.api.dto.CreateLocationResponse location = locationApiResponse.getData();
+        assertThat(location).isNotNull();
+        return location;
+    }
+
+    /**
+     * Create a consignment and wait for stock items to be created.
+     * This is a common pattern in tests that need stock items available.
+     * 
+     * @param warehouseId the warehouse ID where consignment is received
+     * @param productCode the product code for the consignment line item
+     * @param quantity the quantity to receive
+     * @param expirationDate optional expiration date (null if not needed)
+     * @param productId the product ID to wait for stock items
+     * @param accessToken the JWT access token
+     * @param tenantId the tenant ID
+     * @param maxWaitSeconds maximum seconds to wait for stock items (default: 10)
+     */
+    protected void createConsignmentAndWaitForStock(
+            String warehouseId, 
+            String productCode, 
+            int quantity, 
+            java.time.LocalDate expirationDate,
+            String productId,
+            String accessToken, 
+            String tenantId,
+            int maxWaitSeconds) {
+        
+        com.ccbsa.wms.gateway.api.dto.CreateConsignmentRequest consignmentRequest;
+        if (expirationDate != null) {
+            consignmentRequest = com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder
+                    .buildCreateConsignmentRequestV2WithExpiration(warehouseId, productCode, expirationDate);
+        } else {
+            consignmentRequest = com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder
+                    .buildCreateConsignmentRequestV2(warehouseId, productCode, quantity, null);
+        }
+        
+        authenticatedPost(
+                "/api/v1/stock-management/consignments",
+                accessToken,
+                tenantId,
+                consignmentRequest
+        ).exchange()
+                .expectStatus().isCreated();
+
+        // Wait for stock items to be created (async via Kafka events)
+        boolean stockItemsCreated = waitForStockItems(productId, accessToken, tenantId, maxWaitSeconds, 500);
+        assertThat(stockItemsCreated).as("Stock items should be created from consignment within " + maxWaitSeconds + " seconds").isTrue();
     }
 }
 

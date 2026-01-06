@@ -2,8 +2,6 @@ package com.ccbsa.wms.location.config;
 
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -14,13 +12,14 @@ import com.ccbsa.common.application.context.CorrelationContext;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Request logging interceptor. Adds correlation ID and logs request/response details.
  */
+@Slf4j
 @Component
 public class RequestLoggingInterceptor implements HandlerInterceptor {
-    private static final Logger logger = LoggerFactory.getLogger(RequestLoggingInterceptor.class);
     private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
     private static final String CORRELATION_ID_MDC = "correlationId";
 
@@ -30,10 +29,10 @@ public class RequestLoggingInterceptor implements HandlerInterceptor {
         String correlationId = request.getHeader(CORRELATION_ID_HEADER);
         if (correlationId == null || correlationId.trim().isEmpty()) {
             correlationId = UUID.randomUUID().toString();
-            logger.debug("Generated new correlation ID: {}", correlationId);
+            log.debug("Generated new correlation ID: {}", correlationId);
         } else {
             correlationId = correlationId.trim();
-            logger.debug("Using existing correlation ID: {}", correlationId);
+            log.debug("Using existing correlation ID: {}", correlationId);
         }
 
         // Set in CorrelationContext for event publishing
@@ -53,7 +52,7 @@ public class RequestLoggingInterceptor implements HandlerInterceptor {
 
         // Log request (excluding sensitive endpoints)
         if (!isSensitiveEndpoint(request.getRequestURI())) {
-            logger.debug("Incoming request: {} {} from {} [{}]", request.getMethod(), request.getRequestURI(), request.getRemoteAddr(), correlationId);
+            log.debug("Incoming request: {} {} from {} [{}]", request.getMethod(), request.getRequestURI(), request.getRemoteAddr(), correlationId);
         }
 
         return true;
@@ -68,7 +67,7 @@ public class RequestLoggingInterceptor implements HandlerInterceptor {
     public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, @Nullable Exception ex) {
         // Log response (excluding sensitive endpoints)
         if (!isSensitiveEndpoint(request.getRequestURI())) {
-            logger.debug("Completed request: {} {} - Status: {}", request.getMethod(), request.getRequestURI(), response.getStatus());
+            log.debug("Completed request: {} {} - Status: {}", request.getMethod(), request.getRequestURI(), response.getStatus());
         }
 
         // Clear MDC

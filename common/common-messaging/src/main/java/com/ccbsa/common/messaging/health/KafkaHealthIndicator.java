@@ -10,23 +10,22 @@ import java.util.concurrent.TimeoutException;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Health indicator for Kafka connectivity and broker status.
  * <p>
  * Checks: - Kafka broker connectivity - Cluster information - Producer/consumer health
  */
+@Slf4j
 @Component
 public class KafkaHealthIndicator implements HealthIndicator {
-    private static final Logger logger = LoggerFactory.getLogger(KafkaHealthIndicator.class);
-
     private final String bootstrapServers;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private AdminClient adminClient;
@@ -54,7 +53,7 @@ public class KafkaHealthIndicator implements HealthIndicator {
                 String clusterId = clusterResult.clusterId().get(5, TimeUnit.SECONDS);
                 details.put("clusterId", clusterId);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                logger.warn("Could not retrieve cluster ID: {}", e.getMessage());
+                log.warn("Could not retrieve cluster ID: {}", e.getMessage());
                 details.put("clusterId", "unknown");
             }
 
@@ -63,7 +62,7 @@ public class KafkaHealthIndicator implements HealthIndicator {
                 String controller = clusterResult.controller().get(5, TimeUnit.SECONDS).idString();
                 details.put("controller", controller);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                logger.warn("Could not retrieve controller: {}", e.getMessage());
+                log.warn("Could not retrieve controller: {}", e.getMessage());
             }
 
             // Get node count (non-blocking check)
@@ -71,7 +70,7 @@ public class KafkaHealthIndicator implements HealthIndicator {
                 int nodeCount = clusterResult.nodes().get(5, TimeUnit.SECONDS).size();
                 details.put("nodeCount", nodeCount);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                logger.warn("Could not retrieve node count: {}", e.getMessage());
+                log.warn("Could not retrieve node count: {}", e.getMessage());
             }
 
             // Test producer connectivity
@@ -79,18 +78,18 @@ public class KafkaHealthIndicator implements HealthIndicator {
                 kafkaTemplate.getProducerFactory().createProducer();
                 details.put("producer", "available");
             } catch (RuntimeException e) {
-                logger.warn("Producer health check failed: {}", e.getMessage());
+                log.warn("Producer health check failed: {}", e.getMessage());
                 details.put("producer", "unavailable");
                 return Health.down().withDetails(details).withException(e).build();
             }
 
             details.put("status", "UP");
-            logger.debug("Kafka health check passed");
+            log.debug("Kafka health check passed");
 
             return Health.up().withDetails(details).build();
 
         } catch (RuntimeException e) {
-            logger.error("Kafka health check failed", e);
+            log.error("Kafka health check failed", e);
 
             Map<String, Object> details = new HashMap<>();
             details.put("bootstrapServers", bootstrapServers);

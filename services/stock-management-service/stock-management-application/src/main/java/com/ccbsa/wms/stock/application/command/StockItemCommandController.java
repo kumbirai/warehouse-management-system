@@ -41,7 +41,7 @@ public class StockItemCommandController {
 
     @PostMapping("/{stockItemId}/assign-location")
     @Operation(summary = "Assign Location to Stock Item", description = "Assigns a location to a stock item")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<Void>> assignLocationToStock(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable("stockItemId") String stockItemId,
                                                                    @Valid @RequestBody AssignLocationToStockCommandDTO commandDTO) {
         // Map DTO to command

@@ -9,6 +9,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.ccbsa.common.domain.DomainEvent;
+import com.ccbsa.common.domain.valueobject.Description;
 import com.ccbsa.wms.location.application.service.command.dto.BlockLocationCommand;
 import com.ccbsa.wms.location.application.service.command.dto.BlockLocationResult;
 import com.ccbsa.wms.location.application.service.port.messaging.LocationEventPublisher;
@@ -49,7 +50,7 @@ public class BlockLocationCommandHandler {
                 .orElseThrow(() -> new LocationNotFoundException("Location not found: " + command.getLocationId().getValueAsString()));
 
         // 3. Execute business logic
-        location.block(command.getBlockedBy(), command.getReason());
+        location.block(command.getBlockedBy(), Description.of(command.getReason()));
 
         // 4. Get domain events BEFORE saving
         List<DomainEvent<?>> domainEvents = new ArrayList<>(location.getDomainEvents());

@@ -1,22 +1,39 @@
-import { Container } from '@mui/material';
+import { useState } from 'react';
 import { useUploadProductCsv } from '../hooks/useUploadProductCsv';
 import { ProductCsvUploadForm } from '../components/ProductCsvUploadForm';
 import { useAuth } from '../../../hooks/useAuth';
+import { FormPageLayout } from '../../../components/layouts/FormPageLayout';
+import { getBreadcrumbs } from '../../../utils/navigationUtils';
 
 export const ProductCsvUploadPage = () => {
   const { uploadCsv, isLoading } = useUploadProductCsv();
   const { user } = useAuth();
+  const [error, setError] = useState<string | null>(null);
 
   const handleUpload = async (file: File) => {
     if (!user?.tenantId) {
-      throw new Error('Tenant ID is required');
+      const errorMsg = 'Tenant ID is required';
+      setError(errorMsg);
+      throw new Error(errorMsg);
     }
-    return await uploadCsv(file, user.tenantId);
+    try {
+      setError(null);
+      return await uploadCsv(file, user.tenantId);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to upload CSV file';
+      setError(errorMsg);
+      throw err;
+    }
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <FormPageLayout
+      breadcrumbs={getBreadcrumbs.productUploadCsv()}
+      title="Upload Products CSV"
+      description="Bulk import products from a CSV file"
+      error={error}
+    >
       <ProductCsvUploadForm onUpload={handleUpload} isLoading={isLoading} />
-    </Container>
+    </FormPageLayout>
   );
 };

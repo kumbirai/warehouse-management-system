@@ -69,9 +69,9 @@ public class UpdateProductCommandHandler {
         List<ProductBarcode> existingSecondaryBarcodes = new ArrayList<>(product.getSecondaryBarcodes());
 
         // Collect barcode values that are being kept (present in both existing and new lists)
-        // SecondaryBarcodes is validated as non-null in static factory method, but may be empty
+        // SecondaryBarcodes should never be null (mapper ensures empty list if null/empty), but defensive check for safety
         List<String> barcodesToKeep = new ArrayList<>();
-        if (!command.getSecondaryBarcodes().isEmpty()) {
+        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
             for (ProductBarcode newBarcode : command.getSecondaryBarcodes()) {
                 barcodesToKeep.add(newBarcode.getValue());
             }
@@ -85,7 +85,7 @@ public class UpdateProductCommandHandler {
         }
 
         // Add new secondary barcodes (only those not already present)
-        if (!command.getSecondaryBarcodes().isEmpty()) {
+        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
             for (ProductBarcode newBarcode : command.getSecondaryBarcodes()) {
                 // Only validate and add if not already present (avoid duplicate adds)
                 if (!product.hasBarcode(newBarcode.getValue())) {

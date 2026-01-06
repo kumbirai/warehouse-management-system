@@ -6,9 +6,12 @@ import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Role;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
@@ -53,8 +56,8 @@ import lombok.extern.slf4j.Slf4j;
  * @see ServiceAccountTokenProvider
  * @see ServiceAccountAuthenticationInterceptor
  */
-@Configuration
 @Slf4j
+@Configuration
 public class ServiceAccountAuthenticationConfig {
 
     private static final int MAX_TOTAL_CONNECTIONS = 200;
@@ -62,6 +65,45 @@ public class ServiceAccountAuthenticationConfig {
     private static final int CONNECTION_TIMEOUT_SECONDS = 10;
     private static final int READ_TIMEOUT_SECONDS = 25;
     private static final int CONNECTION_REQUEST_TIMEOUT_SECONDS = 10;
+
+    /**
+     * Configuration Post-Processor to add authentication interceptor to RestTemplate beans
+     * <p>
+     * This bean post-processor automatically adds the service account authentication interceptor
+     * to any RestTemplate bean created in the application context. This allows services to
+     * define their own RestTemplate beans (e.g., with @LoadBalanced for Eureka) while
+     * automatically getting authentication support.
+     * <p>
+     * Note: Services should create their own RestTemplate beans as needed. This configuration
+     * will automatically add the authentication interceptor to them.
+     * <p>
+     * Marked as ROLE_INFRASTRUCTURE to suppress BeanPostProcessor warnings about early initialization.
+     * Uses static factory method and @Lazy annotation to avoid BeanPostProcessor initialization warnings.
+     * The @Lazy annotation ensures the interceptor is only created when needed, preventing eager
+     * initialization of dependencies.
+     *
+     * @param interceptor Authentication interceptor (lazily initialized)
+     * @return BeanPostProcessor that adds interceptor to RestTemplate beans
+     */
+    @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public static org.springframework.beans.factory.config.BeanPostProcessor restTemplateAuthenticationPostProcessor(@Lazy ServiceAccountAuthenticationInterceptor interceptor) {
+        return new org.springframework.beans.factory.config.BeanPostProcessor() {
+            @Override
+            public Object postProcessAfterInitialization(Object bean, String beanName) {
+                if (bean instanceof RestTemplate) {
+                    RestTemplate restTemplate = (RestTemplate) bean;
+
+                    // Add authentication interceptor if not already present
+                    if (restTemplate.getInterceptors().stream().noneMatch(i -> i instanceof ServiceAccountAuthenticationInterceptor)) {
+                        restTemplate.getInterceptors().add(interceptor);
+                        log.info("Added service account authentication interceptor to RestTemplate bean: {}", beanName);
+                    }
+                }
+                return bean;
+            }
+        };
+    }
 
     /**
      * Service Account Token Provider Bean
@@ -78,8 +120,8 @@ public class ServiceAccountAuthenticationConfig {
     @Bean
     public ServiceAccountTokenProvider serviceAccountTokenProvider(RestTemplateBuilder builder,
                                                                    @Value("${keycloak.service-account.token-endpoint:http://localhost:7080/realms/wms-realm/protocol/openid"
-                                                                           + "-connect/token}")
-                                                                   String tokenEndpoint, @Value("${keycloak.service-account.client-id:wms-service-account}") String clientId,
+                                                                           + "-connect/token}") String tokenEndpoint,
+                                                                   @Value("${keycloak.service-account.client-id:wms-service-account}") String clientId,
                                                                    @Value("${keycloak.service-account.client-secret:}") String clientSecret) {
         // Create a dedicated RestTemplate for token endpoint calls
         // This RestTemplate does NOT have the authentication interceptor to avoid circular dependency
@@ -140,39 +182,5 @@ public class ServiceAccountAuthenticationConfig {
     public ServiceAccountAuthenticationInterceptor serviceAccountAuthenticationInterceptor(ServiceAccountTokenProvider tokenProvider) {
         log.info("Configuring service account authentication interceptor");
         return new ServiceAccountAuthenticationInterceptor(tokenProvider);
-    }
-
-    /**
-     * Configuration Post-Processor to add authentication interceptor to RestTemplate beans
-     * <p>
-     * This bean post-processor automatically adds the service account authentication interceptor
-     * to any RestTemplate bean created in the application context. This allows services to
-     * define their own RestTemplate beans (e.g., with @LoadBalanced for Eureka) while
-     * automatically getting authentication support.
-     * <p>
-     * Note: Services should create their own RestTemplate beans as needed. This configuration
-     * will automatically add the authentication interceptor to them.
-     *
-     * @param interceptor Authentication interceptor
-     * @return BeanPostProcessor that adds interceptor to RestTemplate beans
-     */
-    @Bean
-    public org.springframework.beans.factory.config.BeanPostProcessor restTemplateAuthenticationPostProcessor(ServiceAccountAuthenticationInterceptor interceptor) {
-
-        return new org.springframework.beans.factory.config.BeanPostProcessor() {
-            @Override
-            public Object postProcessAfterInitialization(Object bean, String beanName) {
-                if (bean instanceof RestTemplate) {
-                    RestTemplate restTemplate = (RestTemplate) bean;
-
-                    // Add authentication interceptor if not already present
-                    if (restTemplate.getInterceptors().stream().noneMatch(i -> i instanceof ServiceAccountAuthenticationInterceptor)) {
-                        restTemplate.getInterceptors().add(interceptor);
-                        log.info("Added service account authentication interceptor to RestTemplate bean: {}", beanName);
-                    }
-                }
-                return bean;
-            }
-        };
     }
 }

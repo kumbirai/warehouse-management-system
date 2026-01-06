@@ -90,17 +90,25 @@ export const CommonSchemas = {
 };
 
 /**
+ * Form error type - matches react-hook-form error structure
+ */
+interface FormError {
+  message?: string;
+  type?: string;
+}
+
+/**
  * Utility function to check if a form has any errors
  */
-export const hasFormErrors = (errors: Record<string, any>): boolean => {
+export const hasFormErrors = (errors: Record<string, FormError | undefined>): boolean => {
   return Object.keys(errors).length > 0;
 };
 
 /**
  * Utility function to get all error messages from a form
  */
-export const getFormErrorMessages = (errors: Record<string, any>): string[] => {
+export const getFormErrorMessages = (errors: Record<string, FormError | undefined>): string[] => {
   return Object.values(errors)
-    .filter((error: any) => error?.message)
-    .map((error: any) => error.message);
+    .filter((error): error is FormError => error !== undefined && error?.message !== undefined)
+    .map(error => error.message as string);
 };

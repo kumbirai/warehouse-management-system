@@ -36,17 +36,25 @@ export const ActionDialog: React.FC<ActionDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={isLoading ? undefined : onCancel} maxWidth="sm" fullWidth>
-      <DialogTitle>{title}</DialogTitle>
+    <Dialog
+      open={open}
+      onClose={isLoading ? undefined : onCancel}
+      maxWidth="sm"
+      fullWidth
+      aria-labelledby="dialog-title"
+      aria-describedby="dialog-description"
+      aria-modal="true"
+    >
+      <DialogTitle id="dialog-title">{title}</DialogTitle>
       <DialogContent>
         {typeof description === 'string' ? (
-          <DialogContentText>{description}</DialogContentText>
+          <DialogContentText id="dialog-description">{description}</DialogContentText>
         ) : (
-          description
+          <div id="dialog-description">{description}</div>
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onCancel} disabled={isLoading}>
+        <Button onClick={onCancel} disabled={isLoading} aria-label={cancelLabel}>
           {cancelLabel}
         </Button>
         <Button
@@ -54,6 +62,7 @@ export const ActionDialog: React.FC<ActionDialogProps> = ({
           variant="contained"
           color={variant === 'danger' ? 'error' : 'primary'}
           disabled={isLoading}
+          aria-label={confirmLabel}
         >
           {isLoading ? 'Processing...' : confirmLabel}
         </Button>

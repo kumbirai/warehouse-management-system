@@ -7,11 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.ccbsa.common.domain.DomainEvent;
 import com.ccbsa.common.domain.EventMetadata;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Utility class for enriching domain events with metadata.
@@ -24,8 +23,8 @@ import com.ccbsa.common.domain.EventMetadata;
  * Note: This implementation uses reflection to extract event field values via getters and create enriched copies. If enrichment fails, the original event is returned to avoid
  * breaking event publishing.
  */
+@Slf4j
 public final class EventEnricher {
-    private static final Logger logger = LoggerFactory.getLogger(EventEnricher.class);
 
     private EventEnricher() {
         // Utility class
@@ -63,7 +62,7 @@ public final class EventEnricher {
         }
         if (event.getMetadata() != null) {
             // Event already has metadata, return as-is
-            logger.debug("Event {} already has metadata, skipping enrichment", event.getClass().getSimpleName());
+            log.debug("Event {} already has metadata, skipping enrichment", event.getClass().getSimpleName());
             return event;
         }
 
@@ -73,7 +72,7 @@ public final class EventEnricher {
             // Find constructor that accepts EventMetadata as last parameter
             Constructor<?> enrichedConstructor = findEnrichedConstructor(eventClass);
             if (enrichedConstructor == null) {
-                logger.warn("No constructor with EventMetadata found for event class: {}. Event will be published without metadata.", eventClass.getName());
+                log.warn("No constructor with EventMetadata found for event class: {}. Event will be published without metadata.", eventClass.getName());
                 return event;
             }
 
@@ -83,7 +82,7 @@ public final class EventEnricher {
             Class<?>[] paramTypes = enrichedConstructor.getParameterTypes();
             int expectedParamCount = paramTypes.length - 1; // Exclude EventMetadata
             if (originalParams.length == 0 && expectedParamCount > 0) {
-                logger.warn("Failed to extract constructor parameters for event class: {}. Event will be published without metadata.", eventClass.getName());
+                log.warn("Failed to extract constructor parameters for event class: {}. Event will be published without metadata.", eventClass.getName());
                 return event;
             }
 
@@ -95,7 +94,7 @@ public final class EventEnricher {
             // Create enriched event instance
             return (T) enrichedConstructor.newInstance(enrichedParams);
         } catch (ReflectiveOperationException | IllegalArgumentException | SecurityException e) {
-            logger.error("Failed to enrich event {} with metadata: {}", event.getClass().getSimpleName(), e.getMessage(), e);
+            log.error("Failed to enrich event {} with metadata: {}", event.getClass().getSimpleName(), e.getMessage(), e);
             // Return original event on failure to avoid breaking event publishing
             return event;
         }
@@ -119,6 +118,11 @@ public final class EventEnricher {
 
     /**
      * Extracts constructor parameters from an event instance using getters.
+     * <p>
+     * Matches constructor parameters to getters by:
+     * 1. Special handling for aggregateId (first parameter, usually String from parent DomainEvent)
+     * 2. Matching getters to parameters by type, ensuring each getter is only used once
+     * 3. Using parameter names if available (requires -parameters compiler flag)
      *
      * @param event       The event instance
      * @param constructor The constructor to extract parameters for
@@ -136,38 +140,69 @@ public final class EventEnricher {
 
             Object[] params = new Object[paramCount];
 
-            // Get all getter methods from the event class
+            // Get all getter methods from the event class (excluding parent class getters like getAggregateId)
             Method[] methods = event.getClass().getMethods();
-            List<Method> getters = new ArrayList<>();
+            List<Method> availableGetters = new ArrayList<>();
             for (Method method : methods) {
                 String methodName = method.getName();
                 if (methodName.startsWith("get") && method.getParameterCount() == 0 && !methodName.equals("getClass") && !methodName.equals("getEventId") && !methodName.equals(
                         "getAggregateId") && !methodName.equals("getAggregateType") && !methodName.equals("getOccurredOn") && !methodName.equals("getVersion")
                         && !methodName.equals("getMetadata")) {
-                    getters.add(method);
+                    availableGetters.add(method);
                 }
             }
 
+            // Get parameter names using reflection (Java 8+)
+            // Note: Parameter names are only available if compiled with -parameters flag
+            java.lang.reflect.Parameter[] parameters = constructor.getParameters();
+
+            // Track which getters have been used to avoid duplicate matches
+            List<Method> usedGetters = new ArrayList<>();
+
             // Try to match getters to constructor parameters
-            // This is a simplified matching - in practice, parameter order and types must match
             for (int i = 0; i < paramCount; i++) {
                 Class<?> paramType = paramTypes[i];
+                String paramName = (parameters.length > i && parameters[i].isNamePresent()) ? parameters[i].getName() : null;
 
-                // Try to find a getter that returns this parameter type
+                // Special handling for aggregateId (first parameter, usually String)
+                if (i == 0 && paramType == String.class) {
+                    // Check if parameter name is aggregateId or if it's the first String parameter
+                    if (paramName == null || "aggregateId".equals(paramName)) {
+                        params[i] = event.getAggregateId();
+                        continue;
+                    }
+                }
+
+                // Try to find a getter by parameter name first (if available)
                 Method matchingGetter = null;
-                for (Method getter : getters) {
-                    if (paramType.isAssignableFrom(getter.getReturnType())) {
-                        matchingGetter = getter;
-                        break;
+                if (paramName != null && !paramName.isEmpty()) {
+                    // Convert parameter name to getter name (e.g., "consignmentReference" -> "getConsignmentReference")
+                    String getterName = "get" + Character.toUpperCase(paramName.charAt(0)) + paramName.substring(1);
+                    for (Method getter : availableGetters) {
+                        if (getter.getName().equals(getterName) && paramType.isAssignableFrom(getter.getReturnType()) && !usedGetters.contains(getter)) {
+                            matchingGetter = getter;
+                            break;
+                        }
+                    }
+                }
+
+                // If no match by name, try by type (but only if we haven't used this getter yet)
+                if (matchingGetter == null) {
+                    for (Method getter : availableGetters) {
+                        if (!usedGetters.contains(getter) && paramType.isAssignableFrom(getter.getReturnType())) {
+                            matchingGetter = getter;
+                            break;
+                        }
                     }
                 }
 
                 if (matchingGetter != null) {
                     params[i] = matchingGetter.invoke(event);
+                    usedGetters.add(matchingGetter);
                 } else {
-                    // If no matching getter found, try to infer from common patterns
-                    // For UserEvent, TenantEvent, etc., we might need special handling
-                    logger.debug("No matching getter found for parameter {} of type {} in event {}", i, paramType.getSimpleName(), event.getClass().getSimpleName());
+                    // If no matching getter found, log and return empty array
+                    log.debug("No matching getter found for parameter {} (name={}, type={}) in event {}", i, paramName, paramType.getSimpleName(),
+                            event.getClass().getSimpleName());
                     // Return empty array to indicate failure (SpotBugs prefers zero-length arrays)
                     return new Object[0];
                 }
@@ -175,7 +210,7 @@ public final class EventEnricher {
 
             return params;
         } catch (IllegalAccessException | InvocationTargetException | SecurityException e) {
-            logger.debug("Failed to extract constructor parameters: {}", e.getMessage());
+            log.debug("Failed to extract constructor parameters: {}", e.getMessage());
             // Return empty array to indicate failure (SpotBugs prefers zero-length arrays)
             return new Object[0];
         }

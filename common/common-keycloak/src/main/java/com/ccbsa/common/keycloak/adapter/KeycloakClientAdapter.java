@@ -6,8 +6,6 @@ import java.util.concurrent.TimeUnit;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.keycloak.config.KeycloakConfig;
@@ -15,22 +13,23 @@ import com.ccbsa.common.keycloak.port.KeycloakClientPort;
 
 import jakarta.annotation.PreDestroy;
 import jakarta.ws.rs.client.ClientBuilder;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Adapter implementation for Keycloak client operations. Provides the base Keycloak Admin Client instance used by all service-specific adapters.
  * <p>
  * This adapter manages the Keycloak client lifecycle and connection pooling with production-grade timeout configuration.
  */
+@Slf4j
 @Component
 public class KeycloakClientAdapter implements KeycloakClientPort {
-    private static final Logger logger = LoggerFactory.getLogger(KeycloakClientAdapter.class);
     private final KeycloakConfig config;
     private Keycloak keycloak;
 
     public KeycloakClientAdapter(KeycloakConfig config) {
         this.config = Objects.requireNonNull(config, "KeycloakConfig must not be null");
         this.keycloak = createKeycloakClient();
-        logger.info("Keycloak Admin Client initialized for server: {} with connectionTimeout={}ms, socketTimeout={}ms", config.getServerUrl(), config.getConnectionTimeout(),
+        log.info("Keycloak Admin Client initialized for server: {} with connectionTimeout={}ms, socketTimeout={}ms", config.getServerUrl(), config.getConnectionTimeout(),
                 config.getSocketTimeout());
     }
 
@@ -52,7 +51,7 @@ public class KeycloakClientAdapter implements KeycloakClientPort {
             getAdminClient().realms().findAll();
             return true;
         } catch (Exception e) {
-            logger.warn("Keycloak is not accessible: {}", e.getMessage());
+            log.warn("Keycloak is not accessible: {}", e.getMessage());
             return false;
         }
     }
@@ -62,7 +61,7 @@ public class KeycloakClientAdapter implements KeycloakClientPort {
         // Always return the client - don't check if closed as it requires a blocking call
         // The client will handle connection errors when used, and timeouts are configured
         if (keycloak == null) {
-            logger.debug("Creating new Keycloak client connection");
+            log.debug("Creating new Keycloak client connection");
             keycloak = createKeycloakClient();
         }
         return keycloak;
@@ -74,9 +73,9 @@ public class KeycloakClientAdapter implements KeycloakClientPort {
         if (keycloak != null) {
             try {
                 keycloak.close();
-                logger.info("Keycloak Admin Client closed");
+                log.info("Keycloak Admin Client closed");
             } catch (Exception e) {
-                logger.warn("Error closing Keycloak client: {}", e.getMessage());
+                log.warn("Error closing Keycloak client: {}", e.getMessage());
             } finally {
                 keycloak = null;
             }

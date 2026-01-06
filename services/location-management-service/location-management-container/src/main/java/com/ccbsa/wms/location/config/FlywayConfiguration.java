@@ -2,12 +2,12 @@ package com.ccbsa.wms.location.config;
 
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.exception.FlywayValidateException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Custom Flyway Configuration
@@ -18,10 +18,9 @@ import org.springframework.context.annotation.Configuration;
  * <p>
  * This configuration uses FlywayMigrationStrategy to customize migration behavior and automatically repair checksums when validation fails.
  */
+@Slf4j
 @Configuration
 public class FlywayConfiguration {
-
-    private static final Logger logger = LoggerFactory.getLogger(FlywayConfiguration.class);
 
     @Value("${spring.flyway.repair-on-migrate:false}")
     private boolean repairOnMigrate;
@@ -43,14 +42,14 @@ public class FlywayConfiguration {
                 f.migrate();
             } catch (FlywayValidateException e) {
                 if (repairOnMigrate && e.getMessage() != null && e.getMessage().contains("checksum mismatch")) {
-                    logger.warn("Flyway validation failed with checksum mismatch. Repairing checksums...");
-                    logger.warn("This should only be enabled in development environments.");
+                    log.warn("Flyway validation failed with checksum mismatch. Repairing checksums...");
+                    log.warn("This should only be enabled in development environments.");
                     try {
                         f.repair();
-                        logger.info("Flyway checksums repaired successfully. Retrying migration...");
+                        log.info("Flyway checksums repaired successfully. Retrying migration...");
                         f.migrate();
                     } catch (Exception repairException) {
-                        logger.error("Failed to repair Flyway checksums", repairException);
+                        log.error("Failed to repair Flyway checksums", repairException);
                         throw new RuntimeException("Flyway checksum repair failed. Please run 'mvn flyway:repair' manually.", repairException);
                     }
                 } else {

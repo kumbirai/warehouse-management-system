@@ -19,8 +19,19 @@ export const FormActions: React.FC<FormActionsProps> = ({
   submitDisabled = false,
 }) => {
   return (
-    <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 3 }}>
-      <Button variant="outlined" onClick={onCancel} disabled={isSubmitting}>
+    <Stack
+      direction={{ xs: 'column', sm: 'row' }}
+      spacing={2}
+      justifyContent="flex-end"
+      sx={{ mt: 3 }}
+    >
+      <Button
+        variant="outlined"
+        onClick={onCancel}
+        disabled={isSubmitting}
+        sx={{ width: { xs: '100%', sm: 'auto' } }}
+        aria-label={cancelLabel}
+      >
         {cancelLabel}
       </Button>
       <Button
@@ -28,6 +39,8 @@ export const FormActions: React.FC<FormActionsProps> = ({
         variant="contained"
         onClick={onSubmit}
         disabled={isSubmitting || submitDisabled}
+        sx={{ width: { xs: '100%', sm: 'auto' } }}
+        aria-label={submitLabel}
       >
         {isSubmitting ? `${submitLabel}...` : submitLabel}
       </Button>

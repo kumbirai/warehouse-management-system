@@ -173,15 +173,16 @@ public class StockConsignmentDTOMapper {
     }
 
     /**
-     * Converts tenant ID, page, and size to ListConsignmentsQuery.
+     * Converts tenant ID, page, size, and optional expiration filter to ListConsignmentsQuery.
      *
-     * @param tenantId Tenant ID string
-     * @param page     Page number (0-based)
-     * @param size     Page size
+     * @param tenantId           Tenant ID string
+     * @param page               Page number (0-based)
+     * @param size               Page size
+     * @param expiringWithinDays Optional number of days to filter consignments expiring within
      * @return ListConsignmentsQuery
      */
-    public ListConsignmentsQuery toListConsignmentsQuery(String tenantId, Integer page, Integer size) {
-        return ListConsignmentsQuery.builder().tenantId(TenantId.of(tenantId)).page(page).size(size).build();
+    public ListConsignmentsQuery toListConsignmentsQuery(String tenantId, Integer page, Integer size, Integer expiringWithinDays) {
+        return ListConsignmentsQuery.builder().tenantId(TenantId.of(tenantId)).page(page).size(size).expiringWithinDays(expiringWithinDays).build();
     }
 
     /**
@@ -214,16 +215,19 @@ public class StockConsignmentDTOMapper {
         dto.setCreatedAt(result.getCreatedAt());
         dto.setLastModifiedAt(result.getLastModifiedAt());
 
-        // Resolve warehouse name
+        // Resolve warehouse name and code
         if (tenantId != null && result.getWarehouseId() != null) {
             try {
                 var locationInfo = locationServicePort.getLocationInfo(LocationId.of(result.getWarehouseId().getValue()), TenantId.of(tenantId));
-                locationInfo.ifPresent(info -> dto.setWarehouseName(info.getDisplayName()));
+                locationInfo.ifPresent(info -> {
+                    dto.setWarehouseCode(info.code());
+                    dto.setWarehouseName(info.getDisplayName());
+                });
             } catch (Exception e) {
-                // If we can't get warehouse name, leave it null - this is optional enrichment
+                // If we can't get warehouse info, leave it null - this is optional enrichment
                 // Log at debug level to avoid noise in production logs
                 if (log.isDebugEnabled()) {
-                    log.debug("Could not resolve warehouse name for warehouseId: {}, tenantId: {}", result.getWarehouseId().getValue(), tenantId, e);
+                    log.debug("Could not resolve warehouse info for warehouseId: {}, tenantId: {}", result.getWarehouseId().getValue(), tenantId, e);
                 }
             }
         }

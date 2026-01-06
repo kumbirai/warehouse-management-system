@@ -2,8 +2,6 @@ package com.ccbsa.wms.stock.messaging.publisher;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +13,8 @@ import com.ccbsa.wms.stock.application.service.port.messaging.StockManagementEve
 import com.ccbsa.wms.stock.domain.core.event.StockManagementEvent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Event Publisher Implementation: StockManagementEventPublisherImpl
@@ -24,16 +24,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Responsibilities: - Publishes Stock Management domain events to Kafka topic - Enriches events with metadata (correlation ID, user ID) for traceability - Uses Kafka message key
  * for event ordering (aggregate ID)
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is a managed bean and treated as immutable port")
 public class StockManagementEventPublisherImpl implements StockManagementEventPublisher {
-    private static final Logger logger = LoggerFactory.getLogger(StockManagementEventPublisherImpl.class);
     private static final String STOCK_MANAGEMENT_EVENTS_TOPIC = "stock-management-events";
     private final KafkaTemplate<String, Object> kafkaTemplate;
-
-    public StockManagementEventPublisherImpl(KafkaTemplate<String, Object> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
-    }
 
     @Override
     public void publish(List<DomainEvent<?>> events) {
@@ -57,10 +54,10 @@ public class StockManagementEventPublisherImpl implements StockManagementEventPu
 
             String key = enrichedEvent.getAggregateId();
             kafkaTemplate.send(STOCK_MANAGEMENT_EVENTS_TOPIC, key, enrichedEvent);
-            logger.info("Published stock management event: {} with key: {} to topic: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
+            log.info("Published stock management event: {} with key: {} to topic: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
                     STOCK_MANAGEMENT_EVENTS_TOPIC, enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
         } catch (Exception e) {
-            logger.error("Failed to publish stock management event: {}", event.getClass().getSimpleName(), e);
+            log.error("Failed to publish stock management event: {}", event.getClass().getSimpleName(), e);
             throw new RuntimeException("Failed to publish stock management event", e);
         }
     }

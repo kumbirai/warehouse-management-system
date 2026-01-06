@@ -214,6 +214,16 @@ public class TenantServiceAdapter implements TenantServicePort {
         } catch (HttpClientErrorException.Unauthorized e) {
             log.error("Unauthorized when calling tenant service - authentication token may be missing or invalid: {}", e.getMessage());
             throw new TenantServiceException("Failed to authenticate with tenant service. Please ensure you are logged in.", e);
+        } catch (IllegalArgumentException e) {
+            // Handle LoadBalancer service discovery failures
+            if (e.getMessage() != null && e.getMessage().contains("Service Instance cannot be null")) {
+                log.error("Tenant service not found in service registry (Eureka). Please ensure tenant-service is running and registered with Eureka: tenantId={}, serviceUrl={}",
+                        tenantId.getValue(), tenantServiceUrl, e);
+                throw new TenantServiceException(String.format(
+                        "Tenant service is not available. The service may not be running or not registered with service discovery. Please contact system administrator."), e);
+            }
+            log.error("Invalid argument when calling tenant service: tenantId={}, error={}", tenantId.getValue(), e.getMessage(), e);
+            throw new TenantServiceException(String.format("Failed to call tenant service: %s", e.getMessage()), e);
         } catch (RestClientException e) {
             log.error("Failed to call tenant service: {}", e.getMessage(), e);
             throw new TenantServiceException(String.format("Failed to call tenant service: %s", e.getMessage()), e);

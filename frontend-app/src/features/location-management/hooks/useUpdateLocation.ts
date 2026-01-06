@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { locationService } from '../services/locationService';
 import { UpdateLocationRequest } from '../types/location';
 import { logger } from '../../../utils/logger';
+import { useToast } from '../../../hooks/useToast';
 
 export interface UseUpdateLocationResult {
   updateLocation: (
@@ -16,6 +17,7 @@ export interface UseUpdateLocationResult {
 export const useUpdateLocation = (): UseUpdateLocationResult => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const { success, error: showErrorToast } = useToast();
 
   const updateLocation = async (
     locationId: string,
@@ -37,10 +39,12 @@ export const useUpdateLocation = (): UseUpdateLocationResult => {
       }
 
       logger.info('Location updated successfully', { locationId });
+      success('Location updated successfully');
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to update location');
       logger.error('Error updating location:', error);
       setError(error);
+      showErrorToast(error.message);
       throw error;
     } finally {
       setIsLoading(false);

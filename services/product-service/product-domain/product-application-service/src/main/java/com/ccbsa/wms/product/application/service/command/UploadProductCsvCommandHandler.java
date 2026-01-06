@@ -55,7 +55,8 @@ public class UploadProductCsvCommandHandler {
         try {
             rows = csvParser.parse(command.getCsvContent());
         } catch (IllegalArgumentException e) {
-            log.error("Failed to parse CSV file: {}", e.getMessage());
+            // Log validation errors at WARN level - these are expected user input validation failures
+            log.warn("Invalid CSV format: {}", e.getMessage());
             throw new IllegalArgumentException(String.format("Invalid CSV format: %s", e.getMessage()), e);
         }
 

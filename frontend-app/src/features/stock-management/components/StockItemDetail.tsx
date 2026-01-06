@@ -54,17 +54,22 @@ export const StockItemDetail = ({ stockItem, onLocationAssigned }: StockItemDeta
                 <Typography variant="caption" color="text.secondary">
                   Stock Item ID
                 </Typography>
-                <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                <Typography variant="body1" sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
                   {stockItem.stockItemId}
                 </Typography>
               </Box>
 
               <Box>
                 <Typography variant="caption" color="text.secondary">
-                  Product ID
+                  Product
                 </Typography>
-                <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                  {stockItem.productId}
+                <Typography variant="body1" fontWeight="medium">
+                  {stockItem.productCode && stockItem.productDescription
+                    ? `${stockItem.productCode} - ${stockItem.productDescription}`
+                    : stockItem.productCode || stockItem.productDescription || 'Unknown Product'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                  ID: {stockItem.productId}
                 </Typography>
               </Box>
 
@@ -101,10 +106,17 @@ export const StockItemDetail = ({ stockItem, onLocationAssigned }: StockItemDeta
                   Location
                 </Typography>
                 {stockItem.locationId ? (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                    <LocationIcon fontSize="small" color="action" />
-                    <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                      {stockItem.locationId}
+                  <Box sx={{ mt: 0.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <LocationIcon fontSize="small" color="action" />
+                      <Typography variant="body1" fontWeight="medium">
+                        {stockItem.locationName && stockItem.locationCode
+                          ? `${stockItem.locationCode} - ${stockItem.locationName}`
+                          : stockItem.locationName || stockItem.locationCode || 'Unknown Location'}
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem', ml: 4 }}>
+                      ID: {stockItem.locationId}
                     </Typography>
                   </Box>
                 ) : (

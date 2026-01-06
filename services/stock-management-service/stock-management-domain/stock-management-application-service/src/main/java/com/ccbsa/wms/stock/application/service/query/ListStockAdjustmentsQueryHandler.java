@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ccbsa.wms.stock.application.service.port.data.StockAdjustmentViewRepository;
+import com.ccbsa.wms.stock.application.service.port.data.dto.StockAdjustmentView;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockAdjustmentQueryResult;
 import com.ccbsa.wms.stock.application.service.query.dto.ListStockAdjustmentsQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.ListStockAdjustmentsQueryResult;
@@ -42,7 +43,7 @@ public class ListStockAdjustmentsQueryHandler {
         int size = query.getSize() != null ? query.getSize() : 100;
 
         // 2. Query adjustment views with pagination
-        List<com.ccbsa.wms.stock.application.service.port.data.dto.StockAdjustmentView> adjustmentViews = viewRepository.findByTenantId(query.getTenantId(), page, size);
+        List<StockAdjustmentView> adjustmentViews = viewRepository.findByTenantId(query.getTenantId(), page, size);
 
         // 3. Get total count for pagination metadata
         @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE", justification = "totalCount and results are used in builder - SpotBugs false positive") long totalCount =
@@ -56,7 +57,7 @@ public class ListStockAdjustmentsQueryHandler {
     }
 
     @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD", justification = "Method is called via method reference in stream (this::mapToQueryResult) - SpotBugs false positive")
-    private GetStockAdjustmentQueryResult mapToQueryResult(com.ccbsa.wms.stock.application.service.port.data.dto.StockAdjustmentView view) {
+    private GetStockAdjustmentQueryResult mapToQueryResult(StockAdjustmentView view) {
         return GetStockAdjustmentQueryResult.builder().adjustmentId(view.getAdjustmentId()).productId(view.getProductId()).locationId(view.getLocationId())
                 .stockItemId(view.getStockItemId()).adjustmentType(view.getAdjustmentType()).quantity(view.getQuantity()).quantityBefore(view.getQuantityBefore())
                 .quantityAfter(view.getQuantityAfter()).reason(view.getReason()).notes(view.getNotes()).adjustedBy(view.getAdjustedBy())

@@ -1,7 +1,5 @@
 package com.ccbsa.wms.stock.messaging.listener;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +8,8 @@ import com.ccbsa.common.cache.invalidation.LocalCacheInvalidator;
 import com.ccbsa.common.cache.key.CacheNamespace;
 import com.ccbsa.wms.stock.domain.core.event.StockConsignmentConfirmedEvent;
 import com.ccbsa.wms.stock.domain.core.event.StockConsignmentReceivedEvent;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Stock Management Service Cache Invalidation Listener for Stock Consignments.
@@ -20,11 +20,9 @@ import com.ccbsa.wms.stock.domain.core.event.StockConsignmentReceivedEvent;
  * - StockConsignmentReceivedEvent: No invalidation (cache-aside pattern)
  * - StockConsignmentConfirmedEvent: Invalidate entity + collections
  */
+@Slf4j
 @Component
 public class StockConsignmentCacheInvalidationListener extends CacheInvalidationEventListener {
-
-    private static final Logger log = LoggerFactory.getLogger(StockConsignmentCacheInvalidationListener.class);
-
     public StockConsignmentCacheInvalidationListener(LocalCacheInvalidator cacheInvalidator) {
         super(cacheInvalidator);
     }

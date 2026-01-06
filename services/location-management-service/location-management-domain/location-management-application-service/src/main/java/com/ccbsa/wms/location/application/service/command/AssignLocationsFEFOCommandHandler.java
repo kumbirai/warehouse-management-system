@@ -1,6 +1,7 @@
 package com.ccbsa.wms.location.application.service.command;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +11,8 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.ccbsa.common.domain.DomainEvent;
+import com.ccbsa.common.domain.valueobject.BigDecimalQuantity;
+import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.wms.location.application.service.command.dto.AssignLocationsFEFOCommand;
 import com.ccbsa.wms.location.application.service.command.dto.AssignLocationsFEResult;
 import com.ccbsa.wms.location.application.service.port.messaging.LocationEventPublisher;
@@ -50,12 +53,27 @@ public class AssignLocationsFEFOCommandHandler {
         // 2. Get available locations
         List<Location> availableLocations = locationRepository.findAvailableLocations(command.getTenantId());
 
+        // Handle case where no locations are available
+        // This is acceptable - stock items can remain unassigned and be assigned later
+        // or allocated from unassigned items (handled in allocation logic)
         if (availableLocations.isEmpty()) {
-            throw new IllegalStateException("No available locations found for FEFO assignment");
+            log.warn("No available locations found for FEFO assignment. Stock items will remain unassigned. "
+                            + "tenantId={}, stockItemCount={}. Stock items can be assigned later when locations become available.", command.getTenantId().getValue(),
+                    command.getStockItems().size());
+            // Return empty assignments - stock items remain unassigned
+            return AssignLocationsFEResult.builder().assignments(Collections.emptyMap()).build();
         }
 
         // 3. Assign locations using FEFO algorithm
+        // Note: This may return partial assignments if some stock items cannot be assigned
         Map<String, LocationId> assignments = fefoAssignmentService.assignLocationsFEFO(command.getStockItems(), availableLocations);
+
+        // Log if not all stock items were assigned
+        if (assignments.size() < command.getStockItems().size()) {
+            int unassignedCount = command.getStockItems().size() - assignments.size();
+            log.warn("FEFO assignment completed with partial assignments. Assigned: {}, Unassigned: {}, tenantId={}. "
+                    + "Unassigned stock items can be assigned later when locations become available.", assignments.size(), unassignedCount, command.getTenantId().getValue());
+        }
 
         // 4. Update locations and collect events
         List<DomainEvent<?>> allDomainEvents = new ArrayList<>();
@@ -72,7 +90,9 @@ public class AssignLocationsFEFOCommandHandler {
                     .orElseThrow(() -> new IllegalStateException(String.format("Stock item request not found: %s", stockItemId)));
 
             // Assign stock to location
-            location.assignStock(stockItemId, stockItemRequest.getQuantity());
+            StockItemId stockItemIdValueObject = StockItemId.of(stockItemId);
+            BigDecimalQuantity quantity = BigDecimalQuantity.of(stockItemRequest.getQuantity());
+            location.assignStock(stockItemIdValueObject, quantity);
 
             // Get domain events BEFORE saving
             List<DomainEvent<?>> locationEvents = new ArrayList<>(location.getDomainEvents());

@@ -61,11 +61,14 @@ public class ProductDTOMapper {
         var builder = CreateProductCommand.builder().tenantId(TenantId.of(tenantId)).productCode(ProductCode.of(dto.getProductCode())).description(dto.getDescription())
                 .primaryBarcode(ProductBarcode.of(dto.getPrimaryBarcode())).unitOfMeasure(UnitOfMeasure.valueOf(dto.getUnitOfMeasure()));
 
-        // Add secondary barcodes if provided
+        // Add secondary barcodes - always set to avoid null (empty list if null or empty)
+        List<ProductBarcode> secondaryBarcodes;
         if (dto.getSecondaryBarcodes() != null && !dto.getSecondaryBarcodes().isEmpty()) {
-            List<ProductBarcode> secondaryBarcodes = dto.getSecondaryBarcodes().stream().map(ProductBarcode::of).collect(Collectors.toList());
-            builder.secondaryBarcodes(secondaryBarcodes);
+            secondaryBarcodes = dto.getSecondaryBarcodes().stream().map(ProductBarcode::of).collect(Collectors.toList());
+        } else {
+            secondaryBarcodes = new ArrayList<>();
         }
+        builder.secondaryBarcodes(secondaryBarcodes);
 
         // Set optional fields
         if (dto.getCategory() != null && !dto.getCategory().trim().isEmpty()) {
@@ -106,11 +109,14 @@ public class ProductDTOMapper {
         var builder = UpdateProductCommand.builder().productId(ProductId.of(UUID.fromString(productId))).tenantId(TenantId.of(tenantId)).description(dto.getDescription())
                 .primaryBarcode(ProductBarcode.of(dto.getPrimaryBarcode())).unitOfMeasure(UnitOfMeasure.valueOf(dto.getUnitOfMeasure()));
 
-        // Add secondary barcodes if provided
+        // Add secondary barcodes - always set to avoid null (empty list if null or empty)
+        List<ProductBarcode> secondaryBarcodes;
         if (dto.getSecondaryBarcodes() != null && !dto.getSecondaryBarcodes().isEmpty()) {
-            List<ProductBarcode> secondaryBarcodes = dto.getSecondaryBarcodes().stream().map(ProductBarcode::of).collect(Collectors.toList());
-            builder.secondaryBarcodes(secondaryBarcodes);
+            secondaryBarcodes = dto.getSecondaryBarcodes().stream().map(ProductBarcode::of).collect(Collectors.toList());
+        } else {
+            secondaryBarcodes = new ArrayList<>();
         }
+        builder.secondaryBarcodes(secondaryBarcodes);
 
         // Set optional fields
         if (dto.getCategory() != null && !dto.getCategory().trim().isEmpty()) {

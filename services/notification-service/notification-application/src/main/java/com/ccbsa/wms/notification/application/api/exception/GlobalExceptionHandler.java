@@ -1,7 +1,5 @@
 package com.ccbsa.wms.notification.application.api.exception;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,6 +13,7 @@ import com.ccbsa.common.application.api.exception.BaseGlobalExceptionHandler;
 import com.ccbsa.wms.notification.application.service.exception.NotificationNotFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Global Exception Handler: GlobalExceptionHandler
@@ -23,9 +22,9 @@ import jakarta.servlet.http.HttpServletRequest;
  * <p>
  * This handler extends {@link BaseGlobalExceptionHandler} to inherit common exception handling and adds notification-service-specific exception handlers.
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
-    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
      * Handles NotificationNotFoundException - indicates notification does not exist.

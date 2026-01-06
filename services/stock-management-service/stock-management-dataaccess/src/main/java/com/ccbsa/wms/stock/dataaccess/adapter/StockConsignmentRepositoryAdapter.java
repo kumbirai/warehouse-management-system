@@ -196,6 +196,8 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
     }
 
     @Override
+    @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT", justification = "Calling size() to force initialization of lazy-loaded JPA collection. The return value"
+            + " is intentionally ignored as the side effect (initialization) is the desired behavior.")
     public Optional<StockConsignment> findByIdAndTenantId(ConsignmentId id, TenantId tenantId) {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
@@ -224,8 +226,30 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
         Session session = entityManager.unwrap(Session.class);
         setSearchPath(session, schemaName);
 
-        // Now query using JPA repository (will use the schema set in search_path)
-        return jpaRepository.findByTenantIdAndId(tenantId.getValue(), id.getValue()).map(mapper::toDomain);
+        // Use JPQL query with JOIN FETCH to eagerly load lineItems
+        // This prevents lazy initialization errors when accessing lineItems after transaction closes
+        jakarta.persistence.Query query =
+                entityManager.createQuery("SELECT c FROM StockConsignmentEntity c " + "LEFT JOIN FETCH c.lineItems " + "WHERE c.tenantId = :tenantId AND c.id = :id",
+                        StockConsignmentEntity.class);
+        query.setParameter("tenantId", tenantId.getValue());
+        query.setParameter("id", id.getValue());
+
+        @SuppressWarnings("unchecked") List<StockConsignmentEntity> results = query.getResultList();
+
+        if (results.isEmpty()) {
+            return Optional.empty();
+        }
+
+        // Get first result (should be unique by ID)
+        StockConsignmentEntity entity = results.get(0);
+
+        // Initialize lineItems collection to ensure it's loaded
+        if (entity.getLineItems() != null) {
+            // Force initialization of lazy-loaded collection
+            entity.getLineItems().size();
+        }
+
+        return Optional.of(mapper.toDomain(entity));
     }
 
     @Override

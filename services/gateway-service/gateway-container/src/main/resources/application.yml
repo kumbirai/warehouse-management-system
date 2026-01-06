@@ -83,13 +83,15 @@ spring:
                     redis-rate-limiter.burstCapacity: 100
                     key-resolver: "#{@keyResolver}"
             
-            # Stock Management Service
-            - id: stock-management-service
-              uri: lb://stock-management-service
+            # Stock Movement endpoints (proxied to Location Management Service)
+            # Note: Stock movements are logically part of stock management API but implemented in location-management-service
+            # IMPORTANT: This route must come BEFORE the general stock-management-service route to ensure proper matching
+            - id: stock-management-movements
+              uri: lb://location-management-service
               predicates:
-                - Path=/api/v1/stock-management/**
+                - Path=/api/v1/stock-management/movements/**
               filters:
-                - StripPrefix=0
+                - RewritePath=/api/v1/stock-management/movements, /api/v1/location-management/stock-movements
                 - name: TenantValidationFilter
                 - name: TenantContextFilter
                 - name: RequestRateLimiter
@@ -99,14 +101,13 @@ spring:
                     redis-rate-limiter.requestedTokens: 1
                     key-resolver: "#{@keyResolver}"
             
-            # Stock Movement endpoints (proxied to Location Management Service)
-            # Note: Stock movements are logically part of stock management API but implemented in location-management-service
-            - id: stock-management-movements
-              uri: lb://location-management-service
+            # Stock Management Service
+            - id: stock-management-service
+              uri: lb://stock-management-service
               predicates:
-                - Path=/api/v1/stock-management/movements/**
+                - Path=/api/v1/stock-management/**
               filters:
-                - RewritePath=/api/v1/stock-management/movements, /api/v1/location-management/stock-movements
+                - StripPrefix=0
                 - name: TenantValidationFilter
                 - name: TenantContextFilter
                 - name: RequestRateLimiter
@@ -200,6 +201,21 @@ spring:
                 - StripPrefix=0
                 - name: TenantValidationFilter
                 - name: TenantContextFilter
+            
+            # Notification Service
+            - id: notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/v1/notifications/**
+              filters:
+                - StripPrefix=0
+                - name: TenantValidationFilter
+                - name: TenantContextFilter
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 100
+                    redis-rate-limiter.burstCapacity: 200
+                    key-resolver: "#{@keyResolver}"
       
       default-filters:
         - name: RequestRateLimiter
@@ -297,17 +313,27 @@ management:
 logging:
   level:
     root: INFO
+    # Application packages - DEBUG for business logic debugging
     com.ccbsa.wms.gateway: DEBUG
     com.ccbsa.wms.gateway.application: DEBUG
+    # Spring Framework - INFO to reduce noise (RestTemplate, etc.)
+    org.springframework: INFO
+    org.springframework.web: INFO
+    org.springframework.web.client.RestTemplate: INFO
+    # Spring Cloud Gateway - INFO for routing visibility without noise
     org.springframework.cloud.gateway: INFO
     org.springframework.cloud.gateway.handler.RoutePredicateHandlerMapping: INFO
     org.springframework.cloud.gateway.filter.NettyRoutingFilter: INFO
     org.springframework.cloud.gateway.filter.ReactiveLoadBalancerClientFilter: INFO
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
-    org.springframework.web.cors: DEBUG
+    # Spring Security - WARN to avoid exposing security details
+    org.springframework.security: WARN
+    # Eureka/Discovery - INFO to avoid RestTemplate noise
+    com.netflix.discovery: INFO
+    com.netflix.eureka: INFO
+    # Keycloak - WARN to reduce authentication noise
     org.keycloak: WARN
-    reactor.netty: DEBUG
+    # Reactor Netty - INFO for gateway networking visibility
+    reactor.netty: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"

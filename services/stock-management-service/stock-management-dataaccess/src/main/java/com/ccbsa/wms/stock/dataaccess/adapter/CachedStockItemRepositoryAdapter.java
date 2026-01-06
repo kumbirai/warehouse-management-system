@@ -10,9 +10,11 @@ import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.cache.decorator.CachedRepositoryDecorator;
 import com.ccbsa.common.cache.key.CacheNamespace;
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.StockClassification;
 import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.application.service.port.repository.StockItemRepository;
 import com.ccbsa.wms.stock.domain.core.entity.StockItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
@@ -84,14 +86,13 @@ public class CachedStockItemRepositoryAdapter extends CachedRepositoryDecorator<
     }
 
     @Override
-    public List<StockItem> findByTenantIdAndProductId(TenantId tenantId, com.ccbsa.common.domain.valueobject.ProductId productId) {
+    public List<StockItem> findByTenantIdAndProductId(TenantId tenantId, ProductId productId) {
         // Collections NOT cached to avoid cache bloat
         return baseRepository.findByTenantIdAndProductId(tenantId, productId);
     }
 
     @Override
-    public List<StockItem> findByTenantIdAndProductIdAndLocationId(TenantId tenantId, com.ccbsa.common.domain.valueobject.ProductId productId,
-                                                                   com.ccbsa.wms.location.domain.core.valueobject.LocationId locationId) {
+    public List<StockItem> findByTenantIdAndProductIdAndLocationId(TenantId tenantId, ProductId productId, LocationId locationId) {
         // Collections NOT cached to avoid cache bloat
         return baseRepository.findByTenantIdAndProductIdAndLocationId(tenantId, productId, locationId);
     }

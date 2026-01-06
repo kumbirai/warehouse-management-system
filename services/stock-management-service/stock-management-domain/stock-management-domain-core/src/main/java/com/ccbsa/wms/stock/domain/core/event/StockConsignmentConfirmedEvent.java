@@ -1,5 +1,6 @@
 package com.ccbsa.wms.stock.domain.core.event;
 
+import com.ccbsa.common.domain.EventMetadata;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.WarehouseId;
 import com.ccbsa.wms.stock.domain.core.entity.StockConsignment;
@@ -29,6 +30,22 @@ public class StockConsignmentConfirmedEvent extends StockManagementEvent<StockCo
      */
     public StockConsignmentConfirmedEvent(String aggregateId, ConsignmentReference consignmentReference, TenantId tenantId, WarehouseId warehouseId) {
         super(aggregateId, AGGREGATE_TYPE);
+        this.consignmentReference = consignmentReference;
+        this.tenantId = tenantId;
+        this.warehouseId = warehouseId;
+    }
+
+    /**
+     * Constructor for StockConsignmentConfirmedEvent with metadata.
+     *
+     * @param aggregateId          Consignment ID (as String)
+     * @param consignmentReference Consignment reference
+     * @param tenantId             Tenant identifier
+     * @param warehouseId          Warehouse identifier
+     * @param metadata             Event metadata for traceability
+     */
+    public StockConsignmentConfirmedEvent(String aggregateId, ConsignmentReference consignmentReference, TenantId tenantId, WarehouseId warehouseId, EventMetadata metadata) {
+        super(aggregateId, AGGREGATE_TYPE, metadata);
         this.consignmentReference = consignmentReference;
         this.tenantId = tenantId;
         this.warehouseId = warehouseId;

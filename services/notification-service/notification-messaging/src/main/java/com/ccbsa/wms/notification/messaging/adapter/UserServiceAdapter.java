@@ -1,5 +1,7 @@
 package com.ccbsa.wms.notification.messaging.adapter;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -45,15 +47,23 @@ public class UserServiceAdapter implements UserServicePort {
     }
 
     @Override
-    public EmailAddress getUserEmail(UserId userId) {
-        log.debug("Getting user email from user-service: userId={}", userId.getValue());
+    public Optional<EmailAddress> getUserEmail(UserId userId, com.ccbsa.common.domain.valueobject.TenantId tenantId) {
+        log.debug("Getting user email from user-service: userId={}, tenantId={}", userId.getValue(), tenantId.getValue());
 
         try {
             String url = String.format("%s/api/v1/users/%s", userServiceUrl, userId.getValue());
             log.debug("Calling user service: {}", url);
 
             // Service-to-service authentication is handled automatically by ServiceAccountAuthenticationInterceptor
+            // The interceptor will:
+            // 1. Forward Authorization header from HTTP request context (if available)
+            // 2. Use service account token for event-driven calls (no HTTP context)
             HttpHeaders headers = new HttpHeaders();
+
+            // Set X-Tenant-Id header (required by user service)
+            headers.set("X-Tenant-Id", tenantId.getValue());
+            log.debug("Setting X-Tenant-Id header: {}", tenantId.getValue());
+
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
             ResponseEntity<ApiResponse<UserResponse>> response = restTemplate.exchange(url, HttpMethod.GET, entity, USER_RESPONSE_TYPE);
@@ -61,18 +71,20 @@ public class UserServiceAdapter implements UserServicePort {
             ApiResponse<UserResponse> responseBody = response.getBody();
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
                 UserResponse userResponse = responseBody.getData();
-                if (userResponse.getEmail() != null && !userResponse.getEmail().isEmpty()) {
-                    log.debug("User email retrieved: userId={}, email={}", userId.getValue(), userResponse.getEmail());
-                    return EmailAddress.of(userResponse.getEmail());
+                if (userResponse.getEmailAddress() != null && !userResponse.getEmailAddress().isEmpty()) {
+                    log.debug("User email retrieved: userId={}, email={}", userId.getValue(), userResponse.getEmailAddress());
+                    return Optional.of(EmailAddress.of(userResponse.getEmailAddress()));
                 } else {
-                    throw new RuntimeException(String.format("User email not found for userId: %s", userId.getValue()));
+                    log.warn("User exists but email is not set: userId={}", userId.getValue());
+                    return Optional.empty();
                 }
             }
 
-            throw new RuntimeException(String.format("User not found: %s", userId.getValue()));
+            log.warn("User not found or invalid response: userId={}, status={}", userId.getValue(), response.getStatusCode());
+            return Optional.empty();
         } catch (HttpClientErrorException.NotFound e) {
-            log.warn("User not found: {}", userId.getValue());
-            throw new RuntimeException(String.format("User not found: %s", userId.getValue()), e);
+            log.warn("User not found: userId={}", userId.getValue());
+            return Optional.empty();
         } catch (RestClientException e) {
             log.error("Failed to get user email from user-service: userId={}", userId.getValue(), e);
             throw new RuntimeException(String.format("Failed to retrieve user email: %s", e.getMessage()), e);
@@ -84,20 +96,23 @@ public class UserServiceAdapter implements UserServicePort {
 
     /**
      * DTO for user-service response. Simplified structure matching the expected API response.
+     * <p>
+     * Note: Field name matches user-service API response which uses @JsonProperty("emailAddress").
      */
     private static class UserResponse {
-        private String email;
+        @com.fasterxml.jackson.annotation.JsonProperty("emailAddress")
+        private String emailAddress;
 
-        public String getEmail() {
-            return email;
+        public String getEmailAddress() {
+            return emailAddress;
         }
 
         /**
          * Setter required for Jackson deserialization. Suppressed unused warning as Jackson uses reflection to call this method.
          */
         @SuppressWarnings("unused")
-        public void setEmail(String email) {
-            this.email = email;
+        public void setEmailAddress(String emailAddress) {
+            this.emailAddress = emailAddress;
         }
     }
 }

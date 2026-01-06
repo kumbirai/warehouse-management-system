@@ -1,8 +1,9 @@
-import { Box, Divider, Grid, Paper, Stack, Typography } from '@mui/material';
+import { Box, Divider, Grid, LinearProgress, Paper, Stack, Typography } from '@mui/material';
 
-import { getStatusVariant, StatusBadge } from '../../../components/common';
+import { StatusBadge } from '../../../components/common';
+import { getStatusVariant } from '../../../utils/statusUtils';
 import { formatDateTime } from '../../../utils/dateUtils';
-import { Location } from '../types/location';
+import { Location, LocationStatus } from '../types/location';
 import { LocationActions } from './LocationActions';
 import { useAuth } from '../../../hooks/useAuth';
 
@@ -145,19 +146,45 @@ export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps
                 <Typography variant="body1">{location.capacity.maximumQuantity || 0}</Typography>
               </Box>
 
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Utilization
-                </Typography>
-                <Typography variant="body1">
-                  {location.capacity.maximumQuantity > 0
-                    ? `${Math.round(
-                        (location.capacity.currentQuantity / location.capacity.maximumQuantity) *
-                          100
-                      )}%`
-                    : '0%'}
-                </Typography>
-              </Box>
+              {location.capacity.maximumQuantity > 0 && (
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Capacity Utilization
+                    </Typography>
+                    <Typography variant="body2" fontWeight="medium">
+                      {Math.round(
+                        (location.capacity.currentQuantity / location.capacity.maximumQuantity) * 100
+                      )}
+                      %
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(
+                      (location.capacity.currentQuantity / location.capacity.maximumQuantity) * 100,
+                      100
+                    )}
+                    color={
+                      (location.capacity.currentQuantity / location.capacity.maximumQuantity) * 100 >= 80
+                        ? 'error'
+                        : (location.capacity.currentQuantity / location.capacity.maximumQuantity) * 100 >= 50
+                        ? 'warning'
+                        : 'success'
+                    }
+                    sx={{ height: 8, borderRadius: 4 }}
+                    aria-label="Location capacity utilization"
+                    aria-valuenow={Math.round(
+                      (location.capacity.currentQuantity / location.capacity.maximumQuantity) * 100
+                    )}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                  />
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    {location.capacity.currentQuantity || 0} / {location.capacity.maximumQuantity} units
+                  </Typography>
+                </Box>
+              )}
             </Stack>
           </Paper>
         </Grid>
@@ -202,7 +229,7 @@ export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps
 
             <LocationActions
               locationId={location.locationId}
-              status={location.status as any}
+              status={location.status as LocationStatus}
               tenantId={user.tenantId}
               onCompleted={onStatusUpdate}
             />

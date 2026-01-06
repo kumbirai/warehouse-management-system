@@ -199,14 +199,12 @@ export const useLocations = (filters: LocationListFilters): UseLocationsResult =
   }, [filters]);
 
   // Memoize filters key to detect actual changes
-  const filtersKey = useMemo(() => getFiltersKey(filters), [
-    filters.tenantId,
-    filters.page,
-    filters.size,
-    filters.status,
-    filters.zone,
-    filters.search,
-  ]);
+  // Using individual properties to avoid unnecessary recalculations when object reference changes
+  const filtersKey = useMemo(
+    () => getFiltersKey(filters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filters.tenantId, filters.page, filters.size, filters.status, filters.zone, filters.search]
+  );
 
   useEffect(() => {
     // Only fetch if filters actually changed (avoid infinite loops from object reference changes)

@@ -1,9 +1,8 @@
 package com.ccbsa.wms.notification.messaging.listener;
 
 import java.util.Map;
+import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -23,6 +22,9 @@ import com.ccbsa.wms.notification.application.service.command.dto.CreateNotifica
 import com.ccbsa.wms.notification.application.service.port.service.TenantServicePort;
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Event Listener: TenantDeactivatedEventListener
  * <p>
@@ -30,32 +32,27 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
  * <p>
  * Uses local DTO to avoid tight coupling with tenant-service domain classes.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class TenantDeactivatedEventListener {
-    private static final Logger logger = LoggerFactory.getLogger(TenantDeactivatedEventListener.class);
-
     private final CreateNotificationCommandHandler createNotificationCommandHandler;
     private final TenantServicePort tenantServicePort;
-
-    public TenantDeactivatedEventListener(CreateNotificationCommandHandler createNotificationCommandHandler, TenantServicePort tenantServicePort) {
-        this.createNotificationCommandHandler = createNotificationCommandHandler;
-        this.tenantServicePort = tenantServicePort;
-    }
 
     @KafkaListener(topics = "tenant-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
                        @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
-        logger.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));
+        log.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));
         try {
             // Extract and set correlation ID from event metadata for traceability
             extractAndSetCorrelationId(eventData);
 
             // Detect event type from payload (aggregateType field) or header
             String detectedEventType = detectEventType(eventData, eventType);
-            logger.info("Event type detection: detectedType={}, headerType={}, eventDataKeys={}, aggregateType={}", detectedEventType, eventType, eventData.keySet(),
+            log.info("Event type detection: detectedType={}, headerType={}, eventDataKeys={}, aggregateType={}", detectedEventType, eventType, eventData.keySet(),
                     eventData.get("aggregateType"));
             if (!isTenantDeactivatedEvent(detectedEventType)) {
-                logger.debug("Skipping event - not TenantDeactivatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
+                log.debug("Skipping event - not TenantDeactivatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
                 acknowledgment.acknowledge();
                 return;
             }
@@ -65,7 +62,7 @@ public class TenantDeactivatedEventListener {
             String tenantIdString = extractTenantIdFromEvent(eventData);
             TenantId tenantId = TenantId.of(tenantIdString);
 
-            logger.info("Received TenantDeactivatedEvent: tenantId={}, eventId={}, eventDataKeys={}", tenantId.getValue(), extractEventId(eventData), eventData.keySet());
+            log.info("Received TenantDeactivatedEvent: tenantId={}, eventId={}, eventDataKeys={}", tenantId.getValue(), extractEventId(eventData), eventData.keySet());
 
             // Set tenant context for multi-tenant schema resolution
             TenantContext.setTenantId(tenantId);
@@ -74,16 +71,16 @@ public class TenantDeactivatedEventListener {
                 EmailAddress tenantEmail = tenantServicePort.getTenantEmail(tenantId);
 
                 // Create tenant deactivation notification
-                // Use tenantId as recipientUserId placeholder since tenant notifications don't target a specific user
+                // Use system user ID (00000000-0000-0000-0000-000000000000) for tenant notifications since they don't target a specific user
                 CreateNotificationCommand command =
-                        CreateNotificationCommand.builder().tenantId(tenantId).recipientUserId(UserId.of(tenantId.getValue())).recipientEmail(tenantEmail)
-                                .title(Title.of("Tenant Deactivated"))
+                        CreateNotificationCommand.builder().tenantId(tenantId).recipientUserId(UserId.of(UUID.fromString("00000000-0000-0000-0000-000000000000")))
+                                .recipientEmail(tenantEmail).title(Title.of("Tenant Deactivated"))
                                 .message(Message.of("Your tenant account has been deactivated. Please contact your administrator for more information."))
                                 .type(NotificationType.TENANT_DEACTIVATED).build();
 
                 createNotificationCommandHandler.handle(command);
 
-                logger.info("Created tenant deactivation notification for tenant: tenantId={}, email={}", tenantId.getValue(), tenantEmail.getValue());
+                log.info("Created tenant deactivation notification for tenant: tenantId={}, email={}", tenantId.getValue(), tenantEmail.getValue());
 
                 // Acknowledge message
                 acknowledgment.acknowledge();
@@ -93,10 +90,10 @@ public class TenantDeactivatedEventListener {
             }
         } catch (IllegalArgumentException e) {
             // Invalid event format - acknowledge to skip (don't retry malformed events)
-            logger.error("Invalid event format for TenantDeactivatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
+            log.error("Invalid event format for TenantDeactivatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             acknowledgment.acknowledge();
         } catch (Exception e) {
-            logger.error("Failed to process TenantDeactivatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
+            log.error("Failed to process TenantDeactivatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             // Don't acknowledge - will retry for transient failures
             throw new RuntimeException("Failed to process TenantDeactivatedEvent", e);
         } finally {
@@ -119,11 +116,11 @@ public class TenantDeactivatedEventListener {
                 if (correlationIdObj != null) {
                     String correlationId = correlationIdObj.toString();
                     CorrelationContext.setCorrelationId(correlationId);
-                    logger.debug("Set correlation ID from event metadata: {}", correlationId);
+                    log.debug("Set correlation ID from event metadata: {}", correlationId);
                 }
             }
         } catch (Exception e) {
-            logger.warn("Failed to extract correlation ID from event metadata: {}", e.getMessage());
+            log.warn("Failed to extract correlation ID from event metadata: {}", e.getMessage());
             // Continue processing even if correlation ID extraction fails
         }
     }
@@ -146,17 +143,17 @@ public class TenantDeactivatedEventListener {
             String className = (String) classObj;
             if (className.contains(".")) {
                 String simpleName = className.substring(className.lastIndexOf('.') + 1);
-                logger.debug("Detected event type from @class field: {}", simpleName);
+                log.debug("Detected event type from @class field: {}", simpleName);
                 return simpleName;
             }
-            logger.debug("Detected event type from @class field: {}", className);
+            log.debug("Detected event type from @class field: {}", className);
             return className;
         }
 
         // Check header if @class is not available
         if (headerType != null) {
             String simpleName = headerType.contains(".") ? headerType.substring(headerType.lastIndexOf('.') + 1) : headerType;
-            logger.debug("Detected event type from header: {}", simpleName);
+            log.debug("Detected event type from header: {}", simpleName);
             return simpleName;
         }
 
@@ -176,7 +173,7 @@ public class TenantDeactivatedEventListener {
             // This could be TenantActivatedEvent, TenantDeactivatedEvent, or TenantSuspendedEvent
             // Without @class or header, default to TenantDeactivatedEvent for this listener
             // The isTenantDeactivatedEvent check will determine if we should process it
-            logger.debug("No @class or header found, defaulting to TenantDeactivatedEvent for aggregateType=Tenant");
+            log.debug("No @class or header found, defaulting to TenantDeactivatedEvent for aggregateType=Tenant");
             return "TenantDeactivatedEvent";
         }
 

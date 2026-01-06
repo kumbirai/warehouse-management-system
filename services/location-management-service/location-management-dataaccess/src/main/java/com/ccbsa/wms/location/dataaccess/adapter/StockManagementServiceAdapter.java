@@ -95,12 +95,15 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
                     return StockItemValidationResult.invalid("Stock item not found");
                 }
 
-                // Validate quantity is sufficient
-                if (stockItemResponse.getQuantity() == null || stockItemResponse.getQuantity() < quantity.getValue()) {
-                    log.warn("Stock item has insufficient quantity: available={}, required={}", stockItemResponse.getQuantity(), quantity.getValue());
-                    return StockItemValidationResult.invalid(
-                            String.format("Insufficient quantity. Available: %d, Required: %d", stockItemResponse.getQuantity() != null ? stockItemResponse.getQuantity() : 0,
-                                    quantity.getValue()));
+                // Validate available quantity is sufficient (total - allocated)
+                int totalQuantity = stockItemResponse.getQuantity() != null ? stockItemResponse.getQuantity() : 0;
+                int allocatedQuantity = stockItemResponse.getAllocatedQuantity() != null ? stockItemResponse.getAllocatedQuantity() : 0;
+                int availableQuantity = Math.max(0, totalQuantity - allocatedQuantity);
+
+                if (availableQuantity < quantity.getValue()) {
+                    log.warn("Stock item has insufficient available quantity: total={}, allocated={}, available={}, required={}", totalQuantity, allocatedQuantity,
+                            availableQuantity, quantity.getValue());
+                    return StockItemValidationResult.invalid(String.format("Insufficient quantity. Available: %d, Required: %d", availableQuantity, quantity.getValue()));
                 }
 
                 // Extract product ID
@@ -283,6 +286,7 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
         private String productId;
         private String locationId;
         private Integer quantity;
+        private Integer allocatedQuantity;
         private String expirationDate;
         private String classification;
         private String createdAt;
@@ -323,6 +327,15 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
         @SuppressWarnings("unused")
         public void setQuantity(Integer quantity) {
             this.quantity = quantity;
+        }
+
+        public Integer getAllocatedQuantity() {
+            return allocatedQuantity;
+        }
+
+        @SuppressWarnings("unused")
+        public void setAllocatedQuantity(Integer allocatedQuantity) {
+            this.allocatedQuantity = allocatedQuantity;
         }
 
         @SuppressWarnings("unused")

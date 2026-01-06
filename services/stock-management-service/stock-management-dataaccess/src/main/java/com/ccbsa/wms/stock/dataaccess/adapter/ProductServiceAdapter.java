@@ -16,6 +16,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.ccbsa.common.application.api.ApiResponse;
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
 import com.ccbsa.wms.stock.application.service.exception.ProductServiceException;
@@ -95,6 +96,16 @@ public class ProductServiceAdapter implements ProductServicePort {
             throw new ProductServiceException(
                     String.format("Product service error (status %s): %s", e.getStatusCode(), e.getResponseBodyAsString() != null ? e.getResponseBodyAsString() : e.getMessage()),
                     e);
+        } catch (IllegalArgumentException e) {
+            // Handle LoadBalancer service discovery failures
+            if (e.getMessage() != null && e.getMessage().contains("Service Instance cannot be null")) {
+                log.error("Product service not found in service registry (Eureka). Please ensure product-service is running and registered with Eureka: barcode={}, serviceUrl={}",
+                        barcode, productServiceUrl, e);
+                throw new ProductServiceException(String.format(
+                        "Product service is not available. The service may not be running or not registered with service discovery. Please contact system administrator."), e);
+            }
+            log.error("Invalid argument when calling product-service: barcode={}, error={}", barcode, e.getMessage(), e);
+            throw new ProductServiceException(String.format("Product service error: %s", e.getMessage()), e);
         } catch (RestClientException e) {
             log.error("Failed to validate product barcode from product-service: barcode={}, error={}", barcode, e.getMessage(), e);
             throw new ProductServiceException(String.format("Product service is temporarily unavailable. Please try again later."), e);
@@ -144,11 +155,85 @@ public class ProductServiceAdapter implements ProductServicePort {
             throw new ProductServiceException(
                     String.format("Product service error (status %s): %s", e.getStatusCode(), e.getResponseBodyAsString() != null ? e.getResponseBodyAsString() : e.getMessage()),
                     e);
+        } catch (IllegalArgumentException e) {
+            // Handle LoadBalancer service discovery failures
+            if (e.getMessage() != null && e.getMessage().contains("Service Instance cannot be null")) {
+                log.error(
+                        "Product service not found in service registry (Eureka). Please ensure product-service is running and registered with Eureka: productCode={}, "
+                                + "serviceUrl={}",
+                        productCode.getValue(), productServiceUrl, e);
+                throw new ProductServiceException(String.format(
+                        "Product service is not available. The service may not be running or not registered with service discovery. Please contact system administrator."), e);
+            }
+            log.error("Invalid argument when calling product-service: productCode={}, error={}", productCode.getValue(), e.getMessage(), e);
+            throw new ProductServiceException(String.format("Product service error: %s", e.getMessage()), e);
         } catch (RestClientException e) {
             log.error("Failed to get product by code from product-service: productCode={}, error={}", productCode.getValue(), e.getMessage(), e);
             throw new ProductServiceException(String.format("Product service is temporarily unavailable. Please try again later."), e);
         } catch (Exception e) {
             log.error("Unexpected error getting product by code: productCode={}", productCode.getValue(), e);
+            throw new ProductServiceException(String.format("Product service error: %s", e.getMessage()), e);
+        }
+    }
+
+    @Override
+    public Optional<ProductInfo> getProductById(ProductId productId, TenantId tenantId) {
+        log.debug("Getting product by ID from product-service: productId={}, tenantId={}", productId.getValueAsString(), tenantId.getValue());
+
+        try {
+            String url = String.format("%s/api/v1/products/%s", productServiceUrl, productId.getValueAsString());
+            log.debug("Calling product service: {}", url);
+
+            // Service-to-service authentication is handled automatically by ServiceAccountAuthenticationInterceptor
+            HttpHeaders headers = new HttpHeaders();
+
+            // Set X-Tenant-Id header (required by product service)
+            headers.set("X-Tenant-Id", tenantId.getValue());
+            log.debug("Setting X-Tenant-Id header: {}", tenantId.getValue());
+
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<ApiResponse<ProductResponse>> response = restTemplate.exchange(url, HttpMethod.GET, entity, PRODUCT_RESPONSE_TYPE);
+
+            ApiResponse<ProductResponse> responseBody = response.getBody();
+            if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
+                ProductResponse productResponse = responseBody.getData();
+                ProductInfo productInfo =
+                        new ProductInfo(productResponse.getProductId(), productResponse.getProductCode(), productResponse.getDescription(), productResponse.getPrimaryBarcode());
+                log.debug("Product retrieved by ID: productId={}, productCode={}", productResponse.getProductId(), productResponse.getProductCode());
+                return Optional.of(productInfo);
+            }
+
+            return Optional.empty();
+        } catch (HttpClientErrorException.NotFound e) {
+            log.warn("Product not found by ID: {}", productId.getValueAsString());
+            return Optional.empty();
+        } catch (HttpClientErrorException.Unauthorized e) {
+            log.error("Unauthorized access to product-service: productId={}, status={}, response={}", productId.getValueAsString(), e.getStatusCode(), e.getResponseBodyAsString(),
+                    e);
+            throw new ProductServiceException(String.format("Product service authentication failed. Please check service account configuration."), e);
+        } catch (HttpServerErrorException e) {
+            log.error("Product service returned server error: productId={}, status={}, response={}", productId.getValueAsString(), e.getStatusCode(), e.getResponseBodyAsString(),
+                    e);
+            throw new ProductServiceException(
+                    String.format("Product service error (status %s): %s", e.getStatusCode(), e.getResponseBodyAsString() != null ? e.getResponseBodyAsString() : e.getMessage()),
+                    e);
+        } catch (IllegalArgumentException e) {
+            // Handle LoadBalancer service discovery failures
+            if (e.getMessage() != null && e.getMessage().contains("Service Instance cannot be null")) {
+                log.error(
+                        "Product service not found in service registry (Eureka). Please ensure product-service is running and registered with Eureka: productId={}, serviceUrl={}",
+                        productId.getValueAsString(), productServiceUrl, e);
+                throw new ProductServiceException(String.format(
+                        "Product service is not available. The service may not be running or not registered with service discovery. Please contact system administrator."), e);
+            }
+            log.error("Invalid argument when calling product-service: productId={}, error={}", productId.getValueAsString(), e.getMessage(), e);
+            throw new ProductServiceException(String.format("Product service error: %s", e.getMessage()), e);
+        } catch (RestClientException e) {
+            log.error("Failed to get product by ID from product-service: productId={}, error={}", productId.getValueAsString(), e.getMessage(), e);
+            throw new ProductServiceException(String.format("Product service is temporarily unavailable. Please try again later."), e);
+        } catch (Exception e) {
+            log.error("Unexpected error getting product by ID: productId={}", productId.getValueAsString(), e);
             throw new ProductServiceException(String.format("Product service error: %s", e.getMessage()), e);
         }
     }

@@ -1,6 +1,7 @@
 import { AppBar, Box, Button, Toolbar, Typography } from '@mui/material';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { NotificationBadge } from '../../features/notification-management/components/NotificationBadge';
 
 export function Header() {
   const { isAuthenticated, user, logout, isSystemAdmin } = useAuth();
@@ -42,6 +43,7 @@ export function Header() {
                 Tenants
               </Button>
             )}
+            <NotificationBadge />
             <Typography variant="body2">{user?.firstName || user?.username}</Typography>
             <Button color="inherit" onClick={handleLogout}>
               Logout

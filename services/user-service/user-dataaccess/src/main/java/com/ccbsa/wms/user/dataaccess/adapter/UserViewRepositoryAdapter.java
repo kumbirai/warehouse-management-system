@@ -302,14 +302,12 @@ public class UserViewRepositoryAdapter implements UserViewRepository {
                 // Status filter + 4 search patterns (username, email, firstName, lastName)
                 unionParts.add(String.format(
                         "SELECT %s FROM %s.users WHERE status = ? AND (LOWER(username) LIKE ? OR LOWER(email_address) LIKE ? OR LOWER(COALESCE(first_name, '')) LIKE ? OR LOWER"
-                                + "(COALESCE(last_name, '')) LIKE ?)",
-                        columns, escapedSchema));
+                                + "(COALESCE(last_name, '')) LIKE ?)", columns, escapedSchema));
             } else {
                 // 4 search patterns (username, email, firstName, lastName)
                 unionParts.add(String.format(
                         "SELECT %s FROM %s.users WHERE LOWER(username) LIKE ? OR LOWER(email_address) LIKE ? OR LOWER(COALESCE(first_name, '')) LIKE ? OR LOWER(COALESCE"
-                                + "(last_name, '')) LIKE ?",
-                        columns, escapedSchema));
+                                + "(last_name, '')) LIKE ?", columns, escapedSchema));
             }
         }
 

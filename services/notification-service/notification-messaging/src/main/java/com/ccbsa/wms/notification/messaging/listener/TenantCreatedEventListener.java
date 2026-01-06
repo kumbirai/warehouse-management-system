@@ -2,15 +2,16 @@ package com.ccbsa.wms.notification.messaging.listener;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ccbsa.common.application.context.CorrelationContext;
 import com.ccbsa.common.domain.valueobject.EmailAddress;
@@ -25,6 +26,8 @@ import com.ccbsa.wms.notification.application.service.port.service.TenantService
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
 
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Event Listener: TenantCreatedEventListener
@@ -33,17 +36,12 @@ import jakarta.annotation.PostConstruct;
  * <p>
  * Uses local DTO to avoid tight coupling with tenant-service domain classes.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class TenantCreatedEventListener {
-    private static final Logger logger = LoggerFactory.getLogger(TenantCreatedEventListener.class);
-
     private final CreateNotificationCommandHandler createNotificationCommandHandler;
     private final TenantServicePort tenantServicePort;
-
-    public TenantCreatedEventListener(CreateNotificationCommandHandler createNotificationCommandHandler, TenantServicePort tenantServicePort) {
-        this.createNotificationCommandHandler = createNotificationCommandHandler;
-        this.tenantServicePort = tenantServicePort;
-    }
 
     /**
      * Initializes the listener and logs registration status.
@@ -52,23 +50,24 @@ public class TenantCreatedEventListener {
      */
     @PostConstruct
     public void init() {
-        logger.info("TenantCreatedEventListener initialized and ready to consume TenantCreatedEvent from topic 'tenant-events' with groupId 'notification-service'");
+        log.info("TenantCreatedEventListener initialized and ready to consume TenantCreatedEvent from topic 'tenant-events' with groupId 'notification-service'");
     }
 
     @KafkaListener(topics = "tenant-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
                        @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
-        logger.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));
+        log.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));
         try {
             // Extract and set correlation ID from event metadata for traceability
             extractAndSetCorrelationId(eventData);
 
             // Detect event type from payload (class name or aggregateType field) or header
             String detectedEventType = detectEventType(eventData, eventType);
-            logger.info("Event type detection: detectedType={}, headerType={}, eventDataKeys={}, aggregateType={}", detectedEventType, eventType, eventData.keySet(),
+            log.info("Event type detection: detectedType={}, headerType={}, eventDataKeys={}, aggregateType={}", detectedEventType, eventType, eventData.keySet(),
                     eventData.get("aggregateType"));
             if (!isTenantCreatedEvent(detectedEventType)) {
-                logger.debug("Skipping event - not TenantCreatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
+                log.debug("Skipping event - not TenantCreatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
                 acknowledgment.acknowledge();
                 return;
             }
@@ -78,7 +77,7 @@ public class TenantCreatedEventListener {
             String tenantIdString = extractTenantIdFromEvent(eventData);
             TenantId tenantId = TenantId.of(tenantIdString);
 
-            logger.info("Received TenantCreatedEvent: tenantId={}, eventId={}, eventDataKeys={}", tenantId.getValue(), extractEventId(eventData), eventData.keySet());
+            log.info("Received TenantCreatedEvent: tenantId={}, eventId={}, eventDataKeys={}", tenantId.getValue(), extractEventId(eventData), eventData.keySet());
 
             // Set tenant context for multi-tenant schema resolution
             TenantContext.setTenantId(tenantId);
@@ -87,22 +86,25 @@ public class TenantCreatedEventListener {
                 Optional<EmailAddress> tenantEmailOpt = extractEmailFromEvent(eventData, tenantId);
 
                 // Create tenant creation notification
-                // Use tenantId as recipientUserId placeholder since tenant notifications don't target a specific user
+                // Use system user ID (00000000-0000-0000-0000-000000000000) for tenant notifications since they don't target a specific user
                 CreateNotificationCommand.Builder commandBuilder =
-                        CreateNotificationCommand.builder().tenantId(tenantId).recipientUserId(UserId.of(tenantId.getValue())).title(Title.of("New Tenant Created"))
-                                .message(Message.of("A new tenant account has been created. Please wait for activation.")).type(NotificationType.TENANT_CREATED);
+                        CreateNotificationCommand.builder().tenantId(tenantId).recipientUserId(UserId.of(UUID.fromString("00000000-0000-0000-0000-000000000000")))
+                                .title(Title.of("New Tenant Created")).message(Message.of("A new tenant account has been created. Please wait for activation."))
+                                .type(NotificationType.TENANT_CREATED);
 
                 // Set email if available
                 tenantEmailOpt.ifPresent(commandBuilder::recipientEmail);
 
                 CreateNotificationCommand command = commandBuilder.build();
 
-                createNotificationCommandHandler.handle(command);
+                // Process notification creation in a separate transaction to ensure proper connection management
+                // This ensures connections are properly released after each transaction, preventing connection leaks
+                createNotificationInTransaction(command, tenantId);
 
                 if (tenantEmailOpt.isPresent()) {
-                    logger.info("Created tenant creation notification for tenant: tenantId={}, email={}", tenantId.getValue(), tenantEmailOpt.get().getValue());
+                    log.info("Created tenant creation notification for tenant: tenantId={}, email={}", tenantId.getValue(), tenantEmailOpt.get().getValue());
                 } else {
-                    logger.warn("Created tenant creation notification for tenant without email: tenantId={}. Email delivery will be skipped.", tenantId.getValue());
+                    log.warn("Created tenant creation notification for tenant without email: tenantId={}. Email delivery will be skipped.", tenantId.getValue());
                 }
 
                 // Acknowledge message
@@ -113,10 +115,10 @@ public class TenantCreatedEventListener {
             }
         } catch (IllegalArgumentException e) {
             // Invalid event format - acknowledge to skip (don't retry malformed events)
-            logger.error("Invalid event format for TenantCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
+            log.error("Invalid event format for TenantCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             acknowledgment.acknowledge();
         } catch (Exception e) {
-            logger.error("Failed to process TenantCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
+            log.error("Failed to process TenantCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             // Don't acknowledge - will retry for transient failures
             throw new RuntimeException("Failed to process TenantCreatedEvent", e);
         } finally {
@@ -139,11 +141,11 @@ public class TenantCreatedEventListener {
                 if (correlationIdObj != null) {
                     String correlationId = correlationIdObj.toString();
                     CorrelationContext.setCorrelationId(correlationId);
-                    logger.debug("Set correlation ID from event metadata: {}", correlationId);
+                    log.debug("Set correlation ID from event metadata: {}", correlationId);
                 }
             }
         } catch (Exception e) {
-            logger.warn("Failed to extract correlation ID from event metadata: {}", e.getMessage());
+            log.warn("Failed to extract correlation ID from event metadata: {}", e.getMessage());
             // Continue processing even if correlation ID extraction fails
         }
     }
@@ -271,14 +273,14 @@ public class TenantCreatedEventListener {
                     try {
                         return Optional.of(EmailAddress.of((String) valueObj));
                     } catch (IllegalArgumentException e) {
-                        logger.warn("Invalid email format in event payload: tenantId={}, email={}", tenantId.getValue(), valueObj, e);
+                        log.warn("Invalid email format in event payload: tenantId={}, email={}", tenantId.getValue(), valueObj, e);
                     }
                 }
             } else if (emailObj instanceof String && !((String) emailObj).trim().isEmpty()) {
                 try {
                     return Optional.of(EmailAddress.of((String) emailObj));
                 } catch (IllegalArgumentException e) {
-                    logger.warn("Invalid email format in event payload: tenantId={}, email={}", tenantId.getValue(), emailObj, e);
+                    log.warn("Invalid email format in event payload: tenantId={}, email={}", tenantId.getValue(), emailObj, e);
                 }
             }
         }
@@ -289,10 +291,33 @@ public class TenantCreatedEventListener {
             return Optional.of(email);
         } catch (Exception e) {
             // Log warning but don't fail - email is optional for tenant notifications
-            logger.warn("Failed to retrieve tenant email from tenant-service: tenantId={}, error={}. Notification will be created without email.", tenantId.getValue(),
+            log.warn("Failed to retrieve tenant email from tenant-service: tenantId={}, error={}. Notification will be created without email.", tenantId.getValue(),
                     e.getMessage());
             return Optional.empty();
         }
+    }
+
+    /**
+     * Creates notification in a separate transaction to ensure proper connection management.
+     * <p>
+     * This method runs in its own transaction (REQUIRES_NEW), ensuring connections are properly released
+     * after the transaction completes, preventing connection leaks.
+     *
+     * @param command  Create notification command
+     * @param tenantId Tenant identifier
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private void createNotificationInTransaction(CreateNotificationCommand command, TenantId tenantId) {
+        // Ensure tenant context is set (may be cleared between method calls)
+        TenantId currentTenantId = TenantContext.getTenantId();
+        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
+            log.warn("Tenant context missing or incorrect: expected={}, actual={}. Re-setting.", tenantId.getValue(),
+                    currentTenantId != null ? currentTenantId.getValue() : "null");
+            TenantContext.setTenantId(tenantId);
+        }
+        log.debug("Creating notification in transaction: tenantId={}", tenantId.getValue());
+
+        createNotificationCommandHandler.handle(command);
     }
 }
 

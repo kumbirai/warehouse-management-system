@@ -3,8 +3,6 @@ package com.ccbsa.wms.common.dataaccess.naming;
 import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -12,6 +10,8 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Hibernate PhysicalNamingStrategy that dynamically resolves tenant schema at runtime.
@@ -32,10 +32,9 @@ import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
  * }
  * </pre>
  */
+@Slf4j
 @Component
 public class TenantAwarePhysicalNamingStrategy implements PhysicalNamingStrategy, ApplicationContextAware {
-
-    private static final Logger logger = LoggerFactory.getLogger(TenantAwarePhysicalNamingStrategy.class);
     private static final String PLACEHOLDER_SCHEMA = "tenant_schema";
 
     private ApplicationContext applicationContext;
@@ -71,16 +70,16 @@ public class TenantAwarePhysicalNamingStrategy implements PhysicalNamingStrategy
                 if (resolver != null) {
                     String resolvedSchema = resolver.resolveSchema();
                     // Log schema resolution for debugging
-                    logger.info("Resolved schema '{}' to '{}'", PLACEHOLDER_SCHEMA, resolvedSchema);
+                    log.info("Resolved schema '{}' to '{}'", PLACEHOLDER_SCHEMA, resolvedSchema);
                     return Identifier.toIdentifier(resolvedSchema, identifier.isQuoted());
                 } else {
-                    logger.warn("TenantSchemaResolver not available - using default schema");
+                    log.warn("TenantSchemaResolver not available - using default schema");
                 }
             } catch (IllegalStateException e) {
                 // Tenant context not set - this is expected during Hibernate initialization at startup
                 // Return null to use default schema (public) where Flyway creates tables
                 // The actual tenant schema will be resolved at runtime when tenant context is available
-                logger.debug("Tenant context not set when resolving schema '{}' during initialization: {}. Using default schema (public). This is expected during startup.",
+                log.debug("Tenant context not set when resolving schema '{}' during initialization: {}. Using default schema (public). This is expected during startup.",
                         PLACEHOLDER_SCHEMA, e.getMessage());
                 return null;
             }

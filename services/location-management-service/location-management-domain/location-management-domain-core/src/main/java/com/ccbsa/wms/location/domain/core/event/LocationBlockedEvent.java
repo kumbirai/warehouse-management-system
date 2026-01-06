@@ -3,6 +3,7 @@ package com.ccbsa.wms.location.domain.core.event;
 import java.time.LocalDateTime;
 
 import com.ccbsa.common.domain.EventMetadata;
+import com.ccbsa.common.domain.valueobject.Description;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
@@ -22,7 +23,7 @@ public class LocationBlockedEvent extends LocationManagementEvent {
     private final LocationId locationId;
     private final TenantId tenantId;
     private final UserId blockedBy;
-    private final String reason;
+    private final Description reason;
     private final LocalDateTime blockedAt;
 
     /**
@@ -34,7 +35,7 @@ public class LocationBlockedEvent extends LocationManagementEvent {
      * @param reason     Reason for blocking
      * @param blockedAt  Block timestamp
      */
-    public LocationBlockedEvent(LocationId locationId, TenantId tenantId, UserId blockedBy, String reason, LocalDateTime blockedAt) {
+    public LocationBlockedEvent(LocationId locationId, TenantId tenantId, UserId blockedBy, Description reason, LocalDateTime blockedAt) {
         super(locationId);
         this.locationId = locationId;
         this.tenantId = tenantId;
@@ -53,7 +54,7 @@ public class LocationBlockedEvent extends LocationManagementEvent {
      * @param blockedAt  Block timestamp
      * @param metadata   Event metadata (correlation ID, user ID, etc.)
      */
-    public LocationBlockedEvent(LocationId locationId, TenantId tenantId, UserId blockedBy, String reason, LocalDateTime blockedAt, EventMetadata metadata) {
+    public LocationBlockedEvent(LocationId locationId, TenantId tenantId, UserId blockedBy, Description reason, LocalDateTime blockedAt, EventMetadata metadata) {
         super(locationId, metadata);
         this.locationId = locationId;
         this.tenantId = tenantId;
@@ -74,7 +75,7 @@ public class LocationBlockedEvent extends LocationManagementEvent {
         return blockedBy;
     }
 
-    public String getReason() {
+    public Description getReason() {
         return reason;
     }
 

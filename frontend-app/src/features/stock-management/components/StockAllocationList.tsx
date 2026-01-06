@@ -1,6 +1,7 @@
 import { Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { Column, getStatusVariant, ResponsiveTable, StatusBadge } from '../../../components/common';
+import { Column, ResponsiveTable, StatusBadge } from '../../../components/common';
+import { getStatusVariant } from '../../../utils/statusUtils';
 import { StockAllocationResponse } from '../types/stockManagement';
 import { Routes } from '../../../utils/navigationUtils';
 import { formatDateTime } from '../../../utils/dateUtils';

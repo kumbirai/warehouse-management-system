@@ -11,6 +11,17 @@ spring:
     username: ${DATABASE_USERNAME:${DB_USER:postgres}}
     password: ${DATABASE_PASSWORD:${DB_PASSWORD:secret}}
     driver-class-name: org.postgresql.Driver
+    # HikariCP Connection Pool Configuration
+    # Increased pool size to handle concurrent Kafka listeners (3) + HTTP requests
+    # Each listener may make database calls and service-to-service calls
+    hikari:
+      minimum-idle: 5                    # Minimum idle connections
+      maximum-pool-size: 20               # Maximum pool size (increased from default 10)
+      connection-timeout: 30000           # 30 seconds timeout for getting connection
+      idle-timeout: 600000                # 10 minutes - close idle connections
+      max-lifetime: 1800000               # 30 minutes - maximum connection lifetime
+      leak-detection-threshold: 60000     # 60 seconds - detect connection leaks
+      connection-test-query: SELECT 1    # Connection validation query
   
   # JPA Configuration
   jpa:
@@ -143,11 +154,25 @@ management:
 logging:
   level:
     root: INFO
+    # Application packages - DEBUG for business logic debugging
     com.ccbsa.wms.product: INFO
     com.ccbsa.wms.product.application: DEBUG
-    org.springframework.security: WARN
+    # Spring Framework - INFO to reduce noise (RestTemplate, etc.)
+    org.springframework: INFO
     org.springframework.web: INFO
+    org.springframework.web.client.RestTemplate: INFO
+    # Spring Security - WARN to avoid exposing security details
+    org.springframework.security: WARN
+    # Hibernate - INFO for SQL visibility without excessive verbosity
+    org.hibernate.SQL: INFO
+    org.hibernate.type.descriptor.sql.BasicBinder: INFO
+    # Keycloak - WARN to reduce authentication noise
     org.keycloak: WARN
+    # Kafka - INFO for messaging visibility
+    org.springframework.kafka: INFO
+    # Eureka/Discovery - INFO to avoid RestTemplate noise
+    com.netflix.discovery: INFO
+    com.netflix.eureka: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"

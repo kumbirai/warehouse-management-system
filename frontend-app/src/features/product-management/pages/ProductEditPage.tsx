@@ -6,6 +6,7 @@ import { useProduct } from '../hooks/useProduct';
 import { CreateProductRequest, UpdateProductRequest } from '../types/product';
 import { useAuth } from '../../../hooks/useAuth';
 import { FormPageLayout } from '../../../components/layouts';
+import { SkeletonForm } from '../../../components/common';
 import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 
 export const ProductEditPage = () => {
@@ -19,6 +20,21 @@ export const ProductEditPage = () => {
     productId || '',
     user?.tenantId || ''
   );
+
+  // Convert Product to form default values - memoized to prevent unnecessary re-renders
+  // Must be called before any early returns to follow React Hooks rules
+  const defaultValues = useMemo(() => {
+    if (!product) return undefined;
+    return {
+      productCode: product.productCode,
+      description: product.description,
+      primaryBarcode: product.primaryBarcode,
+      unitOfMeasure: product.unitOfMeasure,
+      secondaryBarcodes: product.secondaryBarcodes || [],
+      category: product.category || '',
+      brand: product.brand || '',
+    };
+  }, [product]);
 
   if (!productId) {
     navigate(Routes.products);
@@ -53,20 +69,6 @@ export const ProductEditPage = () => {
     navigate(Routes.productDetail(validProductId));
   };
 
-  // Convert Product to form default values - memoized to prevent unnecessary re-renders
-  const defaultValues = useMemo(() => {
-    if (!product) return undefined;
-    return {
-      productCode: product.productCode,
-      description: product.description,
-      primaryBarcode: product.primaryBarcode,
-      unitOfMeasure: product.unitOfMeasure,
-      secondaryBarcodes: product.secondaryBarcodes || [],
-      category: product.category || '',
-      brand: product.brand || '',
-    };
-  }, [product]);
-
   return (
     <FormPageLayout
       breadcrumbs={getBreadcrumbs.productEdit()}
@@ -76,7 +78,7 @@ export const ProductEditPage = () => {
       maxWidth="md"
     >
       {isLoadingProduct ? (
-        <div>Loading product data...</div>
+        <SkeletonForm fields={8} />
       ) : (
         <ProductForm
           key={product?.productId}

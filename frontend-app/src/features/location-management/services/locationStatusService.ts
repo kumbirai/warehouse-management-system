@@ -1,5 +1,6 @@
 import apiClient from '../../../services/apiClient';
 import { ApiResponse } from '../../../types/api';
+import { BlockLocationRequest } from '../types/location';
 
 /**
  * Location Status Service
@@ -22,14 +23,19 @@ const BASE_PATH = '/location-management/locations';
 export const locationStatusService = {
   /**
    * Blocks a location.
+   * @param locationId - The location ID to block
+   * @param reason - Required reason for blocking the location (for audit trail)
+   * @param tenantId - The tenant ID
    */
   async blockLocation(
     locationId: string,
+    reason: string,
     tenantId: string
   ): Promise<ApiResponse<BlockLocationResponse>> {
+    const request: BlockLocationRequest = { reason };
     const response = await apiClient.post<ApiResponse<BlockLocationResponse>>(
       `${BASE_PATH}/${locationId}/block`,
-      {},
+      request,
       {
         headers: {
           'X-Tenant-Id': tenantId,

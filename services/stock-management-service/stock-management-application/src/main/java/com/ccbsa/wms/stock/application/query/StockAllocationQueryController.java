@@ -52,7 +52,7 @@ public class StockAllocationQueryController {
 
     @GetMapping("/{allocationId}")
     @Operation(summary = "Get Stock Allocation by ID", description = "Retrieves a stock allocation by ID")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER', 'SERVICE')")
     public ResponseEntity<ApiResponse<StockAllocationQueryDTO>> getStockAllocation(@PathVariable String allocationId, @RequestHeader("X-Tenant-Id") String tenantId) {
         // Map to query
         GetStockAllocationQuery query = mapper.toGetStockAllocationQuery(allocationId, tenantId);
@@ -68,7 +68,7 @@ public class StockAllocationQueryController {
 
     @GetMapping
     @Operation(summary = "List Stock Allocations", description = "Retrieves a list of stock allocations with optional filtering")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER', 'SERVICE')")
     public ResponseEntity<ApiResponse<ListStockAllocationsQueryResultDTO>> listStockAllocations(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                                                 @RequestParam(required = false) String productId,
                                                                                                 @RequestParam(required = false) String locationId,

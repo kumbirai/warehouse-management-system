@@ -18,6 +18,10 @@
 -- Create validation table in public schema for Hibernate schema validation
 -- This table is only used during application startup for schema validation.
 -- At runtime, all operations use tenant-specific schemas (tenant_{tenant_id}_schema).
+--
+-- Note: When Flyway runs with .schemas(schemaName), it automatically sets the search_path
+-- to that schema. Tables created without schema qualifier will be created in the current
+-- schema (the one specified in Flyway configuration).
 CREATE TABLE IF NOT EXISTS notifications
 (
     id

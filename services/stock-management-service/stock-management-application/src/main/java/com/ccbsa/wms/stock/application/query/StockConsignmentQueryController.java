@@ -49,12 +49,13 @@ public class StockConsignmentQueryController {
 
     @GetMapping
     @Operation(summary = "List Consignments", description = "Retrieves a paginated list of consignments")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER', 'SERVICE')")
     public ResponseEntity<ApiResponse<List<ConsignmentQueryDTO>>> listConsignments(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                                    @RequestParam(value = "page", defaultValue = "0") Integer page,
-                                                                                   @RequestParam(value = "size", defaultValue = "10") Integer size) {
+                                                                                   @RequestParam(value = "size", defaultValue = "10") Integer size,
+                                                                                   @RequestParam(value = "expiringWithinDays", required = false) Integer expiringWithinDays) {
         // Map to query
-        ListConsignmentsQuery query = mapper.toListConsignmentsQuery(tenantId, page, size);
+        ListConsignmentsQuery query = mapper.toListConsignmentsQuery(tenantId, page, size, expiringWithinDays);
 
         // Execute query
         ListConsignmentsQueryResult result = listConsignmentsQueryHandler.handle(query);
@@ -67,7 +68,7 @@ public class StockConsignmentQueryController {
 
     @GetMapping("/{consignmentId}")
     @Operation(summary = "Get Consignment", description = "Retrieves a consignment by ID")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER', 'SERVICE')")
     public ResponseEntity<ApiResponse<ConsignmentQueryDTO>> getConsignment(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable String consignmentId) {
         // Map to query
         GetConsignmentQuery query = mapper.toGetConsignmentQuery(consignmentId, tenantId);

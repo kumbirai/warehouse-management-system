@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.ccbsa.common.cache.warming.CacheWarmingService;
@@ -13,6 +11,9 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.user.application.service.port.repository.UserRepository;
 import com.ccbsa.wms.user.domain.core.entity.User;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * User Service Cache Warming.
@@ -31,16 +32,11 @@ import com.ccbsa.wms.user.domain.core.entity.User;
  * avoiding dependency on tenant service during startup. Cache warming failures are
  * handled gracefully and do not prevent application startup.
  */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserCacheWarmingService extends CacheWarmingService {
-
-    private static final Logger log = LoggerFactory.getLogger(UserCacheWarmingService.class);
-
     private final UserRepository userRepository;
-
-    public UserCacheWarmingService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     @Override
     protected void performCacheWarming() {

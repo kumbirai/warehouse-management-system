@@ -7,8 +7,6 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -27,15 +25,17 @@ import org.springframework.util.backoff.ExponentialBackOff;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Kafka error handling configuration with dead letter queue support.
  * <p>
  * Provides: - Dead letter topic publishing for failed messages - Exponential backoff retry mechanism - Error handlers for listener containers - Configurable retry attempts and
  * intervals
  */
+@Slf4j
 @Configuration
 public class KafkaErrorHandlingConfig {
-    private static final Logger logger = LoggerFactory.getLogger(KafkaErrorHandlingConfig.class);
 
     @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
     private String bootstrapServers;
@@ -136,7 +136,7 @@ public class KafkaErrorHandlingConfig {
         return new DeadLetterPublishingRecoverer(kafkaTemplate, (record, ex) -> {
             String originalTopic = record.topic();
             String dlqTopic = originalTopic + deadLetterTopicSuffix;
-            logger.warn("Publishing failed message to dead letter topic: {} -> {}", originalTopic, dlqTopic);
+            log.warn("Publishing failed message to dead letter topic: {} -> {}", originalTopic, dlqTopic);
             return new org.apache.kafka.common.TopicPartition(dlqTopic, record.partition());
         });
     }
@@ -166,7 +166,7 @@ public class KafkaErrorHandlingConfig {
                 org.springframework.kafka.support.serializer.DeserializationException.class);
 
         errorHandler.setRetryListeners((record, ex, deliveryAttempt) -> {
-            logger.warn("Retry attempt {} for message from topic {}: {}", deliveryAttempt, record.topic(), ex.getMessage());
+            log.warn("Retry attempt {} for message from topic {}: {}", deliveryAttempt, record.topic(), ex.getMessage());
         });
 
         return errorHandler;

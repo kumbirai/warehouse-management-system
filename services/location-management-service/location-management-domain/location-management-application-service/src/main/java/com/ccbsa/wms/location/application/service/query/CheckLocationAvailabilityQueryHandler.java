@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ccbsa.wms.location.application.service.port.data.LocationViewRepository;
+import com.ccbsa.wms.location.application.service.port.data.dto.LocationView;
 import com.ccbsa.wms.location.application.service.query.dto.CheckLocationAvailabilityQuery;
 import com.ccbsa.wms.location.application.service.query.dto.LocationAvailabilityResult;
 import com.ccbsa.wms.location.domain.core.exception.LocationNotFoundException;
@@ -62,7 +63,7 @@ public class CheckLocationAvailabilityQueryHandler {
      * @param requiredQuantity Required quantity
      * @return true if location can accommodate the quantity
      */
-    private boolean checkCapacity(com.ccbsa.wms.location.application.service.port.data.dto.LocationView locationView, BigDecimal requiredQuantity) {
+    private boolean checkCapacity(LocationView locationView, BigDecimal requiredQuantity) {
         if (requiredQuantity == null || requiredQuantity.compareTo(BigDecimal.ZERO) <= 0) {
             return true;
         }

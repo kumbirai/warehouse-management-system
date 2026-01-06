@@ -169,11 +169,29 @@ export const ProductCsvUploadForm = ({ onUpload, isLoading }: ProductCsvUploadFo
         </Box>
       )}
 
-      <Box sx={{ display: 'flex', gap: 2 }}>
-        <Button variant="contained" onClick={handleUpload} disabled={!selectedFile || isLoading}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+        }}
+      >
+        <Button
+          variant="contained"
+          onClick={handleUpload}
+          disabled={!selectedFile || isLoading}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+          aria-label="Upload CSV file"
+        >
           {isLoading ? 'Uploading...' : 'Upload CSV'}
         </Button>
-        <Button variant="outlined" onClick={handleClear} disabled={isLoading}>
+        <Button
+          variant="outlined"
+          onClick={handleClear}
+          disabled={isLoading}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+          aria-label="Clear form"
+        >
           Clear
         </Button>
       </Box>

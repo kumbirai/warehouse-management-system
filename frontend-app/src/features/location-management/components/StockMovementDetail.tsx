@@ -1,6 +1,6 @@
 import { Box, Button, Chip, Grid, Paper, Typography } from '@mui/material';
 import { StockMovement } from '../services/stockMovementService';
-import { getStatusVariant } from '../../../components/common';
+import { getStatusVariant } from '../../../utils/statusUtils';
 
 interface StockMovementDetailProps {
   movement: StockMovement | null;
@@ -158,10 +158,19 @@ export const StockMovementDetail = ({
 
       {(canComplete || canCancel) && (
         <Paper sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 2,
+              justifyContent: 'flex-end',
+            }}
+          >
             {canComplete && onComplete && (
               <Button
                 variant="contained"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+                aria-label="Complete stock movement"
                 color="success"
                 onClick={onComplete}
                 disabled={isCompleting}

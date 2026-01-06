@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.ccbsa.common.domain.TenantAwareAggregateRoot;
+import com.ccbsa.common.domain.valueobject.BigDecimalQuantity;
+import com.ccbsa.common.domain.valueobject.Description;
+import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.location.domain.core.event.LocationAssignedEvent;
@@ -137,26 +140,23 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
      * @param newQuantity New current quantity
      * @throws IllegalArgumentException if newQuantity is invalid
      */
-    public void updateCurrentQuantity(BigDecimal newQuantity) {
+    public void updateCurrentQuantity(BigDecimalQuantity newQuantity) {
         if (newQuantity == null) {
             throw new IllegalArgumentException("CurrentQuantity cannot be null");
         }
-        if (newQuantity.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("CurrentQuantity cannot be negative");
-        }
 
         BigDecimal maxQty = this.capacity != null ? this.capacity.getMaximumQuantity() : null;
-        if (maxQty != null && newQuantity.compareTo(maxQty) > 0) {
-            throw new IllegalArgumentException(String.format("CurrentQuantity (%s) cannot exceed MaximumQuantity (%s)", newQuantity, maxQty));
+        if (maxQty != null && newQuantity.isGreaterThan(maxQty)) {
+            throw new IllegalArgumentException(String.format("CurrentQuantity (%s) cannot exceed MaximumQuantity (%s)", newQuantity.getValue(), maxQty));
         }
 
-        LocationCapacity newCapacity = LocationCapacity.of(newQuantity, maxQty);
+        LocationCapacity newCapacity = LocationCapacity.of(newQuantity.getValue(), maxQty);
         LocationStatus oldStatus = this.status;
         this.capacity = newCapacity;
         this.lastModifiedAt = LocalDateTime.now();
 
         // Update status based on capacity
-        if (newQuantity.compareTo(BigDecimal.ZERO) == 0) {
+        if (newQuantity.isZero()) {
             if (this.status != LocationStatus.BLOCKED) {
                 this.status = LocationStatus.AVAILABLE;
             }
@@ -182,31 +182,40 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
      * @throws IllegalArgumentException if quantityChange would result in negative quantity
      * @throws IllegalStateException    if capacity would be exceeded
      */
-    public void updateCapacity(BigDecimal quantityChange) {
+    public void updateCapacity(BigDecimalQuantity quantityChange) {
         if (quantityChange == null) {
             throw new IllegalArgumentException("QuantityChange cannot be null");
         }
 
         BigDecimal currentQty = this.capacity != null ? this.capacity.getCurrentQuantity() : BigDecimal.ZERO;
-        BigDecimal newQuantity = currentQty.add(quantityChange);
+        BigDecimalQuantity currentQuantity = BigDecimalQuantity.of(currentQty);
+        BigDecimalQuantity newQuantity;
 
-        if (newQuantity.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Quantity cannot be negative after update");
+        if (quantityChange.isPositive()) {
+            newQuantity = currentQuantity.add(quantityChange);
+        } else {
+            // For negative changes, we need to allow subtraction that might go negative temporarily
+            // but we'll validate the result
+            BigDecimal result = currentQty.add(quantityChange.getValue());
+            if (result.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("Quantity cannot be negative after update");
+            }
+            newQuantity = BigDecimalQuantity.of(result);
         }
 
         BigDecimal maxQty = this.capacity != null ? this.capacity.getMaximumQuantity() : null;
-        if (maxQty != null && newQuantity.compareTo(maxQty) > 0) {
-            throw new IllegalStateException(String.format("Capacity would be exceeded. Current: %s, Change: %s, Max: %s", currentQty, quantityChange, maxQty));
+        if (maxQty != null && newQuantity.isGreaterThan(maxQty)) {
+            throw new IllegalStateException(String.format("Capacity would be exceeded. Current: %s, Change: %s, Max: %s", currentQty, quantityChange.getValue(), maxQty));
         }
 
-        LocationCapacity newCapacity = LocationCapacity.of(newQuantity, maxQty);
+        LocationCapacity newCapacity = LocationCapacity.of(newQuantity.getValue(), maxQty);
         LocationStatus oldStatus = this.status;
         this.capacity = newCapacity;
         this.lastModifiedAt = LocalDateTime.now();
 
         // Update status based on new capacity (only if not blocked)
         if (this.status != LocationStatus.BLOCKED) {
-            if (newQuantity.compareTo(BigDecimal.ZERO) == 0) {
+            if (newQuantity.isZero()) {
                 this.status = LocationStatus.AVAILABLE;
             } else {
                 this.status = LocationStatus.OCCUPIED;
@@ -231,9 +240,9 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
      * @param blockedBy User who blocked the location
      * @param reason    Reason for blocking (required)
      * @throws IllegalStateException    if location is already blocked
-     * @throws IllegalArgumentException if reason is null or empty
+     * @throws IllegalArgumentException if reason is null
      */
-    public void block(UserId blockedBy, String reason) {
+    public void block(UserId blockedBy, Description reason) {
         if (this.status == LocationStatus.BLOCKED) {
             throw new IllegalStateException("Location is already blocked");
         }
@@ -242,7 +251,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
             throw new IllegalArgumentException("BlockedBy cannot be null");
         }
 
-        if (reason == null || reason.trim().isEmpty()) {
+        if (reason == null) {
             throw new IllegalArgumentException("Block reason is required");
         }
 
@@ -251,7 +260,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish blocked event
-        addDomainEvent(new LocationBlockedEvent(this.getId(), this.getTenantId(), blockedBy, reason.trim(), LocalDateTime.now()));
+        addDomainEvent(new LocationBlockedEvent(this.getId(), this.getTenantId(), blockedBy, reason, LocalDateTime.now()));
 
         // Publish status changed event
         if (oldStatus != this.status) {
@@ -336,8 +345,8 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
      * @param quantity Quantity to check
      * @return true if location can accommodate the quantity
      */
-    public boolean canAccommodate(BigDecimal quantity) {
-        if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+    public boolean canAccommodate(BigDecimalQuantity quantity) {
+        if (quantity == null || !quantity.isPositive()) {
             return false;
         }
         if (!isAvailable() && status != LocationStatus.RESERVED) {
@@ -346,7 +355,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
         if (capacity == null) {
             return true; // No capacity constraints
         }
-        return capacity.canAccommodate(quantity);
+        return capacity.canAccommodate(quantity.getValue());
     }
 
     /**
@@ -379,16 +388,16 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
      * - Updates location status and capacity
      * - Publishes LocationStatusChangedEvent if status changes
      *
-     * @param stockItemId Stock item identifier (as String, cross-service reference)
+     * @param stockItemId Stock item identifier
      * @param quantity    Quantity to assign
      * @throws IllegalStateException    if location is not available or cannot accommodate quantity
      * @throws IllegalArgumentException if stockItemId or quantity is null/invalid
      */
-    public void assignStock(String stockItemId, BigDecimal quantity) {
-        if (stockItemId == null || stockItemId.trim().isEmpty()) {
-            throw new IllegalArgumentException("StockItemId cannot be null or empty");
+    public void assignStock(StockItemId stockItemId, BigDecimalQuantity quantity) {
+        if (stockItemId == null) {
+            throw new IllegalArgumentException("StockItemId cannot be null");
         }
-        if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+        if (quantity == null || !quantity.isPositive()) {
             throw new IllegalArgumentException("Quantity must be positive");
         }
 
@@ -401,12 +410,13 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
         if (!hasCapacity(quantity)) {
             BigDecimal available = getAvailableCapacity();
             throw new IllegalStateException(
-                    String.format("Location does not have sufficient capacity. Required: %s, Available: %s", quantity, available != null ? available : "unlimited"));
+                    String.format("Location does not have sufficient capacity. Required: %s, Available: %s", quantity.getValue(), available != null ? available : "unlimited"));
         }
 
         // Update capacity
-        BigDecimal newCurrentQuantity = this.capacity.getCurrentQuantity().add(quantity);
-        LocationCapacity newCapacity = LocationCapacity.of(newCurrentQuantity, this.capacity.getMaximumQuantity());
+        BigDecimalQuantity currentQuantity = BigDecimalQuantity.of(this.capacity.getCurrentQuantity());
+        BigDecimalQuantity newCurrentQuantity = currentQuantity.add(quantity);
+        LocationCapacity newCapacity = LocationCapacity.of(newCurrentQuantity.getValue(), this.capacity.getMaximumQuantity());
         this.capacity = newCapacity;
 
         // Update status if location is now full
@@ -418,7 +428,7 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
         this.lastModifiedAt = LocalDateTime.now();
 
         // Publish domain events
-        addDomainEvent(new LocationAssignedEvent(this.getId(), this.getTenantId(), stockItemId, quantity));
+        addDomainEvent(new LocationAssignedEvent(this.getId(), this.getTenantId(), stockItemId.getValueAsString(), quantity.getValue()));
 
         if (oldStatus != this.status) {
             addDomainEvent(new LocationStatusChangedEvent(this.getId(), this.getTenantId(), oldStatus, this.status));
@@ -432,14 +442,14 @@ public class Location extends TenantAwareAggregateRoot<LocationId> {
      * @return true if location has sufficient capacity
      * @throws IllegalArgumentException if quantity is null or non-positive
      */
-    public boolean hasCapacity(BigDecimal quantity) {
-        if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+    public boolean hasCapacity(BigDecimalQuantity quantity) {
+        if (quantity == null || !quantity.isPositive()) {
             throw new IllegalArgumentException("Quantity must be positive");
         }
         if (this.capacity == null) {
             return true; // No capacity limit
         }
-        return this.capacity.canAccommodate(quantity);
+        return this.capacity.canAccommodate(quantity.getValue());
     }
 
     /**

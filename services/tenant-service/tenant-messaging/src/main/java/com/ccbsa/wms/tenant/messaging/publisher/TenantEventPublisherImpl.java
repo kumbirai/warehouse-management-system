@@ -5,8 +5,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
@@ -14,27 +12,33 @@ import org.springframework.stereotype.Component;
 import com.ccbsa.common.application.context.CorrelationContext;
 import com.ccbsa.common.domain.DomainEvent;
 import com.ccbsa.common.domain.EventMetadata;
+import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.tenant.application.service.port.messaging.TenantEventPublisher;
+import com.ccbsa.wms.tenant.domain.core.event.TenantActivatedEvent;
+import com.ccbsa.wms.tenant.domain.core.event.TenantConfigurationUpdatedEvent;
+import com.ccbsa.wms.tenant.domain.core.event.TenantCreatedEvent;
+import com.ccbsa.wms.tenant.domain.core.event.TenantDeactivatedEvent;
 import com.ccbsa.wms.tenant.domain.core.event.TenantEvent;
+import com.ccbsa.wms.tenant.domain.core.event.TenantSchemaCreatedEvent;
+import com.ccbsa.wms.tenant.domain.core.event.TenantSuspendedEvent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Event Publisher Implementation: TenantEventPublisherImpl
  * <p>
  * Implements TenantEventPublisher port interface. Publishes tenant domain events to Kafka.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is a managed bean and treated as immutable port")
 public class TenantEventPublisherImpl implements TenantEventPublisher {
-    private static final Logger logger = LoggerFactory.getLogger(TenantEventPublisherImpl.class);
     private static final String TENANT_EVENTS_TOPIC = "tenant-events";
     private final KafkaTemplate<String, Object> kafkaTemplate;
-
-    public TenantEventPublisherImpl(KafkaTemplate<String, Object> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
-    }
 
     @Override
     public void publish(List<DomainEvent<?>> events) {
@@ -65,20 +69,20 @@ public class TenantEventPublisherImpl implements TenantEventPublisher {
             // Timeout of 30 seconds should be sufficient for Kafka send operations
             SendResult<String, Object> sendResult = kafkaTemplate.send(TENANT_EVENTS_TOPIC, key, enrichedEvent).get(30, TimeUnit.SECONDS);
 
-            logger.info("Published tenant event: {} with key: {} to topic: {} [partition: {}, offset: {}, correlationId: {}]", eventType, key, TENANT_EVENTS_TOPIC,
+            log.info("Published tenant event: {} with key: {} to topic: {} [partition: {}, offset: {}, correlationId: {}]", eventType, key, TENANT_EVENTS_TOPIC,
                     sendResult.getRecordMetadata().partition(), sendResult.getRecordMetadata().offset(), correlationId);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.error("Interrupted while publishing tenant event: {} to topic: {}", event.getClass().getSimpleName(), TENANT_EVENTS_TOPIC, e);
+            log.error("Interrupted while publishing tenant event: {} to topic: {}", event.getClass().getSimpleName(), TENANT_EVENTS_TOPIC, e);
             throw new RuntimeException("Failed to publish tenant event: interrupted", e);
         } catch (ExecutionException e) {
-            logger.error("Failed to publish tenant event: {} to topic: {}", event.getClass().getSimpleName(), TENANT_EVENTS_TOPIC, e);
+            log.error("Failed to publish tenant event: {} to topic: {}", event.getClass().getSimpleName(), TENANT_EVENTS_TOPIC, e);
             throw new RuntimeException("Failed to publish tenant event", e.getCause() != null ? e.getCause() : e);
         } catch (TimeoutException e) {
-            logger.error("Timeout while publishing tenant event: {} to topic: {}", event.getClass().getSimpleName(), TENANT_EVENTS_TOPIC, e);
+            log.error("Timeout while publishing tenant event: {} to topic: {}", event.getClass().getSimpleName(), TENANT_EVENTS_TOPIC, e);
             throw new RuntimeException("Failed to publish tenant event: timeout", e);
         } catch (Exception e) {
-            logger.error("Unexpected error while publishing tenant event: {} to topic: {}", event.getClass().getSimpleName(), TENANT_EVENTS_TOPIC, e);
+            log.error("Unexpected error while publishing tenant event: {} to topic: {}", event.getClass().getSimpleName(), TENANT_EVENTS_TOPIC, e);
             throw new RuntimeException("Failed to publish tenant event", e);
         }
     }
@@ -103,30 +107,28 @@ public class TenantEventPublisherImpl implements TenantEventPublisher {
         }
 
         // Extract tenantId from aggregateId (now a String)
-        com.ccbsa.common.domain.valueobject.TenantId tenantId = com.ccbsa.common.domain.valueobject.TenantId.of(event.getAggregateId());
+        TenantId tenantId = TenantId.of(event.getAggregateId());
 
         // Create enriched copy based on event type
-        if (event instanceof com.ccbsa.wms.tenant.domain.core.event.TenantCreatedEvent) {
-            com.ccbsa.wms.tenant.domain.core.event.TenantCreatedEvent tenantCreatedEvent = (com.ccbsa.wms.tenant.domain.core.event.TenantCreatedEvent) event;
-            return new com.ccbsa.wms.tenant.domain.core.event.TenantCreatedEvent(tenantId, tenantCreatedEvent.getName(), tenantCreatedEvent.getStatus(),
-                    tenantCreatedEvent.getEmail().orElse(null), metadata);
-        } else if (event instanceof com.ccbsa.wms.tenant.domain.core.event.TenantActivatedEvent) {
-            return new com.ccbsa.wms.tenant.domain.core.event.TenantActivatedEvent(tenantId, metadata);
-        } else if (event instanceof com.ccbsa.wms.tenant.domain.core.event.TenantDeactivatedEvent) {
-            return new com.ccbsa.wms.tenant.domain.core.event.TenantDeactivatedEvent(tenantId, metadata);
-        } else if (event instanceof com.ccbsa.wms.tenant.domain.core.event.TenantSuspendedEvent) {
-            return new com.ccbsa.wms.tenant.domain.core.event.TenantSuspendedEvent(tenantId, metadata);
-        } else if (event instanceof com.ccbsa.wms.tenant.domain.core.event.TenantSchemaCreatedEvent) {
-            com.ccbsa.wms.tenant.domain.core.event.TenantSchemaCreatedEvent tenantSchemaCreatedEvent = (com.ccbsa.wms.tenant.domain.core.event.TenantSchemaCreatedEvent) event;
-            return new com.ccbsa.wms.tenant.domain.core.event.TenantSchemaCreatedEvent(tenantId, tenantSchemaCreatedEvent.getSchemaName(), metadata);
-        } else if (event instanceof com.ccbsa.wms.tenant.domain.core.event.TenantConfigurationUpdatedEvent) {
-            com.ccbsa.wms.tenant.domain.core.event.TenantConfigurationUpdatedEvent tenantConfigurationUpdatedEvent =
-                    (com.ccbsa.wms.tenant.domain.core.event.TenantConfigurationUpdatedEvent) event;
-            return new com.ccbsa.wms.tenant.domain.core.event.TenantConfigurationUpdatedEvent(tenantId, tenantConfigurationUpdatedEvent.getConfiguration(), metadata);
+        if (event instanceof TenantCreatedEvent) {
+            TenantCreatedEvent tenantCreatedEvent = (TenantCreatedEvent) event;
+            return new TenantCreatedEvent(tenantId, tenantCreatedEvent.getName(), tenantCreatedEvent.getStatus(), tenantCreatedEvent.getEmail().orElse(null), metadata);
+        } else if (event instanceof TenantActivatedEvent) {
+            return new TenantActivatedEvent(tenantId, metadata);
+        } else if (event instanceof TenantDeactivatedEvent) {
+            return new TenantDeactivatedEvent(tenantId, metadata);
+        } else if (event instanceof TenantSuspendedEvent) {
+            return new TenantSuspendedEvent(tenantId, metadata);
+        } else if (event instanceof TenantSchemaCreatedEvent) {
+            TenantSchemaCreatedEvent tenantSchemaCreatedEvent = (TenantSchemaCreatedEvent) event;
+            return new TenantSchemaCreatedEvent(tenantId, tenantSchemaCreatedEvent.getSchemaName(), metadata);
+        } else if (event instanceof TenantConfigurationUpdatedEvent) {
+            TenantConfigurationUpdatedEvent tenantConfigurationUpdatedEvent = (TenantConfigurationUpdatedEvent) event;
+            return new TenantConfigurationUpdatedEvent(tenantId, tenantConfigurationUpdatedEvent.getConfiguration(), metadata);
         }
 
         // Unknown event type, return original
-        logger.warn("Unknown tenant event type: {}. Event will be published without metadata.", event.getClass().getName());
+        log.warn("Unknown tenant event type: {}. Event will be published without metadata.", event.getClass().getName());
         return event;
     }
 

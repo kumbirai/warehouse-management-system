@@ -1,6 +1,6 @@
 import { Box, Button, Chip, Grid, Paper, Typography } from '@mui/material';
 import { StockAllocationResponse } from '../types/stockManagement';
-import { getStatusVariant } from '../../../components/common';
+import { getStatusVariant } from '../../../utils/statusUtils';
 import { formatDateTime } from '../../../utils/dateUtils';
 
 interface StockAllocationDetailProps {
@@ -148,12 +148,21 @@ export const StockAllocationDetail = ({
 
       {canRelease && onRelease && (
         <Paper sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 2,
+              justifyContent: 'flex-end',
+            }}
+          >
             <Button
               variant="outlined"
               color="warning"
               onClick={onRelease}
               disabled={isReleasing}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+              aria-label="Release stock allocation"
             >
               {isReleasing ? 'Releasing...' : 'Release Allocation'}
             </Button>

@@ -2,12 +2,12 @@ package com.ccbsa.wms.gateway.filter;
 
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Gateway filter that extracts or generates correlation ID and propagates it to downstream services.
@@ -29,9 +29,9 @@ import org.springframework.stereotype.Component;
  *             - CorrelationContext
  * }</pre>
  */
+@Slf4j
 @Component
 public class CorrelationContextFilter extends AbstractGatewayFilterFactory<CorrelationContextFilter.Config> {
-    private static final Logger logger = LoggerFactory.getLogger(CorrelationContextFilter.class);
     private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
 
     public CorrelationContextFilter() {
@@ -47,10 +47,10 @@ public class CorrelationContextFilter extends AbstractGatewayFilterFactory<Corre
             // Generate correlation ID if not present
             if (correlationId == null || correlationId.trim().isEmpty()) {
                 correlationId = UUID.randomUUID().toString();
-                logger.debug("Generated new correlation ID: {}", correlationId);
+                log.debug("Generated new correlation ID: {}", correlationId);
             } else {
                 correlationId = correlationId.trim();
-                logger.debug("Using existing correlation ID: {}", correlationId);
+                log.debug("Using existing correlation ID: {}", correlationId);
             }
 
             // Add correlation ID to request headers for downstream services

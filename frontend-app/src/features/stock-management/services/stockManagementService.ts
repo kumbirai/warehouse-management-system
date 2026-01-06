@@ -234,6 +234,23 @@ export const stockManagementService = {
   },
 
   /**
+   * Gets all stock items for a tenant (Sprint 3).
+   */
+  async getAllStockItems(
+    tenantId: string
+  ): Promise<GetStockItemsByClassificationApiResponse> {
+    const response = await apiClient.get<GetStockItemsByClassificationApiResponse>(
+      `${STOCK_MANAGEMENT_BASE_PATH}/stock-items/all`,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
    * Gets stock items by classification (Sprint 3).
    */
   async getStockItemsByClassification(

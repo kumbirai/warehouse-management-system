@@ -15,7 +15,7 @@ const stockMovementSchema = z.object({
   movementType: z.enum(['RECEIVING_TO_STORAGE', 'STORAGE_TO_PICKING', 'INTER_STORAGE', 'PICKING_TO_SHIPPING', 'OTHER'], {
     required_error: 'Movement type is required',
   }),
-  reason: z.enum(['PICKING', 'RESTOCKING', 'REORGANIZATION', 'DAMAGE', 'EXPIRATION', 'OTHER'], {
+  reason: z.enum(['PICKING', 'RESTOCKING', 'REORGANIZATION', 'DAMAGE', 'CORRECTION', 'OTHER'], {
     required_error: 'Reason is required',
   }),
 });
@@ -157,7 +157,7 @@ export const StockMovementForm = ({
                   <MenuItem value="RESTOCKING">Restocking</MenuItem>
                   <MenuItem value="REORGANIZATION">Reorganization</MenuItem>
                   <MenuItem value="DAMAGE">Damage</MenuItem>
-                  <MenuItem value="EXPIRATION">Expiration</MenuItem>
+                  <MenuItem value="CORRECTION">Correction</MenuItem>
                   <MenuItem value="OTHER">Other</MenuItem>
                 </TextField>
               )}

@@ -5,6 +5,8 @@ import { Provider } from 'react-redux';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import App from './App';
 import { store } from './store';
 import { theme } from './utils/theme';
@@ -64,6 +66,18 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <ThemeProvider theme={theme}>
               <CssBaseline />
               <App />
+              <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
+              />
             </ThemeProvider>
           </BrowserRouter>
         </Provider>

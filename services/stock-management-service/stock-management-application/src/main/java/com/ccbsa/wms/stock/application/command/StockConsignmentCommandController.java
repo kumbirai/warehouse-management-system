@@ -37,6 +37,8 @@ import com.ccbsa.wms.stock.application.service.command.dto.ValidateConsignmentRe
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * REST Controller: StockConsignmentCommandController
@@ -45,9 +47,11 @@ import jakarta.validation.Valid;
  * <p>
  * Responsibilities: - Create consignment endpoints - Upload CSV endpoints - Validate consignment endpoints - Map DTOs to commands - Return standardized API responses
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/stock-management/consignments")
 @Tag(name = "Stock Consignment Commands", description = "Stock consignment command operations")
+@RequiredArgsConstructor
 public class StockConsignmentCommandController {
     private final CreateConsignmentCommandHandler createCommandHandler;
     private final UploadConsignmentCsvCommandHandler uploadCsvCommandHandler;
@@ -55,19 +59,9 @@ public class StockConsignmentCommandController {
     private final ConfirmConsignmentCommandHandler confirmCommandHandler;
     private final StockConsignmentDTOMapper mapper;
 
-    public StockConsignmentCommandController(CreateConsignmentCommandHandler createCommandHandler, UploadConsignmentCsvCommandHandler uploadCsvCommandHandler,
-                                             ValidateConsignmentCommandHandler validateCommandHandler, ConfirmConsignmentCommandHandler confirmCommandHandler,
-                                             StockConsignmentDTOMapper mapper) {
-        this.createCommandHandler = createCommandHandler;
-        this.uploadCsvCommandHandler = uploadCsvCommandHandler;
-        this.validateCommandHandler = validateCommandHandler;
-        this.confirmCommandHandler = confirmCommandHandler;
-        this.mapper = mapper;
-    }
-
     @PostMapping
     @Operation(summary = "Create Consignment", description = "Creates a new stock consignment")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'SERVICE')")
     public ResponseEntity<ApiResponse<CreateConsignmentResultDTO>> createConsignment(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                                      @Valid @RequestBody CreateConsignmentCommandDTO commandDTO) {
         // Map DTO to command
@@ -84,7 +78,7 @@ public class StockConsignmentCommandController {
 
     @PostMapping("/upload-csv")
     @Operation(summary = "Upload Consignment CSV", description = "Uploads consignment data via CSV file")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'SERVICE')")
     public ResponseEntity<ApiResponse<UploadConsignmentCsvResultDTO>> uploadConsignmentCsv(@RequestHeader("X-Tenant-Id") String tenantId, @RequestParam("file") MultipartFile file,
                                                                                            @RequestParam(value = "receivedBy", required = false) String receivedBy) {
         try {
@@ -105,7 +99,7 @@ public class StockConsignmentCommandController {
 
     @PostMapping("/validate")
     @Operation(summary = "Validate Consignment", description = "Validates consignment data before creation")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'SERVICE')")
     public ResponseEntity<ApiResponse<ValidateConsignmentResultDTO>> validateConsignment(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                                          @Valid @RequestBody ValidateConsignmentCommandDTO commandDTO) {
         // Map DTO to command
@@ -122,7 +116,7 @@ public class StockConsignmentCommandController {
 
     @PutMapping("/{consignmentId}/confirm")
     @Operation(summary = "Confirm Consignment Receipt", description = "Confirms receipt of a stock consignment and triggers stock item creation")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'SERVICE')")
     public ResponseEntity<ApiResponse<Void>> confirmConsignment(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable("consignmentId") String consignmentId) {
         // Map to command
         ConfirmConsignmentCommand command = ConfirmConsignmentCommand.builder().tenantId(com.ccbsa.common.domain.valueobject.TenantId.of(tenantId))

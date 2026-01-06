@@ -44,4 +44,3 @@ export const useAllocateStock = (): UseAllocateStockResult => {
 
   return { allocateStock, isLoading, error };
 };
-

@@ -183,6 +183,11 @@ export const ConsignmentForm = ({
                 {...register('consignmentReference')}
                 error={!!errors.consignmentReference}
                 helperText={errors.consignmentReference?.message}
+                aria-label="Consignment reference input field"
+                aria-required="true"
+                aria-describedby="consignment-reference-helper"
+                FormHelperTextProps={{ id: 'consignment-reference-helper' }}
+                autoFocus
               />
             </Grid>
 
@@ -197,6 +202,8 @@ export const ConsignmentForm = ({
                     required
                     error={!!errors.warehouseId}
                     helperText={errors.warehouseId?.message}
+                    aria-label="Select warehouse"
+                    aria-required="true"
                   />
                 )}
               />
@@ -213,6 +220,10 @@ export const ConsignmentForm = ({
                 InputLabelProps={{
                   shrink: true,
                 }}
+                aria-label="Received date and time input field"
+                aria-required="true"
+                aria-describedby="received-at-helper"
+                FormHelperTextProps={{ id: 'received-at-helper' }}
               />
             </Grid>
 
@@ -245,6 +256,7 @@ export const ConsignmentForm = ({
                     })
                   }
                   size="small"
+                  aria-label="Add line item button"
                 >
                   Add Line Item
                 </Button>
@@ -278,12 +290,17 @@ export const ConsignmentForm = ({
                                 title="Scan barcode"
                                 edge="end"
                                 size="small"
+                                aria-label={`Scan barcode for line item ${index + 1}`}
                               >
                                 <QrCodeIcon />
                               </IconButton>
                             </InputAdornment>
                           ),
                         }}
+                        aria-label={`Product code input field for line item ${index + 1}`}
+                        aria-required="true"
+                        aria-describedby={`line-item-${index}-product-code-helper`}
+                        FormHelperTextProps={{ id: `line-item-${index}-product-code-helper` }}
                       />
                     </Grid>
 
@@ -295,6 +312,10 @@ export const ConsignmentForm = ({
                         {...register(`lineItems.${index}.quantity`, { valueAsNumber: true })}
                         error={!!errors.lineItems?.[index]?.quantity}
                         helperText={errors.lineItems?.[index]?.quantity?.message}
+                        aria-label={`Quantity input field for line item ${index + 1}`}
+                        aria-required="true"
+                        aria-describedby={`line-item-${index}-quantity-helper`}
+                        FormHelperTextProps={{ id: `line-item-${index}-quantity-helper` }}
                       />
                     </Grid>
 
@@ -309,6 +330,9 @@ export const ConsignmentForm = ({
                         InputLabelProps={{
                           shrink: true,
                         }}
+                        aria-label={`Expiration date input field for line item ${index + 1} (optional)`}
+                        aria-describedby={`line-item-${index}-expiration-date-helper`}
+                        FormHelperTextProps={{ id: `line-item-${index}-expiration-date-helper` }}
                       />
                     </Grid>
 
@@ -319,6 +343,9 @@ export const ConsignmentForm = ({
                         {...register(`lineItems.${index}.batchNumber`)}
                         error={!!errors.lineItems?.[index]?.batchNumber}
                         helperText={errors.lineItems?.[index]?.batchNumber?.message}
+                        aria-label={`Batch number input field for line item ${index + 1} (optional)`}
+                        aria-describedby={`line-item-${index}-batch-number-helper`}
+                        FormHelperTextProps={{ id: `line-item-${index}-batch-number-helper` }}
                       />
                     </Grid>
 
@@ -328,6 +355,7 @@ export const ConsignmentForm = ({
                         color="error"
                         disabled={fields.length === 1}
                         title="Remove line item"
+                        aria-label={`Remove line item ${index + 1}`}
                       >
                         <DeleteIcon />
                       </IconButton>

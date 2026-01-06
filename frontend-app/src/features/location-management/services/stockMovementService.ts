@@ -14,7 +14,7 @@ export interface CreateStockMovementRequest {
   destinationLocationId: string;
   quantity: number;
   movementType: 'RECEIVING_TO_STORAGE' | 'STORAGE_TO_PICKING' | 'INTER_STORAGE' | 'PICKING_TO_SHIPPING' | 'OTHER';
-  reason: 'PICKING' | 'RESTOCKING' | 'REORGANIZATION' | 'DAMAGE' | 'EXPIRATION' | 'OTHER';
+  reason: 'PICKING' | 'RESTOCKING' | 'REORGANIZATION' | 'DAMAGE' | 'CORRECTION' | 'OTHER';
 }
 
 export interface CreateStockMovementResponse {

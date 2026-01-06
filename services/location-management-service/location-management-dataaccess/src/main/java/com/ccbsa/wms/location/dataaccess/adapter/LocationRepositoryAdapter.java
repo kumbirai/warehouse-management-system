@@ -22,6 +22,7 @@ import com.ccbsa.wms.location.domain.core.entity.Location;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationBarcode;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationCapacity;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityManager;
@@ -411,8 +412,7 @@ public class LocationRepositoryAdapter implements LocationRepository {
         setSearchPath(session, schemaName);
 
         // Query for available locations (AVAILABLE or RESERVED status)
-        List<com.ccbsa.wms.location.domain.core.valueobject.LocationStatus> availableStatuses =
-                List.of(com.ccbsa.wms.location.domain.core.valueobject.LocationStatus.AVAILABLE, com.ccbsa.wms.location.domain.core.valueobject.LocationStatus.RESERVED);
+        List<LocationStatus> availableStatuses = List.of(LocationStatus.AVAILABLE, LocationStatus.RESERVED);
 
         // Now query using JPA repository (will use the schema set in search_path)
         return jpaRepository.findByTenantIdAndStatusIn(tenantId.getValue(), availableStatuses).stream().map(mapper::toDomain).collect(Collectors.toList());

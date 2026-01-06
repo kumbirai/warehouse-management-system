@@ -3,7 +3,7 @@ import { Container, Alert } from '@mui/material';
 import { Header } from '../layout/Header';
 import { PageBreadcrumbs, BreadcrumbItem } from '../common/PageBreadcrumbs';
 import { PageHeader } from '../common/PageHeader';
-import { LoadingSpinner } from '../common/LoadingSpinner';
+import { SkeletonTable } from '../common/SkeletonTable';
 
 interface ListPageLayoutProps {
   breadcrumbs: BreadcrumbItem[];
@@ -34,14 +34,12 @@ export const ListPageLayout: React.FC<ListPageLayoutProps> = ({
         <PageHeader title={title} description={description} actions={actions} />
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: 3 }} role="alert" aria-live="assertive">
             {error}
           </Alert>
         )}
 
-        {isLoading && <LoadingSpinner />}
-
-        {!isLoading && children}
+        {isLoading ? <SkeletonTable rows={5} columns={4} /> : children}
       </Container>
     </>
   );

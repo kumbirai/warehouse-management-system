@@ -3,8 +3,11 @@ package com.ccbsa.wms.stock.dataaccess.adapter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.hibernate.Session;
@@ -175,6 +178,128 @@ public class StockConsignmentViewRepositoryAdapter implements StockConsignmentVi
         setSearchPath(session, schemaName);
 
         return jpaRepository.countByTenantId(tenantId.getValue());
+    }
+
+    @Override
+    public List<StockConsignmentView> findByTenantId(TenantId tenantId, int page, int size, Integer expiringWithinDays) {
+        // Verify TenantContext is set
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            log.error("TenantContext is not set when querying consignment views!");
+            throw new IllegalStateException("TenantContext must be set before querying consignment views");
+        }
+
+        // Verify tenantId matches
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            log.error("TenantContext mismatch! Context: {}, Query: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match query tenantId");
+        }
+
+        // Resolve schema and set search_path
+        String schemaName = schemaResolver.resolveSchema();
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
+
+        schemaProvisioner.ensureSchemaReady(schemaName);
+        validateSchemaName(schemaName);
+
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Calculate expiration date threshold
+        LocalDate expirationDateThreshold = LocalDate.now().plusDays(expiringWithinDays);
+
+        // Calculate pagination parameters for native query
+        int pageSize = size;
+        long offset = (long) page * size;
+
+        // Use EntityManager to execute native query with schema-qualified table names
+        // This ensures the query works correctly with schema-per-tenant pattern
+        String escapedSchemaName = escapeIdentifier(schemaName);
+        String queryString = String.format(
+                "SELECT c.id FROM %s.stock_consignments c " + "WHERE c.tenant_id = :tenantId " + "AND EXISTS (" + "    SELECT 1 FROM %s.consignment_line_items li "
+                        + "    WHERE li.consignment_id = c.id " + "    AND li.expiration_date IS NOT NULL " + "    AND li.expiration_date <= :expirationDateThreshold" + ") "
+                        + "ORDER BY c.created_at DESC " + "LIMIT :pageSize OFFSET :offset", escapedSchemaName, escapedSchemaName);
+
+        jakarta.persistence.Query query = entityManager.createNativeQuery(queryString);
+        query.setParameter("tenantId", tenantId.getValue());
+        query.setParameter("expirationDateThreshold", expirationDateThreshold);
+        query.setParameter("pageSize", pageSize);
+        query.setParameter("offset", offset);
+
+        @SuppressWarnings("unchecked") List<Object> resultList = query.getResultList();
+        List<UUID> consignmentIds = resultList.stream().map(obj -> {
+            if (obj instanceof UUID) {
+                return (UUID) obj;
+            } else if (obj instanceof String) {
+                return UUID.fromString((String) obj);
+            } else {
+                return UUID.fromString(obj.toString());
+            }
+        }).collect(Collectors.toList());
+
+        // Then fetch the full entities by IDs, maintaining order
+        if (consignmentIds.isEmpty()) {
+            return List.of();
+        }
+
+        // Fetch entities by IDs - need to maintain the order from the query
+        List<StockConsignmentViewEntity> allEntities = jpaRepository.findAllById(consignmentIds);
+
+        // Create a map for O(1) lookup
+        java.util.Map<UUID, StockConsignmentViewEntity> entityMap = allEntities.stream().collect(Collectors.toMap(StockConsignmentViewEntity::getId, e -> e));
+
+        // Return entities in the same order as the IDs
+        List<StockConsignmentViewEntity> entities = consignmentIds.stream().map(entityMap::get).filter(Objects::nonNull).collect(Collectors.toList());
+
+        // Map to views (line items loaded via @OneToMany)
+        return entities.stream().map(mapper::toView).collect(Collectors.toList());
+    }
+
+    @Override
+    public long countByTenantId(TenantId tenantId, Integer expiringWithinDays) {
+        // Verify TenantContext is set
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            log.error("TenantContext is not set when counting consignment views!");
+            throw new IllegalStateException("TenantContext must be set before counting consignment views");
+        }
+
+        // Verify tenantId matches
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            log.error("TenantContext mismatch! Context: {}, Query: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match query tenantId");
+        }
+
+        // Resolve schema and set search_path
+        String schemaName = schemaResolver.resolveSchema();
+        schemaProvisioner.ensureSchemaReady(schemaName);
+        validateSchemaName(schemaName);
+
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Calculate expiration date threshold
+        LocalDate expirationDateThreshold = LocalDate.now().plusDays(expiringWithinDays);
+
+        // Use EntityManager to execute native query with schema-qualified table names
+        // This ensures the query works correctly with schema-per-tenant pattern
+        String escapedSchemaName = escapeIdentifier(schemaName);
+        String queryString = String.format("SELECT COUNT(DISTINCT c.id) FROM %s.stock_consignments c " + "INNER JOIN %s.consignment_line_items li ON c.id = li.consignment_id "
+                        + "WHERE c.tenant_id = :tenantId " + "AND li.expiration_date IS NOT NULL " + "AND li.expiration_date <= :expirationDateThreshold", escapedSchemaName,
+                escapedSchemaName);
+
+        jakarta.persistence.Query query = entityManager.createNativeQuery(queryString);
+        query.setParameter("tenantId", tenantId.getValue());
+        query.setParameter("expirationDateThreshold", expirationDateThreshold);
+
+        Object result = query.getSingleResult();
+        if (result instanceof Number) {
+            return ((Number) result).longValue();
+        } else if (result instanceof String) {
+            return Long.parseLong((String) result);
+        } else {
+            return Long.parseLong(result.toString());
+        }
     }
 }
 

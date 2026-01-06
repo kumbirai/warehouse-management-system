@@ -26,11 +26,13 @@ import com.ccbsa.wms.stock.application.service.query.GetStockItemQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.GetStockItemsByClassificationQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.GetStockItemsByProductAndLocationQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.GetStockItemsByProductQueryHandler;
+import com.ccbsa.wms.stock.application.service.query.GetStockItemsQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemQueryResult;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemsByClassificationQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemsByProductAndLocationQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemsByProductQuery;
+import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemsQuery;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,19 +57,68 @@ public class StockItemQueryController {
     private final GetStockItemsByClassificationQueryHandler getStockItemsByClassificationQueryHandler;
     private final GetStockItemsByProductAndLocationQueryHandler getStockItemsByProductAndLocationQueryHandler;
     private final GetStockItemsByProductQueryHandler getStockItemsByProductQueryHandler;
+    private final GetStockItemsQueryHandler getStockItemsQueryHandler;
 
     public StockItemQueryController(GetStockItemQueryHandler getStockItemQueryHandler, GetStockItemsByClassificationQueryHandler getStockItemsByClassificationQueryHandler,
                                     GetStockItemsByProductAndLocationQueryHandler getStockItemsByProductAndLocationQueryHandler,
-                                    GetStockItemsByProductQueryHandler getStockItemsByProductQueryHandler) {
+                                    GetStockItemsByProductQueryHandler getStockItemsByProductQueryHandler, GetStockItemsQueryHandler getStockItemsQueryHandler) {
         this.getStockItemQueryHandler = getStockItemQueryHandler;
         this.getStockItemsByClassificationQueryHandler = getStockItemsByClassificationQueryHandler;
         this.getStockItemsByProductAndLocationQueryHandler = getStockItemsByProductAndLocationQueryHandler;
         this.getStockItemsByProductQueryHandler = getStockItemsByProductQueryHandler;
+        this.getStockItemsQueryHandler = getStockItemsQueryHandler;
+    }
+
+    @GetMapping("/all")
+    @Operation(summary = "Get All Stock Items", description = "Gets all stock items for a tenant")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER', 'SERVICE')")
+    public ResponseEntity<ApiResponse<StockItemsByClassificationResponseDTO>> getAllStockItems(@RequestHeader("X-Tenant-Id") String tenantId) {
+        // Log incoming request for debugging
+        org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(StockItemQueryController.class);
+        log.info("Received request to get all stock items: tenantId={}", tenantId);
+
+        // Map to query
+        GetStockItemsQuery query = GetStockItemsQuery.builder().tenantId(TenantId.of(tenantId)).build();
+
+        // Execute query
+        List<GetStockItemQueryResult> results = getStockItemsQueryHandler.handle(query);
+        log.info("Query returned {} stock items for tenantId: {}", results.size(), tenantId);
+
+        // Map results to DTOs
+        @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE", justification = "dtos is used in builder - SpotBugs false positive") List<StockItemQueryDTO> dtos =
+                results.stream().map(this::mapToDTO).collect(Collectors.toList());
+
+        // Wrap in response DTO to match frontend expectation: { stockItems: StockItem[] }
+        StockItemsByClassificationResponseDTO response = StockItemsByClassificationResponseDTO.builder().stockItems(dtos).build();
+
+        return ApiResponseBuilder.ok(response);
+    }
+
+    private StockItemQueryDTO mapToDTO(GetStockItemQueryResult result) {
+        StockItemQueryDTO dto = new StockItemQueryDTO();
+        dto.setStockItemId(result.getStockItemId().getValueAsString());
+        dto.setProductId(result.getProductId().getValueAsString());
+        dto.setProductCode(result.getProductCode());
+        dto.setProductDescription(result.getProductDescription());
+        if (result.getLocationId() != null) {
+            dto.setLocationId(result.getLocationId().getValueAsString());
+        }
+        dto.setLocationCode(result.getLocationCode());
+        dto.setLocationName(result.getLocationName());
+        dto.setQuantity(result.getQuantity().getValue());
+        dto.setAllocatedQuantity(result.getAllocatedQuantity() != null ? result.getAllocatedQuantity().getValue() : 0);
+        if (result.getExpirationDate() != null) {
+            dto.setExpirationDate(result.getExpirationDate().getValue());
+        }
+        dto.setClassification(result.getClassification().name());
+        dto.setCreatedAt(result.getCreatedAt());
+        dto.setLastModifiedAt(result.getLastModifiedAt());
+        return dto;
     }
 
     @GetMapping("/{stockItemId}")
     @Operation(summary = "Get Stock Item", description = "Gets a stock item by ID")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<StockItemQueryDTO>> getStockItem(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable("stockItemId") String stockItemId) {
         // Map to query
         GetStockItemQuery query = GetStockItemQuery.builder().tenantId(TenantId.of(tenantId)).stockItemId(StockItemId.of(stockItemId)).build();
@@ -81,26 +132,9 @@ public class StockItemQueryController {
         return ApiResponseBuilder.ok(dto);
     }
 
-    private StockItemQueryDTO mapToDTO(GetStockItemQueryResult result) {
-        StockItemQueryDTO dto = new StockItemQueryDTO();
-        dto.setStockItemId(result.getStockItemId().getValueAsString());
-        dto.setProductId(result.getProductId().getValueAsString());
-        if (result.getLocationId() != null) {
-            dto.setLocationId(result.getLocationId().getValueAsString());
-        }
-        dto.setQuantity(result.getQuantity().getValue());
-        if (result.getExpirationDate() != null) {
-            dto.setExpirationDate(result.getExpirationDate().getValue());
-        }
-        dto.setClassification(result.getClassification().name());
-        dto.setCreatedAt(result.getCreatedAt());
-        dto.setLastModifiedAt(result.getLastModifiedAt());
-        return dto;
-    }
-
     @GetMapping("/by-classification")
     @Operation(summary = "Get Stock Items by Classification", description = "Gets stock items filtered by classification")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<StockItemsByClassificationResponseDTO>> getStockItemsByClassification(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                                                             @RequestParam("classification") String classification) {
         // Log incoming request for debugging
@@ -127,7 +161,7 @@ public class StockItemQueryController {
 
     @GetMapping
     @Operation(summary = "Get Stock Items by Product and Location", description = "Gets stock items filtered by product ID and location ID")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<List<StockItemQueryDTO>>> getStockItemsByProductAndLocation(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                                                   @RequestParam("productId") String productId,
                                                                                                   @RequestParam("locationId") String locationId) {
@@ -156,7 +190,7 @@ public class StockItemQueryController {
 
     @GetMapping("/by-product")
     @Operation(summary = "Get Stock Items by Product", description = "Gets stock items filtered by product ID (including items without location assignment)")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<List<StockItemQueryDTO>>> getStockItemsByProduct(@RequestHeader("X-Tenant-Id") String tenantId, @RequestParam("productId") String productId) {
         try {
             // Map to query

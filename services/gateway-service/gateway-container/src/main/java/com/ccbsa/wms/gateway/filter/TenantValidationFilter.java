@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -21,6 +19,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 /**
@@ -37,9 +36,9 @@ import reactor.core.publisher.Mono;
  * X-Tenant-Id header for downstream services. If a tenant ID is explicitly requested
  * via the X-Tenant-Id header, it validates that it matches the JWT tenant ID.
  */
+@Slf4j
 @Component
 public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantValidationFilter.Config> {
-    private static final Logger logger = LoggerFactory.getLogger(TenantValidationFilter.class);
     private static final String TENANT_ID_CLAIM = "tenant_id";
     private static final String X_TENANT_ID_HEADER = "X-Tenant-Id";
     private static final String REALM_ACCESS_CLAIM = "realm_access";
@@ -70,7 +69,7 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
 
                     // Allow SYSTEM_ADMIN users to bypass tenant validation for all endpoints
                     if (isSystemAdmin) {
-                        logger.debug("SYSTEM_ADMIN user detected for {} {} - bypassing tenant validation", method, path);
+                        log.debug("SYSTEM_ADMIN user detected for {} {} - bypassing tenant validation", method, path);
                         // SYSTEM_ADMIN users don't need tenant_id, allow request to proceed
                         ServerHttpRequest request = exchange.getRequest();
                         ServerHttpRequest.Builder requestBuilder = request.mutate();
@@ -81,7 +80,7 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
 
                     // Allow ADMIN users to access list endpoint without tenant_id requirement
                     if (isListEndpoint && isAdmin) {
-                        logger.debug("ADMIN user detected for list endpoint {} {} - bypassing tenant validation", method, path);
+                        log.debug("ADMIN user detected for list endpoint {} {} - bypassing tenant validation", method, path);
                         ServerHttpRequest request = exchange.getRequest();
                         ServerHttpRequest.Builder requestBuilder = request.mutate();
                         // Don't set X-Tenant-Id header for list endpoint
@@ -91,7 +90,7 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
 
                     // For non-SYSTEM_ADMIN and non-ADMIN users, or non-list endpoints, tenant_id is required
                     if (jwtTenantId == null || jwtTenantId.isEmpty()) {
-                        logger.warn("Tenant ID not found in JWT token for {} {} from {}", method, path, exchange.getRequest().getRemoteAddress());
+                        log.warn("Tenant ID not found in JWT token for {} {} from {}", method, path, exchange.getRequest().getRemoteAddress());
                         return handleError(exchange, HttpStatus.FORBIDDEN, "Tenant ID not found in token");
                     }
 
@@ -101,7 +100,7 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
                     // If tenant ID is explicitly requested, validate it matches JWT tenant
                     if (requestedTenantId != null && !requestedTenantId.isEmpty()) {
                         if (!jwtTenantId.equals(requestedTenantId)) {
-                            logger.warn("Tenant ID mismatch for {} {}: JWT tenant={}, requested tenant={}", method, path, jwtTenantId, requestedTenantId);
+                            log.warn("Tenant ID mismatch for {} {}: JWT tenant={}, requested tenant={}", method, path, jwtTenantId, requestedTenantId);
                             return handleError(exchange, HttpStatus.FORBIDDEN, String.format("Tenant ID mismatch: token tenant does not match requested tenant"));
                         }
                     }
@@ -110,7 +109,7 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
                     ServerHttpRequest.Builder requestBuilder = request.mutate();
                     requestBuilder.header(X_TENANT_ID_HEADER, jwtTenantId);
 
-                    logger.debug("Tenant validation passed for {} {}: tenant={}", method, path, jwtTenantId);
+                    log.debug("Tenant validation passed for {} {}: tenant={}", method, path, jwtTenantId);
 
                     ServerHttpRequest modifiedRequest = requestBuilder.build();
                     return chain.filter(exchange.mutate().request(modifiedRequest).build());
@@ -121,18 +120,28 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
                 // However, we should not block the request here - let it proceed and let the
                 // downstream service or OAuth2 Resource Server handle it
                 .switchIfEmpty(Mono.defer(() -> {
+                    ServerHttpResponse response = exchange.getResponse();
+
+                    // CRITICAL: Check if response is already committed (e.g., by rate limiter returning 429 or Spring Security rejecting)
+                    // If response is committed, we cannot proceed with the filter chain
+                    // This prevents UnsupportedOperationException when trying to modify a committed response
+                    if (response.isCommitted()) {
+                        log.trace("Response already committed, skipping tenant validation filter");
+                        return Mono.empty();
+                    }
+
                     String path = exchange.getRequest().getPath().value();
                     String method = exchange.getRequest().getMethod().name();
+
                     // Check if this is a public endpoint - if so, no authentication is expected
                     boolean isPublicEndpoint = PUBLIC_ENDPOINTS.stream().anyMatch(path::startsWith);
                     if (!isPublicEndpoint) {
-                        // Only log at DEBUG level for protected endpoints since OAuth2 Resource Server
-                        // should have already validated authentication. If authentication is truly missing,
-                        // the downstream service will reject it with a proper error response.
-                        logger.debug("No JWT authentication found in SecurityContext for {} {} - OAuth2 Resource Server should have validated this", method, path);
+                        // For protected endpoints, if no JWT is found, allow the request to proceed
+                        // OAuth2 Resource Server or downstream service will handle authentication
+                        // No need to log - this is an expected flow when response is already handled upstream
+                        return chain.filter(exchange);
                     }
-                    // Allow request to proceed - OAuth2 Resource Server should have handled authentication
-                    // If authentication is truly missing, the downstream service will reject it
+                    // Public endpoint - no authentication expected, allow to proceed
                     return chain.filter(exchange);
                 }));
     }
@@ -184,24 +193,78 @@ public class TenantValidationFilter extends AbstractGatewayFilterFactory<TenantV
 
     /**
      * Handles errors by returning an appropriate HTTP response.
+     * <p>
+     * Safely handles cases where the response may already be committed (e.g., by Spring Security).
+     * If the response is already committed, the error is logged and an empty Mono is returned.
      *
      * @param exchange The server web exchange
      * @param status   The HTTP status code
      * @param message  The error message
-     * @return Mono that completes when the error response is written
+     * @return Mono that completes when the error response is written, or empty Mono if response is already committed
      */
     private Mono<Void> handleError(ServerWebExchange exchange, HttpStatus status, String message) {
         ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(status);
-        response.getHeaders().add("Content-Type", "application/json");
 
-        String errorBody = String.format("{\"error\":{\"code\":\"%s\",\"message\":\"%s\",\"timestamp\":\"%s\"}}", status.name(), message, Instant.now().toString());
+        // Check if response is already committed (e.g., by Spring Security)
+        // This can happen when Spring Security rejects the request before our filter runs
+        if (response.isCommitted()) {
+            log.debug("Response already committed, cannot set error response: status={}, message={}", status, message);
+            return Mono.empty();
+        }
 
-        byte[] errorBytes = Objects.requireNonNull(errorBody.getBytes(StandardCharsets.UTF_8), "Error body bytes cannot be null");
-        DataBuffer buffer = response.bufferFactory().wrap(errorBytes);
+        // Use Mono.defer to ensure we check committed status right before each operation
+        // This prevents race conditions where Spring Security commits the response
+        // between our check and our write operation
+        return Mono.defer(() -> {
+            // Re-check committed status right before setting status code
+            // Spring Security might have committed the response in the meantime
+            if (response.isCommitted()) {
+                log.debug("Response became committed before error handling: status={}, message={}", status, message);
+                return Mono.empty();
+            }
 
-        Mono<DataBuffer> bufferMono = Objects.requireNonNull(Mono.just(buffer), "Buffer mono cannot be null");
-        return response.writeWith(bufferMono);
+            try {
+                // Set status code - this may throw UnsupportedOperationException if response becomes committed
+                // Wrap in try-catch to handle race conditions where Spring Security commits between check and set
+                try {
+                    response.setStatusCode(status);
+                } catch (UnsupportedOperationException | IllegalStateException e) {
+                    // Response was committed between check and setStatusCode call
+                    log.debug("Response committed during setStatusCode (likely by Spring Security): status={}, message={}", status, message);
+                    return Mono.empty();
+                }
+
+                // Re-check before adding headers
+                if (response.isCommitted()) {
+                    log.debug("Response became committed after setting status: status={}, message={}", status, message);
+                    return Mono.empty();
+                }
+
+                response.getHeaders().add("Content-Type", "application/json");
+
+                String errorBody = String.format("{\"error\":{\"code\":\"%s\",\"message\":\"%s\",\"timestamp\":\"%s\"}}", status.name(), message, Instant.now().toString());
+
+                byte[] errorBytes = Objects.requireNonNull(errorBody.getBytes(StandardCharsets.UTF_8), "Error body bytes cannot be null");
+                DataBuffer buffer = response.bufferFactory().wrap(errorBytes);
+
+                Mono<DataBuffer> bufferMono = Objects.requireNonNull(Mono.just(buffer), "Buffer mono cannot be null");
+                return response.writeWith(bufferMono).onErrorResume(UnsupportedOperationException.class, e -> {
+                    // Response was committed between check and write, log at debug level
+                    // This is expected when Spring Security has already committed a 403 response
+                    log.debug("Response committed during error response write (likely by Spring Security): status={}, message={}", status, message);
+                    return Mono.empty();
+                }).onErrorResume(IllegalStateException.class, e -> {
+                    // Response was committed or closed, log at debug level
+                    log.debug("Response in invalid state during error response write: status={}, message={}, error={}", status, message, e.getMessage());
+                    return Mono.empty();
+                });
+            } catch (UnsupportedOperationException | IllegalStateException e) {
+                // Response was committed between check and set, log at debug level
+                // This is expected when Spring Security has already committed a 403 response
+                log.debug("Response committed during error response setup (likely by Spring Security): status={}, message={}, error={}", status, message, e.getMessage());
+                return Mono.empty();
+            }
+        });
     }
 
     /**

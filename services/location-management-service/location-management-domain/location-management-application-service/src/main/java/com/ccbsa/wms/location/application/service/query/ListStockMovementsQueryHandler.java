@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ccbsa.wms.location.application.service.port.data.StockMovementViewRepository;
+import com.ccbsa.wms.location.application.service.port.data.dto.StockMovementView;
 import com.ccbsa.wms.location.application.service.query.dto.ListStockMovementsQuery;
 import com.ccbsa.wms.location.application.service.query.dto.ListStockMovementsQueryResult;
 import com.ccbsa.wms.location.application.service.query.dto.StockMovementQueryResult;
@@ -40,7 +41,7 @@ public class ListStockMovementsQueryHandler {
         validateQuery(query);
 
         // 2. Load read models (views) based on filters
-        List<com.ccbsa.wms.location.application.service.port.data.dto.StockMovementView> movementViews = findMovements(query);
+        List<StockMovementView> movementViews = findMovements(query);
 
         // 3. Map views to query results
         @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE", justification = "results is used in builder - SpotBugs false positive") List<StockMovementQueryResult> results =
@@ -73,7 +74,7 @@ public class ListStockMovementsQueryHandler {
      * @return List of StockMovementViews
      */
     @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD", justification = "Method is called from handle() method - SpotBugs false positive")
-    private List<com.ccbsa.wms.location.application.service.port.data.dto.StockMovementView> findMovements(ListStockMovementsQuery query) {
+    private List<StockMovementView> findMovements(ListStockMovementsQuery query) {
         if (query.getStockItemId() != null && !query.getStockItemId().trim().isEmpty()) {
             return viewRepository.findByTenantIdAndStockItemId(query.getTenantId(), query.getStockItemId());
         } else if (query.getSourceLocationId() != null) {
@@ -94,7 +95,7 @@ public class ListStockMovementsQueryHandler {
      * @return StockMovementQueryResult DTO
      */
     @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD", justification = "Method is called via method reference in stream (this::mapToQueryResult) - SpotBugs false positive")
-    private StockMovementQueryResult mapToQueryResult(com.ccbsa.wms.location.application.service.port.data.dto.StockMovementView view) {
+    private StockMovementQueryResult mapToQueryResult(StockMovementView view) {
         return StockMovementQueryResult.builder().stockMovementId(view.getStockMovementId()).stockItemId(view.getStockItemId()).productId(view.getProductId())
                 .sourceLocationId(view.getSourceLocationId()).destinationLocationId(view.getDestinationLocationId()).quantity(view.getQuantity())
                 .movementType(view.getMovementType()).reason(view.getReason()).status(view.getStatus()).initiatedBy(view.getInitiatedBy()).initiatedAt(view.getInitiatedAt())

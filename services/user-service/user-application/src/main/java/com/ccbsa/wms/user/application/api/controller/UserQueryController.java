@@ -51,7 +51,7 @@ public class UserQueryController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get User by ID", description = "Retrieves a user by ID")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
     public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable String id) {
         // Check if current user is SYSTEM_ADMIN for cross-tenant query support
         boolean isSystemAdmin = isSystemAdmin();
@@ -81,7 +81,7 @@ public class UserQueryController {
 
     @GetMapping("/{id}/profile")
     @Operation(summary = "Get User Profile", description = "Retrieves a user profile by ID (same as GET /users/{id})")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
     public ResponseEntity<ApiResponse<UserResponse>> getUserProfile(@PathVariable String id) {
         // Delegate to getUser - same functionality, different endpoint for RESTful clarity
         // Check if current user is SYSTEM_ADMIN for cross-tenant query support
@@ -93,7 +93,7 @@ public class UserQueryController {
 
     @GetMapping("/{id}/roles")
     @Operation(summary = "Get User Roles", description = "Retrieves roles for a user")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
     public ResponseEntity<ApiResponse<List<String>>> getUserRoles(@PathVariable String id) {
         // Check if current user is SYSTEM_ADMIN for cross-tenant query support
         boolean isSystemAdmin = isSystemAdmin();
@@ -104,7 +104,7 @@ public class UserQueryController {
 
     @GetMapping
     @Operation(summary = "List Users", description = "Lists users with optional filtering and pagination")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE')")
     public ResponseEntity<ApiResponse<List<UserResponse>>> listUsers(@RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
                                                                      @RequestParam(required = false) String status,
                                                                      @RequestParam(required = false, defaultValue = "1") Integer page,

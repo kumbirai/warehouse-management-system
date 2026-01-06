@@ -32,6 +32,7 @@ export interface Consignment {
   consignmentId: string;
   consignmentReference: string;
   warehouseId: string;
+  warehouseCode?: string;
   warehouseName?: string;
   status: ConsignmentStatus;
   receivedAt: string; // ISO date-time string
@@ -251,7 +252,11 @@ export type StockClassification =
 export interface StockItem {
   stockItemId: string;
   productId: string;
+  productCode?: string;
+  productDescription?: string;
   locationId?: string;
+  locationCode?: string;
+  locationName?: string;
   quantity: number;
   expirationDate?: string; // ISO date string (YYYY-MM-DD)
   classification: StockClassification;
@@ -262,7 +267,11 @@ export interface StockItem {
 export interface GetStockItemResponse {
   stockItemId: string;
   productId: string;
+  productCode?: string;
+  productDescription?: string;
   locationId?: string;
+  locationCode?: string;
+  locationName?: string;
   quantity: number;
   expirationDate?: string;
   classification: StockClassification;

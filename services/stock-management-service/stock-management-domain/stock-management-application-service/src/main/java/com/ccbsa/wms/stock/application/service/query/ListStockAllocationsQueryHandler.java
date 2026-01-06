@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ccbsa.wms.stock.application.service.port.data.StockAllocationViewRepository;
+import com.ccbsa.wms.stock.application.service.port.data.dto.StockAllocationView;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockAllocationQueryResult;
 import com.ccbsa.wms.stock.application.service.query.dto.ListStockAllocationsQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.ListStockAllocationsQueryResult;
@@ -42,7 +43,7 @@ public class ListStockAllocationsQueryHandler {
         int size = query.getSize() != null ? query.getSize() : 100;
 
         // 2. Query allocation views with pagination
-        List<com.ccbsa.wms.stock.application.service.port.data.dto.StockAllocationView> allocationViews = viewRepository.findByTenantId(query.getTenantId(), page, size);
+        List<StockAllocationView> allocationViews = viewRepository.findByTenantId(query.getTenantId(), page, size);
 
         // 3. Filter by status if provided (in-memory filtering for now)
         if (query.getStatus() != null) {
@@ -61,7 +62,7 @@ public class ListStockAllocationsQueryHandler {
     }
 
     @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD", justification = "Method is called via method reference in stream (this::mapToQueryResult) - SpotBugs false positive")
-    private GetStockAllocationQueryResult mapToQueryResult(com.ccbsa.wms.stock.application.service.port.data.dto.StockAllocationView view) {
+    private GetStockAllocationQueryResult mapToQueryResult(StockAllocationView view) {
         return GetStockAllocationQueryResult.builder().allocationId(view.getAllocationId()).productId(view.getProductId()).locationId(view.getLocationId())
                 .stockItemId(view.getStockItemId()).quantity(view.getQuantity()).allocationType(view.getAllocationType()).referenceId(view.getReferenceId())
                 .status(view.getStatus()).allocatedAt(view.getAllocatedAt()).releasedAt(view.getReleasedAt()).allocatedBy(view.getAllocatedBy()).notes(view.getNotes()).build();

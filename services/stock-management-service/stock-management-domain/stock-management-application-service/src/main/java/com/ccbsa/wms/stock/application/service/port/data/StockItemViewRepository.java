@@ -3,9 +3,11 @@ package com.ccbsa.wms.stock.application.service.port.data;
 import java.util.List;
 import java.util.Optional;
 
+import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.StockClassification;
 import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.application.service.port.data.dto.StockItemView;
 
 /**
@@ -47,5 +49,24 @@ public interface StockItemViewRepository {
      * @return List of StockItemView
      */
     List<StockItemView> findByTenantIdAndClassification(TenantId tenantId, StockClassification classification);
+
+    /**
+     * Finds stock item views by tenant and product.
+     *
+     * @param tenantId  Tenant ID
+     * @param productId Product ID
+     * @return List of StockItemView
+     */
+    List<StockItemView> findByTenantIdAndProductId(TenantId tenantId, ProductId productId);
+
+    /**
+     * Finds stock item views by tenant, product, and location.
+     *
+     * @param tenantId   Tenant ID
+     * @param productId  Product ID
+     * @param locationId Location ID
+     * @return List of StockItemView
+     */
+    List<StockItemView> findByTenantIdAndProductIdAndLocationId(TenantId tenantId, ProductId productId, LocationId locationId);
 }
 

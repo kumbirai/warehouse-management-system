@@ -35,6 +35,8 @@ import com.ccbsa.wms.location.application.service.query.dto.LocationQueryResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * REST Controller: LocationCommandController
@@ -43,9 +45,11 @@ import jakarta.validation.Valid;
  * <p>
  * Responsibilities: - Create location endpoints - Validate request DTOs - Map DTOs to commands - Return standardized API responses
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/location-management/locations")
 @Tag(name = "Location Commands", description = "Location command operations")
+@RequiredArgsConstructor
 public class LocationCommandController {
     private final CreateLocationCommandHandler createCommandHandler;
     private final UpdateLocationCommandHandler updateCommandHandler;
@@ -56,24 +60,9 @@ public class LocationCommandController {
     private final com.ccbsa.wms.location.application.service.command.UnblockLocationCommandHandler unblockLocationCommandHandler;
     private final LocationDTOMapper mapper;
 
-    public LocationCommandController(CreateLocationCommandHandler createCommandHandler, UpdateLocationCommandHandler updateCommandHandler,
-                                     UpdateLocationStatusCommandHandler updateStatusCommandHandler, AssignLocationsFEFOCommandHandler fefoCommandHandler,
-                                     GetLocationQueryHandler getLocationQueryHandler,
-                                     com.ccbsa.wms.location.application.service.command.BlockLocationCommandHandler blockLocationCommandHandler,
-                                     com.ccbsa.wms.location.application.service.command.UnblockLocationCommandHandler unblockLocationCommandHandler, LocationDTOMapper mapper) {
-        this.createCommandHandler = createCommandHandler;
-        this.updateCommandHandler = updateCommandHandler;
-        this.updateStatusCommandHandler = updateStatusCommandHandler;
-        this.fefoCommandHandler = fefoCommandHandler;
-        this.getLocationQueryHandler = getLocationQueryHandler;
-        this.blockLocationCommandHandler = blockLocationCommandHandler;
-        this.unblockLocationCommandHandler = unblockLocationCommandHandler;
-        this.mapper = mapper;
-    }
-
     @PostMapping
     @Operation(summary = "Create Location", description = "Creates a new warehouse location with barcode")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<CreateLocationResultDTO>> createLocation(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                                @Valid @RequestBody CreateLocationCommandDTO commandDTO) {
         // Map DTO to command
@@ -90,7 +79,7 @@ public class LocationCommandController {
 
     @PutMapping("/{locationId}")
     @Operation(summary = "Update Location", description = "Updates an existing location's coordinates, barcode, and description")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<LocationQueryResultDTO>> updateLocation(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable String locationId,
                                                                               @Valid @RequestBody UpdateLocationCommandDTO commandDTO) {
         // Map DTO to command
@@ -111,7 +100,7 @@ public class LocationCommandController {
 
     @PutMapping("/{locationId}/status")
     @Operation(summary = "Update Location Status", description = "Updates the status of an existing location")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<LocationQueryResultDTO>> updateLocationStatus(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable String locationId,
                                                                                     @Valid @RequestBody UpdateLocationStatusCommandDTO commandDTO) {
         // Map DTO to command
@@ -132,7 +121,7 @@ public class LocationCommandController {
 
     @PostMapping("/assign-fefo")
     @Operation(summary = "Assign Locations FEFO", description = "Assigns locations to stock items based on FEFO principles")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'STOCK_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'STOCK_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<Void>> assignLocationsFEFO(@RequestHeader("X-Tenant-Id") String tenantId, @Valid @RequestBody AssignLocationsFEFOCommandDTO commandDTO) {
         // Map DTO to command
         AssignLocationsFEFOCommand command = mapper.toAssignLocationsFEFOCommand(commandDTO, tenantId);
@@ -145,13 +134,13 @@ public class LocationCommandController {
 
     @PostMapping("/{locationId}/block")
     @Operation(summary = "Block Location", description = "Blocks a location, preventing stock movements to/from it")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<com.ccbsa.wms.location.application.dto.command.BlockLocationResultDTO>> blockLocation(@PathVariable String locationId,
                                                                                                                             @RequestHeader("X-Tenant-Id") String tenantId,
-                                                                                                                            @Valid @RequestBody(required = false)
+                                                                                                                            @Valid @RequestBody
                                                                                                                             com.ccbsa.wms.location.application.dto.command.BlockLocationCommandDTO commandDTO) {
         // Map DTO to command
-        com.ccbsa.wms.location.application.service.command.dto.BlockLocationCommand command = mapper.toBlockLocationCommand(locationId, tenantId);
+        com.ccbsa.wms.location.application.service.command.dto.BlockLocationCommand command = mapper.toBlockLocationCommand(locationId, tenantId, commandDTO);
 
         // Execute command
         com.ccbsa.wms.location.application.service.command.dto.BlockLocationResult result = blockLocationCommandHandler.handle(command);
@@ -164,7 +153,7 @@ public class LocationCommandController {
 
     @PostMapping("/{locationId}/unblock")
     @Operation(summary = "Unblock Location", description = "Unblocks a location, allowing stock movements to/from it")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<com.ccbsa.wms.location.application.dto.command.UnblockLocationResultDTO>> unblockLocation(@PathVariable String locationId,
                                                                                                                                 @RequestHeader("X-Tenant-Id") String tenantId,
                                                                                                                                 @Valid @RequestBody(required = false)

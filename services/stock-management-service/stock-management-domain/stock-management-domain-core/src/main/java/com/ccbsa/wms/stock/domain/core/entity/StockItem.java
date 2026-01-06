@@ -87,9 +87,9 @@ public class StockItem extends TenantAwareAggregateRoot<StockItemId> {
                 this.lastModifiedAt = LocalDateTime.now();
 
                 // Publish classification change event
-                if (oldClassification != null) {
-                    addDomainEvent(new StockClassifiedEvent(this.getId().getValueAsString(), this.productId, oldClassification, this.classification, null, this.quantity));
-                }
+                // Always publish for initial classification (oldClassification == null) to trigger FEFO assignment
+                addDomainEvent(
+                        new StockClassifiedEvent(this.getId().getValueAsString(), this.productId, this.getTenantId(), oldClassification, this.classification, null, this.quantity));
             }
             return;
         }
@@ -127,7 +127,8 @@ public class StockItem extends TenantAwareAggregateRoot<StockItemId> {
             this.lastModifiedAt = LocalDateTime.now();
 
             // Publish classification change event
-            addDomainEvent(new StockClassifiedEvent(this.getId().getValueAsString(), this.productId, oldClassification, newClassification, expiryDate, this.quantity));
+            addDomainEvent(
+                    new StockClassifiedEvent(this.getId().getValueAsString(), this.productId, this.getTenantId(), oldClassification, newClassification, expiryDate, this.quantity));
         }
     }
 

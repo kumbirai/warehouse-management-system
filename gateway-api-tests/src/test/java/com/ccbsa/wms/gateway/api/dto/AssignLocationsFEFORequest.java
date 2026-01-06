@@ -2,6 +2,7 @@ package com.ccbsa.wms.gateway.api.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -16,11 +17,11 @@ public class AssignLocationsFEFORequest {
     }
 
     public List<StockItemAssignmentRequest> getStockItems() {
-        return stockItems;
+        return stockItems != null ? Collections.unmodifiableList(stockItems) : Collections.emptyList();
     }
 
     public void setStockItems(List<StockItemAssignmentRequest> stockItems) {
-        this.stockItems = stockItems;
+        this.stockItems = stockItems != null ? new java.util.ArrayList<>(stockItems) : null;
     }
 
     /**

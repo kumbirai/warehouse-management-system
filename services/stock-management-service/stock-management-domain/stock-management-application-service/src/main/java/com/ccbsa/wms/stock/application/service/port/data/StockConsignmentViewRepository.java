@@ -41,11 +41,31 @@ public interface StockConsignmentViewRepository {
     List<StockConsignmentView> findByTenantId(TenantId tenantId, int page, int size);
 
     /**
+     * Finds consignment views for a tenant with pagination and optional expiration filtering.
+     *
+     * @param tenantId           Tenant ID
+     * @param page               Page number (0-based)
+     * @param size               Page size
+     * @param expiringWithinDays Optional number of days to filter consignments expiring within (null to disable filtering)
+     * @return List of StockConsignmentView
+     */
+    List<StockConsignmentView> findByTenantId(TenantId tenantId, int page, int size, Integer expiringWithinDays);
+
+    /**
      * Counts consignment views for a tenant.
      *
      * @param tenantId Tenant ID
      * @return Total count
      */
     long countByTenantId(TenantId tenantId);
+
+    /**
+     * Counts consignment views for a tenant with optional expiration filtering.
+     *
+     * @param tenantId           Tenant ID
+     * @param expiringWithinDays Optional number of days to filter consignments expiring within (null to disable filtering)
+     * @return Total count
+     */
+    long countByTenantId(TenantId tenantId, Integer expiringWithinDays);
 }
 

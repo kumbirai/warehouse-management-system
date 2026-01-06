@@ -9,6 +9,7 @@ import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.domain.core.entity.StockAdjustment;
+import com.ccbsa.wms.stock.domain.core.valueobject.Notes;
 import com.ccbsa.wms.stock.domain.core.valueobject.StockAdjustmentId;
 
 /**
@@ -30,10 +31,10 @@ public class StockAdjustedEvent extends StockManagementEvent<StockAdjustment> {
     private final StockItemId stockItemId;
     private final AdjustmentType adjustmentType;
     private final Quantity quantity;
-    private final int quantityBefore;
-    private final int quantityAfter;
+    private final Quantity quantityBefore;
+    private final Quantity quantityAfter;
     private final AdjustmentReason reason;
-    private final String notes;
+    private final Notes notes;
 
     /**
      * Constructor for StockAdjustedEvent.
@@ -51,7 +52,7 @@ public class StockAdjustedEvent extends StockManagementEvent<StockAdjustment> {
      * @param notes          Adjustment notes
      */
     public StockAdjustedEvent(StockAdjustmentId adjustmentId, TenantId tenantId, ProductId productId, LocationId locationId, StockItemId stockItemId, AdjustmentType adjustmentType,
-                              Quantity quantity, int quantityBefore, int quantityAfter, AdjustmentReason reason, String notes) {
+                              Quantity quantity, Quantity quantityBefore, Quantity quantityAfter, AdjustmentReason reason, Notes notes) {
         super(adjustmentId.getValueAsString(), "StockAdjustment");
         this.adjustmentId = adjustmentId;
         this.tenantId = tenantId;
@@ -83,7 +84,7 @@ public class StockAdjustedEvent extends StockManagementEvent<StockAdjustment> {
      * @param metadata       Event metadata (correlation ID, user ID, etc.)
      */
     public StockAdjustedEvent(StockAdjustmentId adjustmentId, TenantId tenantId, ProductId productId, LocationId locationId, StockItemId stockItemId, AdjustmentType adjustmentType,
-                              Quantity quantity, int quantityBefore, int quantityAfter, AdjustmentReason reason, String notes, EventMetadata metadata) {
+                              Quantity quantity, Quantity quantityBefore, Quantity quantityAfter, AdjustmentReason reason, Notes notes, EventMetadata metadata) {
         super(adjustmentId.getValueAsString(), "StockAdjustment", metadata);
         this.adjustmentId = adjustmentId;
         this.tenantId = tenantId;
@@ -126,11 +127,11 @@ public class StockAdjustedEvent extends StockManagementEvent<StockAdjustment> {
         return quantity;
     }
 
-    public int getQuantityBefore() {
+    public Quantity getQuantityBefore() {
         return quantityBefore;
     }
 
-    public int getQuantityAfter() {
+    public Quantity getQuantityAfter() {
         return quantityAfter;
     }
 
@@ -138,7 +139,7 @@ public class StockAdjustedEvent extends StockManagementEvent<StockAdjustment> {
         return reason;
     }
 
-    public String getNotes() {
+    public Notes getNotes() {
         return notes;
     }
 }

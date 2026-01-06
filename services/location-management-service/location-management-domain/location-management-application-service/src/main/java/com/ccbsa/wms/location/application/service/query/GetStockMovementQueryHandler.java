@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ccbsa.wms.location.application.service.port.data.StockMovementViewRepository;
+import com.ccbsa.wms.location.application.service.port.data.dto.StockMovementView;
 import com.ccbsa.wms.location.application.service.query.dto.GetStockMovementQuery;
 import com.ccbsa.wms.location.application.service.query.dto.StockMovementQueryResult;
 import com.ccbsa.wms.location.domain.core.exception.StockMovementNotFoundException;
@@ -67,7 +68,7 @@ public class GetStockMovementQueryHandler {
      * @param view StockMovementView read model
      * @return StockMovementQueryResult DTO
      */
-    private StockMovementQueryResult mapToQueryResult(com.ccbsa.wms.location.application.service.port.data.dto.StockMovementView view) {
+    private StockMovementQueryResult mapToQueryResult(StockMovementView view) {
         return StockMovementQueryResult.builder().stockMovementId(view.getStockMovementId()).stockItemId(view.getStockItemId()).productId(view.getProductId())
                 .sourceLocationId(view.getSourceLocationId()).destinationLocationId(view.getDestinationLocationId()).quantity(view.getQuantity())
                 .movementType(view.getMovementType()).reason(view.getReason()).status(view.getStatus()).initiatedBy(view.getInitiatedBy()).initiatedAt(view.getInitiatedAt())

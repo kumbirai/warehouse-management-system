@@ -59,7 +59,7 @@ public class StockMovementCommandController {
 
     @PostMapping
     @Operation(summary = "Create Stock Movement", description = "Initiates a stock movement between locations")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'STOCK_MANAGER', 'OPERATOR')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'SERVICE')")
     public ResponseEntity<ApiResponse<CreateStockMovementResultDTO>> createStockMovement(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                                          @Valid @RequestBody CreateStockMovementCommandDTO commandDTO) {
         // Map DTO to command
@@ -76,7 +76,7 @@ public class StockMovementCommandController {
 
     @PutMapping("/{movementId}/complete")
     @Operation(summary = "Complete Stock Movement", description = "Completes a stock movement")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'STOCK_MANAGER', 'OPERATOR')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'SERVICE')")
     public ResponseEntity<ApiResponse<CompleteStockMovementResultDTO>> completeStockMovement(@PathVariable String movementId, @RequestHeader("X-Tenant-Id") String tenantId,
                                                                                              @Valid @RequestBody(required = false) CompleteStockMovementCommandDTO commandDTO) {
         // Map DTO to command
@@ -93,7 +93,7 @@ public class StockMovementCommandController {
 
     @PutMapping("/{movementId}/cancel")
     @Operation(summary = "Cancel Stock Movement", description = "Cancels a stock movement with a reason")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'STOCK_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'STOCK_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<CancelStockMovementResultDTO>> cancelStockMovement(@PathVariable String movementId, @RequestHeader("X-Tenant-Id") String tenantId,
                                                                                          @Valid @RequestBody CancelStockMovementCommandDTO commandDTO) {
         // Map DTO to command

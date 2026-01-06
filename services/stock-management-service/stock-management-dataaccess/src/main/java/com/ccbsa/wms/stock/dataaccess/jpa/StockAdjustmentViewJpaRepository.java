@@ -6,7 +6,6 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import com.ccbsa.wms.stock.dataaccess.entity.StockAdjustmentViewEntity;
 
@@ -17,7 +16,6 @@ import com.ccbsa.wms.stock.dataaccess.entity.StockAdjustmentViewEntity;
  * <p>
  * Provides optimized read-only queries for adjustment views.
  */
-@Repository
 public interface StockAdjustmentViewJpaRepository extends JpaRepository<StockAdjustmentViewEntity, UUID> {
 
     /**

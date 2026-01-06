@@ -86,6 +86,11 @@ export const LocationForm = ({
               required
               error={!!errors.zone}
               helperText={errors.zone?.message}
+              aria-label="Zone input field"
+              aria-required="true"
+              aria-describedby="zone-helper"
+              FormHelperTextProps={{ id: 'zone-helper' }}
+              autoFocus
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -96,6 +101,10 @@ export const LocationForm = ({
               required
               error={!!errors.aisle}
               helperText={errors.aisle?.message}
+              aria-label="Aisle input field"
+              aria-required="true"
+              aria-describedby="aisle-helper"
+              FormHelperTextProps={{ id: 'aisle-helper' }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -106,6 +115,10 @@ export const LocationForm = ({
               required
               error={!!errors.rack}
               helperText={errors.rack?.message}
+              aria-label="Rack input field"
+              aria-required="true"
+              aria-describedby="rack-helper"
+              FormHelperTextProps={{ id: 'rack-helper' }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -116,6 +129,10 @@ export const LocationForm = ({
               required
               error={!!errors.level}
               helperText={errors.level?.message}
+              aria-label="Level input field"
+              aria-required="true"
+              aria-describedby="level-helper"
+              FormHelperTextProps={{ id: 'level-helper' }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -134,6 +151,9 @@ export const LocationForm = ({
                   }
                   value={field.value || ''}
                   onChange={value => field.onChange(value)}
+                  aria-label="Barcode input field (optional)"
+                  aria-describedby="barcode-helper"
+                  FormHelperTextProps={{ id: 'barcode-helper' }}
                 />
               )}
             />
@@ -147,6 +167,9 @@ export const LocationForm = ({
               rows={3}
               error={!!errors.description}
               helperText={errors.description?.message}
+              aria-label="Location description input field (optional)"
+              aria-describedby="description-helper"
+              FormHelperTextProps={{ id: 'description-helper' }}
             />
           </Grid>
         </Grid>

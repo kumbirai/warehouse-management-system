@@ -2,14 +2,14 @@ package com.ccbsa.wms.notification.messaging.listener;
 
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ccbsa.common.application.context.CorrelationContext;
 import com.ccbsa.common.domain.valueobject.TenantId;
@@ -21,6 +21,9 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationChannel;
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationId;
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Event Listener: NotificationCreatedEventListener
  * <p>
@@ -29,17 +32,14 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
  * <p>
  * Uses Map deserialization to avoid deserialization issues when type headers are not present.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class NotificationCreatedEventListener {
-    private static final Logger logger = LoggerFactory.getLogger(NotificationCreatedEventListener.class);
-
     private final SendNotificationCommandHandler sendHandler;
 
-    public NotificationCreatedEventListener(SendNotificationCommandHandler sendHandler) {
-        this.sendHandler = sendHandler;
-    }
-
     @KafkaListener(topics = "notification-events", groupId = "notification-service", containerFactory = "internalEventKafkaListenerContainerFactory")
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
                        @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         try {
@@ -49,7 +49,7 @@ public class NotificationCreatedEventListener {
             // Detect event type from payload or header
             String detectedEventType = detectEventType(eventData, eventType);
             if (!isNotificationCreatedEvent(detectedEventType)) {
-                logger.debug("Skipping event - not NotificationCreatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
+                log.debug("Skipping event - not NotificationCreatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
                 acknowledgment.acknowledge();
                 return;
             }
@@ -65,7 +65,7 @@ public class NotificationCreatedEventListener {
             // Extract notification type
             NotificationType notificationType = extractNotificationType(eventData);
 
-            logger.info("Received NotificationCreatedEvent: notificationId={}, tenantId={}, type={}, eventDataKeys={}", notificationId, tenantId.getValue(), notificationType,
+            log.info("Received NotificationCreatedEvent: notificationId={}, tenantId={}, type={}, eventDataKeys={}", notificationId, tenantId.getValue(), notificationType,
                     eventData.keySet());
 
             // Determine delivery channel
@@ -80,27 +80,28 @@ public class NotificationCreatedEventListener {
             // Retry is needed because events may be consumed before the transaction that created
             // the notification commits (eventual consistency)
             // Pass tenantId to ensure it's available during retries
-            sendNotificationWithRetry(command, notificationId, channel, tenantId);
+            // Note: Each retry attempt runs in its own transaction to ensure proper connection management
+            sendNotificationWithRetryInTransaction(command, notificationId, channel, tenantId);
 
-            logger.info("Notification delivery initiated: notificationId={}, channel={}", notificationId, channel);
+            log.info("Notification delivery initiated: notificationId={}, channel={}", notificationId, channel);
 
             // Acknowledge message
             acknowledgment.acknowledge();
 
         } catch (IllegalArgumentException e) {
             // Invalid event format - acknowledge to skip (don't retry malformed events)
-            logger.error("Invalid event format for NotificationCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
+            log.error("Invalid event format for NotificationCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             acknowledgment.acknowledge();
         } catch (NotificationNotFoundException e) {
             // Notification not found after retries - likely race condition where event consumed before transaction commits
             // Log warning - Kafka retry mechanism will handle if notification appears later
             String aggregateId = extractAggregateId(eventData);
-            logger.warn("Notification not found when processing NotificationCreatedEvent: notificationId={}, error={}. "
+            log.warn("Notification not found when processing NotificationCreatedEvent: notificationId={}, error={}. "
                     + "This may be a race condition. Event will be retried by Kafka if notification appears.", aggregateId, e.getMessage());
             // Don't acknowledge - let Kafka retry mechanism handle it
             throw new RuntimeException("Notification not found - will retry", e);
         } catch (Exception e) {
-            logger.error("Failed to process NotificationCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
+            log.error("Failed to process NotificationCreatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             // Don't acknowledge - will retry for transient failures
             throw new RuntimeException("Failed to process NotificationCreatedEvent", e);
         } finally {
@@ -124,11 +125,11 @@ public class NotificationCreatedEventListener {
                 if (correlationIdObj != null) {
                     String correlationId = correlationIdObj.toString();
                     CorrelationContext.setCorrelationId(correlationId);
-                    logger.debug("Set correlation ID from event metadata: {}", correlationId);
+                    log.debug("Set correlation ID from event metadata: {}", correlationId);
                 }
             }
         } catch (Exception e) {
-            logger.warn("Failed to extract correlation ID from event metadata: {}", e.getMessage());
+            log.warn("Failed to extract correlation ID from event metadata: {}", e.getMessage());
             // Continue processing even if correlation ID extraction fails
         }
     }
@@ -286,6 +287,8 @@ public class NotificationCreatedEventListener {
      * issues
      * <p>
      * Production-grade retry strategy with sufficient delays to handle transaction commit delays.
+     * <p>
+     * Each retry attempt runs in its own transaction to ensure proper connection management and release.
      *
      * @param command        Send notification command
      * @param notificationId Notification identifier
@@ -293,42 +296,33 @@ public class NotificationCreatedEventListener {
      * @param tenantId       Tenant identifier (ensures tenant context is preserved during retries)
      * @throws NotificationNotFoundException if notification not found after all retries
      */
-    private void sendNotificationWithRetry(SendNotificationCommand command, NotificationId notificationId, NotificationChannel channel, TenantId tenantId) {
+    private void sendNotificationWithRetryInTransaction(SendNotificationCommand command, NotificationId notificationId, NotificationChannel channel, TenantId tenantId) {
         // Production-grade retry configuration
         // Increased retries and delays to handle transaction commit delays and eventual consistency
         int maxRetries = 5;
         long initialDelayMs = 200; // 200ms initial delay
         long maxDelayMs = 5000; // 5 seconds max delay (handles longer transaction commit times)
 
-        logger.info("Starting notification send with retry: notificationId={}, tenantId={}, channel={}", notificationId, tenantId.getValue(), channel);
+        log.info("Starting notification send with retry: notificationId={}, tenantId={}, channel={}", notificationId, tenantId.getValue(), channel);
 
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                // Ensure tenant context is set before each attempt (may be cleared between retries)
-                TenantId currentTenantId = TenantContext.getTenantId();
-                if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
-                    logger.warn("Tenant context missing or incorrect before attempt {}: notificationId={}, expected={}, actual={}. Re-setting.", attempt, notificationId,
-                            tenantId.getValue(), currentTenantId != null ? currentTenantId.getValue() : "null");
-                    TenantContext.setTenantId(tenantId);
-                }
-                logger.debug("Attempt {}: tenantId={}, notificationId={}", attempt, tenantId.getValue(), notificationId);
-
-                sendHandler.handle(command);
-                logger.info("Successfully sent notification on attempt {}: notificationId={}, channel={}", attempt, notificationId, channel);
+                // Each attempt runs in its own transaction to ensure proper connection management
+                sendNotificationInTransaction(command, notificationId, channel, tenantId, attempt);
+                log.info("Successfully sent notification on attempt {}: notificationId={}, channel={}", attempt, notificationId, channel);
                 return;
             } catch (NotificationNotFoundException e) {
                 TenantId tenantIdOnError = TenantContext.getTenantId();
                 if (attempt == maxRetries) {
                     // Last attempt failed - rethrow to trigger Kafka retry or dead letter queue
-                    logger.warn(
-                            "Notification not found after {} retries: notificationId={}, tenantId={}. This may indicate the notification was never created, was deleted, or there"
+                    log.warn("Notification not found after {} retries: notificationId={}, tenantId={}. This may indicate the notification was never created, was deleted, or there"
                                     + " is a persistent consistency issue. Event will be retried by Kafka.", maxRetries, notificationId,
                             tenantIdOnError != null ? tenantIdOnError.getValue() : "null");
                     throw e;
                 }
                 // Calculate delay with exponential backoff
                 long delayMs = Math.min(initialDelayMs * (long) Math.pow(2, attempt - 1), maxDelayMs);
-                logger.warn("Notification not found on attempt {}: notificationId={}, tenantId={}. "
+                log.warn("Notification not found on attempt {}: notificationId={}, tenantId={}. "
                                 + "Retrying in {}ms (handling eventual consistency - transaction may not have committed yet).", attempt, notificationId,
                         tenantIdOnError != null ? tenantIdOnError.getValue() : "null", delayMs);
                 try {
@@ -339,6 +333,33 @@ public class NotificationCreatedEventListener {
                 }
             }
         }
+    }
+
+    /**
+     * Sends notification in a separate transaction to ensure proper connection management.
+     * <p>
+     * Each retry attempt runs in its own transaction, ensuring connections are properly released
+     * after each attempt, preventing connection leaks.
+     *
+     * @param command        Send notification command
+     * @param notificationId Notification identifier
+     * @param channel        Delivery channel
+     * @param tenantId       Tenant identifier
+     * @param attempt        Current attempt number
+     * @throws NotificationNotFoundException if notification not found
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private void sendNotificationInTransaction(SendNotificationCommand command, NotificationId notificationId, NotificationChannel channel, TenantId tenantId, int attempt) {
+        // Ensure tenant context is set before each attempt (may be cleared between retries)
+        TenantId currentTenantId = TenantContext.getTenantId();
+        if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
+            log.warn("Tenant context missing or incorrect before attempt {}: notificationId={}, expected={}, actual={}. Re-setting.", attempt, notificationId, tenantId.getValue(),
+                    currentTenantId != null ? currentTenantId.getValue() : "null");
+            TenantContext.setTenantId(tenantId);
+        }
+        log.debug("Attempt {}: tenantId={}, notificationId={}", attempt, tenantId.getValue(), notificationId);
+
+        sendHandler.handle(command);
     }
 }
 

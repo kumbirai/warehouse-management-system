@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -17,15 +15,17 @@ import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.user.application.service.port.security.SecurityContextPort;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Service for extracting security context information from Spring Security.
  * <p>
  * Provides methods to extract current user ID, roles, and tenant ID from JWT tokens.
  * Implements SecurityContextPort interface for dependency injection.
  */
+@Slf4j
 @Service
 public class SecurityContextService implements SecurityContextPort {
-    private static final Logger logger = LoggerFactory.getLogger(SecurityContextService.class);
 
     /**
      * Gets the current user ID from the security context.
@@ -81,7 +81,7 @@ public class SecurityContextService implements SecurityContextPort {
     public List<String> getCurrentUserRoles() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-            logger.warn("No authentication found in security context");
+            log.warn("No authentication found in security context");
             return Collections.emptyList();
         }
 
@@ -114,7 +114,7 @@ public class SecurityContextService implements SecurityContextPort {
                 }
             }
         } catch (Exception e) {
-            logger.warn("Failed to extract roles from JWT token: {}", e.getMessage());
+            log.warn("Failed to extract roles from JWT token: {}", e.getMessage());
         }
         return Collections.emptyList();
     }

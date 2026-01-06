@@ -9,8 +9,6 @@ import org.keycloak.admin.client.resource.GroupResource;
 import org.keycloak.admin.client.resource.GroupsResource;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.GroupRepresentation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
@@ -21,24 +19,22 @@ import com.ccbsa.wms.tenant.application.service.port.service.TenantGroupServiceP
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Adapter handling tenant-specific Keycloak group orchestration.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Ports are framework-managed singletons and treated as immutable dependencies")
 public class KeycloakGroupAdapter implements TenantGroupServicePort {
-    private static final Logger logger = LoggerFactory.getLogger(KeycloakGroupAdapter.class);
     private static final String STATUS_ATTRIBUTE = "tenant_status";
     private static final String TENANT_ID_ATTRIBUTE = "tenant_id";
 
     private final KeycloakClientPort keycloakClientPort;
     private final KeycloakConfig keycloakConfig;
-
-    public KeycloakGroupAdapter(KeycloakClientPort keycloakClientPort, KeycloakConfig keycloakConfig) {
-        this.keycloakClientPort = keycloakClientPort;
-        this.keycloakConfig = keycloakConfig;
-    }
 
     @Override
     public void ensureTenantGroupEnabled(TenantId tenantId) {
@@ -49,7 +45,7 @@ public class KeycloakGroupAdapter implements TenantGroupServicePort {
             group = createGroup(realmName, tenantId, groupName);
         }
         updateStatusAttribute(realmName, group, "ACTIVE");
-        logger.info("Tenant group {} ensured/enabled in realm {}", groupName, realmName);
+        log.info("Tenant group {} ensured/enabled in realm {}", groupName, realmName);
     }
 
     private String buildGroupName(TenantId tenantId) {
@@ -64,7 +60,7 @@ public class KeycloakGroupAdapter implements TenantGroupServicePort {
                 return representation;
             }
         } catch (NotFoundException ex) {
-            logger.debug("Group {} not found via path lookup in realm {}", groupName, realmName);
+            log.debug("Group {} not found via path lookup in realm {}", groupName, realmName);
         }
 
         GroupsResource groupsResource = realmResource.groups();
@@ -116,11 +112,11 @@ public class KeycloakGroupAdapter implements TenantGroupServicePort {
         String groupName = buildGroupName(tenantId);
         GroupRepresentation group = findGroup(realmName, groupName);
         if (group == null) {
-            logger.info("Tenant group {} not found in realm {}; nothing to disable", groupName, realmName);
+            log.info("Tenant group {} not found in realm {}; nothing to disable", groupName, realmName);
             return;
         }
         updateStatusAttribute(realmName, group, "DISABLED");
-        logger.info("Tenant group {} disabled in realm {}", groupName, realmName);
+        log.info("Tenant group {} disabled in realm {}", groupName, realmName);
     }
 }
 

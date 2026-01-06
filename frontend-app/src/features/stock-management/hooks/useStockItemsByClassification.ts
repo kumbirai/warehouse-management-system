@@ -1,27 +1,34 @@
 import {useQuery} from '@tanstack/react-query';
+import {useEffect} from 'react';
 import {useAuth} from '../../../hooks/useAuth';
 import {stockManagementService} from '../services/stockManagementService';
-import {StockClassification} from '../types/stockManagement';
+import {GetStockItemsByClassificationApiResponse, StockClassification} from '../types/stockManagement';
 import {logger} from '../../../utils/logger';
 
 /**
  * Hook: useStockItemsByClassification
  * <p>
- * Fetches stock items filtered by classification.
+ * Fetches stock items filtered by classification, or all stock items if classification is null.
  */
 export const useStockItemsByClassification = (classification: StockClassification | null) => {
   const { user } = useAuth();
   const tenantId = user?.tenantId;
 
-  return useQuery({
+  const queryResult = useQuery<GetStockItemsByClassificationApiResponse>({
     queryKey: ['stockItemsByClassification', classification, tenantId],
     queryFn: () => {
-      if (!classification || !tenantId) {
-        logger.warn('Cannot fetch stock items: classification or tenantId missing', {
+      if (!tenantId) {
+        logger.warn('Cannot fetch stock items: tenantId missing', {
           classification,
           tenantId,
         });
-        throw new Error('Classification and tenant ID are required');
+        throw new Error('Tenant ID is required');
+      }
+      if (classification === null) {
+        logger.debug('Fetching all stock items', {
+          tenantId,
+        });
+        return stockManagementService.getAllStockItems(tenantId);
       }
       logger.debug('Fetching stock items by classification', {
         classification,
@@ -29,20 +36,30 @@ export const useStockItemsByClassification = (classification: StockClassificatio
       });
       return stockManagementService.getStockItemsByClassification(classification, tenantId);
     },
-    enabled: !!classification && !!tenantId,
-    onSuccess: (data) => {
+    enabled: !!tenantId,
+  });
+
+  // Handle success logging
+  useEffect(() => {
+    if (queryResult.data && queryResult.isSuccess) {
       logger.info('Stock items fetched successfully', {
         classification,
         tenantId,
-        count: data?.data?.stockItems?.length || 0,
+        count: queryResult.data?.data?.stockItems?.length || 0,
       });
-    },
-    onError: (error) => {
+    }
+  }, [queryResult.data, queryResult.isSuccess, classification, tenantId]);
+
+  // Handle error logging
+  useEffect(() => {
+    if (queryResult.error) {
       logger.error('Error fetching stock items by classification', {
         classification,
         tenantId,
-        error: error instanceof Error ? error.message : String(error),
+        error: queryResult.error instanceof Error ? queryResult.error.message : String(queryResult.error),
       });
-    },
-  });
+    }
+  }, [queryResult.error, classification, tenantId]);
+
+  return queryResult;
 };

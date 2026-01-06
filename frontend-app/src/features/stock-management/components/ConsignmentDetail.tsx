@@ -16,9 +16,9 @@ import {
 } from '@mui/material';
 import { Consignment } from '../types/stockManagement';
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
-import { getStatusVariant, StatusBadge } from '../../../components/common';
+import { StatusBadge } from '../../../components/common';
+import { getStatusVariant } from '../../../utils/statusUtils';
 import { formatDateTime } from '../../../utils/dateUtils';
-import { useLocationDescription } from '../hooks/useLocationDescription';
 
 interface ConsignmentDetailProps {
   consignment: Consignment | null;
@@ -38,8 +38,19 @@ export const ConsignmentDetail = ({
   canConfirm = false,
 }: ConsignmentDetailProps) => {
   // Always call hook (React rules), but prefer backend value if available
-  const fallbackWarehouseDescription = useLocationDescription(consignment?.warehouseId);
-  const warehouseDescription = consignment?.warehouseName || fallbackWarehouseDescription;
+  const getWarehouseDisplayName = (): string => {
+    if (!consignment) return '';
+    if (consignment.warehouseName && consignment.warehouseCode) {
+      return `${consignment.warehouseCode} - ${consignment.warehouseName}`;
+    }
+    if (consignment.warehouseName) {
+      return consignment.warehouseName;
+    }
+    if (consignment.warehouseCode) {
+      return consignment.warehouseCode;
+    }
+    return consignment.warehouseId;
+  };
 
   if (!consignment) {
     return (
@@ -82,7 +93,12 @@ export const ConsignmentDetail = ({
               <Typography variant="caption" color="text.secondary">
                 Warehouse
               </Typography>
-              <Typography variant="body1">{warehouseDescription || consignment.warehouseId}</Typography>
+              <Typography variant="body1" fontWeight="medium">
+                {getWarehouseDisplayName()}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                ID: {consignment.warehouseId}
+              </Typography>
             </Box>
 
             <Box>
@@ -215,13 +231,21 @@ export const ConsignmentDetail = ({
               This consignment is in RECEIVED status. Confirm it to create stock items and update
               inventory.
             </Alert>
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 2,
+              }}
+            >
               {canConfirm && onConfirm && (
                 <Button
                   variant="contained"
                   color="success"
                   startIcon={<CheckCircleIcon />}
                   onClick={onConfirm}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                  aria-label="Confirm consignment"
                 >
                   Confirm Consignment
                 </Button>
@@ -231,6 +255,8 @@ export const ConsignmentDetail = ({
                   variant="outlined"
                   color="primary"
                   onClick={onValidate}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                  aria-label="Validate consignment"
                   disabled={isValidating}
                 >
                   {isValidating ? 'Validating...' : 'Validate Consignment'}

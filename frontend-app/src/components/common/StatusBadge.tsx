@@ -26,26 +26,3 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     <Chip label={label} color={variantColorMap[variant]} size={size} sx={{ fontWeight: 500 }} />
   );
 };
-
-export const getStatusVariant = (status: string): StatusVariant => {
-  const statusLower = status.toLowerCase();
-
-  if (statusLower === 'active' || statusLower === 'available' || statusLower === 'confirmed') {
-    return 'success';
-  }
-
-  if (statusLower === 'pending' || statusLower === 'reserved' || statusLower === 'in_progress') {
-    return 'warning';
-  }
-
-  if (
-    statusLower === 'inactive' ||
-    statusLower === 'suspended' ||
-    statusLower === 'unavailable' ||
-    statusLower === 'blocked'
-  ) {
-    return 'error';
-  }
-
-  return 'default';
-};

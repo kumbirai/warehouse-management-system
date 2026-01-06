@@ -4,8 +4,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.cloud.gateway.filter.ratelimit.RateLimiter;
@@ -16,6 +14,7 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 /**
@@ -38,8 +37,8 @@ import reactor.core.publisher.Mono;
  * This class is registered as a bean in RateLimiterConfig to override the default
  * RequestRateLimiterGatewayFilterFactory from Spring Cloud Gateway.
  */
+@Slf4j
 public class SafeRequestRateLimiterGatewayFilterFactory extends org.springframework.cloud.gateway.filter.factory.RequestRateLimiterGatewayFilterFactory {
-    private static final Logger logger = LoggerFactory.getLogger(SafeRequestRateLimiterGatewayFilterFactory.class);
     private static final String REMAINING_HEADER = "X-RateLimit-Remaining";
     private static final String REPLENISH_RATE_HEADER = "X-RateLimit-Replenish-Rate";
     private static final String BURST_CAPACITY_HEADER = "X-RateLimit-Burst-Capacity";
@@ -69,7 +68,7 @@ public class SafeRequestRateLimiterGatewayFilterFactory extends org.springframew
 
             return keyResolver.resolve(exchange).flatMap(key -> {
                 if (key == null || key.isEmpty()) {
-                    logger.warn("Key resolver returned null or empty key for route: {}", routeId);
+                    log.warn("Key resolver returned null or empty key for route: {}", routeId);
                     return chain.filter(exchange);
                 }
 
@@ -80,15 +79,22 @@ public class SafeRequestRateLimiterGatewayFilterFactory extends org.springframew
                     ServerHttpResponse httpResponse = exchange.getResponse();
 
                     // Check if response is already committed before adding headers
+                    // CRITICAL: Check committed status before ANY header operations to prevent UnsupportedOperationException
                     if (!httpResponse.isCommitted()) {
-                        addRateLimitHeaders(httpResponse, response, config);
+                        try {
+                            addRateLimitHeaders(httpResponse, response, config);
+                        } catch (UnsupportedOperationException e) {
+                            // Response became committed between check and header addition
+                            // This can happen in reactive streams - log and continue
+                            log.debug("Response became committed during header addition for route: {}, key: {}", routeId, resolvedKey);
+                        }
                     } else {
-                        logger.debug("Response already committed, skipping rate limit headers for route: {}, key: {}", routeId, resolvedKey);
+                        log.debug("Response already committed, skipping rate limit headers for route: {}, key: {}", routeId, resolvedKey);
                     }
 
                     // If request is not allowed, return 429 before committing response
                     if (!response.isAllowed()) {
-                        logger.debug("Rate limit exceeded for route: {}, key: {}", routeId, resolvedKey);
+                        log.debug("Rate limit exceeded for route: {}, key: {}", routeId, resolvedKey);
 
                         // Ensure headers are set before setting status
                         if (!httpResponse.isCommitted()) {
@@ -102,19 +108,19 @@ public class SafeRequestRateLimiterGatewayFilterFactory extends org.springframew
                                 return httpResponse.writeWith(Mono.just(buffer));
                             } catch (UnsupportedOperationException e) {
                                 // Response was committed between check and set, log and return empty
-                                logger.debug("Response committed during rate limit response setup for route: {}, key: {}", routeId, resolvedKey);
+                                log.debug("Response committed during rate limit response setup for route: {}, key: {}", routeId, resolvedKey);
                                 return Mono.empty();
                             }
                         } else {
                             // Response already committed, just log and return
-                            logger.debug("Response already committed when rate limit exceeded for route: {}, key: {}", routeId, resolvedKey);
+                            log.debug("Response already committed when rate limit exceeded for route: {}, key: {}", routeId, resolvedKey);
                             return Mono.empty();
                         }
                     }
 
                     return chain.filter(exchange);
                 }).onErrorResume(throwable -> {
-                    logger.error("Error in rate limiter for route: {}, key: {}", routeId, resolvedKey, throwable);
+                    log.error("Error in rate limiter for route: {}, key: {}", routeId, resolvedKey, throwable);
                     // On error, allow the request to proceed (graceful degradation)
                     return chain.filter(exchange);
                 });
@@ -134,7 +140,7 @@ public class SafeRequestRateLimiterGatewayFilterFactory extends org.springframew
      */
     private void addRateLimitHeaders(ServerHttpResponse response, Response rateLimiterResponse, Config config) {
         if (response.isCommitted()) {
-            logger.debug("Response already committed, skipping rate limit headers");
+            log.debug("Response already committed, skipping rate limit headers");
             return;
         }
 
@@ -166,7 +172,7 @@ public class SafeRequestRateLimiterGatewayFilterFactory extends org.springframew
             }
         } catch (UnsupportedOperationException e) {
             // If headers are read-only (response committed), log and continue
-            logger.debug("Cannot add rate limit headers - response is read-only: {}", e.getMessage());
+            log.debug("Cannot add rate limit headers - response is read-only: {}", e.getMessage());
         }
     }
 }

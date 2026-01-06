@@ -91,7 +91,13 @@ public class ServiceAccountAuthenticationInterceptor implements ClientHttpReques
                     request.getHeaders().set("X-Tenant-Id", tenantId);
                     log.debug("Forwarding X-Tenant-Id from TenantContext: {}", tenantId);
                 } else {
-                    log.warn("No X-Tenant-Id available from TenantContext for service-to-service call to: {}", request.getURI());
+                    // Downgrade to DEBUG for Keycloak endpoints (tenant context not required)
+                    String uri = request.getURI().toString();
+                    if (uri.contains("/realms/") || uri.contains("/protocol/openid-connect")) {
+                        log.debug("No X-Tenant-Id available from TenantContext for Keycloak call to: {} (tenant context not required for Keycloak)", uri);
+                    } else {
+                        log.warn("No X-Tenant-Id available from TenantContext for service-to-service call to: {}", uri);
+                    }
                 }
             } catch (ServiceAccountAuthenticationException e) {
                 log.error("Failed to obtain service account token for inter-service call to: {}. Error: {}", request.getURI(), e.getMessage(), e);

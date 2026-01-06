@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ccbsa.wms.stock.application.service.port.data.StockConsignmentViewRepository;
+import com.ccbsa.wms.stock.application.service.port.data.dto.StockConsignmentView;
 import com.ccbsa.wms.stock.application.service.query.dto.ConsignmentQueryResult;
 import com.ccbsa.wms.stock.application.service.query.dto.ListConsignmentsQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.ListConsignmentsQueryResult;
@@ -38,23 +39,27 @@ public class ListConsignmentsQueryHandler {
         int page = query.getPage() != null ? query.getPage() : 0;
         int size = query.getSize() != null ? query.getSize() : 100;
 
-        // 2. Query consignment views with pagination
-        List<com.ccbsa.wms.stock.application.service.port.data.dto.StockConsignmentView> consignmentViews = viewRepository.findByTenantId(query.getTenantId(), page, size);
+        // 2. Query consignment views with pagination and optional expiration filtering
+        List<StockConsignmentView> consignmentViews;
+        long totalCount;
+        if (query.getExpiringWithinDays() != null) {
+            consignmentViews = viewRepository.findByTenantId(query.getTenantId(), page, size, query.getExpiringWithinDays());
+            totalCount = viewRepository.countByTenantId(query.getTenantId(), query.getExpiringWithinDays());
+        } else {
+            consignmentViews = viewRepository.findByTenantId(query.getTenantId(), page, size);
+            totalCount = viewRepository.countByTenantId(query.getTenantId());
+        }
 
-        // 3. Get total count for pagination metadata
-        @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE", justification = "totalCount and consignmentResults are used in builder - SpotBugs false positive") long totalCount =
-                viewRepository.countByTenantId(query.getTenantId());
-
-        // 4. Map views to query results
+        // 3. Map views to query results
         List<ConsignmentQueryResult> consignmentResults = consignmentViews.stream().map(this::toConsignmentQueryResult).collect(Collectors.toList());
 
-        // 5. Build result with pagination metadata
+        // 4. Build result with pagination metadata
         return ListConsignmentsQueryResult.builder().consignments(consignmentResults).totalCount((int) totalCount).page(page).size(size).build();
     }
 
     @SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD", justification = "Method is called via method reference in stream (this::toConsignmentQueryResult) - SpotBugs false"
             + " positive")
-    private ConsignmentQueryResult toConsignmentQueryResult(com.ccbsa.wms.stock.application.service.port.data.dto.StockConsignmentView view) {
+    private ConsignmentQueryResult toConsignmentQueryResult(StockConsignmentView view) {
         return ConsignmentQueryResult.builder().consignmentId(view.getConsignmentId()).consignmentReference(view.getConsignmentReference()).warehouseId(view.getWarehouseId())
                 .status(view.getStatus()).receivedAt(view.getReceivedAt()).confirmedAt(view.getConfirmedAt()).receivedBy(view.getReceivedBy()).lineItems(view.getLineItems())
                 .createdAt(view.getCreatedAt()).lastModifiedAt(view.getLastModifiedAt()).build();

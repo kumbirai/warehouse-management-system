@@ -147,18 +147,18 @@ public class StockAdjustmentRepositoryAdapter implements StockAdjustmentReposito
         entity.setReason(adjustment.getReason());
         entity.setAdjustedBy(java.util.UUID.fromString(adjustment.getAdjustedBy().getValue()));
         entity.setAdjustedAt(adjustment.getAdjustedAt());
-        entity.setQuantityBefore(adjustment.getQuantityBefore());
-        entity.setQuantityAfter(adjustment.getQuantityAfter());
+        entity.setQuantityBefore(adjustment.getQuantityBefore() != null ? adjustment.getQuantityBefore().getValue() : null);
+        entity.setQuantityAfter(adjustment.getQuantityAfter() != null ? adjustment.getQuantityAfter().getValue() : null);
         entity.setLastModifiedAt(adjustment.getAdjustedAt());
 
         // Update optional fields
         if (adjustment.getNotes() != null) {
-            entity.setNotes(adjustment.getNotes());
+            entity.setNotes(adjustment.getNotes().getValue());
         } else {
             entity.setNotes(null);
         }
         if (adjustment.getAuthorizationCode() != null) {
-            entity.setAuthorizationCode(adjustment.getAuthorizationCode());
+            entity.setAuthorizationCode(adjustment.getAuthorizationCode().getValue());
         } else {
             entity.setAuthorizationCode(null);
         }

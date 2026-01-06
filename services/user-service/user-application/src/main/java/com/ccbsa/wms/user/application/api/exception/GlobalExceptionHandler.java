@@ -1,7 +1,5 @@
 package com.ccbsa.wms.user.application.api.exception;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -25,6 +23,7 @@ import com.ccbsa.wms.user.application.service.exception.UserCreationException;
 import com.ccbsa.wms.user.application.service.exception.UserNotFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Global Exception Handler: GlobalExceptionHandler
@@ -46,9 +45,9 @@ import jakarta.servlet.http.HttpServletRequest;
  *   <li>{@link Exception}</li>
  * </ul>
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
-    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
      * Handles AuthenticationException - indicates authentication failed (invalid credentials).
@@ -62,7 +61,7 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Authentication failed: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+        log.warn("Authentication failed: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
         ApiError error = ApiError.builder("AUTHENTICATION_FAILED", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.UNAUTHORIZED, error);
@@ -78,7 +77,7 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
     @ExceptionHandler(KeycloakServiceException.class)
     public ResponseEntity<ApiResponse<Void>> handleKeycloakServiceException(KeycloakServiceException ex, HttpServletRequest request) {
 
-        logger.error("Keycloak service error: {}", ex.getMessage(), ex);
+        log.error("Keycloak service error: {}", ex.getMessage(), ex);
 
         return ApiResponseBuilder.error(HttpStatus.SERVICE_UNAVAILABLE, "Authentication service is temporarily unavailable. Please try again later.", "KEYCLOAK_SERVICE_ERROR");
     }
@@ -95,7 +94,7 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Tenant not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+        log.warn("Tenant not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
         ApiError error = ApiError.builder("TENANT_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
@@ -113,7 +112,7 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Tenant not active: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+        log.warn("Tenant not active: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
         ApiError error = ApiError.builder("TENANT_NOT_ACTIVE", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
@@ -128,7 +127,7 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
      */
     @ExceptionHandler(TenantServiceException.class)
     public ResponseEntity<ApiResponse<Void>> handleTenantServiceException(TenantServiceException ex, HttpServletRequest request) {
-        logger.error("Tenant service error: {}", ex.getMessage(), ex);
+        log.error("Tenant service error: {}", ex.getMessage(), ex);
 
         return ApiResponseBuilder.error(HttpStatus.SERVICE_UNAVAILABLE, "Tenant service is temporarily unavailable. Please try again later.", "TENANT_SERVICE_ERROR");
     }
@@ -145,7 +144,7 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("User not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+        log.warn("User not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
         ApiError error = ApiError.builder("USER_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
@@ -163,7 +162,7 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Duplicate user: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+        log.warn("Duplicate user: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
         ApiError error = ApiError.builder("DUPLICATE_USER", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
@@ -181,7 +180,7 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.error("User creation failed: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path, ex);
+        log.error("User creation failed: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path, ex);
 
         ApiError error = ApiError.builder("USER_CREATION_FAILED", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -199,7 +198,7 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Insufficient privileges: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+        log.warn("Insufficient privileges: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
         ApiError error = ApiError.builder("INSUFFICIENT_PRIVILEGES", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.FORBIDDEN, error);
@@ -217,7 +216,7 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.warn("Tenant mismatch: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+        log.warn("Tenant mismatch: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
         ApiError error = ApiError.builder("TENANT_MISMATCH", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.FORBIDDEN, error);
@@ -235,7 +234,7 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
 
-        logger.error("Role assignment failed: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path, ex);
+        log.error("Role assignment failed: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path, ex);
 
         ApiError error = ApiError.builder("ROLE_ASSIGNMENT_FAILED", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.INTERNAL_SERVER_ERROR, error);

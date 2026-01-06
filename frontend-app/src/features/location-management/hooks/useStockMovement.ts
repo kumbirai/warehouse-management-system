@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { stockMovementService, StockMovement } from '../services/stockMovementService';
 import { logger } from '../../../utils/logger';
 
@@ -14,7 +14,7 @@ export const useStockMovement = (movementId: string, tenantId: string): UseStock
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchMovement = async () => {
+  const fetchMovement = useCallback(async () => {
     if (!movementId || !tenantId) {
       setIsLoading(false);
       return;
@@ -43,11 +43,11 @@ export const useStockMovement = (movementId: string, tenantId: string): UseStock
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [movementId, tenantId]);
 
   useEffect(() => {
     fetchMovement();
-  }, [movementId, tenantId]);
+  }, [fetchMovement]);
 
   return { movement, isLoading, error, refetch: fetchMovement };
 };

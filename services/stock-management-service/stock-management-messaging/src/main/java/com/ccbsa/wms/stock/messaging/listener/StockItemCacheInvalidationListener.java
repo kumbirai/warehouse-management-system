@@ -1,7 +1,5 @@
 package com.ccbsa.wms.stock.messaging.listener;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +10,8 @@ import com.ccbsa.wms.stock.domain.core.event.LocationAssignedEvent;
 import com.ccbsa.wms.stock.domain.core.event.StockClassifiedEvent;
 import com.ccbsa.wms.stock.domain.core.event.StockExpiredEvent;
 import com.ccbsa.wms.stock.domain.core.event.StockExpiringAlertEvent;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Stock Management Service Cache Invalidation Listener for Stock Items.
@@ -24,11 +24,9 @@ import com.ccbsa.wms.stock.domain.core.event.StockExpiringAlertEvent;
  * - StockExpiringAlertEvent: No invalidation (read-only alert)
  * - StockExpiredEvent: Invalidate entity + collections
  */
+@Slf4j
 @Component
 public class StockItemCacheInvalidationListener extends CacheInvalidationEventListener {
-
-    private static final Logger log = LoggerFactory.getLogger(StockItemCacheInvalidationListener.class);
-
     public StockItemCacheInvalidationListener(LocalCacheInvalidator cacheInvalidator) {
         super(cacheInvalidator);
     }

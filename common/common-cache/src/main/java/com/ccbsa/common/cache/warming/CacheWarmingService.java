@@ -1,11 +1,11 @@
 package com.ccbsa.common.cache.warming;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Cache Warming Service.
@@ -17,10 +17,9 @@ import org.springframework.stereotype.Service;
  * <p>
  * Service-specific implementations extend this base class.
  */
+@Slf4j
 @Service
 public abstract class CacheWarmingService {
-
-    private static final Logger log = LoggerFactory.getLogger(CacheWarmingService.class);
 
     /**
      * Triggered when application is fully started and ready to accept requests.

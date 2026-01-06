@@ -6,8 +6,6 @@ import java.util.UUID;
 import javax.sql.DataSource;
 
 import org.flywaydb.core.Flyway;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
@@ -21,6 +19,7 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.security.TenantContext;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Event Listener: TenantSchemaCreatedEventListener
@@ -36,11 +35,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * migrations in flyway_schema_history table, ensuring migrations run
  * only once
  */
+@Slf4j
 @Component
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "DataSource is a Spring-managed bean and treated as immutable infrastructure component")
 public class TenantSchemaCreatedEventListener {
-    private static final Logger logger = LoggerFactory.getLogger(TenantSchemaCreatedEventListener.class);
-
     private static final String TENANT_SCHEMA_CREATED_EVENT = "TenantSchemaCreatedEvent";
 
     private final DataSource dataSource;
@@ -54,15 +52,15 @@ public class TenantSchemaCreatedEventListener {
     @KafkaListener(topics = "tenant-events", groupId = "product-service", containerFactory = "externalEventKafkaListenerContainerFactory")
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
                        @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
-        logger.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));
+        log.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));
         try {
             extractAndSetCorrelationId(eventData);
 
             String detectedEventType = detectEventType(eventData, eventType);
-            logger.info("Event type detection: detectedType={}, headerType={}, eventDataKeys={}, aggregateType={}", detectedEventType, eventType, eventData.keySet(),
+            log.info("Event type detection: detectedType={}, headerType={}, eventDataKeys={}, aggregateType={}", detectedEventType, eventType, eventData.keySet(),
                     eventData.get("aggregateType"));
             if (!isTenantSchemaCreatedEvent(detectedEventType, eventData)) {
-                logger.debug("Skipping event - not TenantSchemaCreatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
+                log.debug("Skipping event - not TenantSchemaCreatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
                 acknowledgment.acknowledge();
                 return;
             }
@@ -73,26 +71,26 @@ public class TenantSchemaCreatedEventListener {
             String schemaName = extractSchemaName(eventData);
 
             if (schemaName == null || schemaName.trim().isEmpty()) {
-                logger.error("Schema name is missing in TenantSchemaCreatedEvent: tenantId={}, eventId={}", tenantId.getValue(), extractEventId(eventData));
+                log.error("Schema name is missing in TenantSchemaCreatedEvent: tenantId={}, eventId={}", tenantId.getValue(), extractEventId(eventData));
                 acknowledgment.acknowledge();
                 return;
             }
 
-            logger.info("Received TenantSchemaCreatedEvent: tenantId={}, schemaName={}, eventId={}", tenantId.getValue(), schemaName, extractEventId(eventData));
+            log.info("Received TenantSchemaCreatedEvent: tenantId={}, schemaName={}, eventId={}", tenantId.getValue(), schemaName, extractEventId(eventData));
 
             TenantContext.setTenantId(tenantId);
             try {
                 createTenantSchema(schemaName);
                 runFlywayMigrations(schemaName);
 
-                logger.info("Successfully created tenant schema and ran migrations: tenantId={}, schemaName={}", tenantId.getValue(), schemaName);
+                log.info("Successfully created tenant schema and ran migrations: tenantId={}, schemaName={}", tenantId.getValue(), schemaName);
             } finally {
                 TenantContext.clear();
             }
 
             acknowledgment.acknowledge();
         } catch (Exception e) {
-            logger.error("Error processing TenantSchemaCreatedEvent: eventId={}, error={}", extractEventId(eventData), e.getMessage(), e);
+            log.error("Error processing TenantSchemaCreatedEvent: eventId={}, error={}", extractEventId(eventData), e.getMessage(), e);
             acknowledgment.acknowledge();
         }
     }
@@ -240,26 +238,26 @@ public class TenantSchemaCreatedEventListener {
     }
 
     private void createTenantSchema(String schemaName) {
-        logger.info("Creating tenant schema: schemaName={}", schemaName);
+        log.info("Creating tenant schema: schemaName={}", schemaName);
         try {
             jdbcTemplate.execute(String.format("CREATE SCHEMA IF NOT EXISTS %s", schemaName));
-            logger.info("Tenant schema created successfully: schemaName={}", schemaName);
+            log.info("Tenant schema created successfully: schemaName={}", schemaName);
         } catch (Exception e) {
-            logger.error("Failed to create tenant schema: schemaName={}, error={}", schemaName, e.getMessage(), e);
+            log.error("Failed to create tenant schema: schemaName={}, error={}", schemaName, e.getMessage(), e);
             throw new RuntimeException(String.format("Failed to create tenant schema: %s", schemaName), e);
         }
     }
 
     private void runFlywayMigrations(String schemaName) {
-        logger.info("Running Flyway migrations in tenant schema: schemaName={}", schemaName);
+        log.info("Running Flyway migrations in tenant schema: schemaName={}", schemaName);
         try {
             Flyway flyway = Flyway.configure().dataSource(dataSource).schemas(schemaName).locations("classpath:db/migration").baselineOnMigrate(true).load();
 
             var migrateResult = flyway.migrate();
             int migrationsApplied = migrateResult.migrationsExecuted;
-            logger.info("Flyway migrations completed in tenant schema: schemaName={}, migrationsApplied={}", schemaName, migrationsApplied);
+            log.info("Flyway migrations completed in tenant schema: schemaName={}, migrationsApplied={}", schemaName, migrationsApplied);
         } catch (Exception e) {
-            logger.error("Failed to run Flyway migrations in tenant schema: schemaName={}, error={}", schemaName, e.getMessage(), e);
+            log.error("Failed to run Flyway migrations in tenant schema: schemaName={}, error={}", schemaName, e.getMessage(), e);
             throw new RuntimeException(String.format("Failed to run Flyway migrations in schema: %s", schemaName), e);
         }
     }

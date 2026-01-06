@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { stockManagementService } from '../services/stockManagementService';
 import { Consignment, ConsignmentListFilters } from '../types/stockManagement';
 import { logger } from '../../../utils/logger';
@@ -15,6 +15,20 @@ export interface UseConsignmentsResult {
   };
   refetch: () => Promise<void>;
 }
+
+/**
+ * Creates a stable string representation of filters for comparison.
+ * This prevents unnecessary re-renders when filter objects are recreated with the same values.
+ */
+const getFiltersKey = (filters: ConsignmentListFilters): string => {
+  return JSON.stringify({
+    page: filters.page ?? 0,
+    size: filters.size ?? 20,
+    status: filters.status ?? '',
+    search: filters.search ?? '',
+    expiringWithinDays: filters.expiringWithinDays ?? undefined,
+  });
+};
 
 export const useConsignments = (
   filters: ConsignmentListFilters,
@@ -34,6 +48,15 @@ export const useConsignments = (
   const [error, setError] = useState<Error | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFetchingRef = useRef(false);
+  const lastFiltersKeyRef = useRef<string>('');
+  const lastTenantIdRef = useRef<string | undefined>(undefined);
+
+  // Compute filters key for dependency tracking
+  const filtersKey = useMemo(() => getFiltersKey(filters), [filters]);
+
+  // Memoize filters to create a stable reference based on serialized key
+  // Note: filtersKey is included to ensure memoization updates when key changes
+  const stableFilters = useMemo(() => filters, [filters]);
 
   const fetchConsignments = useCallback(async () => {
     // Prevent concurrent fetches
@@ -44,7 +67,7 @@ export const useConsignments = (
     if (!tenantId) {
       if (import.meta.env.DEV) {
         logger.warn('Cannot fetch consignments: tenantId is missing', {
-          filters,
+          filters: stableFilters,
           hasTenantId: !!tenantId,
         });
       }
@@ -52,6 +75,18 @@ export const useConsignments = (
       setConsignments([]);
       return;
     }
+
+    // Check if filters or tenantId actually changed to prevent unnecessary fetches
+    if (filtersKey === lastFiltersKeyRef.current && tenantId === lastTenantIdRef.current) {
+      // No change, skip fetch (initial load will still happen due to empty refs)
+      if (lastFiltersKeyRef.current !== '') {
+        return;
+      }
+    }
+
+    // Update refs
+    lastFiltersKeyRef.current = filtersKey;
+    lastTenantIdRef.current = tenantId;
 
     // Cancel any ongoing request
     if (abortControllerRef.current) {
@@ -68,14 +103,15 @@ export const useConsignments = (
       if (import.meta.env.DEV) {
         logger.debug('Fetching consignments with filters:', {
           tenantId,
-          page: filters.page,
-          size: filters.size,
-          status: filters.status,
-          search: filters.search,
+          page: stableFilters.page,
+          size: stableFilters.size,
+          status: stableFilters.status,
+          search: stableFilters.search,
+          expiringWithinDays: stableFilters.expiringWithinDays,
         });
       }
 
-      const response = await stockManagementService.listConsignments(filters, tenantId);
+      const response = await stockManagementService.listConsignments(stableFilters, tenantId);
 
       if (import.meta.env.DEV) {
         logger.debug('Raw consignment list response:', {
@@ -122,8 +158,8 @@ export const useConsignments = (
       // Set pagination if available
       if (response.data && typeof response.data === 'object' && 'totalCount' in response.data) {
         setPagination({
-          page: response.data.page || filters.page || 0,
-          size: response.data.size || filters.size || 20,
+          page: response.data.page || stableFilters.page || 0,
+          size: response.data.size || stableFilters.size || 20,
           totalPages: response.data.totalPages || 0,
           totalItems: response.data.totalCount || 0,
         });
@@ -136,11 +172,20 @@ export const useConsignments = (
         return;
       }
 
+      // Handle 429 rate limit errors gracefully
+      if (err instanceof Error && err.message.includes('429')) {
+        logger.warn('Rate limit exceeded, will retry after delay', {
+          filters: stableFilters,
+        });
+        // Don't set error state for rate limits - let the retry mechanism handle it
+        return;
+      }
+
       const error = err instanceof Error ? err : new Error('Failed to fetch consignments');
       logger.error('Error fetching consignments:', {
         error,
         errorMessage: error.message,
-        filters,
+        filters: stableFilters,
       });
       setError(error);
       setConsignments([]);
@@ -148,7 +193,7 @@ export const useConsignments = (
       isFetchingRef.current = false;
       setIsLoading(false);
     }
-  }, [filters, tenantId]);
+  }, [stableFilters, filtersKey, tenantId]);
 
   useEffect(() => {
     fetchConsignments();

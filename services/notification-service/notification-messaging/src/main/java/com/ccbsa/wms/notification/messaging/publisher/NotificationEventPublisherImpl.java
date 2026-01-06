@@ -2,8 +2,6 @@ package com.ccbsa.wms.notification.messaging.publisher;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
@@ -12,25 +10,27 @@ import com.ccbsa.common.domain.DomainEvent;
 import com.ccbsa.common.domain.EventMetadata;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.notification.application.service.port.messaging.NotificationEventPublisher;
+import com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent;
 import com.ccbsa.wms.notification.domain.core.event.NotificationEvent;
+import com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent;
+import com.ccbsa.wms.notification.domain.core.valueobject.NotificationId;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Event Publisher Implementation: NotificationEventPublisherImpl
  * <p>
  * Implements NotificationEventPublisher port interface. Publishes notification domain events to Kafka.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is a managed bean and treated as immutable port")
 public class NotificationEventPublisherImpl implements NotificationEventPublisher {
-    private static final Logger logger = LoggerFactory.getLogger(NotificationEventPublisherImpl.class);
     private static final String NOTIFICATION_EVENTS_TOPIC = "notification-events";
     private final KafkaTemplate<String, Object> kafkaTemplate;
-
-    public NotificationEventPublisherImpl(KafkaTemplate<String, Object> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
-    }
 
     @Override
     public void publish(List<DomainEvent<?>> events) {
@@ -54,10 +54,10 @@ public class NotificationEventPublisherImpl implements NotificationEventPublishe
 
             String key = enrichedEvent.getAggregateId();
             kafkaTemplate.send(NOTIFICATION_EVENTS_TOPIC, key, enrichedEvent);
-            logger.debug("Published notification event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
+            log.debug("Published notification event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
                     enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
         } catch (Exception e) {
-            logger.error("Failed to publish notification event: {}", event.getClass().getSimpleName(), e);
+            log.error("Failed to publish notification event: {}", event.getClass().getSimpleName(), e);
             throw new RuntimeException("Failed to publish notification event", e);
         }
     }
@@ -82,23 +82,19 @@ public class NotificationEventPublisherImpl implements NotificationEventPublishe
         }
 
         // Extract notificationId from aggregateId (now a String)
-        com.ccbsa.wms.notification.domain.core.valueobject.NotificationId notificationId =
-                com.ccbsa.wms.notification.domain.core.valueobject.NotificationId.of(event.getAggregateId());
+        NotificationId notificationId = NotificationId.of(event.getAggregateId());
 
         // Create enriched copy based on event type
-        if (event instanceof com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent) {
-            com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent notificationCreatedEvent =
-                    (com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent) event;
-            return new com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent(notificationId, notificationCreatedEvent.getTenantId(),
-                    notificationCreatedEvent.getType(), metadata);
-        } else if (event instanceof com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent) {
-            com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent notificationSentEvent = (com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent) event;
-            return new com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent(notificationId, notificationSentEvent.getChannel(), notificationSentEvent.getSentAt(),
-                    metadata);
+        if (event instanceof NotificationCreatedEvent) {
+            NotificationCreatedEvent notificationCreatedEvent = (NotificationCreatedEvent) event;
+            return new NotificationCreatedEvent(notificationId, notificationCreatedEvent.getTenantId(), notificationCreatedEvent.getType(), metadata);
+        } else if (event instanceof NotificationSentEvent) {
+            NotificationSentEvent notificationSentEvent = (NotificationSentEvent) event;
+            return new NotificationSentEvent(notificationId, notificationSentEvent.getChannel(), notificationSentEvent.getSentAt(), metadata);
         }
 
         // Unknown event type, return original
-        logger.warn("Unknown notification event type: {}. Event will be published without metadata.", event.getClass().getName());
+        log.warn("Unknown notification event type: {}. Event will be published without metadata.", event.getClass().getName());
         return event;
     }
 

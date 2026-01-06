@@ -81,11 +81,6 @@ public class User extends TenantAwareAggregateRoot<UserId> {
         addDomainEvent(new UserDeactivatedEvent(this.getId(), this.getTenantId()));
     }
 
-    @Override
-    public UserId getId() {
-        return super.getId();
-    }
-
     /**
      * Business logic method: Activates the user.
      * <p>

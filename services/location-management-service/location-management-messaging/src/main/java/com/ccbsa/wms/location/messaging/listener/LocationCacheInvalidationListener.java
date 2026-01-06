@@ -1,7 +1,5 @@
 package com.ccbsa.wms.location.messaging.listener;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +11,8 @@ import com.ccbsa.wms.location.domain.core.event.LocationBlockedEvent;
 import com.ccbsa.wms.location.domain.core.event.LocationCreatedEvent;
 import com.ccbsa.wms.location.domain.core.event.LocationStatusChangedEvent;
 import com.ccbsa.wms.location.domain.core.event.LocationUnblockedEvent;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Location Management Service Cache Invalidation Listener.
@@ -26,11 +26,9 @@ import com.ccbsa.wms.location.domain.core.event.LocationUnblockedEvent;
  * - LocationBlockedEvent: Invalidate entity + collections
  * - LocationUnblockedEvent: Invalidate entity + collections
  */
+@Slf4j
 @Component
 public class LocationCacheInvalidationListener extends CacheInvalidationEventListener {
-
-    private static final Logger log = LoggerFactory.getLogger(LocationCacheInvalidationListener.class);
-
     public LocationCacheInvalidationListener(LocalCacheInvalidator cacheInvalidator) {
         super(cacheInvalidator);
     }

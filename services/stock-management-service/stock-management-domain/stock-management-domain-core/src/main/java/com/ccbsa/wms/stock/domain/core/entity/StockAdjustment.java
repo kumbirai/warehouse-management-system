@@ -12,6 +12,8 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.domain.core.event.StockAdjustedEvent;
+import com.ccbsa.wms.stock.domain.core.valueobject.AuthorizationCode;
+import com.ccbsa.wms.stock.domain.core.valueobject.Notes;
 import com.ccbsa.wms.stock.domain.core.valueobject.StockAdjustmentId;
 
 /**
@@ -34,14 +36,14 @@ public class StockAdjustment extends TenantAwareAggregateRoot<StockAdjustmentId>
     private AdjustmentType adjustmentType;
     private Quantity quantity;
     private AdjustmentReason reason;
-    private String notes;
+    private Notes notes;
     private UserId adjustedBy;
-    private String authorizationCode; // For large adjustments
+    private AuthorizationCode authorizationCode; // For large adjustments
     private LocalDateTime adjustedAt;
 
     // Before/after quantities for audit
-    private int quantityBefore;
-    private int quantityAfter;
+    private Quantity quantityBefore;
+    private Quantity quantityAfter;
 
     /**
      * Private constructor for builder pattern. Prevents direct instantiation.
@@ -70,8 +72,11 @@ public class StockAdjustment extends TenantAwareAggregateRoot<StockAdjustmentId>
      * @param currentQuantity Current stock quantity before adjustment
      * @throws IllegalStateException if adjustment would result in negative stock
      */
-    public void adjust(int currentQuantity) {
-        if (currentQuantity < 0) {
+    public void adjust(Quantity currentQuantity) {
+        if (currentQuantity == null) {
+            throw new IllegalArgumentException("Current quantity cannot be null");
+        }
+        if (currentQuantity.getValue() < 0) {
             throw new IllegalArgumentException("Current quantity cannot be negative");
         }
 
@@ -81,18 +86,11 @@ public class StockAdjustment extends TenantAwareAggregateRoot<StockAdjustmentId>
         }
 
         // Calculate after quantity
-        int afterQuantity;
+        Quantity afterQuantity;
         if (this.adjustmentType == AdjustmentType.INCREASE) {
-            afterQuantity = currentQuantity + this.quantity.getValue();
+            afterQuantity = currentQuantity.add(this.quantity);
         } else { // DECREASE
-            afterQuantity = currentQuantity - this.quantity.getValue();
-
-            // Validate doesn't result in negative
-            if (afterQuantity < 0) {
-                throw new IllegalStateException(
-                        String.format("Adjustment would result in negative stock. Current: %d, Adjustment: %d, Result: %d", currentQuantity, this.quantity.getValue(),
-                                afterQuantity));
-            }
+            afterQuantity = currentQuantity.subtract(this.quantity);
         }
 
         // Set before/after quantities
@@ -131,7 +129,7 @@ public class StockAdjustment extends TenantAwareAggregateRoot<StockAdjustmentId>
         return reason;
     }
 
-    public String getNotes() {
+    public Notes getNotes() {
         return notes;
     }
 
@@ -139,7 +137,7 @@ public class StockAdjustment extends TenantAwareAggregateRoot<StockAdjustmentId>
         return adjustedBy;
     }
 
-    public String getAuthorizationCode() {
+    public AuthorizationCode getAuthorizationCode() {
         return authorizationCode;
     }
 
@@ -147,11 +145,11 @@ public class StockAdjustment extends TenantAwareAggregateRoot<StockAdjustmentId>
         return adjustedAt;
     }
 
-    public int getQuantityBefore() {
+    public Quantity getQuantityBefore() {
         return quantityBefore;
     }
 
-    public int getQuantityAfter() {
+    public Quantity getQuantityAfter() {
         return quantityAfter;
     }
 
@@ -201,8 +199,13 @@ public class StockAdjustment extends TenantAwareAggregateRoot<StockAdjustmentId>
             return this;
         }
 
-        public Builder notes(String notes) {
+        public Builder notes(Notes notes) {
             adjustment.notes = notes;
+            return this;
+        }
+
+        public Builder notes(String notes) {
+            adjustment.notes = Notes.ofNullable(notes);
             return this;
         }
 
@@ -211,13 +214,23 @@ public class StockAdjustment extends TenantAwareAggregateRoot<StockAdjustmentId>
             return this;
         }
 
-        public Builder authorizationCode(String authorizationCode) {
+        public Builder authorizationCode(AuthorizationCode authorizationCode) {
             adjustment.authorizationCode = authorizationCode;
             return this;
         }
 
-        public Builder quantityBefore(int quantityBefore) {
+        public Builder authorizationCode(String authorizationCode) {
+            adjustment.authorizationCode = AuthorizationCode.ofNullable(authorizationCode);
+            return this;
+        }
+
+        public Builder quantityBefore(Quantity quantityBefore) {
             adjustment.quantityBefore = quantityBefore;
+            return this;
+        }
+
+        public Builder quantityAfter(Quantity quantityAfter) {
+            adjustment.quantityAfter = quantityAfter;
             return this;
         }
 

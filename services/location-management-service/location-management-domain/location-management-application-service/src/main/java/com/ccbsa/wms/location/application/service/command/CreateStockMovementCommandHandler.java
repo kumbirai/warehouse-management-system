@@ -1,5 +1,6 @@
 package com.ccbsa.wms.location.application.service.command;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.ccbsa.common.domain.DomainEvent;
+import com.ccbsa.common.domain.valueobject.BigDecimalQuantity;
 import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.common.domain.valueobject.StockItemId;
@@ -62,7 +64,8 @@ public class CreateStockMovementCommandHandler {
         Location destinationLocation = locationRepository.findByIdAndTenantId(command.getDestinationLocationId(), command.getTenantId())
                 .orElseThrow(() -> new LocationNotFoundException("Destination location not found: " + command.getDestinationLocationId().getValueAsString()));
 
-        if (!destinationLocation.canAccommodate(convertQuantityToBigDecimal(command.getQuantity()))) {
+        BigDecimalQuantity quantity = BigDecimalQuantity.of(convertQuantityToBigDecimal(command.getQuantity()));
+        if (!destinationLocation.canAccommodate(quantity)) {
             throw new IllegalStateException("Destination location does not have sufficient capacity for quantity: " + command.getQuantity().getValue());
         }
 
@@ -93,6 +96,11 @@ public class CreateStockMovementCommandHandler {
             } else {
                 stockItemId = stockItemQuery.getStockItemId();
             }
+        }
+
+        // Validate stockItemId is not null or empty before proceeding
+        if (stockItemId == null || stockItemId.trim().isEmpty()) {
+            throw new IllegalStateException("Stock item ID is required but could not be determined from product and location");
         }
 
         // Validate stock item exists and has sufficient quantity
@@ -175,8 +183,8 @@ public class CreateStockMovementCommandHandler {
     /**
      * Converts Quantity to BigDecimal for location capacity checks.
      */
-    private java.math.BigDecimal convertQuantityToBigDecimal(Quantity quantity) {
-        return java.math.BigDecimal.valueOf(quantity.getValue());
+    private BigDecimal convertQuantityToBigDecimal(Quantity quantity) {
+        return BigDecimal.valueOf(quantity.getValue());
     }
 
     /**

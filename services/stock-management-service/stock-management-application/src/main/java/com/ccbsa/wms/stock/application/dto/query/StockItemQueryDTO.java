@@ -22,8 +22,13 @@ import lombok.Setter;
 public class StockItemQueryDTO {
     private String stockItemId;
     private String productId;
+    private String productCode;
+    private String productDescription;
     private String locationId;
+    private String locationCode;
+    private String locationName;
     private Integer quantity;
+    private Integer allocatedQuantity;
     private LocalDate expirationDate;
     private String classification;
     private LocalDateTime createdAt;

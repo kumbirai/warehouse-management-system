@@ -53,32 +53,51 @@ public class ReleaseStockAllocationCommandHandler {
         StockAllocation allocation = allocationRepository.findByIdAndTenantId(command.getAllocationId(), command.getTenantId())
                 .orElseThrow(() -> new StockAllocationNotFoundException("Stock allocation not found: " + command.getAllocationId().getValueAsString()));
 
-        // 3. Load stock item
+        // 3. Validate allocation can be released (check status before releasing)
+        if (allocation.getStatus() != com.ccbsa.wms.stock.domain.core.valueobject.AllocationStatus.ALLOCATED) {
+            throw new IllegalStateException(String.format("Cannot release allocation in status: %s. Only ALLOCATED allocations can be released.", allocation.getStatus()));
+        }
+
+        // 4. Load stock item
         StockItem stockItem = stockItemRepository.findById(allocation.getStockItemId())
                 .orElseThrow(() -> new IllegalStateException("Stock item not found: " + allocation.getStockItemId().getValueAsString()));
 
-        // 4. Execute business logic (release allocation)
+        // 5. Execute business logic (release allocation)
         allocation.release();
 
-        // 5. Update stock item allocated quantity
+        // 6. Update stock item allocated quantity
         Quantity currentAllocated = stockItem.getAllocatedQuantity();
-        Quantity newAllocated = currentAllocated.subtract(allocation.getQuantity());
+        Quantity allocationQuantity = allocation.getQuantity();
+
+        // Subtract allocation quantity from stock item's allocated quantity
+        // Ensure we don't go negative (safeguard against data integrity issues)
+        int expectedNewAllocated = currentAllocated.getValue() - allocationQuantity.getValue();
+        int newAllocatedValue = Math.max(0, expectedNewAllocated);
+        Quantity newAllocated = Quantity.of(newAllocatedValue);
+
+        if (expectedNewAllocated < 0) {
+            log.warn("Stock item allocated quantity would go negative. Clamping to 0. " + "This may indicate a data integrity issue. AllocationId: {}, StockItemId: {}, "
+                            + "Current allocated: {}, Allocation quantity: {}", allocation.getId().getValueAsString(), stockItem.getId().getValueAsString(),
+                    currentAllocated.getValue(),
+                    allocationQuantity.getValue());
+        }
+
         stockItem.updateAllocatedQuantity(newAllocated);
 
-        // 6. Get domain events BEFORE saving
+        // 7. Get domain events BEFORE saving
         List<DomainEvent<?>> domainEvents = new ArrayList<>(allocation.getDomainEvents());
 
-        // 7. Persist aggregates
+        // 8. Persist aggregates
         StockAllocation savedAllocation = allocationRepository.save(allocation);
         stockItemRepository.save(stockItem);
 
-        // 8. Publish events after transaction commit
+        // 9. Publish events after transaction commit
         if (!domainEvents.isEmpty()) {
             publishEventsAfterCommit(domainEvents);
             allocation.clearDomainEvents();
         }
 
-        // 9. Return result
+        // 10. Return result
         return ReleaseStockAllocationResult.builder().allocationId(savedAllocation.getId()).status(savedAllocation.getStatus()).releasedAt(savedAllocation.getReleasedAt()).build();
     }
 

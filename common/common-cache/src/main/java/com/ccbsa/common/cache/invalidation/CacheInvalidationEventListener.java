@@ -3,12 +3,11 @@ package com.ccbsa.common.cache.invalidation;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.ccbsa.common.domain.DomainEvent;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.security.TenantContext;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base class for event-driven cache invalidation listeners.
@@ -27,9 +26,8 @@ import com.ccbsa.wms.common.security.TenantContext;
  * }
  * </pre>
  */
+@Slf4j
 public abstract class CacheInvalidationEventListener {
-
-    private static final Logger log = LoggerFactory.getLogger(CacheInvalidationEventListener.class);
 
     protected final LocalCacheInvalidator cacheInvalidator;
 

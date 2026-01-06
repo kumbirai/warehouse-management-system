@@ -6,7 +6,6 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import com.ccbsa.wms.stock.dataaccess.entity.StockAllocationViewEntity;
 
@@ -17,7 +16,6 @@ import com.ccbsa.wms.stock.dataaccess.entity.StockAllocationViewEntity;
  * <p>
  * Provides optimized read-only queries for allocation views.
  */
-@Repository
 public interface StockAllocationViewJpaRepository extends JpaRepository<StockAllocationViewEntity, UUID> {
 
     /**
@@ -45,5 +43,32 @@ public interface StockAllocationViewJpaRepository extends JpaRepository<StockAll
      * @return Total count
      */
     long countByTenantId(String tenantId);
+
+    /**
+     * Finds allocation views by tenant ID and product ID.
+     *
+     * @param tenantId  Tenant ID
+     * @param productId Product ID
+     * @return List of StockAllocationViewEntity
+     */
+    List<StockAllocationViewEntity> findByTenantIdAndProductId(String tenantId, UUID productId);
+
+    /**
+     * Finds allocation views by tenant ID, product ID, and location ID.
+     *
+     * @param tenantId   Tenant ID
+     * @param productId  Product ID
+     * @param locationId Location ID
+     * @return List of StockAllocationViewEntity
+     */
+    List<StockAllocationViewEntity> findByTenantIdAndProductIdAndLocationId(String tenantId, UUID productId, UUID locationId);
+
+    /**
+     * Finds allocation views by stock item ID.
+     *
+     * @param stockItemId Stock item ID
+     * @return List of StockAllocationViewEntity
+     */
+    List<StockAllocationViewEntity> findByStockItemId(UUID stockItemId);
 }
 

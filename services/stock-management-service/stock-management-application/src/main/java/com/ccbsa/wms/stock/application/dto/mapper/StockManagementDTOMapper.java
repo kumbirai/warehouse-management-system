@@ -83,18 +83,53 @@ public class StockManagementDTOMapper {
      * @return AllocateStockResultDTO
      */
     public AllocateStockResultDTO toAllocateStockResultDTO(AllocateStockResult result) {
+        if (result == null) {
+            throw new IllegalArgumentException("AllocateStockResult cannot be null");
+        }
+
         AllocateStockResultDTO dto = new AllocateStockResultDTO();
+
+        if (result.getAllocationId() == null) {
+            throw new IllegalStateException("AllocationId cannot be null in AllocateStockResult");
+        }
         dto.setAllocationId(result.getAllocationId().getValue());
+
+        if (result.getProductId() == null) {
+            throw new IllegalStateException("ProductId cannot be null in AllocateStockResult");
+        }
         dto.setProductId(result.getProductId().getValue());
+
         if (result.getLocationId() != null) {
             dto.setLocationId(result.getLocationId().getValue());
         }
+
+        if (result.getStockItemId() == null) {
+            throw new IllegalStateException("StockItemId cannot be null in AllocateStockResult");
+        }
         dto.setStockItemId(result.getStockItemId().getValue());
+
+        if (result.getQuantity() == null) {
+            throw new IllegalStateException("Quantity cannot be null in AllocateStockResult");
+        }
         dto.setQuantity(result.getQuantity().getValue());
+
+        if (result.getAllocationType() == null) {
+            throw new IllegalStateException("AllocationType cannot be null in AllocateStockResult");
+        }
         dto.setAllocationType(result.getAllocationType());
+
         dto.setReferenceId(result.getReferenceId());
+
+        if (result.getStatus() == null) {
+            throw new IllegalStateException("Status cannot be null in AllocateStockResult");
+        }
         dto.setStatus(result.getStatus());
+
+        if (result.getAllocatedAt() == null) {
+            throw new IllegalStateException("AllocatedAt cannot be null in AllocateStockResult");
+        }
         dto.setAllocatedAt(result.getAllocatedAt());
+
         return dto;
     }
 

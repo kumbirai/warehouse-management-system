@@ -117,7 +117,10 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+      _retryCount?: number;
+    };
 
     // Log error details for debugging
     if (import.meta.env.DEV) {
@@ -190,6 +193,33 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       }
       // If already retried, reject to prevent infinite loops
+      return Promise.reject(error);
+    }
+
+    // Handle 5xx server errors - retry with exponential backoff
+    if (error.response?.status && error.response.status >= 500 && error.response.status < 600) {
+      const retryCount = (originalRequest?._retryCount as number) || 0;
+      const maxRetries = 3;
+
+      if (originalRequest && retryCount < maxRetries) {
+        originalRequest._retryCount = retryCount + 1;
+        const backoffDelay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 1s, 2s, 4s
+
+        logger.warn(`Retrying request after ${backoffDelay}ms (attempt ${retryCount + 1}/${maxRetries})`, {
+          url: originalRequest.url,
+          status: error.response.status,
+        });
+
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        return apiClient(originalRequest);
+      }
+
+      // Max retries reached or no original request
+      logger.error('Max retries reached for 5xx error', {
+        url: originalRequest?.url,
+        status: error.response.status,
+        retryCount,
+      });
       return Promise.reject(error);
     }
 

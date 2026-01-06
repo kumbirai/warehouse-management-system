@@ -1,7 +1,5 @@
 package com.ccbsa.wms.notification.messaging.listener;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +8,8 @@ import com.ccbsa.common.cache.invalidation.LocalCacheInvalidator;
 import com.ccbsa.common.cache.key.CacheNamespace;
 import com.ccbsa.wms.notification.domain.core.event.NotificationCreatedEvent;
 import com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Notification Service Cache Invalidation Listener.
@@ -20,11 +20,9 @@ import com.ccbsa.wms.notification.domain.core.event.NotificationSentEvent;
  * - NotificationCreatedEvent: No invalidation (cache-aside pattern)
  * - NotificationSentEvent: Invalidate entity + collections
  */
+@Slf4j
 @Component
 public class NotificationCacheInvalidationListener extends CacheInvalidationEventListener {
-
-    private static final Logger log = LoggerFactory.getLogger(NotificationCacheInvalidationListener.class);
-
     public NotificationCacheInvalidationListener(LocalCacheInvalidator cacheInvalidator) {
         super(cacheInvalidator);
     }

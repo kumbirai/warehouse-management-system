@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { StockMovement } from '../services/stockMovementService';
 import { useNavigate } from 'react-router-dom';
-import { getStatusVariant } from '../../../components/common';
+import { getStatusVariant } from '../../../utils/statusUtils';
 
 interface StockMovementListProps {
   movements: StockMovement[];

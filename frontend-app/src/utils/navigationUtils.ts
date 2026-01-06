@@ -36,6 +36,7 @@ export const Routes = {
   productDetail: (id: string) => `/products/${id}`,
   productCreate: '/products/create',
   productEdit: (id: string) => `/products/${id}/edit`,
+  productUploadCsv: '/products/upload-csv',
 
   consignments: '/stock-management/consignments',
   consignmentDetail: (id: string) => `/stock-management/consignments/${id}`,
@@ -60,6 +61,16 @@ export const Routes = {
   stockAdjustments: '/stock-management/adjustments',
   stockAdjustmentDetail: (id: string) => `/stock-management/adjustments/${id}`,
   stockAdjustmentCreate: '/stock-management/adjustments/create',
+
+  // Notifications
+  notifications: '/notifications',
+  notificationDetail: (id: string) => `/notifications/${id}`,
+
+  // Stock Levels
+  stockLevels: '/stock-management/stock-levels',
+
+  // FEFO Assignment
+  fefoAssignment: '/locations/assign-fefo',
 
   // Future routes (placeholder)
   inventory: '/inventory',
@@ -133,6 +144,11 @@ export const getBreadcrumbs = {
     { label: 'Dashboard', href: Routes.dashboard },
     { label: 'Products', href: Routes.products },
     { label: 'Edit Product' },
+  ],
+  productUploadCsv: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Products', href: Routes.products },
+    { label: 'Upload CSV' },
   ],
 
   // Consignment Management
@@ -210,6 +226,27 @@ export const getBreadcrumbs = {
     { label: 'Dashboard', href: Routes.dashboard },
     { label: 'Stock Adjustments', href: Routes.stockAdjustments },
     { label: 'Adjust Stock' },
+  ],
+
+  // Notification Management
+  notificationList: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Notifications' },
+  ],
+  notificationDetail: (title: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Notifications', href: Routes.notifications },
+    { label: title },
+  ],
+
+  // Stock Levels
+  stockLevels: () => [{ label: 'Dashboard', href: Routes.dashboard }, { label: 'Stock Levels' }],
+
+  // FEFO Assignment
+  fefoAssignment: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Locations', href: Routes.locations },
+    { label: 'FEFO Assignment' },
   ],
 };
 

@@ -23,16 +23,22 @@ import lombok.Getter;
 public final class GetStockItemQueryResult {
     private final StockItemId stockItemId;
     private final ProductId productId;
+    private final String productCode;
+    private final String productDescription;
     private final LocationId locationId;
+    private final String locationCode;
+    private final String locationName;
     private final Quantity quantity;
+    private final Quantity allocatedQuantity;
     private final ExpirationDate expirationDate;
     private final StockClassification classification;
     private final ConsignmentId consignmentId;
     private final LocalDateTime createdAt;
     private final LocalDateTime lastModifiedAt;
 
-    public GetStockItemQueryResult(StockItemId stockItemId, ProductId productId, LocationId locationId, Quantity quantity, ExpirationDate expirationDate,
-                                   StockClassification classification, ConsignmentId consignmentId, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
+    public GetStockItemQueryResult(StockItemId stockItemId, ProductId productId, String productCode, String productDescription, LocationId locationId, String locationCode,
+                                   String locationName, Quantity quantity, Quantity allocatedQuantity, ExpirationDate expirationDate, StockClassification classification,
+                                   ConsignmentId consignmentId, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
         if (stockItemId == null) {
             throw new IllegalArgumentException("StockItemId is required");
         }
@@ -47,8 +53,13 @@ public final class GetStockItemQueryResult {
         }
         this.stockItemId = stockItemId;
         this.productId = productId;
+        this.productCode = productCode;
+        this.productDescription = productDescription;
         this.locationId = locationId;
+        this.locationCode = locationCode;
+        this.locationName = locationName;
         this.quantity = quantity;
+        this.allocatedQuantity = allocatedQuantity != null ? allocatedQuantity : Quantity.of(0);
         this.expirationDate = expirationDate;
         this.classification = classification;
         this.consignmentId = consignmentId;

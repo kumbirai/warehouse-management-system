@@ -62,10 +62,12 @@ public class UploadConsignmentCsvCommandHandler {
         try {
             rows = csvParser.parse(command.getCsvInputStream());
         } catch (IOException e) {
-            log.error("Failed to parse CSV file: {}", e.getMessage());
+            // IO errors are system errors - log at ERROR level
+            log.error("Failed to read CSV file: {}", e.getMessage(), e);
             throw new IllegalArgumentException(String.format("Failed to parse CSV file: %s", e.getMessage()), e);
         } catch (IllegalArgumentException e) {
-            log.error("Invalid CSV format: {}", e.getMessage());
+            // Log validation errors at WARN level - these are expected user input validation failures
+            log.warn("Invalid CSV format: {}", e.getMessage());
             throw new IllegalArgumentException(String.format("Invalid CSV format: %s", e.getMessage()), e);
         }
 

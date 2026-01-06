@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
@@ -26,6 +24,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Filter that extracts roles from X-Role header (set by gateway) and sets them as Spring Security authorities.
@@ -43,10 +42,10 @@ import jakarta.servlet.http.HttpServletResponse;
  * If X-Role header is not present, the filter falls back to extracting roles from JWT token
  * (for backward compatibility or direct service-to-service calls).
  */
+@Slf4j
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 1) // Run after JWT authentication filter
 public class GatewayRoleHeaderAuthenticationFilter extends OncePerRequestFilter {
-    private static final Logger logger = LoggerFactory.getLogger(GatewayRoleHeaderAuthenticationFilter.class);
     private static final String X_ROLE_HEADER = "X-Role";
 
     @Override
@@ -64,14 +63,14 @@ public class GatewayRoleHeaderAuthenticationFilter extends OncePerRequestFilter 
 
             // Fallback to JWT if header not present (for backward compatibility)
             if (authorities.isEmpty()) {
-                logger.debug("X-Role header not present for path {}, falling back to JWT token roles", request.getRequestURI());
+                log.debug("X-Role header not present for path {}, falling back to JWT token roles", request.getRequestURI());
                 authorities = extractAuthoritiesFromJwt(jwt);
                 if (!authorities.isEmpty()) {
-                    logger.debug("Extracted {} authorities from JWT token (fallback): {}", authorities.size(),
+                    log.debug("Extracted {} authorities from JWT token (fallback): {}", authorities.size(),
                             authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
                 }
             } else {
-                logger.info("Extracted {} authorities from X-Role header for path {}: {}", authorities.size(), request.getRequestURI(),
+                log.info("Extracted {} authorities from X-Role header for path {}: {}", authorities.size(), request.getRequestURI(),
                         authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
             }
 
@@ -79,9 +78,9 @@ public class GatewayRoleHeaderAuthenticationFilter extends OncePerRequestFilter 
             if (!authorities.isEmpty()) {
                 JwtAuthenticationToken newAuth = new JwtAuthenticationToken(jwt, authorities);
                 SecurityContextHolder.getContext().setAuthentication(newAuth);
-                logger.info("Updated authentication with {} authorities for path {}", authorities.size(), request.getRequestURI());
+                log.info("Updated authentication with {} authorities for path {}", authorities.size(), request.getRequestURI());
             } else {
-                logger.warn("No authorities found for path {} - neither X-Role header nor JWT roles present", request.getRequestURI());
+                log.warn("No authorities found for path {} - neither X-Role header nor JWT roles present", request.getRequestURI());
             }
         }
 

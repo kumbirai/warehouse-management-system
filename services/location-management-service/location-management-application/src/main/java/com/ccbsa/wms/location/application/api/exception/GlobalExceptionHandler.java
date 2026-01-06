@@ -2,6 +2,7 @@ package com.ccbsa.wms.location.application.api.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -39,7 +40,11 @@ import jakarta.servlet.http.HttpServletRequest;
 public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
 
     /**
-     * Handles LocationNotFoundException. Returns 404 Not Found.
+     * Handles LocationNotFoundException.
+     * <p>
+     * Returns 404 Not Found when a location resource cannot be found, regardless of HTTP method.
+     * This follows REST API best practices where "resource not found" is always a 404 error,
+     * whether it's a GET (query) or PUT/DELETE/PATCH (command) operation.
      *
      * @param ex      The exception
      * @param request The HTTP request
@@ -49,9 +54,9 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleLocationNotFound(LocationNotFoundException ex, HttpServletRequest request) {
         String requestId = RequestContext.getRequestId(request);
         String path = RequestContext.getRequestPath(request);
+        String method = request.getMethod();
 
-        logger.warn("Location not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
-
+        logger.warn("Location not found: {} - RequestId: {}, Path: {}, Method: {}", ex.getMessage(), requestId, path, method);
         ApiError error = ApiError.builder("LOCATION_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
     }
@@ -89,6 +94,31 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         logger.warn("Code already exists: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
         ApiError error = ApiError.builder("CODE_ALREADY_EXISTS", ex.getMessage()).path(path).requestId(requestId).build();
+        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
+    }
+
+    /**
+     * Handles HttpMessageNotReadableException - JSON deserialization errors (e.g., invalid enum values).
+     * Returns 400 Bad Request instead of 500 Internal Server Error.
+     *
+     * @param ex      The exception
+     * @param request The HTTP request
+     * @return Error response with 400 Bad Request
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        // Extract the root cause message for better error reporting
+        String message = ex.getMessage();
+        if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+            message = ex.getCause().getMessage();
+        }
+
+        logger.warn("JSON deserialization error: {} - RequestId: {}, Path: {}", message, requestId, path);
+
+        ApiError error = ApiError.builder("INVALID_REQUEST", message).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 }

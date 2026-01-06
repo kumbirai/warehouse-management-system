@@ -1,10 +1,11 @@
-import { Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { Column, getStatusVariant, ResponsiveTable, StatusBadge } from '../../../components/common';
+import { Column, ResponsiveTable, StatusBadge } from '../../../components/common';
+import { getStatusVariant } from '../../../utils/statusUtils';
 import { Consignment } from '../types/stockManagement';
 import { Routes } from '../../../utils/navigationUtils';
 import { formatDateTime } from '../../../utils/dateUtils';
-import { useLocationDescriptionMap } from '../hooks/useLocationDescription';
+import { LocationOn as LocationIcon } from '@mui/icons-material';
 
 interface ConsignmentListProps {
   consignments: Consignment[];
@@ -13,7 +14,6 @@ interface ConsignmentListProps {
 
 export const ConsignmentList = ({ consignments, error }: ConsignmentListProps) => {
   const navigate = useNavigate();
-  const locationDescriptionMap = useLocationDescriptionMap();
 
   if (error) {
     return <Typography color="error">Error loading consignments: {error.message}</Typography>;
@@ -22,6 +22,19 @@ export const ConsignmentList = ({ consignments, error }: ConsignmentListProps) =
   if (!Array.isArray(consignments)) {
     return <Typography color="error">Invalid data format: consignments is not an array</Typography>;
   }
+
+  const getWarehouseDisplayName = (consignment: Consignment): string => {
+    if (consignment.warehouseName && consignment.warehouseCode) {
+      return `${consignment.warehouseCode} - ${consignment.warehouseName}`;
+    }
+    if (consignment.warehouseName) {
+      return consignment.warehouseName;
+    }
+    if (consignment.warehouseCode) {
+      return consignment.warehouseCode;
+    }
+    return consignment.warehouseId.substring(0, 8) + '...';
+  };
 
   const columns: Column<Consignment>[] = [
     {
@@ -44,9 +57,17 @@ export const ConsignmentList = ({ consignments, error }: ConsignmentListProps) =
       key: 'warehouseId',
       label: 'Warehouse',
       render: consignment => (
-        <Typography variant="body2">
-          {locationDescriptionMap.get(consignment.warehouseId) || consignment.warehouseId}
-        </Typography>
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <LocationIcon fontSize="small" color="action" />
+            <Typography variant="body2" fontWeight="medium">
+              {getWarehouseDisplayName(consignment)}
+            </Typography>
+          </Box>
+          <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem', ml: 3 }}>
+            ID: {consignment.warehouseId.substring(0, 8)}...
+          </Typography>
+        </Box>
       ),
     },
     {

@@ -1,4 +1,4 @@
-import { Box, Button, MenuItem, Pagination, Stack, TextField } from '@mui/material';
+import { Box, Button, MenuItem, Stack, TextField } from '@mui/material';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUsers } from '../hooks/useUsers';
@@ -7,7 +7,7 @@ import { UserList } from '../components/UserList';
 import { TenantSelector } from '../components/TenantSelector';
 import { useAuth } from '../../../hooks/useAuth';
 import { ListPageLayout } from '../../../components/layouts';
-import { FilterBar } from '../../../components/common';
+import { FilterBar, Pagination } from '../../../components/common';
 import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 
 const statusOptions: (UserStatus | 'ALL')[] = ['ALL', 'ACTIVE', 'INACTIVE', 'SUSPENDED'];
@@ -140,12 +140,13 @@ export const UserListPage = () => {
       />
 
       {pagination && pagination.totalPages > 1 && (
-        <Box display="flex" justifyContent="center" mt={3}>
+        <Box sx={{ mt: 3 }}>
           <Pagination
-            count={pagination.totalPages}
-            page={pagination.page}
-            onChange={(_, page) => updatePage(page)}
-            color="primary"
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalElements || 0}
+            itemsPerPage={pagination.size || 10}
+            onPageChange={page => updatePage(page)}
           />
         </Box>
       )}

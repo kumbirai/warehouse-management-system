@@ -50,6 +50,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -57,10 +58,11 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * Handles user management command operations (write operations).
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/users")
 @Tag(name = "User Commands", description = "User management command operations")
-@Slf4j
+@RequiredArgsConstructor
 public class UserCommandController {
     private final CreateUserCommandHandler createUserCommandHandler;
     private final UpdateUserProfileCommandHandler updateUserProfileCommandHandler;
@@ -74,24 +76,9 @@ public class UserCommandController {
             + "dependency injection context.")
     private final UserRepository userRepository;
 
-    public UserCommandController(CreateUserCommandHandler createUserCommandHandler, UpdateUserProfileCommandHandler updateUserProfileCommandHandler,
-                                 ActivateUserCommandHandler activateUserCommandHandler, DeactivateUserCommandHandler deactivateUserCommandHandler,
-                                 SuspendUserCommandHandler suspendUserCommandHandler, AssignUserRoleCommandHandler assignUserRoleCommandHandler,
-                                 RemoveUserRoleCommandHandler removeUserRoleCommandHandler, UserMapper mapper, UserRepository userRepository) {
-        this.createUserCommandHandler = createUserCommandHandler;
-        this.updateUserProfileCommandHandler = updateUserProfileCommandHandler;
-        this.activateUserCommandHandler = activateUserCommandHandler;
-        this.deactivateUserCommandHandler = deactivateUserCommandHandler;
-        this.suspendUserCommandHandler = suspendUserCommandHandler;
-        this.assignUserRoleCommandHandler = assignUserRoleCommandHandler;
-        this.removeUserRoleCommandHandler = removeUserRoleCommandHandler;
-        this.mapper = mapper;
-        this.userRepository = userRepository;
-    }
-
     @PostMapping
     @Operation(summary = "Create User", description = "Creates a new user in the system")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE')")
     public ResponseEntity<ApiResponse<CreateUserResponse>> createUser(@RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
                                                                       @Valid @RequestBody CreateUserRequest request) {
         // Extract user roles to determine tenant isolation rules
@@ -190,7 +177,7 @@ public class UserCommandController {
 
     @PutMapping("/{id}/profile")
     @Operation(summary = "Update User Profile", description = "Updates user profile information")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE') or (hasRole('USER') and #id == authentication.principal.claims['sub'])")
     public ResponseEntity<ApiResponse<Void>> updateUserProfile(@PathVariable String id, @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
                                                                @Valid @RequestBody UpdateUserProfileRequest request) {
         return executeWithTenantContext(tenantId, UserId.of(id), () -> {
@@ -257,7 +244,7 @@ public class UserCommandController {
 
     @PutMapping("/{id}/activate")
     @Operation(summary = "Activate User", description = "Activates a user account")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE')")
     public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable String id, @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
         return executeWithTenantContext(tenantId, UserId.of(id), () -> {
             ActivateUserCommand command = new ActivateUserCommand(UserId.of(id));
@@ -268,7 +255,7 @@ public class UserCommandController {
 
     @PutMapping("/{id}/deactivate")
     @Operation(summary = "Deactivate User", description = "Deactivates a user account")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE')")
     public ResponseEntity<ApiResponse<Void>> deactivateUser(@PathVariable String id, @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
         return executeWithTenantContext(tenantId, UserId.of(id), () -> {
             DeactivateUserCommand command = new DeactivateUserCommand(UserId.of(id));
@@ -279,7 +266,7 @@ public class UserCommandController {
 
     @PutMapping("/{id}/suspend")
     @Operation(summary = "Suspend User", description = "Suspends a user account")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE')")
     public ResponseEntity<ApiResponse<Void>> suspendUser(@PathVariable String id, @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
         return executeWithTenantContext(tenantId, UserId.of(id), () -> {
             SuspendUserCommand command = new SuspendUserCommand(UserId.of(id));
@@ -290,7 +277,7 @@ public class UserCommandController {
 
     @PostMapping("/{id}/roles")
     @Operation(summary = "Assign Role", description = "Assigns a role to a user")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE')")
     public ResponseEntity<ApiResponse<Void>> assignRole(@PathVariable String id, @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
                                                         @Valid @RequestBody AssignRoleRequest request) {
         return executeWithTenantContext(tenantId, UserId.of(id), () -> {
@@ -302,7 +289,7 @@ public class UserCommandController {
 
     @DeleteMapping("/{id}/roles/{roleId}")
     @Operation(summary = "Remove Role", description = "Removes a role from a user")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE')")
     public ResponseEntity<ApiResponse<Void>> removeRole(@PathVariable String id, @PathVariable String roleId,
                                                         @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
         return executeWithTenantContext(tenantId, UserId.of(id), () -> {

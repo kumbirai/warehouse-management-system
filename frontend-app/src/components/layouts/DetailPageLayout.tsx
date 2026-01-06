@@ -3,7 +3,7 @@ import { Container, Alert } from '@mui/material';
 import { Header } from '../layout/Header';
 import { PageBreadcrumbs, BreadcrumbItem } from '../common/PageBreadcrumbs';
 import { PageHeader } from '../common/PageHeader';
-import { LoadingSpinner } from '../common/LoadingSpinner';
+import { SkeletonCard } from '../common/SkeletonCard';
 
 interface DetailPageLayoutProps {
   breadcrumbs: BreadcrumbItem[];
@@ -30,18 +30,22 @@ export const DetailPageLayout: React.FC<DetailPageLayoutProps> = ({
       <Container maxWidth={maxWidth} sx={{ py: 4 }}>
         <PageBreadcrumbs items={breadcrumbs} />
 
-        {isLoading && <LoadingSpinner />}
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-
-        {!isLoading && !error && (
+        {isLoading ? (
+          <SkeletonCard lines={6} />
+        ) : (
           <>
-            <PageHeader title={title} actions={actions} />
-            {children}
+            {error && (
+              <Alert severity="error" sx={{ mb: 3 }} role="alert" aria-live="assertive">
+                {error}
+              </Alert>
+            )}
+
+            {!error && (
+              <>
+                <PageHeader title={title} actions={actions} />
+                {children}
+              </>
+            )}
           </>
         )}
       </Container>

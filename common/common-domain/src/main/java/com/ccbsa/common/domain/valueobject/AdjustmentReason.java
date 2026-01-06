@@ -1,5 +1,7 @@
 package com.ccbsa.common.domain.valueobject;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 /**
  * Value Object: AdjustmentReason
  * <p>
@@ -11,6 +13,7 @@ package com.ccbsa.common.domain.valueobject;
  * - AdjustmentReason cannot be null
  * - Each reason represents a valid business scenario for stock adjustment
  */
+@JsonDeserialize(using = AdjustmentReasonDeserializer.class)
 public enum AdjustmentReason {
     /**
      * Adjustment from stock count/physical inventory

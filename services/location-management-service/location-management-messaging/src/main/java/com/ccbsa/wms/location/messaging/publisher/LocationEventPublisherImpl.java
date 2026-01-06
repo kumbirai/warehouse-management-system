@@ -2,8 +2,6 @@ package com.ccbsa.wms.location.messaging.publisher;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
@@ -24,22 +22,21 @@ import com.ccbsa.wms.location.domain.core.event.StockMovementInitiatedEvent;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Event Publisher Implementation: LocationEventPublisherImpl
  * <p>
  * Implements LocationEventPublisher port interface. Publishes location domain events to Kafka.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Kafka template is a managed bean and treated as immutable port")
 public class LocationEventPublisherImpl implements LocationEventPublisher {
-    private static final Logger logger = LoggerFactory.getLogger(LocationEventPublisherImpl.class);
     private static final String LOCATION_EVENTS_TOPIC = "location-management-events";
     private final KafkaTemplate<String, Object> kafkaTemplate;
-
-    public LocationEventPublisherImpl(KafkaTemplate<String, Object> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
-    }
 
     @Override
     public void publish(List<DomainEvent<?>> events) {
@@ -63,10 +60,10 @@ public class LocationEventPublisherImpl implements LocationEventPublisher {
 
             String key = enrichedEvent.getAggregateId();
             kafkaTemplate.send(LOCATION_EVENTS_TOPIC, key, enrichedEvent);
-            logger.debug("Published location event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
+            log.debug("Published location event: {} with key: {} [correlationId: {}]", enrichedEvent.getClass().getSimpleName(), key,
                     enrichedEvent.getMetadata() != null ? enrichedEvent.getMetadata().getCorrelationId() : "none");
         } catch (Exception e) {
-            logger.error("Failed to publish location event: {}", event.getClass().getSimpleName(), e);
+            log.error("Failed to publish location event: {}", event.getClass().getSimpleName(), e);
             throw new RuntimeException("Failed to publish location event", e);
         }
     }
@@ -149,7 +146,7 @@ public class LocationEventPublisherImpl implements LocationEventPublisher {
         }
 
         // Unknown event type, return original
-        logger.warn("Unknown location event type: {}. Event will be published without metadata.", event.getClass().getName());
+        log.warn("Unknown location event type: {}. Event will be published without metadata.", event.getClass().getName());
         return event;
     }
 

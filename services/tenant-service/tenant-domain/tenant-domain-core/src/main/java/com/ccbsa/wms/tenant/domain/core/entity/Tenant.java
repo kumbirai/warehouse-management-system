@@ -79,11 +79,6 @@ public class Tenant extends AggregateRoot<TenantId> {
         addDomainEvent(new TenantActivatedEvent(this.getId()));
     }
 
-    @Override
-    public TenantId getId() {
-        return super.getId();
-    }
-
     /**
      * Resolves the schema name for this tenant.
      * <p>

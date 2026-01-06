@@ -2,7 +2,9 @@ package com.ccbsa.wms.stock.application.service.command;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -14,6 +16,7 @@ import com.ccbsa.common.domain.DomainEvent;
 import com.ccbsa.common.domain.valueobject.AllocationType;
 import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.Quantity;
+import com.ccbsa.common.domain.valueobject.StockClassification;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.application.service.command.dto.AllocateStockCommand;
 import com.ccbsa.wms.stock.application.service.command.dto.AllocateStockResult;
@@ -59,66 +62,72 @@ public class AllocateStockCommandHandler {
         validateCommand(command);
 
         // 2. Find stock items for allocation (FEFO if location not specified)
-        List<StockItem> stockItems = findStockItemsForAllocation(command.getTenantId(), command.getProductId(), command.getLocationId());
+        List<StockItem> stockItems = findStockItemsForAllocation(command.getTenantId(), command.getProductId(), command.getLocationId(), command.getQuantity().getValue());
 
         log.debug("Found {} stock item(s) for allocation: productId={}, locationId={}", stockItems.size(), command.getProductId().getValueAsString(),
                 command.getLocationId() != null ? command.getLocationId().getValueAsString() : "all locations");
 
         // 3. Validate sufficient available stock
+        // When a specific location is requested, validate against total available (location + unassigned if included)
+        // This ensures we can use unassigned stock when location stock is insufficient, but validation is still strict
         int totalAvailable = calculateTotalAvailable(stockItems);
+
         if (totalAvailable < command.getQuantity().getValue()) {
-            log.warn("Insufficient available stock for allocation: productId={}, locationId={}, required={}, available={}", command.getProductId().getValueAsString(),
-                    command.getLocationId() != null ? command.getLocationId().getValueAsString() : "all locations", command.getQuantity().getValue(), totalAvailable);
+            // Calculate available at location for better error message
+            int availableAtLocation = 0;
+            if (command.getLocationId() != null) {
+                availableAtLocation = stockItems.stream().filter(item -> item.getLocationId() != null && item.getLocationId().equals(command.getLocationId()))
+                        .filter(item -> item.getClassification() != StockClassification.EXPIRED).mapToInt(item -> item.getAvailableQuantity().getValue()).sum();
+            }
+
+            log.warn("Insufficient available stock for allocation: productId={}, locationId={}, required={}, available={}, availableAtLocation={}",
+                    command.getProductId().getValueAsString(), command.getLocationId() != null ? command.getLocationId().getValueAsString() : "all locations",
+                    command.getQuantity().getValue(), totalAvailable, availableAtLocation);
             throw new IllegalStateException(String.format("Insufficient available stock. Required: %d, Available: %d", command.getQuantity().getValue(), totalAvailable));
         }
 
-        // 4. Select stock item for allocation (FEFO: earliest expiration first)
-        StockItem selectedStockItem = selectStockItemForAllocation(stockItems, command.getQuantity().getValue());
+        // 4. Allocate from stock items (FEFO: earliest expiration first)
+        // May need to allocate from multiple stock items if single item doesn't have enough
+        AllocationResult allocationResult = allocateFromStockItems(stockItems, command);
+        List<StockAllocation> allocations = allocationResult.getAllocations();
+        Set<StockItem> updatedStockItems = allocationResult.getUpdatedStockItems();
 
-        // 5. Create allocation aggregate using builder
-        StockAllocation.Builder allocationBuilder =
-                StockAllocation.builder().stockAllocationId(StockAllocationId.generate()).tenantId(command.getTenantId()).productId(command.getProductId())
-                        .locationId(command.getLocationId()).stockItemId(selectedStockItem.getId()).quantity(command.getQuantity()).allocationType(command.getAllocationType())
-                        .allocatedBy(command.getUserId());
-
-        // Set referenceId if provided
-        if (command.getReferenceId() != null && !command.getReferenceId().trim().isEmpty()) {
-            allocationBuilder.referenceId(ReferenceId.of(command.getReferenceId()));
+        // Validate allocations list is not empty (should never happen due to validation, but defensive check)
+        if (allocations == null || allocations.isEmpty()) {
+            log.error("Allocations list is empty after allocation attempt. This should not happen. productId={}, quantity={}", command.getProductId().getValueAsString(),
+                    command.getQuantity().getValue());
+            throw new IllegalStateException("Failed to create any allocations. This indicates a bug in the allocation logic.");
         }
 
-        // Set notes if provided
-        if (command.getNotes() != null) {
-            allocationBuilder.notes(Notes.ofNullable(command.getNotes()));
+        // 5. Collect all domain events BEFORE saving
+        List<DomainEvent<?>> allDomainEvents = new ArrayList<>();
+        for (StockAllocation allocation : allocations) {
+            allDomainEvents.addAll(allocation.getDomainEvents());
         }
 
-        StockAllocation allocation = allocationBuilder.build();
-
-        // 6. Allocate (publishes domain event)
-        allocation.allocate();
-
-        // 7. Update stock item allocated quantity
-        Quantity currentAllocated = selectedStockItem.getAllocatedQuantity();
-        Quantity newAllocated = currentAllocated.add(command.getQuantity());
-        selectedStockItem.updateAllocatedQuantity(newAllocated);
-
-        // 8. Get domain events BEFORE saving
-        List<DomainEvent<?>> domainEvents = new ArrayList<>(allocation.getDomainEvents());
-
-        // 9. Persist aggregates
-        StockAllocation savedAllocation = allocationRepository.save(allocation);
-        stockItemRepository.save(selectedStockItem);
-
-        // 10. Publish events after transaction commit
-        if (!domainEvents.isEmpty()) {
-            publishEventsAfterCommit(domainEvents);
-            allocation.clearDomainEvents();
+        // 6. Persist all aggregates
+        StockAllocation firstAllocation = allocations.get(0);
+        for (StockAllocation allocation : allocations) {
+            allocationRepository.save(allocation);
+        }
+        // Save all updated stock items (avoid duplicates using a set)
+        for (StockItem stockItem : updatedStockItems) {
+            stockItemRepository.save(stockItem);
         }
 
-        // 11. Return result
-        return AllocateStockResult.builder().allocationId(savedAllocation.getId()).productId(savedAllocation.getProductId()).locationId(savedAllocation.getLocationId())
-                .stockItemId(savedAllocation.getStockItemId()).quantity(savedAllocation.getQuantity()).allocationType(savedAllocation.getAllocationType())
-                .referenceId(savedAllocation.getReferenceId() != null ? savedAllocation.getReferenceId().getValue() : null).status(savedAllocation.getStatus())
-                .allocatedAt(savedAllocation.getAllocatedAt()).build();
+        // 7. Publish events after transaction commit
+        if (!allDomainEvents.isEmpty()) {
+            publishEventsAfterCommit(allDomainEvents);
+            for (StockAllocation allocation : allocations) {
+                allocation.clearDomainEvents();
+            }
+        }
+
+        // 8. Return result (first allocation as primary, but total quantity matches request)
+        return AllocateStockResult.builder().allocationId(firstAllocation.getId()).productId(firstAllocation.getProductId()).locationId(firstAllocation.getLocationId())
+                .stockItemId(firstAllocation.getStockItemId()).quantity(command.getQuantity()).allocationType(firstAllocation.getAllocationType())
+                .referenceId(firstAllocation.getReferenceId() != null ? firstAllocation.getReferenceId().getValue() : null).status(firstAllocation.getStatus())
+                .allocatedAt(firstAllocation.getAllocatedAt()).build();
     }
 
     /**
@@ -160,40 +169,66 @@ public class AllocateStockCommandHandler {
      * 3. Sort by expiration date (earliest first)
      * 4. Return items with sufficient available stock
      *
-     * @param tenantId   Tenant ID
-     * @param productId  Product ID
-     * @param locationId Location ID (optional, null for FEFO across all locations)
+     * @param tenantId          Tenant ID
+     * @param productId         Product ID
+     * @param locationId        Location ID (optional, null for FEFO across all locations)
+     * @param requestedQuantity Requested quantity (used to determine if unassigned stock should be included)
      * @return List of stock items sorted by FEFO
      */
-    private List<StockItem> findStockItemsForAllocation(com.ccbsa.common.domain.valueobject.TenantId tenantId, ProductId productId, LocationId locationId) {
+    private List<StockItem> findStockItemsForAllocation(com.ccbsa.common.domain.valueobject.TenantId tenantId, ProductId productId, LocationId locationId, int requestedQuantity) {
         List<StockItem> stockItems;
 
         if (locationId != null) {
-            // Specific location requested
-            stockItems = stockItemRepository.findByTenantIdAndProductIdAndLocationId(tenantId, productId, locationId);
+            // Specific location requested - find stock items at this location
+            List<StockItem> stockItemsAtLocation = stockItemRepository.findByTenantIdAndProductIdAndLocationId(tenantId, productId, locationId);
 
-            // If no stock items found at the specified location, also check for stock items without location assignment
-            // (stock items created from consignments but not yet assigned via FEFO)
-            if (stockItems.isEmpty()) {
-                log.debug("No stock items found at location: {} for product: {}. " + "Checking for stock items without location assignment.", locationId.getValueAsString(),
-                        productId.getValueAsString());
+            // Calculate available quantity at the location (only from items at this location)
+            int availableAtLocation =
+                    stockItemsAtLocation.stream().filter(item -> item.getClassification() != StockClassification.EXPIRED).mapToInt(item -> item.getAvailableQuantity().getValue())
+                            .sum();
 
+            // IMPORTANT: Filter out expired stock items immediately - they cannot be allocated
+            stockItems = stockItemsAtLocation.stream().filter(item -> item.getClassification() != StockClassification.EXPIRED).collect(Collectors.toList());
+
+            // Only include unassigned stock if available stock at location is insufficient for the requested quantity
+            // This handles the case where stock items are created from consignments but haven't been assigned locations yet
+            // (locations are assigned asynchronously via FEFO in the location management service)
+            // NOTE: We only include unassigned stock if we can't fulfill from the location alone
+            // This ensures validation is strict - if location has insufficient stock, we check unassigned stock
+            // but the validation will still fail if total available (location + unassigned) is insufficient
+            if (availableAtLocation < requestedQuantity) {
+                // Insufficient stock at location - check for unassigned stock items
                 List<StockItem> stockItemsWithoutLocation =
-                        stockItemRepository.findByTenantIdAndProductId(tenantId, productId).stream().filter(item -> item.getLocationId() == null).collect(Collectors.toList());
+                        stockItemRepository.findByTenantIdAndProductId(tenantId, productId).stream().filter(item -> item.getLocationId() == null)
+                                .filter(item -> item.getClassification() != StockClassification.EXPIRED).filter(item -> item.getAvailableQuantity().getValue() > 0)
+                                .collect(Collectors.toList());
 
                 if (!stockItemsWithoutLocation.isEmpty()) {
-                    log.debug("Found {} stock item(s) without location assignment for product: {}. " + "These will be considered for allocation.", stockItemsWithoutLocation.size(),
-                            productId.getValueAsString());
-                    stockItems = stockItemsWithoutLocation;
+                    log.debug("Insufficient stock at location {} (available: {}, required: {}). Found {} unassigned stock item(s) for product: {}. "
+                                    + "Unassigned items will be assigned to the requested location during allocation.", locationId.getValueAsString(), availableAtLocation,
+                            requestedQuantity, stockItemsWithoutLocation.size(), productId.getValueAsString());
+                    stockItems.addAll(stockItemsWithoutLocation);
+                } else {
+                    log.debug("Insufficient stock at location {} (available: {}, required: {}). No unassigned stock items found for product: {}", locationId.getValueAsString(),
+                            availableAtLocation, requestedQuantity, productId.getValueAsString());
                 }
+            } else {
+                log.debug("Found {} stock item(s) at location: {} for product: {} with {} available units (sufficient for requested {} units)", stockItemsAtLocation.size(),
+                        locationId.getValueAsString(), productId.getValueAsString(), availableAtLocation, requestedQuantity);
             }
         } else {
             // FEFO: Find all locations with stock, sort by expiration
+            // When locationId is null, include stock items without location assignment (for FEFO allocation)
             stockItems = stockItemRepository.findByTenantIdAndProductId(tenantId, productId);
         }
 
-        // Filter by available quantity and sort by expiration (FEFO)
+        // Filter by available quantity, exclude expired stock, and sort by expiration (FEFO)
         return stockItems.stream().filter(item -> {
+            // Exclude expired stock items - they cannot be allocated
+            if (item.getClassification() == StockClassification.EXPIRED) {
+                log.debug("Excluding expired stock item from allocation: stockItemId={}, productId={}", item.getId().getValueAsString(), productId.getValueAsString());
+                return false;
+            }
             // Calculate available quantity (total - allocated)
             Quantity available = item.getAvailableQuantity();
             return available.getValue() > 0;
@@ -211,22 +246,128 @@ public class AllocateStockCommandHandler {
     }
 
     /**
-     * Selects stock item for allocation using FEFO.
-     * Prefers earliest expiring stock that has sufficient available quantity.
+     * Allocates stock from one or more stock items using FEFO.
+     * If a single stock item has sufficient quantity, allocates from it.
+     * Otherwise, allocates from multiple stock items in FEFO order until required quantity is met.
      *
-     * @param stockItems       List of stock items (already sorted by FEFO)
-     * @param requiredQuantity Required quantity
-     * @return Selected stock item
-     * @throws IllegalStateException if no stock item found with sufficient available quantity
+     * @param stockItems List of stock items (already sorted by FEFO)
+     * @param command    Allocation command
+     * @return AllocationResult containing allocations and updated stock items
      */
-    private StockItem selectStockItemForAllocation(List<StockItem> stockItems, int requiredQuantity) {
-        for (StockItem item : stockItems) {
-            Quantity available = item.getAvailableQuantity();
-            if (available.getValue() >= requiredQuantity) {
-                return item;
+    private AllocationResult allocateFromStockItems(List<StockItem> stockItems, AllocateStockCommand command) {
+        List<StockAllocation> allocations = new ArrayList<>();
+        Set<StockItem> updatedStockItems = new LinkedHashSet<>();
+        int remainingQuantity = command.getQuantity().getValue();
+
+        log.debug("Starting allocation from {} stock item(s) for quantity: {}", stockItems.size(), command.getQuantity().getValue());
+
+        for (StockItem stockItem : stockItems) {
+            if (remainingQuantity <= 0) {
+                log.debug("Required quantity fully allocated. Remaining: {}", remainingQuantity);
+                break;
             }
+
+            // Defensive check: Skip expired stock items - they cannot be allocated
+            // This is a safety check in case expired items somehow made it through the filters
+            if (stockItem.getClassification() == StockClassification.EXPIRED) {
+                log.warn("Skipping expired stock item {} - expired stock should not be in allocation list. This indicates a bug in the filtering logic.",
+                        stockItem.getId().getValueAsString());
+                continue;
+            }
+
+            // Recalculate available quantity (may have changed if this stock item was updated in a previous iteration)
+            Quantity available = stockItem.getAvailableQuantity();
+            int availableQuantity = available.getValue();
+
+            if (availableQuantity <= 0) {
+                log.debug("Skipping stock item {} - no available quantity (total: {}, allocated: {})", stockItem.getId().getValueAsString(),
+                        stockItem.getQuantity() != null ? stockItem.getQuantity().getValue() : 0,
+                        stockItem.getAllocatedQuantity() != null ? stockItem.getAllocatedQuantity().getValue() : 0);
+                continue;
+            }
+
+            // Determine how much to allocate from this stock item
+            int quantityToAllocate = Math.min(remainingQuantity, availableQuantity);
+
+            // For FEFO allocation (locationId is null), use the stock item's locationId (which may be null for unassigned items)
+            // For specific location allocation, use the command's locationId
+            LocationId allocationLocationId;
+
+            if (command.getLocationId() != null) {
+                // Specific location requested
+                allocationLocationId = command.getLocationId();
+
+                // If stock item doesn't have location assigned, assign it during allocation
+                // (handles case where stock items are created from consignments but haven't been assigned locations yet)
+                if (stockItem.getLocationId() == null) {
+                    log.debug("Assigning location {} to stock item {} during allocation", command.getLocationId().getValueAsString(), stockItem.getId().getValueAsString());
+                    stockItem.assignLocation(command.getLocationId(), stockItem.getQuantity());
+                } else if (!stockItem.getLocationId().equals(command.getLocationId())) {
+                    // Stock item is at a different location - skip it
+                    log.debug("Skipping stock item {} - not at requested location {}. Current location: {}", stockItem.getId().getValueAsString(),
+                            command.getLocationId().getValueAsString(), stockItem.getLocationId().getValueAsString());
+                    continue;
+                }
+            } else {
+                // FEFO allocation - use stock item's locationId (may be null for unassigned items)
+                // Don't assign locations during FEFO allocation - that should be done separately via FEFO location assignment
+                allocationLocationId = stockItem.getLocationId();
+            }
+
+            // Create allocation for this stock item
+            StockAllocation.Builder allocationBuilder =
+                    StockAllocation.builder().stockAllocationId(StockAllocationId.generate()).tenantId(command.getTenantId()).productId(command.getProductId())
+                            .locationId(allocationLocationId).stockItemId(stockItem.getId()).quantity(Quantity.of(quantityToAllocate)).allocationType(command.getAllocationType())
+                            .allocatedBy(command.getUserId());
+
+            // Set referenceId if provided
+            if (command.getReferenceId() != null && !command.getReferenceId().trim().isEmpty()) {
+                allocationBuilder.referenceId(ReferenceId.of(command.getReferenceId()));
+            }
+
+            // Set notes if provided
+            if (command.getNotes() != null) {
+                allocationBuilder.notes(Notes.ofNullable(command.getNotes()));
+            }
+
+            StockAllocation allocation = allocationBuilder.build();
+
+            // Allocate (publishes domain event)
+            allocation.allocate();
+
+            // Update stock item allocated quantity
+            Quantity currentAllocated = stockItem.getAllocatedQuantity();
+            Quantity newAllocated = currentAllocated.add(Quantity.of(quantityToAllocate));
+            stockItem.updateAllocatedQuantity(newAllocated);
+            updatedStockItems.add(stockItem);
+
+            allocations.add(allocation);
+            remainingQuantity -= quantityToAllocate;
+
+            log.debug("Allocated {} from stock item: {} (location: {}), remaining quantity to allocate: {}", quantityToAllocate, stockItem.getId().getValueAsString(),
+                    stockItem.getLocationId() != null ? stockItem.getLocationId().getValueAsString() : "unassigned", remainingQuantity);
         }
-        throw new IllegalStateException("No stock item found with sufficient available quantity");
+
+        if (remainingQuantity > 0) {
+            // This should not happen if validation was correct, but handle it gracefully
+            // Calculate current available quantities for better error message
+            String availableQuantities = stockItems.stream().map(item -> {
+                int available = item.getAvailableQuantity().getValue();
+                String location = item.getLocationId() != null ? item.getLocationId().getValueAsString() : "unassigned";
+                return String.format("%d@%s", available, location);
+            }).collect(Collectors.joining(", ", "[", "]"));
+
+            int totalAllocated = command.getQuantity().getValue() - remainingQuantity;
+            log.error("Could not allocate full quantity. Required: {}, Allocated: {}, Remaining: {}, Available quantities: {}", command.getQuantity().getValue(), totalAllocated,
+                    remainingQuantity, availableQuantities);
+
+            throw new IllegalStateException(
+                    String.format("Could not allocate full quantity. Required: %d, Allocated: %d, Remaining: %d, Available quantities: %s", command.getQuantity().getValue(),
+                            totalAllocated, remainingQuantity, availableQuantities));
+        }
+
+        log.info("Successfully created {} allocation(s) for quantity: {} from {} stock item(s)", allocations.size(), command.getQuantity().getValue(), updatedStockItems.size());
+        return new AllocationResult(allocations, updatedStockItems);
     }
 
     /**
@@ -278,6 +419,27 @@ public class AllocateStockCommandHandler {
             // Neither has expiration date (maintain order)
             return 0;
         };
+    }
+
+    /**
+     * Inner class to hold allocation results.
+     */
+    private static class AllocationResult {
+        private final List<StockAllocation> allocations;
+        private final Set<StockItem> updatedStockItems;
+
+        AllocationResult(List<StockAllocation> allocations, Set<StockItem> updatedStockItems) {
+            this.allocations = allocations;
+            this.updatedStockItems = updatedStockItems;
+        }
+
+        List<StockAllocation> getAllocations() {
+            return allocations;
+        }
+
+        Set<StockItem> getUpdatedStockItems() {
+            return updatedStockItems;
+        }
     }
 }
 

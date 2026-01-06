@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Box,
   Button,
   ButtonGroup,
   Dialog,
@@ -68,6 +69,11 @@ export const LocationActions = ({
       return;
     }
 
+    // Validate reason is required for blocking
+    if (dialogAction === 'block' && !reason.trim()) {
+      return; // Don't proceed if reason is empty
+    }
+
     let newStatus: LocationStatus;
     switch (dialogAction) {
       case 'block':
@@ -107,44 +113,87 @@ export const LocationActions = ({
 
   return (
     <>
-      <ButtonGroup variant="outlined" size="small">
-        {availableActions.includes('block') && (
-          <Tooltip title="Block location" arrow>
-            <Button disabled={isLoading} onClick={() => openDialog('block')}>
-              Block
-            </Button>
-          </Tooltip>
-        )}
-        {availableActions.includes('unblock') && (
-          <Tooltip title="Unblock location" arrow>
-            <Button disabled={isLoading} onClick={() => openDialog('unblock')}>
-              Unblock
-            </Button>
-          </Tooltip>
-        )}
-        {availableActions.includes('reserve') && (
-          <Tooltip title="Reserve location" arrow>
-            <Button disabled={isLoading} onClick={() => openDialog('reserve')}>
-              Reserve
-            </Button>
-          </Tooltip>
-        )}
-        {availableActions.includes('release') && (
-          <Tooltip title="Release location" arrow>
-            <Button disabled={isLoading} onClick={() => openDialog('release')}>
-              Release
-            </Button>
-          </Tooltip>
-        )}
-      </ButtonGroup>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 1,
+          flexWrap: 'wrap',
+        }}
+      >
+        <ButtonGroup
+          variant="outlined"
+          size="small"
+          orientation="horizontal"
+          sx={{ flexDirection: { xs: 'column', sm: 'row' } }}
+        >
+          {availableActions.includes('block') && (
+            <Tooltip title="Block location" arrow>
+              <Button disabled={isLoading} onClick={() => openDialog('block')} aria-label="Block location">
+                Block
+              </Button>
+            </Tooltip>
+          )}
+          {availableActions.includes('unblock') && (
+            <Tooltip title="Unblock location" arrow>
+              <Button disabled={isLoading} onClick={() => openDialog('unblock')} aria-label="Unblock location">
+                Unblock
+              </Button>
+            </Tooltip>
+          )}
+          {availableActions.includes('reserve') && (
+            <Tooltip title="Reserve location" arrow>
+              <Button disabled={isLoading} onClick={() => openDialog('reserve')} aria-label="Reserve location">
+                Reserve
+              </Button>
+            </Tooltip>
+          )}
+          {availableActions.includes('release') && (
+            <Tooltip title="Release location" arrow>
+              <Button disabled={isLoading} onClick={() => openDialog('release')} aria-label="Release location">
+                Release
+              </Button>
+            </Tooltip>
+          )}
+        </ButtonGroup>
+      </Box>
 
-      <Dialog open={dialogAction !== null} onClose={closeDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>{dialogAction ? actionLabels[dialogAction] : ''} Location</DialogTitle>
+      <Dialog
+        open={dialogAction !== null}
+        onClose={closeDialog}
+        maxWidth="sm"
+        fullWidth
+        aria-labelledby="location-action-dialog-title"
+        aria-describedby="location-action-dialog-description"
+        aria-modal="true"
+      >
+        <DialogTitle id="location-action-dialog-title">
+          {dialogAction ? actionLabels[dialogAction] : ''} Location
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>
+          <DialogContentText id="location-action-dialog-description" sx={{ mb: 2 }}>
             {dialogAction ? actionDescriptions[dialogAction] : ''}
           </DialogContentText>
-          {(dialogAction === 'block' || dialogAction === 'reserve') && (
+          {dialogAction === 'block' && (
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Reason"
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={3}
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              placeholder="Enter reason for blocking this location..."
+              required
+              error={!reason.trim()}
+              helperText={!reason.trim() ? 'Reason is required for blocking a location' : ''}
+              aria-label="Reason for blocking location input field"
+              aria-required="true"
+            />
+          )}
+          {dialogAction === 'reserve' && (
             <TextField
               autoFocus
               margin="dense"
@@ -156,14 +205,20 @@ export const LocationActions = ({
               value={reason}
               onChange={e => setReason(e.target.value)}
               placeholder="Enter reason for this action..."
+              aria-label="Reason for reserving location input field (optional)"
             />
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeDialog} disabled={isLoading}>
+          <Button onClick={closeDialog} disabled={isLoading} aria-label="Cancel location action">
             Cancel
           </Button>
-          <Button onClick={handleConfirm} variant="contained" disabled={isLoading} autoFocus>
+          <Button
+            onClick={handleConfirm}
+            variant="contained"
+            disabled={isLoading || (dialogAction === 'block' && !reason.trim())}
+            aria-label={`Confirm ${dialogAction} location`}
+          >
             {isLoading ? 'Updating...' : 'Confirm'}
           </Button>
         </DialogActions>

@@ -45,7 +45,7 @@ public class NotificationQueryController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get Notification by ID", description = "Retrieves a notification by ID")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'USER', 'SERVICE')")
     public ResponseEntity<ApiResponse<NotificationResponse>> getNotification(@PathVariable String id) {
         GetNotificationQueryResult result = getNotificationQueryHandler.handle(mapper.toGetNotificationQuery(id));
         NotificationResponse response = mapper.toNotificationResponse(result);
@@ -54,7 +54,7 @@ public class NotificationQueryController {
 
     @GetMapping
     @Operation(summary = "List Notifications", description = "Lists notifications for the authenticated user with optional filtering")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'USER', 'SERVICE')")
     public ResponseEntity<ApiResponse<List<NotificationResponse>>> listNotifications(@RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
                                                                                      @RequestParam(required = false) String recipientUserId,
                                                                                      @RequestParam(required = false) String status, @RequestParam(required = false) String type,

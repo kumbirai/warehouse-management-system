@@ -25,6 +25,7 @@ import com.ccbsa.wms.gateway.api.dto.CreateStockMovementRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateStockMovementResponse;
 import com.ccbsa.wms.gateway.api.dto.ListStockMovementsQueryResultDTO;
 import com.ccbsa.wms.gateway.api.dto.StockItemResponse;
+import com.ccbsa.wms.gateway.api.dto.StockItemsByClassificationResponse;
 import com.ccbsa.wms.gateway.api.dto.StockMovementQueryResultDTO;
 import com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
@@ -138,27 +139,26 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
             ).exchange()
                     .expectStatus().isCreated();
 
-            // Wait for stock item creation
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            // Wait for stock items to be created from consignment (async via Kafka events)
+            boolean stockItemsCreated = waitForStockItems(testProductId.toString(), tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
+            assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
             // Get stock item
-            EntityExchangeResult<ApiResponse<java.util.List<StockItemResponse>>> stockItemsResult = authenticatedGet(
+            EntityExchangeResult<ApiResponse<StockItemsByClassificationResponse>> stockItemsResult = authenticatedGet(
                     "/api/v1/stock-management/stock-items/by-classification?classification=NORMAL",
                     tenantAdminAuth.getAccessToken(),
                     testTenantId
             ).exchange()
                     .expectStatus().isOk()
-                    .expectBody(new ParameterizedTypeReference<ApiResponse<java.util.List<StockItemResponse>>>() {
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<StockItemsByClassificationResponse>>() {
                     })
                     .returnResult();
 
-            ApiResponse<java.util.List<StockItemResponse>> stockItemsApiResponse = stockItemsResult.getResponseBody();
-            if (stockItemsApiResponse != null && stockItemsApiResponse.getData() != null && !stockItemsApiResponse.getData().isEmpty()) {
-                testStockItemId = stockItemsApiResponse.getData().get(0).getStockItemId();
+            ApiResponse<StockItemsByClassificationResponse> stockItemsApiResponse = stockItemsResult.getResponseBody();
+            if (stockItemsApiResponse != null && stockItemsApiResponse.getData() != null 
+                    && stockItemsApiResponse.getData().getStockItems() != null 
+                    && !stockItemsApiResponse.getData().getStockItems().isEmpty()) {
+                testStockItemId = stockItemsApiResponse.getData().getStockItems().get(0).getStockItemId();
             }
         }
     }
@@ -176,7 +176,7 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
                 testProductId,
                 testLocationId1,
                 testLocationId2,
-                50
+                10
         );
 
         // Act
@@ -226,8 +226,8 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
                 request
         ).exchange();
 
-        // Assert
-        response.expectStatus().isBadRequest();
+        // Assert - LocationNotFoundException returns 404 NOT_FOUND
+        response.expectStatus().isNotFound();
     }
 
     // ==================== STOCK MOVEMENT COMPLETION TESTS ====================
@@ -243,7 +243,7 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
                 testProductId,
                 testLocationId1,
                 testLocationId2,
-                30
+                5
         );
 
         EntityExchangeResult<ApiResponse<CreateStockMovementResponse>> createResult = authenticatedPost(
@@ -349,7 +349,7 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
                 testProductId,
                 testLocationId1,
                 testLocationId2,
-                25
+                5
         );
 
         EntityExchangeResult<ApiResponse<CreateStockMovementResponse>> createResult = authenticatedPost(

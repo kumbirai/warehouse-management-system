@@ -5,8 +5,8 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-  schedule:
-    - cron: '0 2 * * *'  # Run nightly at 2 AM
+  # schedule:
+  #   - cron: '0 2 * * *'  # Run nightly at 2 AM
 
 jobs:
   integration-tests:

@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -29,6 +27,8 @@ import com.ccbsa.wms.notification.email.template.TemplateException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Adapter: SmtpEmailDeliveryAdapter
@@ -37,10 +37,11 @@ import jakarta.mail.internet.MimeMessage;
  * <p>
  * Only enabled when notification.email.enabled is true (default: true).
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 @ConditionalOnProperty(name = "notification.email.enabled", havingValue = "true", matchIfMissing = true)
 public class SmtpEmailDeliveryAdapter implements NotificationDeliveryPort {
-    private static final Logger logger = LoggerFactory.getLogger(SmtpEmailDeliveryAdapter.class);
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -50,16 +51,6 @@ public class SmtpEmailDeliveryAdapter implements NotificationDeliveryPort {
     private final UserServicePort userServicePort;
     private final TenantServicePort tenantServicePort;
     private final EmailTemplateEngine templateEngine;
-
-    public SmtpEmailDeliveryAdapter(JavaMailSender mailSender, SmtpConfiguration smtpConfig, EmailConfigurationProperties emailConfig, UserServicePort userServicePort,
-                                    TenantServicePort tenantServicePort, EmailTemplateEngine templateEngine) {
-        this.mailSender = mailSender;
-        this.smtpConfig = smtpConfig;
-        this.emailConfig = emailConfig;
-        this.userServicePort = userServicePort;
-        this.tenantServicePort = tenantServicePort;
-        this.templateEngine = templateEngine;
-    }
 
     @Override
     public boolean supports(NotificationChannel channel) {
@@ -79,11 +70,11 @@ public class SmtpEmailDeliveryAdapter implements NotificationDeliveryPort {
 
             // 2. Validate email address format
             if (!isValidEmail(emailValue)) {
-                logger.warn("Invalid email address format: notificationId={}, email={}", notification.getId(), emailValue);
+                log.warn("Invalid email address format: notificationId={}, email={}", notification.getId(), emailValue);
                 return DeliveryResult.failure(String.format("Invalid email address format: %s", emailValue));
             }
 
-            logger.debug("Sending email to: {}, notificationId={}, type={}", emailValue, notification.getId(), notification.getType());
+            log.debug("Sending email to: {}, notificationId={}, type={}", emailValue, notification.getId(), notification.getType());
 
             // 3. Build email message
             MimeMessage message = mailSender.createMimeMessage();
@@ -112,23 +103,23 @@ public class SmtpEmailDeliveryAdapter implements NotificationDeliveryPort {
 
             // 7. Extract message ID if available
             String messageId = message.getMessageID();
-            logger.info("Email sent successfully: notificationId={}, recipient={}, type={}, messageId={}", notification.getId(), emailValue, notification.getType(), messageId);
+            log.info("Email sent successfully: notificationId={}, recipient={}, type={}, messageId={}", notification.getId(), emailValue, notification.getType(), messageId);
 
             return DeliveryResult.success(messageId);
 
         } catch (TemplateException e) {
-            logger.error("Failed to render email template: notificationId={}, type={}, error={}", notification.getId(), notification.getType(), e.getMessage(), e);
+            log.error("Failed to render email template: notificationId={}, type={}, error={}", notification.getId(), notification.getType(), e.getMessage(), e);
             return DeliveryResult.failure(String.format("Failed to render email template: %s", e.getMessage()));
         } catch (MessagingException e) {
-            logger.error("Failed to create email message: notificationId={}, recipient={}, type={}, error={}", notification.getId(), getRecipientEmail(notification).getValue(),
+            log.error("Failed to create email message: notificationId={}, recipient={}, type={}, error={}", notification.getId(), getRecipientEmail(notification).getValue(),
                     notification.getType(), e.getMessage(), e);
             return DeliveryResult.failure(String.format("Failed to create email message: %s", e.getMessage()));
         } catch (MailException e) {
-            logger.error("Failed to send email: notificationId={}, recipient={}, type={}, error={}", notification.getId(), getRecipientEmail(notification).getValue(),
+            log.error("Failed to send email: notificationId={}, recipient={}, type={}, error={}", notification.getId(), getRecipientEmail(notification).getValue(),
                     notification.getType(), e.getMessage(), e);
             return DeliveryResult.failure(String.format("Failed to send email: %s", e.getMessage()));
         } catch (Exception e) {
-            logger.error("Unexpected error sending email: notificationId={}, type={}, error={}", notification.getId(), notification.getType(), e.getMessage(), e);
+            log.error("Unexpected error sending email: notificationId={}, type={}, error={}", notification.getId(), notification.getType(), e.getMessage(), e);
             return DeliveryResult.failure(String.format("Unexpected error: %s", e.getMessage()));
         }
     }
@@ -146,24 +137,31 @@ public class SmtpEmailDeliveryAdapter implements NotificationDeliveryPort {
     private EmailAddress getRecipientEmail(Notification notification) {
         // Prefer email stored in notification (from event payload)
         if (notification.getRecipientEmail() != null) {
-            logger.debug("Using email from notification aggregate: notificationId={}", notification.getId());
+            log.debug("Using email from notification aggregate: notificationId={}", notification.getId());
             return notification.getRecipientEmail();
         }
 
         // Fallback: Retrieve based on notification type
         if (isTenantNotification(notification.getType())) {
             // For tenant notifications, retrieve from tenant-service
-            logger.debug("Email not in notification, retrieving from tenant-service: notificationId={}, tenantId={}", notification.getId(), notification.getTenantId());
+            log.debug("Email not in notification, retrieving from tenant-service: notificationId={}, tenantId={}", notification.getId(), notification.getTenantId());
             try {
                 return tenantServicePort.getTenantEmail(notification.getTenantId());
             } catch (Exception e) {
-                logger.error("Failed to retrieve tenant email: notificationId={}, tenantId={}, error={}", notification.getId(), notification.getTenantId(), e.getMessage(), e);
+                log.error("Failed to retrieve tenant email: notificationId={}, tenantId={}, error={}", notification.getId(), notification.getTenantId(), e.getMessage(), e);
                 throw new RuntimeException(String.format("Failed to retrieve tenant email for notification: %s", notification.getId()), e);
             }
         } else {
             // For user notifications, retrieve from user-service
-            logger.debug("Email not in notification, retrieving from user-service: notificationId={}, userId={}", notification.getId(), notification.getRecipientUserId());
-            return userServicePort.getUserEmail(notification.getRecipientUserId());
+            log.debug("Email not in notification, retrieving from user-service: notificationId={}, userId={}, tenantId={}", notification.getId(), notification.getRecipientUserId(),
+                    notification.getTenantId());
+            java.util.Optional<EmailAddress> emailOpt = userServicePort.getUserEmail(notification.getRecipientUserId(), notification.getTenantId());
+            if (emailOpt.isPresent()) {
+                return emailOpt.get();
+            } else {
+                throw new RuntimeException(
+                        String.format("User email not available for notification: notificationId=%s, userId=%s", notification.getId(), notification.getRecipientUserId()));
+            }
         }
     }
 
@@ -198,7 +196,7 @@ public class SmtpEmailDeliveryAdapter implements NotificationDeliveryPort {
         String templateName = getTemplateName(notification.getType());
         Map<String, Object> context = buildTemplateContext(notification);
 
-        logger.debug("Rendering email template: templateName={}, notificationId={}, contextKeys={}", templateName, notification.getId(), context.keySet());
+        log.debug("Rendering email template: templateName={}, notificationId={}, contextKeys={}", templateName, notification.getId(), context.keySet());
 
         return templateEngine.render(templateName, context);
     }
@@ -271,7 +269,7 @@ public class SmtpEmailDeliveryAdapter implements NotificationDeliveryPort {
                     }
                 });
             } catch (Exception e) {
-                logger.warn("Failed to fetch tenant details for notification: notificationId={}, tenantId={}, error={}", notification.getId(), tenantIdValue, e.getMessage());
+                log.warn("Failed to fetch tenant details for notification: notificationId={}, tenantId={}, error={}", notification.getId(), tenantIdValue, e.getMessage());
                 // Continue without tenant details - template will show basic info
             }
         }

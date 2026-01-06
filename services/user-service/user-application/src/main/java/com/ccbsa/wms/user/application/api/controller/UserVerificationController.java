@@ -43,7 +43,7 @@ public class UserVerificationController {
 
     @PostMapping("/{userId}/resend-verification")
     @Operation(summary = "Resend Verification Email", description = "Resends email verification and password reset email to user (admin only)")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE')")
     public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(@PathVariable String userId) {
         // Load user to get Keycloak user ID
         User user = userRepository.findById(UserId.of(userId)).orElseThrow(() -> new UserNotFoundException(String.format("User not found: %s", userId)));

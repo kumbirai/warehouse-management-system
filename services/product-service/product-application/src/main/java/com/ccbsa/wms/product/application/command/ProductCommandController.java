@@ -30,6 +30,8 @@ import com.ccbsa.wms.product.application.service.command.dto.UploadProductCsvRes
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * REST Controller: ProductCommandController
@@ -38,26 +40,20 @@ import jakarta.validation.Valid;
  * <p>
  * Responsibilities: - Create product endpoints - Update product endpoints - CSV upload endpoints - Validate request DTOs - Map DTOs to commands - Return standardized API responses
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/products")
 @Tag(name = "Product Commands", description = "Product command operations")
+@RequiredArgsConstructor
 public class ProductCommandController {
     private final CreateProductCommandHandler createCommandHandler;
     private final UpdateProductCommandHandler updateCommandHandler;
     private final UploadProductCsvCommandHandler uploadCsvCommandHandler;
     private final ProductDTOMapper mapper;
 
-    public ProductCommandController(CreateProductCommandHandler createCommandHandler, UpdateProductCommandHandler updateCommandHandler,
-                                    UploadProductCsvCommandHandler uploadCsvCommandHandler, ProductDTOMapper mapper) {
-        this.createCommandHandler = createCommandHandler;
-        this.updateCommandHandler = updateCommandHandler;
-        this.uploadCsvCommandHandler = uploadCsvCommandHandler;
-        this.mapper = mapper;
-    }
-
     @PostMapping
     @Operation(summary = "Create Product", description = "Creates a new product with barcode and unit of measure")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<CreateProductResultDTO>> createProduct(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                              @Valid @RequestBody CreateProductCommandDTO commandDTO) {
         // Map DTO to command
@@ -74,7 +70,7 @@ public class ProductCommandController {
 
     @PutMapping("/{productId}")
     @Operation(summary = "Update Product", description = "Updates an existing product")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'SERVICE')")
     public ResponseEntity<ApiResponse<UpdateProductResultDTO>> updateProduct(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable String productId,
                                                                              @Valid @RequestBody UpdateProductCommandDTO commandDTO) {
         // Map DTO to command
@@ -91,7 +87,7 @@ public class ProductCommandController {
 
     @PostMapping("/upload-csv")
     @Operation(summary = "Upload Product CSV", description = "Uploads product master data via CSV file")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE')")
     public ResponseEntity<ApiResponse<UploadProductCsvResultDTO>> uploadProductCsv(@RequestHeader("X-Tenant-Id") String tenantId, @RequestParam("file") MultipartFile file) {
         // Map file to command
         com.ccbsa.wms.product.application.service.command.dto.UploadProductCsvCommand command = mapper.toUploadCsvCommand(file, tenantId);

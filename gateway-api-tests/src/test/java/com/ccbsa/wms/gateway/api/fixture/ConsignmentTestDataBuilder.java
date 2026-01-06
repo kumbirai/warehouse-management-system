@@ -89,21 +89,64 @@ public class ConsignmentTestDataBuilder {
                 .sourceLocationId(UUID.fromString(sourceLocationId))
                 .destinationLocationId(UUID.fromString(targetLocationId))
                 .quantity(quantity)
-                .movementType("RELOCATION")
-                .reason("Optimization")
+                .movementType("INTER_STORAGE")  // Use valid MovementType enum value - INTER_STORAGE for movements between storage locations
+                .reason("REORGANIZATION")  // Use valid MovementReason enum value instead of "Optimization"
                 .build();
     }
 
     public static CreateStockAdjustmentRequest buildCreateStockAdjustmentRequest(
             String productId, String locationId, String adjustmentType, int quantity, String reason) {
+        // Normalize reason to enum value if human-readable string is provided
+        String normalizedReason = normalizeAdjustmentReason(reason);
         return CreateStockAdjustmentRequest.builder()
                 .productId(UUID.fromString(productId))
                 .locationId(locationId != null ? UUID.fromString(locationId) : null)
                 .stockItemId(null)
                 .adjustmentType(adjustmentType)
                 .quantity(quantity)
-                .reason(reason)
+                .reason(normalizedReason)
                 .build();
+    }
+
+    /**
+     * Normalizes human-readable adjustment reason strings to enum values.
+     * Supports both enum values (STOCK_COUNT, DAMAGE, etc.) and human-readable strings.
+     *
+     * @param reason The reason string (enum value or human-readable)
+     * @return Normalized enum value
+     */
+    private static String normalizeAdjustmentReason(String reason) {
+        if (reason == null) {
+            return "OTHER";
+        }
+        String upperReason = reason.toUpperCase().trim();
+        
+        // If already an enum value, return as-is
+        if (upperReason.equals("STOCK_COUNT") || upperReason.equals("DAMAGE") || 
+            upperReason.equals("CORRECTION") || upperReason.equals("THEFT") || 
+            upperReason.equals("EXPIRATION") || upperReason.equals("OTHER")) {
+            return upperReason;
+        }
+        
+        // Map human-readable strings to enum values
+        if (upperReason.contains("STOCK") && upperReason.contains("COUNT")) {
+            return "STOCK_COUNT";
+        }
+        if (upperReason.contains("DAMAGE") || upperReason.contains("DAMAGED")) {
+            return "DAMAGE";
+        }
+        if (upperReason.contains("CORRECTION") || upperReason.contains("CORRECT")) {
+            return "CORRECTION";
+        }
+        if (upperReason.contains("THEFT") || upperReason.contains("STOLEN")) {
+            return "THEFT";
+        }
+        if (upperReason.contains("EXPIR") || upperReason.contains("EXPIRED")) {
+            return "EXPIRATION";
+        }
+        
+        // Default to OTHER if no match
+        return "OTHER";
     }
 
     /**

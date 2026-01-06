@@ -8,8 +8,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.hibernate.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
@@ -29,6 +27,8 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Repository Adapter: NotificationRepositoryAdapter
@@ -36,8 +36,9 @@ import jakarta.persistence.PersistenceContext;
  * Implements NotificationRepository port interface. Adapts between domain Notification aggregate and JPA NotificationEntity.
  */
 @Repository
+@Slf4j
+@RequiredArgsConstructor
 public class NotificationRepositoryAdapter implements NotificationRepository {
-    private static final Logger logger = LoggerFactory.getLogger(NotificationRepositoryAdapter.class);
 
     private final NotificationJpaRepository jpaRepository;
     private final NotificationEntityMapper mapper;
@@ -47,32 +48,24 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public NotificationRepositoryAdapter(NotificationJpaRepository jpaRepository, NotificationEntityMapper mapper, TenantSchemaResolver schemaResolver,
-                                         TenantSchemaProvisioner schemaProvisioner) {
-        this.jpaRepository = jpaRepository;
-        this.mapper = mapper;
-        this.schemaResolver = schemaResolver;
-        this.schemaProvisioner = schemaProvisioner;
-    }
-
     @Override
     public Notification save(Notification notification) {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId tenantId = TenantContext.getTenantId();
         if (tenantId == null) {
-            logger.error("TenantContext is not set when saving notification! Cannot resolve schema.");
+            log.error("TenantContext is not set when saving notification! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before saving notification");
         }
 
         // Verify tenantId matches
         if (!tenantId.getValue().equals(notification.getTenantId().getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Notification: {}", tenantId.getValue(), notification.getTenantId().getValue());
+            log.error("TenantContext mismatch! Context: {}, Notification: {}", tenantId.getValue(), notification.getTenantId().getValue());
             throw new IllegalStateException("TenantContext tenantId does not match notification tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -81,6 +74,7 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
         validateSchemaName(schemaName);
 
         // Set the search_path explicitly on the database connection
+        // This must be done after ensureSchemaReady to ensure the schema exists
         Session session = entityManager.unwrap(Session.class);
         setSearchPath(session, schemaName);
 
@@ -99,7 +93,7 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
 
         NotificationEntity savedEntity = jpaRepository.save(entity);
         Notification savedNotification = mapper.toDomain(savedEntity);
-        logger.debug("Notification saved successfully to schema: '{}'", schemaName);
+        log.debug("Notification saved successfully to schema: '{}'", schemaName);
 
         // Domain events are preserved by the command handler before calling save()
         // The command handler gets domain events from the original notification before save()
@@ -182,10 +176,10 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     private void executeSetSearchPath(Connection connection, String schemaName) {
         try (Statement stmt = connection.createStatement()) {
             String setSchemaSql = String.format("SET search_path TO %s", escapeIdentifier(schemaName));
-            logger.debug("Setting search_path to: {}", schemaName);
+            log.debug("Setting search_path to: {}", schemaName);
             stmt.execute(setSchemaSql);
         } catch (SQLException e) {
-            logger.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
+            log.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
             throw new RuntimeException("Failed to set database schema", e);
         }
     }
@@ -208,13 +202,13 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     public Optional<Notification> findById(NotificationId notificationId) {
         TenantId tenantId = TenantContext.getTenantId();
         if (tenantId == null) {
-            logger.error("TenantContext is not set when querying notification! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying notification! Cannot resolve schema.");
             throw new IllegalStateException("Tenant context not set. Cannot find notification without tenant ID.");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, tenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -223,6 +217,7 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
         validateSchemaName(schemaName);
 
         // Set the search_path explicitly on the database connection
+        // This must be done after ensureSchemaReady to ensure the schema exists
         Session session = entityManager.unwrap(Session.class);
         setSearchPath(session, schemaName);
 
@@ -235,19 +230,19 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying notifications by recipient! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying notifications by recipient! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying notifications by recipient");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -256,6 +251,7 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
         validateSchemaName(schemaName);
 
         // Set the search_path explicitly on the database connection
+        // This must be done after ensureSchemaReady to ensure the schema exists
         Session session = entityManager.unwrap(Session.class);
         setSearchPath(session, schemaName);
 
@@ -268,19 +264,19 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying notifications by recipient and status! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying notifications by recipient and status! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying notifications by recipient and status");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -289,6 +285,7 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
         validateSchemaName(schemaName);
 
         // Set the search_path explicitly on the database connection
+        // This must be done after ensureSchemaReady to ensure the schema exists
         Session session = entityManager.unwrap(Session.class);
         setSearchPath(session, schemaName);
 
@@ -302,19 +299,19 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when querying notifications by type! Cannot resolve schema.");
+            log.error("TenantContext is not set when querying notifications by type! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before querying notifications by type");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -323,6 +320,7 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
         validateSchemaName(schemaName);
 
         // Set the search_path explicitly on the database connection
+        // This must be done after ensureSchemaReady to ensure the schema exists
         Session session = entityManager.unwrap(Session.class);
         setSearchPath(session, schemaName);
 
@@ -335,19 +333,19 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
         // Verify TenantContext is set (critical for schema resolution)
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
-            logger.error("TenantContext is not set when counting unread notifications! Cannot resolve schema.");
+            log.error("TenantContext is not set when counting unread notifications! Cannot resolve schema.");
             throw new IllegalStateException("TenantContext must be set before counting unread notifications");
         }
 
         // Verify tenantId matches TenantContext
         if (!contextTenantId.getValue().equals(tenantId.getValue())) {
-            logger.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
+            log.error("TenantContext mismatch! Context: {}, Requested: {}", contextTenantId.getValue(), tenantId.getValue());
             throw new IllegalStateException("TenantContext tenantId does not match requested tenantId");
         }
 
         // Get the actual schema name from TenantSchemaResolver
         String schemaName = schemaResolver.resolveSchema();
-        logger.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
+        log.debug("Resolved schema name: '{}' for tenantId: '{}'", schemaName, contextTenantId.getValue());
 
         // On-demand safety: ensure schema exists and migrations are applied
         schemaProvisioner.ensureSchemaReady(schemaName);
@@ -356,6 +354,7 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
         validateSchemaName(schemaName);
 
         // Set the search_path explicitly on the database connection
+        // This must be done after ensureSchemaReady to ensure the schema exists
         Session session = entityManager.unwrap(Session.class);
         setSearchPath(session, schemaName);
 

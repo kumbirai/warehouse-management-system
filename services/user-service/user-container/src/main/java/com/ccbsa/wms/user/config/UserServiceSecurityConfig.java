@@ -3,8 +3,6 @@ package com.ccbsa.wms.user.config;
 import java.time.Instant;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -20,6 +18,9 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import com.ccbsa.wms.common.security.ServiceSecurityConfig;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * User Service Security Configuration
  *
@@ -31,19 +32,16 @@ import com.ccbsa.wms.common.security.ServiceSecurityConfig;
  *
  * <p>Note: CORS is handled at the gateway level, not in this service.
  */
+@Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class UserServiceSecurityConfig extends ServiceSecurityConfig {
-    private static final Logger logger = LoggerFactory.getLogger(UserServiceSecurityConfig.class);
     /**
      * Public endpoints that do not require authentication. Note: Gateway strips /api/v1 prefix, so these paths are what the service receives.
      */
     private static final Set<String> PUBLIC_ENDPOINTS =
             Set.of("/bff/auth/login", "/bff/auth/refresh", "/bff/auth/logout", "/actuator/health", "/actuator/info", "/error", "/swagger-ui", "/v3/api-docs");
     private final SecurityHeadersConfig securityHeadersConfig;
-
-    public UserServiceSecurityConfig(SecurityHeadersConfig securityHeadersConfig) {
-        this.securityHeadersConfig = securityHeadersConfig;
-    }
 
     /**
      * Public endpoints security filter chain - no OAuth2 Resource Server. This chain handles public endpoints (login, refresh, actuator, etc.) without OAuth2 Resource Server,
@@ -56,15 +54,15 @@ public class UserServiceSecurityConfig extends ServiceSecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain publicEndpointsSecurityFilterChain(HttpSecurity http) throws Exception {
-        logger.info("Configuring public endpoints security filter chain (Order 1) - no OAuth2 Resource Server");
-        logger.info("Public endpoints: /bff/auth/login, /bff/auth/refresh, /bff/auth/logout, /actuator/**, /error, /swagger-ui/**, /v3/api-docs/**");
+        log.info("Configuring public endpoints security filter chain (Order 1) - no OAuth2 Resource Server");
+        log.info("Public endpoints: /bff/auth/login, /bff/auth/refresh, /bff/auth/logout, /actuator/**, /error, /swagger-ui/**, /v3/api-docs/**");
         http.securityMatcher(createPublicEndpointsMatcher()).csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(securityHeadersConfig.securityHeadersFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
         SecurityFilterChain chain = http.build();
-        logger.info("Public endpoints security filter chain configured successfully");
+        log.info("Public endpoints security filter chain configured successfully");
         return chain;
     }
 
@@ -78,11 +76,11 @@ public class UserServiceSecurityConfig extends ServiceSecurityConfig {
                 String path = request.getRequestURI();
                 String method = request.getMethod();
                 boolean matches = isPublicEndpoint(path);
-                logger.info("Public endpoints matcher checking: {} {} -> matches: {}", method, path, matches);
+                log.info("Public endpoints matcher checking: {} {} -> matches: {}", method, path, matches);
                 if (matches) {
-                    logger.info("✅ Public endpoints matcher MATCHED path: {} {}", method, path);
+                    log.info("✅ Public endpoints matcher MATCHED path: {} {}", method, path);
                 } else {
-                    logger.debug("❌ Public endpoints matcher did NOT match path: {} {}", method, path);
+                    log.debug("❌ Public endpoints matcher did NOT match path: {} {}", method, path);
                 }
                 return matches;
             }
@@ -100,23 +98,32 @@ public class UserServiceSecurityConfig extends ServiceSecurityConfig {
 
     /**
      * Checks if the given path is a public endpoint that doesn't require authentication.
+     * <p>
+     * Handles paths with or without /api/v1 prefix since gateway may or may not strip it.
      *
      * @param path The request path to check
      * @return true if the path is a public endpoint, false otherwise
      */
     private boolean isPublicEndpoint(String path) {
-        logger.debug("Checking if path is public endpoint: {}", path);
-        // Check exact matches first
-        if (PUBLIC_ENDPOINTS.contains(path)) {
-            logger.debug("Path {} matched exact public endpoint", path);
+        log.debug("Checking if path is public endpoint: {}", path);
+
+        // Normalize path by removing /api/v1 prefix if present
+        final String normalizedPath = path.startsWith("/api/v1") ? path.substring(7) // Remove "/api/v1" prefix
+                : path;
+
+        // Check exact matches first (with normalized path)
+        if (PUBLIC_ENDPOINTS.contains(normalizedPath)) {
+            log.debug("Path {} matched exact public endpoint (normalized: {})", path, normalizedPath);
             return true;
         }
-        // Check if path starts with any public endpoint prefix
-        boolean matches = PUBLIC_ENDPOINTS.stream().anyMatch(endpoint -> path.startsWith(endpoint));
+
+        // Check if normalized path starts with any public endpoint prefix
+        final String finalNormalizedPath = normalizedPath;
+        boolean matches = PUBLIC_ENDPOINTS.stream().anyMatch(endpoint -> finalNormalizedPath.startsWith(endpoint));
         if (matches) {
-            logger.debug("Path {} matched public endpoint prefix", path);
+            log.debug("Path {} matched public endpoint prefix (normalized: {})", path, normalizedPath);
         } else {
-            logger.debug("Path {} did NOT match any public endpoint. Public endpoints: {}", path, PUBLIC_ENDPOINTS);
+            log.debug("Path {} did NOT match any public endpoint (normalized: {}). Public endpoints: {}", path, normalizedPath, PUBLIC_ENDPOINTS);
         }
         return matches;
     }
@@ -126,7 +133,7 @@ public class UserServiceSecurityConfig extends ServiceSecurityConfig {
     @Override
     public SecurityFilterChain securityFilterChain(HttpSecurity http, com.ccbsa.wms.common.security.GatewayRoleHeaderAuthenticationFilter gatewayRoleHeaderAuthenticationFilter)
             throws Exception {
-        logger.info("Configuring protected endpoints security filter chain (Order 2) - with OAuth2 Resource Server");
+        log.info("Configuring protected endpoints security filter chain (Order 2) - with OAuth2 Resource Server");
         http.securityMatcher(createProtectedEndpointsMatcher()).csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(securityHeadersConfig.securityHeadersFilter(), UsernamePasswordAuthenticationFilter.class).authorizeHttpRequests(auth -> auth
@@ -138,7 +145,7 @@ public class UserServiceSecurityConfig extends ServiceSecurityConfig {
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(createAuthenticationEntryPoint()).accessDeniedHandler(createAccessDeniedHandler()));
 
         SecurityFilterChain chain = http.build();
-        logger.info("Protected endpoints security filter chain configured successfully");
+        log.info("Protected endpoints security filter chain configured successfully");
         return chain;
     }
 
@@ -153,11 +160,11 @@ public class UserServiceSecurityConfig extends ServiceSecurityConfig {
                 String method = request.getMethod();
                 boolean isPublic = isPublicEndpoint(path);
                 boolean matches = !isPublic; // Match if NOT public
-                logger.info("Protected endpoints matcher checking: {} {} -> isPublic: {}, matches: {}", method, path, isPublic, matches);
+                log.info("Protected endpoints matcher checking: {} {} -> isPublic: {}, matches: {}", method, path, isPublic, matches);
                 if (matches) {
-                    logger.info("✅ Protected endpoints matcher MATCHED path: {} {}", method, path);
+                    log.info("✅ Protected endpoints matcher MATCHED path: {} {}", method, path);
                 } else {
-                    logger.debug("❌ Protected endpoints matcher did NOT match (public endpoint): {} {}", method, path);
+                    log.debug("❌ Protected endpoints matcher did NOT match (public endpoint): {} {}", method, path);
                 }
                 return matches;
             }
@@ -180,7 +187,7 @@ public class UserServiceSecurityConfig extends ServiceSecurityConfig {
             String method = request.getMethod();
 
             if (isPublicEndpoint(path)) {
-                logger.debug("Allowing unauthenticated access to public endpoint: {} {} - OAuth2 Resource Server will skip authentication", method, path);
+                log.debug("Allowing unauthenticated access to public endpoint: {} {} - OAuth2 Resource Server will skip authentication", method, path);
                 // For public endpoints, do NOT write a response
                 // This allows Spring Security's filter chain to continue processing
                 // The OAuth2 Resource Server filter will skip authentication when no token is present
@@ -188,7 +195,7 @@ public class UserServiceSecurityConfig extends ServiceSecurityConfig {
                 return;
             }
 
-            logger.warn("Authentication required for protected endpoint: {} {} - {}", method, path, authException.getMessage());
+            log.warn("Authentication required for protected endpoint: {} {} - {}", method, path, authException.getMessage());
             // For protected endpoints, return 401 Unauthorized
             if (!response.isCommitted()) {
                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
@@ -211,13 +218,13 @@ public class UserServiceSecurityConfig extends ServiceSecurityConfig {
             String method = request.getMethod();
 
             if (isPublicEndpoint(path)) {
-                logger.debug("Allowing access to public endpoint despite access denied: {} {}", method, path);
+                log.debug("Allowing access to public endpoint despite access denied: {} {}", method, path);
                 // For public endpoints, allow request to proceed
                 // Do nothing - let the request continue
                 return;
             }
 
-            logger.warn("Access denied for endpoint: {} {} - {}", method, path, accessDeniedException.getMessage());
+            log.warn("Access denied for endpoint: {} {} - {}", method, path, accessDeniedException.getMessage());
             // For protected endpoints, return 403 Forbidden
             response.setStatus(HttpStatus.FORBIDDEN.value());
             response.setContentType("application/json");

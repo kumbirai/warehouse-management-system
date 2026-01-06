@@ -61,7 +61,7 @@ public class TenantQueryController {
 
     @GetMapping
     @Operation(summary = "List tenants", description = "Lists tenants with pagination, filtering, and search support")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'SERVICE')")
     public ResponseEntity<ApiResponse<List<TenantSummaryResponse>>> listTenants(@RequestParam(value = "page", required = false) Integer page,
                                                                                 @RequestParam(value = "size", required = false) Integer size,
                                                                                 @RequestParam(value = "status", required = false) String status,

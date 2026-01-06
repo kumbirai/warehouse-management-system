@@ -16,6 +16,10 @@ import com.ccbsa.wms.location.application.dto.query.ListStockMovementsQueryResul
 import com.ccbsa.wms.location.application.dto.query.StockMovementQueryResultDTO;
 import com.ccbsa.wms.location.application.service.query.GetStockMovementQueryHandler;
 import com.ccbsa.wms.location.application.service.query.ListStockMovementsQueryHandler;
+import com.ccbsa.wms.location.application.service.query.dto.GetStockMovementQuery;
+import com.ccbsa.wms.location.application.service.query.dto.ListStockMovementsQuery;
+import com.ccbsa.wms.location.application.service.query.dto.ListStockMovementsQueryResult;
+import com.ccbsa.wms.location.application.service.query.dto.StockMovementQueryResult;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -48,13 +52,13 @@ public class StockMovementQueryController {
 
     @GetMapping("/{movementId}")
     @Operation(summary = "Get Stock Movement by ID", description = "Retrieves a stock movement by ID")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER', 'SERVICE')")
     public ResponseEntity<ApiResponse<StockMovementQueryResultDTO>> getStockMovement(@PathVariable String movementId, @RequestHeader("X-Tenant-Id") String tenantId) {
         // Map to query
-        com.ccbsa.wms.location.application.service.query.dto.GetStockMovementQuery query = mapper.toGetStockMovementQuery(movementId, tenantId);
+        GetStockMovementQuery query = mapper.toGetStockMovementQuery(movementId, tenantId);
 
         // Execute query
-        com.ccbsa.wms.location.application.service.query.dto.StockMovementQueryResult result = getStockMovementQueryHandler.handle(query);
+        StockMovementQueryResult result = getStockMovementQueryHandler.handle(query);
 
         // Map result to DTO
         StockMovementQueryResultDTO resultDTO = mapper.toStockMovementQueryResultDTO(result);
@@ -64,15 +68,15 @@ public class StockMovementQueryController {
 
     @GetMapping
     @Operation(summary = "List Stock Movements", description = "Retrieves a list of stock movements with optional filtering")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER', 'SERVICE')")
     public ResponseEntity<ApiResponse<ListStockMovementsQueryResultDTO>> listStockMovements(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                                             @RequestParam(required = false) String stockItemId,
                                                                                             @RequestParam(required = false) String sourceLocationId) {
         // Map to query
-        com.ccbsa.wms.location.application.service.query.dto.ListStockMovementsQuery query = mapper.toListStockMovementsQuery(tenantId, stockItemId, sourceLocationId);
+        ListStockMovementsQuery query = mapper.toListStockMovementsQuery(tenantId, stockItemId, sourceLocationId);
 
         // Execute query
-        com.ccbsa.wms.location.application.service.query.dto.ListStockMovementsQueryResult result = listStockMovementsQueryHandler.handle(query);
+        ListStockMovementsQueryResult result = listStockMovementsQueryHandler.handle(query);
 
         // Map result to DTO
         ListStockMovementsQueryResultDTO resultDTO = mapper.toListStockMovementsQueryResultDTO(result);

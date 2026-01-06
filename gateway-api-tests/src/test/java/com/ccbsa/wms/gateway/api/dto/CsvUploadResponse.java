@@ -17,26 +17,32 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CsvUploadResponse {
     private Integer totalRows;
-    private Integer createdCount;
-    private Integer updatedCount;
-    private Integer errorCount;
+    private Integer processedRows;
+    private Integer createdConsignments;  // Matches UploadConsignmentCsvResultDTO field name
+    private Integer errorRows;  // Matches UploadConsignmentCsvResultDTO field name
     private List<CsvUploadError> errors;
     
+    // Legacy fields for backward compatibility (if needed by other tests)
+    @Deprecated
+    private Integer createdCount;
+    @Deprecated
+    private Integer updatedCount;
+    @Deprecated
+    private Integer errorCount;
+    
     /**
-     * Convenience method to calculate success count (created + updated).
+     * Convenience method to calculate success count (created consignments).
+     * For consignment CSV upload, success = createdConsignments (no updates).
      */
     public Integer getSuccessCount() {
-        if (createdCount == null || updatedCount == null) {
-            return null;
-        }
-        return createdCount + updatedCount;
+        return createdConsignments != null ? createdConsignments : (createdCount != null ? createdCount : 0);
     }
     
     /**
-     * Convenience method for failure count (alias for errorCount).
+     * Convenience method for failure count (alias for errorRows/errorCount).
      */
     public Integer getFailureCount() {
-        return errorCount;
+        return errorRows != null ? errorRows : (errorCount != null ? errorCount : 0);
     }
 }
 

@@ -2,12 +2,11 @@ package com.ccbsa.wms.gateway.config;
 
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
@@ -15,9 +14,12 @@ import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Security configuration for the API Gateway.
@@ -36,10 +38,10 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
  *
  * <p>All other endpoints require valid JWT tokens for authentication.
  */
+@Slf4j
 @Configuration
 @EnableWebFluxSecurity
 public class GatewaySecurityConfig {
-    private static final Logger logger = LoggerFactory.getLogger(GatewaySecurityConfig.class);
     /**
      * Public endpoints that do not require authentication.
      */
@@ -78,18 +80,18 @@ public class GatewaySecurityConfig {
             String path = exchange.getRequest().getPath().value();
             String method = exchange.getRequest().getMethod().name();
 
-            logger.debug("Public chain checking path: {} method: {}", path, method);
+            log.debug("Public chain checking path: {} method: {}", path, method);
 
             // Allow all OPTIONS requests for CORS preflight
             if ("OPTIONS".equals(method)) {
-                logger.info("Matched OPTIONS request for CORS preflight: {}", path);
+                log.info("Matched OPTIONS request for CORS preflight: {}", path);
                 return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.match();
             }
 
             boolean isPublic = isPublicEndpoint(path);
-            logger.debug("Is public endpoint: {}", isPublic);
+            log.debug("Is public endpoint: {}", isPublic);
             if (isPublic) {
-                logger.info("Matched public endpoint: {}", path);
+                log.info("Matched public endpoint: {}", path);
                 return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.match();
             }
             return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.notMatch();
@@ -145,7 +147,7 @@ public class GatewaySecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfig);
 
-        logger.info("CORS configuration created with allowed origins: {}", corsConfig.getAllowedOrigins());
+        log.info("CORS configuration created with allowed origins: {}", corsConfig.getAllowedOrigins());
         return source;
     }
 
@@ -164,13 +166,14 @@ public class GatewaySecurityConfig {
                     // Only match if NOT a public endpoint
                     boolean isPublic = isPublicEndpoint(path);
                     if (!isPublic) {
-                        logger.debug("Protected chain matched path: {}", path);
+                        log.debug("Protected chain matched path: {}", path);
                         return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.match();
                     }
                     return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.notMatch();
                 }).csrf(csrf -> csrf.disable()).cors(cors -> cors.configurationSource(corsConfigurationSource())).authorizeExchange(exchanges -> exchanges.anyExchange().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(
-                        jwt -> jwt.jwtDecoder(jwtDecoder()).jwtAuthenticationConverter(new ReactiveJwtAuthenticationConverterAdapter(new JwtAuthenticationConverter()))));
+                        jwt -> jwt.jwtDecoder(jwtDecoder()).jwtAuthenticationConverter(new ReactiveJwtAuthenticationConverterAdapter(new JwtAuthenticationConverter()))))
+                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED)));
 
         return http.build();
     }
@@ -185,7 +188,7 @@ public class GatewaySecurityConfig {
      */
     @Bean
     public ReactiveJwtDecoder jwtDecoder() {
-        logger.info("Configuring JWT decoder with JWK set URI: {}", jwkSetUri);
+        log.info("Configuring JWT decoder with JWK set URI: {}", jwkSetUri);
         return NimbusReactiveJwtDecoder.withJwkSetUri(jwkSetUri).build();
     }
 }

@@ -49,7 +49,7 @@ public class StockLevelQueryController {
 
     @GetMapping
     @Operation(summary = "Get Stock Levels", description = "Retrieves stock levels by product and optionally location")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'VIEWER', 'SERVICE')")
     public ResponseEntity<ApiResponse<List<StockLevelQueryDTO>>> getStockLevels(@RequestHeader("X-Tenant-Id") String tenantId, @RequestParam("productId") String productId,
                                                                                 @RequestParam(required = false) String locationId) {
         try {

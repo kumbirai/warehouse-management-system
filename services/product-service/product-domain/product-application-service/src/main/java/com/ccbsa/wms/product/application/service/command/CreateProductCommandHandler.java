@@ -53,8 +53,8 @@ public class CreateProductCommandHandler {
         validateBarcodeUniqueness(command.getPrimaryBarcode(), command.getTenantId());
 
         // 4. Validate secondary barcodes uniqueness
-        // SecondaryBarcodes is validated as non-null in static factory method, but may be empty
-        if (!command.getSecondaryBarcodes().isEmpty()) {
+        // SecondaryBarcodes should never be null (mapper ensures empty list if null/empty), but defensive check for safety
+        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
             for (ProductBarcode barcode : command.getSecondaryBarcodes()) {
                 validateBarcodeUniqueness(barcode, command.getTenantId());
             }
@@ -64,8 +64,8 @@ public class CreateProductCommandHandler {
         Product.Builder builder = Product.builder().productId(ProductId.generate()).tenantId(command.getTenantId()).productCode(command.getProductCode())
                 .description(Description.of(command.getDescription())).primaryBarcode(command.getPrimaryBarcode()).unitOfMeasure(command.getUnitOfMeasure());
 
-        // Add secondary barcodes if provided
-        if (!command.getSecondaryBarcodes().isEmpty()) {
+        // Add secondary barcodes if provided (defensive null check)
+        if (command.getSecondaryBarcodes() != null && !command.getSecondaryBarcodes().isEmpty()) {
             builder.secondaryBarcodes(command.getSecondaryBarcodes());
         }
 

@@ -81,25 +81,33 @@ export const ProductForm = ({
 
   const productCode = watch('productCode');
   const debouncedProductCode = useDebounce(productCode, 500);
+  const [validationState, setValidationState] = useState<'idle' | 'validating' | 'valid' | 'invalid'>('idle');
 
   // Check product code uniqueness (only for create, not update)
   useEffect(() => {
     if (!isUpdate && debouncedProductCode && user?.tenantId && debouncedProductCode.length > 0) {
+      setValidationState('validating');
       setIsCheckingUniqueness(true);
       checkUniqueness(debouncedProductCode, user.tenantId)
         .then(isUnique => {
           if (!isUnique) {
             setProductCodeError('Product code already exists');
+            setValidationState('invalid');
           } else {
             setProductCodeError(null);
+            setValidationState('valid');
           }
         })
         .catch(() => {
           setProductCodeError('Failed to check product code uniqueness');
+          setValidationState('invalid');
         })
         .finally(() => {
           setIsCheckingUniqueness(false);
         });
+    } else if (!debouncedProductCode || debouncedProductCode.length === 0) {
+      setValidationState('idle');
+      setProductCodeError(null);
     }
   }, [debouncedProductCode, isUpdate, user?.tenantId, checkUniqueness]);
 
@@ -129,7 +137,8 @@ export const ProductForm = ({
         onSubmit={handleSubmit(values => {
           if (isUpdate) {
             // For updates, exclude productCode (it can't be changed)
-            const { productCode, ...updateValues } = values;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { productCode: _, ...updateValues } = values;
             onSubmit(updateValues as UpdateProductRequest);
           } else {
             onSubmit(values as CreateProductRequest);
@@ -150,16 +159,28 @@ export const ProductForm = ({
                 productCodeError ||
                 (isCheckingUniqueness ? 'Checking...' : '')
               }
+              aria-label="Product code input field"
+              aria-required="true"
+              aria-describedby="product-code-helper"
+              FormHelperTextProps={{ id: 'product-code-helper' }}
+              autoFocus
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth required error={!!errors.unitOfMeasure}>
-              <InputLabel>Unit of Measure</InputLabel>
+              <InputLabel id="unit-of-measure-label">Unit of Measure</InputLabel>
               <Controller
                 name="unitOfMeasure"
                 control={control}
                 render={({ field }) => (
-                  <Select {...field} label="Unit of Measure">
+                  <Select
+                    {...field}
+                    label="Unit of Measure"
+                    labelId="unit-of-measure-label"
+                    aria-label="Select unit of measure"
+                    aria-required="true"
+                    aria-describedby="unit-of-measure-helper"
+                  >
                     <MenuItem value="EA">Each (EA)</MenuItem>
                     <MenuItem value="CS">Case (CS)</MenuItem>
                     <MenuItem value="PK">Pack (PK)</MenuItem>
@@ -169,7 +190,12 @@ export const ProductForm = ({
                 )}
               />
               {errors.unitOfMeasure && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                <Typography
+                  id="unit-of-measure-helper"
+                  variant="caption"
+                  color="error"
+                  sx={{ mt: 0.5, ml: 1.75 }}
+                >
                   {errors.unitOfMeasure.message}
                 </Typography>
               )}
@@ -185,6 +211,10 @@ export const ProductForm = ({
               rows={3}
               error={!!errors.description}
               helperText={errors.description?.message}
+              aria-label="Product description input field"
+              aria-required="true"
+              aria-describedby="description-helper"
+              FormHelperTextProps={{ id: 'description-helper' }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -201,6 +231,10 @@ export const ProductForm = ({
                   helperText={errors.primaryBarcode?.message || 'Scan or enter barcode'}
                   value={field.value || ''}
                   onChange={value => field.onChange(value)}
+                  aria-label="Primary barcode input field"
+                  aria-required="true"
+                  aria-describedby="primary-barcode-helper"
+                  FormHelperTextProps={{ id: 'primary-barcode-helper' }}
                 />
               )}
             />
@@ -212,6 +246,9 @@ export const ProductForm = ({
               fullWidth
               error={!!errors.category}
               helperText={errors.category?.message}
+              aria-label="Product category input field (optional)"
+              aria-describedby="category-helper"
+              FormHelperTextProps={{ id: 'category-helper' }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -221,13 +258,23 @@ export const ProductForm = ({
               fullWidth
               error={!!errors.brand}
               helperText={errors.brand?.message}
+              aria-label="Product brand input field (optional)"
+              aria-describedby="brand-helper"
+              FormHelperTextProps={{ id: 'brand-helper' }}
             />
           </Grid>
           <Grid item xs={12}>
             <Typography variant="subtitle2" gutterBottom>
               Secondary Barcodes (Optional)
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 1,
+                mb: 2,
+              }}
+            >
               <BarcodeInput
                 value={newSecondaryBarcode}
                 onChange={setNewSecondaryBarcode}
@@ -245,8 +292,14 @@ export const ProductForm = ({
                 }}
                 autoSubmitOnEnter={true}
                 sx={{ flex: 1 }}
+                aria-label="Add secondary barcode input field (optional)"
               />
-              <Button variant="outlined" onClick={handleAddSecondaryBarcode}>
+              <Button
+                variant="outlined"
+                onClick={handleAddSecondaryBarcode}
+                aria-label="Add secondary barcode button"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              >
                 Add
               </Button>
             </Box>
@@ -254,12 +307,19 @@ export const ProductForm = ({
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {secondaryBarcodes.map((barcode, index) => (
                   <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <TextField value={barcode} size="small" disabled fullWidth />
+                    <TextField
+                      value={barcode}
+                      size="small"
+                      disabled
+                      fullWidth
+                      aria-label={`Secondary barcode ${index + 1}`}
+                    />
                     <Button
                       variant="outlined"
                       color="error"
                       size="small"
                       onClick={() => handleRemoveSecondaryBarcode(index)}
+                      aria-label={`Remove secondary barcode ${index + 1}`}
                     >
                       Remove
                     </Button>
@@ -274,7 +334,7 @@ export const ProductForm = ({
               isSubmitting={isSubmitting}
               submitLabel={isUpdate ? 'Update Product' : 'Create Product'}
               cancelLabel="Cancel"
-              submitDisabled={!!productCodeError || isCheckingUniqueness}
+              submitDisabled={!!productCodeError || validationState === 'validating' || validationState === 'invalid'}
             />
           </Grid>
         </Grid>

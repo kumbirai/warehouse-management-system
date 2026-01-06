@@ -3,8 +3,6 @@ package com.ccbsa.common.cache.invalidation;
 import java.util.Set;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +10,7 @@ import com.ccbsa.common.cache.key.CacheKeyGenerator;
 import com.ccbsa.common.domain.valueobject.TenantId;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Local Cache Invalidator.
@@ -22,10 +21,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * <p>
  * Thread-safe and idempotent.
  */
+@Slf4j
 @Component
 public class LocalCacheInvalidator {
-
-    private static final Logger log = LoggerFactory.getLogger(LocalCacheInvalidator.class);
 
     private final RedisTemplate<String, Object> redisTemplate;
 

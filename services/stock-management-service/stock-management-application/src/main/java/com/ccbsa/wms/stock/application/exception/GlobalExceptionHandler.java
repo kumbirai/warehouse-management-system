@@ -1,7 +1,9 @@
 package com.ccbsa.wms.stock.application.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -136,6 +138,64 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
 
         ApiError error = ApiError.builder("PRODUCT_SERVICE_UNAVAILABLE", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.SERVICE_UNAVAILABLE, error);
+    }
+
+    /**
+     * Handles HttpMessageNotReadableException - JSON deserialization errors (e.g., invalid enum values).
+     * Returns 400 Bad Request instead of 500 Internal Server Error.
+     *
+     * @param ex      The exception
+     * @param request The HTTP request
+     * @return Error response with 400 Bad Request
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        // Extract the root cause message for better error reporting
+        String message = ex.getMessage();
+        if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+            message = ex.getCause().getMessage();
+        }
+
+        logger.warn("JSON deserialization error: {} - RequestId: {}, Path: {}", message, requestId, path);
+
+        ApiError error = ApiError.builder("INVALID_REQUEST", message).path(path).requestId(requestId).build();
+        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
+    }
+
+    /**
+     * Handles DataIntegrityViolationException - database constraint violations (e.g., unique constraints, foreign key violations).
+     * Returns 409 Conflict instead of 500 Internal Server Error.
+     *
+     * @param ex      The exception
+     * @param request The HTTP request
+     * @return Error response with 409 Conflict
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(DataIntegrityViolationException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        // Extract a more user-friendly message from the exception
+        String message = "Data integrity violation";
+        if (ex.getMessage() != null) {
+            // Try to extract a more meaningful message
+            String errorMessage = ex.getMessage();
+            if (errorMessage.contains("unique constraint") || errorMessage.contains("duplicate key")) {
+                message = "A record with this information already exists";
+            } else if (errorMessage.contains("foreign key constraint") || errorMessage.contains("referential integrity")) {
+                message = "Referenced record does not exist";
+            } else {
+                message = "Data integrity constraint violation";
+            }
+        }
+
+        logger.warn("Data integrity violation: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+
+        ApiError error = ApiError.builder("DATA_INTEGRITY_VIOLATION", message).path(path).requestId(requestId).build();
+        return ApiResponseBuilder.error(HttpStatus.CONFLICT, error);
     }
 }
 

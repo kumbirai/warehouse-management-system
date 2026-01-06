@@ -26,6 +26,7 @@ public class ConsignmentQueryDTO {
     private String consignmentId;
     private String consignmentReference;
     private String warehouseId;
+    private String warehouseCode;
     private String warehouseName;
     private String status;
     private LocalDateTime receivedAt;

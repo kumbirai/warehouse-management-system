@@ -4,11 +4,11 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cache.interceptor.KeyGenerator;
 
 import com.ccbsa.wms.common.security.TenantContext;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Tenant-Aware Cache Key Generator.
@@ -25,9 +25,8 @@ import com.ccbsa.wms.common.security.TenantContext;
  * public User findUserById(UserId id) { ... }
  * </pre>
  */
+@Slf4j
 public class TenantAwareCacheKeyGenerator implements KeyGenerator {
-
-    private static final Logger log = LoggerFactory.getLogger(TenantAwareCacheKeyGenerator.class);
     private static final String KEY_SEPARATOR = ":";
     private static final String TENANT_PREFIX = "tenant";
 

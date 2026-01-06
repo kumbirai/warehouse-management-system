@@ -6,8 +6,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import com.ccbsa.common.cache.key.CacheKeyGenerator;
@@ -16,6 +14,7 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Base class for cached repository decorators.
@@ -41,9 +40,8 @@ import io.micrometer.core.instrument.MeterRegistry;
  * }
  * </pre>
  */
+@Slf4j
 public abstract class CachedRepositoryDecorator<T, ID> {
-
-    private static final Logger log = LoggerFactory.getLogger(CachedRepositoryDecorator.class);
 
     protected final Object baseRepository;
     protected final RedisTemplate<String, Object> redisTemplate;

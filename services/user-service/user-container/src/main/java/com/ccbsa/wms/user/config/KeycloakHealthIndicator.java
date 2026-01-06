@@ -2,10 +2,7 @@ package com.ccbsa.wms.user.config;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
@@ -13,19 +10,23 @@ import org.springframework.web.client.RestTemplate;
 
 import com.ccbsa.common.keycloak.config.KeycloakConfig;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Health indicator for Keycloak connectivity. Checks if Keycloak server is reachable and responsive.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class KeycloakHealthIndicator implements HealthIndicator {
-    private static final Logger logger = LoggerFactory.getLogger(KeycloakHealthIndicator.class);
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "KeycloakConfig is a Spring-managed @ConfigurationProperties bean that is not modified after initialization. "
+            + "The reference is safe to store.")
     private final KeycloakConfig keycloakConfig;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "RestTemplate is a Spring-managed bean that is thread-safe and not modified after initialization. The reference"
+            + " is safe to store.")
     private final RestTemplate restTemplate;
-
-    public KeycloakHealthIndicator(KeycloakConfig keycloakConfig, RestTemplate restTemplate) {
-        this.keycloakConfig = Objects.requireNonNull(keycloakConfig, "KeycloakConfig must not be null");
-        this.restTemplate = Objects.requireNonNull(restTemplate, "RestTemplate must not be null");
-    }
 
     @Override
     public Health health() {
@@ -40,11 +41,11 @@ public class KeycloakHealthIndicator implements HealthIndicator {
             details.put("defaultRealm", keycloakConfig.getDefaultRealm());
             details.put("status", "UP");
 
-            logger.debug("Keycloak health check passed");
+            log.debug("Keycloak health check passed");
 
             return Health.up().withDetails(details).build();
         } catch (Exception e) {
-            logger.warn("Keycloak health check failed: {}", e.getMessage());
+            log.warn("Keycloak health check failed: {}", e.getMessage());
 
             Map<String, Object> details = new HashMap<>();
             details.put("serverUrl", keycloakConfig.getServerUrl());

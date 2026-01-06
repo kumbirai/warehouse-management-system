@@ -3,6 +3,7 @@ package com.ccbsa.wms.stock.domain.core.entity;
 import java.time.LocalDateTime;
 
 import com.ccbsa.common.domain.TenantAwareAggregateRoot;
+import com.ccbsa.common.domain.valueobject.BigDecimalQuantity;
 import com.ccbsa.common.domain.valueobject.MaximumQuantity;
 import com.ccbsa.common.domain.valueobject.MinimumQuantity;
 import com.ccbsa.common.domain.valueobject.ProductId;
@@ -104,18 +105,20 @@ public class StockLevelThreshold extends TenantAwareAggregateRoot<StockLevelThre
      *
      * @param currentQuantity Current stock quantity
      */
-    public void checkMinMaxThresholds(java.math.BigDecimal currentQuantity) {
+    public void checkMinMaxThresholds(BigDecimalQuantity currentQuantity) {
         if (currentQuantity == null) {
             throw new IllegalArgumentException("CurrentQuantity cannot be null");
         }
 
-        if (this.minimumQuantity != null && currentQuantity.compareTo(this.minimumQuantity.getValue()) < 0) {
-            addDomainEvent(new StockLevelBelowMinimumEvent(this.getId(), this.getTenantId(), this.productId, this.locationId, currentQuantity, this.minimumQuantity.getValue(),
-                    this.enableAutoRestock));
+        if (this.minimumQuantity != null && currentQuantity.isLessThan(this.minimumQuantity.getValue())) {
+            addDomainEvent(
+                    new StockLevelBelowMinimumEvent(this.getId(), this.getTenantId(), this.productId, this.locationId, currentQuantity.getValue(), this.minimumQuantity.getValue(),
+                            this.enableAutoRestock));
         }
 
-        if (this.maximumQuantity != null && currentQuantity.compareTo(this.maximumQuantity.getValue()) > 0) {
-            addDomainEvent(new StockLevelAboveMaximumEvent(this.getId(), this.getTenantId(), this.productId, this.locationId, currentQuantity, this.maximumQuantity.getValue()));
+        if (this.maximumQuantity != null && currentQuantity.isGreaterThan(this.maximumQuantity.getValue())) {
+            addDomainEvent(new StockLevelAboveMaximumEvent(this.getId(), this.getTenantId(), this.productId, this.locationId, currentQuantity.getValue(),
+                    this.maximumQuantity.getValue()));
         }
     }
 
@@ -126,14 +129,15 @@ public class StockLevelThreshold extends TenantAwareAggregateRoot<StockLevelThre
      * @param currentQuantity Current quantity
      * @return true if adding quantity would exceed maximum
      */
-    public boolean wouldExceedMaximum(java.math.BigDecimal quantityToAdd, java.math.BigDecimal currentQuantity) {
+    public boolean wouldExceedMaximum(BigDecimalQuantity quantityToAdd, BigDecimalQuantity currentQuantity) {
         if (this.maximumQuantity == null) {
             return false; // No maximum limit
         }
         if (quantityToAdd == null || currentQuantity == null) {
             throw new IllegalArgumentException("Quantity values cannot be null");
         }
-        return currentQuantity.add(quantityToAdd).compareTo(this.maximumQuantity.getValue()) > 0;
+        BigDecimalQuantity newQuantity = currentQuantity.add(quantityToAdd);
+        return newQuantity.isGreaterThan(this.maximumQuantity.getValue());
     }
 
     /**
@@ -142,14 +146,14 @@ public class StockLevelThreshold extends TenantAwareAggregateRoot<StockLevelThre
      * @param currentQuantity Current quantity
      * @return true if below minimum
      */
-    public boolean isBelowMinimum(java.math.BigDecimal currentQuantity) {
+    public boolean isBelowMinimum(BigDecimalQuantity currentQuantity) {
         if (this.minimumQuantity == null) {
             return false; // No minimum limit
         }
         if (currentQuantity == null) {
             throw new IllegalArgumentException("CurrentQuantity cannot be null");
         }
-        return currentQuantity.compareTo(this.minimumQuantity.getValue()) < 0;
+        return currentQuantity.isLessThan(this.minimumQuantity.getValue());
     }
 
     // Getters (read-only access)

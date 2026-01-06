@@ -6,6 +6,7 @@ import { useLocation } from '../hooks/useLocation';
 import { CreateLocationRequest, UpdateLocationRequest } from '../types/location';
 import { useAuth } from '../../../hooks/useAuth';
 import { FormPageLayout } from '../../../components/layouts';
+import { SkeletonForm } from '../../../components/common';
 import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 
 export const LocationEditPage = () => {
@@ -19,6 +20,20 @@ export const LocationEditPage = () => {
     locationId || '',
     user?.tenantId || ''
   );
+
+  // Convert Location to form default values - memoized to prevent unnecessary re-renders
+  // Must be called before any early returns to follow React Hooks rules
+  const defaultValues = useMemo(() => {
+    if (!location) return undefined;
+    return {
+      zone: location.coordinates?.zone || '',
+      aisle: location.coordinates?.aisle || '',
+      rack: location.coordinates?.rack || '',
+      level: location.coordinates?.level || '',
+      barcode: location.barcode || '',
+      description: location.description || '',
+    };
+  }, [location]);
 
   if (!locationId) {
     navigate(Routes.locations);
@@ -50,19 +65,6 @@ export const LocationEditPage = () => {
     navigate(Routes.locationDetail(validLocationId));
   };
 
-  // Convert Location to form default values - memoized to prevent unnecessary re-renders
-  const defaultValues = useMemo(() => {
-    if (!location) return undefined;
-    return {
-      zone: location.coordinates?.zone || '',
-      aisle: location.coordinates?.aisle || '',
-      rack: location.coordinates?.rack || '',
-      level: location.coordinates?.level || '',
-      barcode: location.barcode || '',
-      description: location.description || '',
-    };
-  }, [location]);
-
   return (
     <FormPageLayout
       breadcrumbs={getBreadcrumbs.locationEdit()}
@@ -72,7 +74,7 @@ export const LocationEditPage = () => {
       maxWidth="md"
     >
       {isLoadingLocation ? (
-        <div>Loading location data...</div>
+        <SkeletonForm fields={6} />
       ) : (
         <LocationForm
           key={location?.locationId}

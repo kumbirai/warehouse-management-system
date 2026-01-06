@@ -28,7 +28,7 @@ public class StockMovementTestDataBuilder {
                 .destinationLocationId(destinationLocationId)
                 .quantity(quantity)
                 .movementType("INTER_STORAGE")
-                .reason("REPLENISHMENT")
+                .reason("RESTOCKING")
                 .build();
     }
 

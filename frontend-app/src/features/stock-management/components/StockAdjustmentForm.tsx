@@ -75,6 +75,11 @@ export const StockAdjustmentForm = ({
               required
               error={!!errors.productId}
               helperText={errors.productId?.message}
+              aria-label="Product ID input field"
+              aria-required="true"
+              aria-describedby="product-id-helper"
+              FormHelperTextProps={{ id: 'product-id-helper' }}
+              autoFocus
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -84,6 +89,9 @@ export const StockAdjustmentForm = ({
               fullWidth
               error={!!errors.locationId}
               helperText={errors.locationId?.message}
+              aria-label="Location ID input field (optional)"
+              aria-describedby="location-id-helper"
+              FormHelperTextProps={{ id: 'location-id-helper' }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -93,6 +101,9 @@ export const StockAdjustmentForm = ({
               fullWidth
               error={!!errors.stockItemId}
               helperText={errors.stockItemId?.message}
+              aria-label="Stock item ID input field (optional)"
+              aria-describedby="stock-item-id-helper"
+              FormHelperTextProps={{ id: 'stock-item-id-helper' }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -108,6 +119,10 @@ export const StockAdjustmentForm = ({
                   required
                   error={!!errors.adjustmentType}
                   helperText={errors.adjustmentType?.message}
+                  aria-label="Select adjustment type"
+                  aria-required="true"
+                  aria-describedby="adjustment-type-helper"
+                  FormHelperTextProps={{ id: 'adjustment-type-helper' }}
                 >
                   <MenuItem value="INCREASE">Increase</MenuItem>
                   <MenuItem value="DECREASE">Decrease</MenuItem>
@@ -124,6 +139,10 @@ export const StockAdjustmentForm = ({
               required
               error={!!errors.quantity}
               helperText={errors.quantity?.message}
+              aria-label="Quantity input field"
+              aria-required="true"
+              aria-describedby="quantity-helper"
+              FormHelperTextProps={{ id: 'quantity-helper' }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -139,6 +158,10 @@ export const StockAdjustmentForm = ({
                   required
                   error={!!errors.reason}
                   helperText={errors.reason?.message}
+                  aria-label="Select adjustment reason"
+                  aria-required="true"
+                  aria-describedby="reason-helper"
+                  FormHelperTextProps={{ id: 'reason-helper' }}
                 >
                   <MenuItem value="STOCK_COUNT">Stock Count</MenuItem>
                   <MenuItem value="DAMAGE">Damage</MenuItem>
@@ -159,6 +182,9 @@ export const StockAdjustmentForm = ({
               rows={3}
               error={!!errors.notes}
               helperText={errors.notes?.message}
+              aria-label="Notes input field (optional)"
+              aria-describedby="notes-helper"
+              FormHelperTextProps={{ id: 'notes-helper' }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -168,6 +194,9 @@ export const StockAdjustmentForm = ({
               fullWidth
               error={!!errors.authorizationCode}
               helperText={errors.authorizationCode?.message}
+              aria-label="Authorization code input field (optional)"
+              aria-describedby="authorization-code-helper"
+              FormHelperTextProps={{ id: 'authorization-code-helper' }}
             />
           </Grid>
         </Grid>

@@ -1,15 +1,28 @@
 package com.ccbsa.wms.location.application.dto.command;
 
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Command DTO: BlockLocationCommandDTO
  * <p>
  * Request DTO for blocking a location.
- * No fields required - location ID is in path.
  */
+@Getter
+@Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class BlockLocationCommandDTO {
-    // Empty DTO - location ID comes from path
+    /**
+     * Reason for blocking the location.
+     * Required field - must not be blank.
+     */
+    @NotBlank(message = "Block reason is required")
+    private String reason;
 }
 

@@ -125,12 +125,9 @@ public class StockAllocationGatewayTest extends BaseIntegrationTest {
         ).exchange()
                 .expectStatus().isCreated();
 
-        // Wait for stock item creation
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Wait for stock item creation (async via Kafka events)
+        boolean stockItemsCreated = waitForStockItems(testProductId.toString(), tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
+        assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
         String orderId = "ORDER-" + faker.number().digits(5);
         CreateStockAllocationRequest request = StockAllocationTestDataBuilder.buildCreateStockAllocationRequest(
@@ -185,12 +182,9 @@ public class StockAllocationGatewayTest extends BaseIntegrationTest {
                 tenantAdminAuth.getAccessToken(), testTenantId, consignment2)
                 .exchange().expectStatus().isCreated();
 
-        // Wait for stock item creation
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Wait for stock item creation (async via Kafka events)
+        boolean stockItemsCreated = waitForStockItems(testProductId.toString(), tenantAdminAuth.getAccessToken(), testTenantId, 15, 500);
+        assertThat(stockItemsCreated).as("Stock items should be created from consignments within 15 seconds").isTrue();
 
         String orderId = "ORDER-" + faker.number().digits(5);
         CreateStockAllocationRequest request = StockAllocationTestDataBuilder.buildCreateStockAllocationRequestFEFO(
@@ -238,12 +232,9 @@ public class StockAllocationGatewayTest extends BaseIntegrationTest {
         ).exchange()
                 .expectStatus().isCreated();
 
-        // Wait for stock item creation
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Wait for stock item creation (async via Kafka events)
+        boolean stockItemsCreated = waitForStockItems(testProductId.toString(), tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
+        assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
         String orderId = "ORDER-" + faker.number().digits(5);
         CreateStockAllocationRequest request = StockAllocationTestDataBuilder.buildCreateStockAllocationRequest(
@@ -281,12 +272,9 @@ public class StockAllocationGatewayTest extends BaseIntegrationTest {
         ).exchange()
                 .expectStatus().isCreated();
 
-        // Wait for stock item creation
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Wait for stock item creation (async via Kafka events)
+        boolean stockItemsCreated = waitForStockItems(testProductId.toString(), tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
+        assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
         String orderId = "ORDER-" + faker.number().digits(5);
         CreateStockAllocationRequest allocationRequest = StockAllocationTestDataBuilder.buildCreateStockAllocationRequest(
@@ -354,12 +342,9 @@ public class StockAllocationGatewayTest extends BaseIntegrationTest {
         ).exchange()
                 .expectStatus().isCreated();
 
-        // Wait for stock item creation
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Wait for stock item creation (async via Kafka events)
+        boolean stockItemsCreated = waitForStockItems(testProductId.toString(), tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
+        assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
         String orderId = "ORDER-" + faker.number().digits(5);
         CreateStockAllocationRequest allocationRequest = StockAllocationTestDataBuilder.buildCreateStockAllocationRequest(
@@ -423,12 +408,9 @@ public class StockAllocationGatewayTest extends BaseIntegrationTest {
         ).exchange()
                 .expectStatus().isCreated();
 
-        // Wait for stock item creation
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Wait for stock item creation (async via Kafka events)
+        boolean stockItemsCreated = waitForStockItems(testProductId.toString(), tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
+        assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
         String orderId = "ORDER-" + faker.number().digits(5);
         CreateStockAllocationRequest allocationRequest = StockAllocationTestDataBuilder.buildCreateStockAllocationRequest(

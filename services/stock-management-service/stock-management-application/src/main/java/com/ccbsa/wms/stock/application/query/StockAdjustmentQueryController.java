@@ -52,7 +52,7 @@ public class StockAdjustmentQueryController {
 
     @GetMapping("/{adjustmentId}")
     @Operation(summary = "Get Stock Adjustment by ID", description = "Retrieves a stock adjustment by ID")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'VIEWER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'VIEWER', 'SERVICE')")
     public ResponseEntity<ApiResponse<StockAdjustmentQueryDTO>> getStockAdjustment(@PathVariable String adjustmentId, @RequestHeader("X-Tenant-Id") String tenantId) {
         // Map to query
         GetStockAdjustmentQuery query = mapper.toGetStockAdjustmentQuery(adjustmentId, tenantId);
@@ -68,7 +68,7 @@ public class StockAdjustmentQueryController {
 
     @GetMapping
     @Operation(summary = "List Stock Adjustments", description = "Retrieves a list of stock adjustments with optional filtering")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'VIEWER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'VIEWER', 'SERVICE')")
     public ResponseEntity<ApiResponse<ListStockAdjustmentsQueryResultDTO>> listStockAdjustments(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                                                 @RequestParam(required = false) String productId,
                                                                                                 @RequestParam(required = false) String locationId,

@@ -44,7 +44,7 @@ public class StockAdjustmentCommandController {
 
     @PostMapping
     @Operation(summary = "Adjust Stock", description = "Adjusts stock levels (increase or decrease) with reason tracking")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'SERVICE')")
     public ResponseEntity<ApiResponse<AdjustStockResultDTO>> adjustStock(@RequestHeader("X-Tenant-Id") String tenantId, @Valid @RequestBody AdjustStockCommandDTO commandDTO) {
         // Map DTO to command
         com.ccbsa.wms.stock.application.service.command.dto.AdjustStockCommand command = mapper.toAdjustStockCommand(commandDTO, tenantId);

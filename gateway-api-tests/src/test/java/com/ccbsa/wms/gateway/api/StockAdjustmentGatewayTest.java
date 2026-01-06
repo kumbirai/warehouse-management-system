@@ -122,12 +122,9 @@ public class StockAdjustmentGatewayTest extends BaseIntegrationTest {
         ).exchange()
                 .expectStatus().isCreated();
 
-        // Wait for stock item creation
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Wait for stock items to be created from consignment (async via Kafka events)
+        boolean stockItemsCreated = waitForStockItems(testProductId.toString(), tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
+        assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
         CreateStockAdjustmentRequest request = StockAdjustmentTestDataBuilder.buildIncreaseStockRequest(
                 testProductId,

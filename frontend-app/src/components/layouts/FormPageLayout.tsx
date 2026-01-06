@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Container, Alert } from '@mui/material';
+import { Container, Alert, Box } from '@mui/material';
 import { Header } from '../layout/Header';
 import { PageBreadcrumbs, BreadcrumbItem } from '../common/PageBreadcrumbs';
 import { PageHeader } from '../common/PageHeader';
@@ -24,17 +24,19 @@ export const FormPageLayout: React.FC<FormPageLayoutProps> = ({
   return (
     <>
       <Header />
-      <Container maxWidth={maxWidth} sx={{ py: 4 }}>
+      <Container maxWidth={maxWidth} sx={{ py: 4 }} component="main" role="main" aria-label={title}>
         <PageBreadcrumbs items={breadcrumbs} />
         <PageHeader title={title} description={description} />
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: 3 }} role="alert" aria-live="assertive">
             {error}
           </Alert>
         )}
 
-        {children}
+        <Box role="region" aria-label="Form content">
+          {children}
+        </Box>
       </Container>
     </>
   );

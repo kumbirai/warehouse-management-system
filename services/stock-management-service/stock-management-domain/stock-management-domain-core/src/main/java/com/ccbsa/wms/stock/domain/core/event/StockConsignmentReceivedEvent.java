@@ -2,6 +2,7 @@ package com.ccbsa.wms.stock.domain.core.event;
 
 import java.util.List;
 
+import com.ccbsa.common.domain.EventMetadata;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.WarehouseId;
 import com.ccbsa.wms.stock.domain.core.entity.StockConsignment;
@@ -35,6 +36,25 @@ public class StockConsignmentReceivedEvent extends StockManagementEvent<StockCon
     public StockConsignmentReceivedEvent(String aggregateId, ConsignmentReference consignmentReference, TenantId tenantId, WarehouseId warehouseId,
                                          List<ConsignmentLineItem> lineItems) {
         super(aggregateId, AGGREGATE_TYPE);
+        this.consignmentReference = consignmentReference;
+        this.tenantId = tenantId;
+        this.warehouseId = warehouseId;
+        this.lineItems = lineItems != null ? List.copyOf(lineItems) : List.of();
+    }
+
+    /**
+     * Constructor for StockConsignmentReceivedEvent with metadata.
+     *
+     * @param aggregateId          Consignment ID (as String)
+     * @param consignmentReference Consignment reference
+     * @param tenantId             Tenant identifier
+     * @param warehouseId          Warehouse identifier
+     * @param lineItems            List of consignment line items
+     * @param metadata             Event metadata for traceability
+     */
+    public StockConsignmentReceivedEvent(String aggregateId, ConsignmentReference consignmentReference, TenantId tenantId, WarehouseId warehouseId,
+                                         List<ConsignmentLineItem> lineItems, EventMetadata metadata) {
+        super(aggregateId, AGGREGATE_TYPE, metadata);
         this.consignmentReference = consignmentReference;
         this.tenantId = tenantId;
         this.warehouseId = warehouseId;

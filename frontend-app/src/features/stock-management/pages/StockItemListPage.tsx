@@ -8,7 +8,7 @@ import {getBreadcrumbs, Routes} from '../../../utils/navigationUtils';
 import {StockItemList} from '../components/StockItemList';
 import {useStockItemsByClassification} from '../hooks/useStockItemsByClassification';
 import {StockClassification} from '../types/stockManagement';
-import {EmptyState, FilterBar} from '../../../components/common';
+import {FilterBar} from '../../../components/common';
 
 /**
  * StockItemListPage
@@ -29,7 +29,7 @@ export const StockItemListPage = () => {
     error,
   } = useStockItemsByClassification(selectedClassification);
 
-  const stockItems = queryResponse?.data?.stockItems || [];
+  const stockItems = queryResponse?.data?.stockItems ?? [];
   const hasFilter = selectedClassification !== null;
 
   const handleClassificationChange = (classification: string) => {
@@ -50,13 +50,32 @@ export const StockItemListPage = () => {
       title="Stock Items"
       description="View and manage stock items with classification and location information"
       actions={
-        <Button
-          variant="outlined"
-          onClick={() => navigate(Routes.consignments)}
-          startIcon={<FilterIcon />}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 1,
+            width: { xs: '100%', sm: 'auto' },
+          }}
         >
-          View Consignments
-        </Button>
+          <Button
+            variant="contained"
+            onClick={() => navigate(Routes.fefoAssignment)}
+            aria-label="Assign locations using FEFO"
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          >
+            Assign Locations (FEFO)
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => navigate(Routes.consignments)}
+            startIcon={<FilterIcon />}
+            aria-label="View consignments"
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          >
+            View Consignments
+          </Button>
+        </Box>
       }
       isLoading={isLoading}
       error={error?.message || null}
@@ -80,14 +99,7 @@ export const StockItemListPage = () => {
       </FilterBar>
 
       <Box sx={{ mt: 3 }}>
-        {!hasFilter ? (
-          <EmptyState
-            title="Select a Classification"
-            description="Please select a classification filter to view stock items. Stock items are automatically classified based on expiration dates."
-          />
-        ) : (
-          <StockItemList stockItems={stockItems} error={error} isLoading={isLoading} />
-        )}
+        <StockItemList stockItems={stockItems} error={error} isLoading={isLoading} />
       </Box>
     </ListPageLayout>
   );

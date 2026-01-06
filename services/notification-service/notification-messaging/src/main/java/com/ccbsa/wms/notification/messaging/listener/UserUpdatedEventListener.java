@@ -2,8 +2,6 @@ package com.ccbsa.wms.notification.messaging.listener;
 
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -22,6 +20,9 @@ import com.ccbsa.wms.notification.application.service.command.CreateNotification
 import com.ccbsa.wms.notification.application.service.command.dto.CreateNotificationCommand;
 import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Event Listener: UserUpdatedEventListener
  * <p>
@@ -29,15 +30,11 @@ import com.ccbsa.wms.notification.domain.core.valueobject.NotificationType;
  * <p>
  * Uses local Map deserialization to avoid tight coupling with user-service domain classes.
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class UserUpdatedEventListener {
-    private static final Logger logger = LoggerFactory.getLogger(UserUpdatedEventListener.class);
-
     private final CreateNotificationCommandHandler createNotificationCommandHandler;
-
-    public UserUpdatedEventListener(CreateNotificationCommandHandler createNotificationCommandHandler) {
-        this.createNotificationCommandHandler = createNotificationCommandHandler;
-    }
 
     @KafkaListener(topics = "user-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
@@ -49,7 +46,7 @@ public class UserUpdatedEventListener {
             // Detect event type from payload (aggregateType field) or header
             String detectedEventType = detectEventType(eventData, eventType);
             if (!isUserUpdatedEvent(detectedEventType)) {
-                logger.debug("Skipping event - not UserUpdatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
+                log.debug("Skipping event - not UserUpdatedEvent: detectedType={}, headerType={}", detectedEventType, eventType);
                 acknowledgment.acknowledge();
                 return;
             }
@@ -60,7 +57,7 @@ public class UserUpdatedEventListener {
             EmailAddress recipientEmail = extractEmail(eventData);
             String description = extractDescription(eventData);
 
-            logger.info("Received UserUpdatedEvent: userId={}, tenantId={}, email={}, eventId={}, eventDataKeys={}", aggregateId, tenantId.getValue(), recipientEmail.getValue(),
+            log.info("Received UserUpdatedEvent: userId={}, tenantId={}, email={}, eventId={}, eventDataKeys={}", aggregateId, tenantId.getValue(), recipientEmail.getValue(),
                     extractEventId(eventData), eventData.keySet());
 
             // Set tenant context for multi-tenant schema resolution
@@ -93,7 +90,7 @@ public class UserUpdatedEventListener {
 
                 createNotificationCommandHandler.handle(command);
 
-                logger.info("Created {} notification for user: userId={}, email={}", notificationType, aggregateId, recipientEmail.getValue());
+                log.info("Created {} notification for user: userId={}, email={}", notificationType, aggregateId, recipientEmail.getValue());
 
                 // Acknowledge message
                 acknowledgment.acknowledge();
@@ -103,10 +100,10 @@ public class UserUpdatedEventListener {
             }
         } catch (IllegalArgumentException e) {
             // Invalid event format - acknowledge to skip (don't retry malformed events)
-            logger.error("Invalid event format for UserUpdatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
+            log.error("Invalid event format for UserUpdatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             acknowledgment.acknowledge();
         } catch (Exception e) {
-            logger.error("Failed to process UserUpdatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
+            log.error("Failed to process UserUpdatedEvent: eventData={}, error={}", eventData, e.getMessage(), e);
             // Don't acknowledge - will retry for transient failures
             throw new RuntimeException("Failed to process UserUpdatedEvent", e);
         } finally {
@@ -129,11 +126,11 @@ public class UserUpdatedEventListener {
                 if (correlationIdObj != null) {
                     String correlationId = correlationIdObj.toString();
                     CorrelationContext.setCorrelationId(correlationId);
-                    logger.debug("Set correlation ID from event metadata: {}", correlationId);
+                    log.debug("Set correlation ID from event metadata: {}", correlationId);
                 }
             }
         } catch (Exception e) {
-            logger.warn("Failed to extract correlation ID from event metadata: {}", e.getMessage());
+            log.warn("Failed to extract correlation ID from event metadata: {}", e.getMessage());
             // Continue processing even if correlation ID extraction fails
         }
     }
@@ -154,17 +151,17 @@ public class UserUpdatedEventListener {
             String className = (String) classObj;
             if (className.contains(".")) {
                 String simpleName = className.substring(className.lastIndexOf('.') + 1);
-                logger.debug("Detected event type from @class field: {}", simpleName);
+                log.debug("Detected event type from @class field: {}", simpleName);
                 return simpleName;
             }
-            logger.debug("Detected event type from @class field: {}", className);
+            log.debug("Detected event type from @class field: {}", className);
             return className;
         }
 
         // Check header if @class is not available
         if (headerType != null) {
             String simpleName = headerType.contains(".") ? headerType.substring(headerType.lastIndexOf('.') + 1) : headerType;
-            logger.debug("Detected event type from header: {}", simpleName);
+            log.debug("Detected event type from header: {}", simpleName);
             return simpleName;
         }
 
