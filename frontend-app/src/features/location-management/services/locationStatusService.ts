@@ -1,10 +1,10 @@
 import apiClient from '../../../services/apiClient';
-import { ApiResponse } from '../../../types/api';
-import { BlockLocationRequest } from '../types/location';
+import {ApiResponse} from '../../../types/api';
+import {BlockLocationRequest} from '../types/location';
 
 /**
  * Location Status Service
- * 
+ *
  * Handles API calls for location status operations (block/unblock).
  */
 
@@ -64,4 +64,3 @@ export const locationStatusService = {
     return response.data;
   },
 };
-

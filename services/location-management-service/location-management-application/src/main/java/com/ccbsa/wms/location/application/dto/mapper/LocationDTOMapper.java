@@ -2,6 +2,7 @@ package com.ccbsa.wms.location.application.dto.mapper;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -800,9 +801,9 @@ public class LocationDTOMapper {
             dto.setParent(toQueryResultDTO(result.getParent()));
         }
 
-        // Map items
+        // Map items (create defensive copy)
         List<LocationHierarchyItemDTO> itemDTOs = result.getItems().stream().map(this::toLocationHierarchyItemDTO).collect(Collectors.toList());
-        dto.setItems(itemDTOs);
+        dto.setItems(new java.util.ArrayList<>(itemDTOs));
 
         dto.setHierarchyLevel(result.getHierarchyLevel());
 
@@ -819,7 +820,9 @@ public class LocationDTOMapper {
         LocationHierarchyItemDTO dto = new LocationHierarchyItemDTO();
         dto.setLocation(toQueryResultDTO(result.getLocation()));
         dto.setChildCount(result.getChildCount());
-        dto.setStatusSummary(result.getStatusSummary());
+        // Create defensive copy of status summary map
+        Map<String, Integer> statusSummary = result.getStatusSummary();
+        dto.setStatusSummary(statusSummary != null ? new java.util.HashMap<>(statusSummary) : null);
         return dto;
     }
 }

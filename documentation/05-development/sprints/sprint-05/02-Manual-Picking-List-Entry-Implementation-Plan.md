@@ -76,28 +76,28 @@
 
 1. User navigates to "Create Picking List" page
 2. System displays **Step 1: Load Information**
-   - Load Number (auto-generated or manual)
-   - Notes (optional)
-   - Action: Next
+    - Load Number (auto-generated or manual)
+    - Notes (optional)
+    - Action: Next
 3. User clicks "Next"
 4. System displays **Step 2: Add Orders**
-   - Order list (initially empty)
-   - "Add Order" button
+    - Order list (initially empty)
+    - "Add Order" button
 5. User clicks "Add Order"
 6. System displays order form:
-   - Order Number (auto-generated or manual)
-   - Customer Code (autocomplete)
-   - Customer Name (auto-filled from customer code)
-   - Priority (dropdown: HIGH, NORMAL, LOW)
-   - Line Items section (initially empty)
-   - "Add Product" button
+    - Order Number (auto-generated or manual)
+    - Customer Code (autocomplete)
+    - Customer Name (auto-filled from customer code)
+    - Priority (dropdown: HIGH, NORMAL, LOW)
+    - Line Items section (initially empty)
+    - "Add Product" button
 7. User clicks "Add Product"
 8. System displays line item form:
-   - Product Code (autocomplete with validation)
-   - Product Description (auto-filled)
-   - Quantity (number input)
-   - Notes (optional)
-   - Remove button
+    - Product Code (autocomplete with validation)
+    - Product Description (auto-filled)
+    - Quantity (number input)
+    - Notes (optional)
+    - Remove button
 9. User enters product details and quantity
 10. User can add more products or orders
 11. User clicks "Review"
@@ -1006,12 +1006,14 @@ Navigate to picking list detail
 ### Unit Tests
 
 **Frontend:**
+
 - Form validation logic
 - Draft save/load logic
 - Autocomplete search debouncing
 - Product/customer selection handling
 
 **Backend:**
+
 - CreatePickingListCommandHandler
 - Product validation
 - Load number generation
@@ -1037,18 +1039,18 @@ Navigate to picking list detail
 
 ## Acceptance Criteria Validation
 
-| Acceptance Criteria | Implementation | Status |
-|---------------------|----------------|--------|
-| AC1: Form-based UI for picking list entry | Multi-step form component | ✅ Planned |
-| AC2: Required fields included | All fields in form | ✅ Planned |
-| AC3: Real-time validation | Field-level validation with debouncing | ✅ Planned |
-| AC4: Multiple orders per load | Dynamic order management | ✅ Planned |
-| AC5: Multiple products per order | Dynamic line items | ✅ Planned |
-| AC6: Product validation against master data | Product Service integration | ✅ Planned |
-| AC7: Autocomplete for products/customers | Autocomplete components | ✅ Planned |
-| AC8: Draft saving | localStorage + backend | ✅ Planned |
-| AC9: Clear validation errors | Field-level error display | ✅ Planned |
-| AC10: Publish PickingListReceivedEvent | Event publishing | ✅ Planned |
+| Acceptance Criteria                         | Implementation                         | Status    |
+|---------------------------------------------|----------------------------------------|-----------|
+| AC1: Form-based UI for picking list entry   | Multi-step form component              | ✅ Planned |
+| AC2: Required fields included               | All fields in form                     | ✅ Planned |
+| AC3: Real-time validation                   | Field-level validation with debouncing | ✅ Planned |
+| AC4: Multiple orders per load               | Dynamic order management               | ✅ Planned |
+| AC5: Multiple products per order            | Dynamic line items                     | ✅ Planned |
+| AC6: Product validation against master data | Product Service integration            | ✅ Planned |
+| AC7: Autocomplete for products/customers    | Autocomplete components                | ✅ Planned |
+| AC8: Draft saving                           | localStorage + backend                 | ✅ Planned |
+| AC9: Clear validation errors                | Field-level error display              | ✅ Planned |
+| AC10: Publish PickingListReceivedEvent      | Event publishing                       | ✅ Planned |
 
 ---
 

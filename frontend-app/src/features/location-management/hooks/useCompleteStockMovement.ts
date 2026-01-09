@@ -40,4 +40,3 @@ export const useCompleteStockMovement = (): UseCompleteStockMovementResult => {
 
   return { completeStockMovement, isLoading, error };
 };
-

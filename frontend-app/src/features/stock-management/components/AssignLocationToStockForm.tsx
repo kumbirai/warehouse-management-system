@@ -16,6 +16,7 @@ import { StockItem } from '../types/stockManagement';
 import { BarcodeInput } from '../../../components/common';
 import { useLocations } from '../../location-management/hooks/useLocations';
 import { useAuth } from '../../../hooks/useAuth';
+import { logger } from '../../../utils/logger';
 
 interface AssignLocationToStockFormProps {
   open: boolean;
@@ -64,13 +65,13 @@ export const AssignLocationToStockForm = ({
     e.preventDefault();
     if (!stockItem || !locationInput) return;
 
-    try {
-      // If we have a search result, use the locationId, otherwise use the input directly
-      let locationIdToUse = locationInput;
-      if (isSearching && searchResults && searchResults.length === 1) {
-        locationIdToUse = searchResults[0].locationId;
-      }
+    // If we have a search result, use the locationId, otherwise use the input directly
+    let locationIdToUse = locationInput;
+    if (isSearching && searchResults && searchResults.length === 1) {
+      locationIdToUse = searchResults[0].locationId;
+    }
 
+    try {
       await assignLocation.mutateAsync({
         stockItemId: stockItem.stockItemId,
         request: {
@@ -82,7 +83,14 @@ export const AssignLocationToStockForm = ({
       onClose();
     } catch (error) {
       // Error is handled by the mutation
-      console.error('Failed to assign location:', error);
+      logger.error(
+        'Failed to assign location',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          stockItemId: stockItem?.stockItemId,
+          locationId: locationIdToUse,
+        }
+      );
     }
   };
 

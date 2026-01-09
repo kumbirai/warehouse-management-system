@@ -123,12 +123,12 @@
 1. User navigates to "Stock Management" → "Stock Adjustments"
 2. System displays list of adjustments
 3. User can filter by:
-   - Product
-   - Location
-   - Adjustment type (INCREASE/DECREASE)
-   - Adjustment reason
-   - User who made adjustment
-   - Date range
+    - Product
+    - Location
+    - Adjustment type (INCREASE/DECREASE)
+    - Adjustment reason
+    - User who made adjustment
+    - Date range
 4. User can click on adjustment to view details
 5. User can export adjustments
 

@@ -614,12 +614,14 @@ private static void simulateStockConsumption(UUID productId, int quantityToConsu
 ## Implementation Checklist
 
 ### Test Infrastructure
+
 - [ ] Update `BaseIntegrationTest` with Sprint 6 test utilities
 - [ ] Create helper methods for test data setup
 - [ ] Add test data cleanup between tests
 - [ ] Configure test database with test schema
 
 ### Execute Picking Task Tests
+
 - [ ] Test successful picking execution
 - [ ] Test partial picking with reason
 - [ ] Test expired stock rejection
@@ -628,12 +630,14 @@ private static void simulateStockConsumption(UUID productId, int quantityToConsu
 - [ ] Test event publishing verification
 
 ### Complete Picking Tests
+
 - [ ] Test successful completion
 - [ ] Test rejection with pending tasks
 - [ ] Test completion with partial picking
 - [ ] Test completion event publishing
 
 ### Expiration Tracking Tests
+
 - [ ] Test expiring stock query
 - [ ] Test filtering by classification
 - [ ] Test expiration check scheduled job
@@ -641,12 +645,14 @@ private static void simulateStockConsumption(UUID productId, int quantityToConsu
 - [ ] Test FEFO query excludes expired stock
 
 ### Prevent Picking Expired Stock Tests
+
 - [ ] Test expired stock exclusion from queries
 - [ ] Test expiration check before picking
 - [ ] Test audit logging of picking attempts
 - [ ] Test UI validation integration
 
 ### Generate Restock Request Tests
+
 - [ ] Test restock request generation
 - [ ] Test duplicate prevention
 - [ ] Test priority calculation
@@ -654,18 +660,21 @@ private static void simulateStockConsumption(UUID productId, int quantityToConsu
 - [ ] Test restock request status tracking
 
 ### End-to-End Workflow Tests
+
 - [ ] Test complete picking workflow with expiration checks
 - [ ] Test restock triggered by picking consumption
 - [ ] Test notification generation throughout workflow
 - [ ] Test audit trail completeness
 
 ### Performance Tests
+
 - [ ] Test query performance with large datasets
 - [ ] Test concurrent picking execution
 - [ ] Test scheduled job performance
 - [ ] Verify database query optimization
 
 ### Documentation
+
 - [ ] Document test scenarios
 - [ ] Document test data requirements
 - [ ] Create troubleshooting guide

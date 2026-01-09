@@ -305,3 +305,66 @@ export type ProductBarcodeValidationApiResponse = ApiResponse<ProductBarcodeVali
 export type GetStockItemApiResponse = ApiResponse<GetStockItemResponse>;
 export type GetStockItemsByClassificationApiResponse =
   ApiResponse<GetStockItemsByClassificationResponse>;
+
+// Expiring Stock Types (Sprint 06)
+export interface ExpiringStockItem {
+  stockItemId: string;
+  productId: string;
+  productCode: string;
+  locationId: string;
+  quantity: number;
+  expirationDate: string; // ISO date string (YYYY-MM-DD)
+  classification: StockClassification;
+  daysUntilExpiry?: number;
+}
+
+export interface ExpiringStockFilters {
+  startDate?: string; // ISO date string (YYYY-MM-DD)
+  endDate?: string; // ISO date string (YYYY-MM-DD)
+  classification?: StockClassification;
+}
+
+export type GetExpiringStockApiResponse = ApiResponse<ExpiringStockItem[]>;
+
+// Stock Expiration Check Types (Sprint 06)
+export interface StockExpirationCheckResponse {
+  expired: boolean;
+  classification: StockClassification;
+  message: string;
+}
+
+export type CheckStockExpirationApiResponse = ApiResponse<StockExpirationCheckResponse>;
+
+// Restock Request Types (Sprint 06)
+export type RestockPriority = 'HIGH' | 'MEDIUM' | 'LOW';
+export type RestockRequestStatus = 'PENDING' | 'SENT_TO_D365' | 'FULFILLED' | 'CANCELLED';
+
+export interface RestockRequest {
+  restockRequestId: string;
+  productId: string;
+  locationId?: string;
+  currentQuantity: number;
+  minimumQuantity: number;
+  maximumQuantity?: number;
+  requestedQuantity: number;
+  priority: RestockPriority;
+  status: RestockRequestStatus;
+  createdAt: string; // ISO date-time string
+  sentToD365At?: string; // ISO date-time string
+  d365OrderReference?: string;
+}
+
+export interface RestockRequestFilters {
+  status?: RestockRequestStatus;
+  priority?: RestockPriority;
+  productId?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface ListRestockRequestsQueryResult {
+  requests: RestockRequest[];
+  totalCount: number;
+}
+
+export type ListRestockRequestsApiResponse = ApiResponse<ListRestockRequestsQueryResult>;

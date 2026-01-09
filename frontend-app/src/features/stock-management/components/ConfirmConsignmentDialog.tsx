@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { Consignment } from '../types/stockManagement';
 import { useConfirmConsignment } from '../hooks/useConfirmConsignment';
+import { logger } from '../../../utils/logger';
 
 interface ConfirmConsignmentDialogProps {
   open: boolean;
@@ -41,7 +42,13 @@ export const ConfirmConsignmentDialog = ({
       onClose();
     } catch (error) {
       // Error is handled by the mutation
-      console.error('Failed to confirm consignment:', error);
+      logger.error(
+        'Failed to confirm consignment',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          consignmentId: consignment.consignmentId,
+        }
+      );
     }
   };
 

@@ -81,7 +81,11 @@ export const Routes = {
   pickingListDetail: (id: string) => `/picking/picking-lists/${id}`,
   pickingListCreate: '/picking/picking-lists/create',
   pickingListUploadCsv: '/picking/picking-lists/upload-csv',
+  pickingListComplete: (id: string) => `/picking/picking-lists/${id}/complete`,
+  pickingTaskExecute: (id: string) => `/picking/picking-tasks/${id}/execute`,
   loadDetail: (id: string) => `/picking/loads/${id}`,
+  expiringStock: '/stock-management/expiring',
+  restockRequests: '/stock-management/restock-requests',
   returns: '/returns',
   reconciliation: '/reconciliation',
   reports: '/reports',
@@ -277,6 +281,25 @@ export const getBreadcrumbs = {
     { label: 'Dashboard', href: Routes.dashboard },
     { label: 'Picking Lists', href: Routes.pickingLists },
     { label: 'Load ' + loadId.substring(0, 8) + '...' },
+  ],
+  pickingListComplete: (pickingListReference: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Picking Lists', href: Routes.pickingLists },
+    { label: pickingListReference, href: Routes.pickingListDetail(pickingListReference) },
+    { label: 'Complete' },
+  ],
+  pickingTaskExecute: (taskId: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Picking Lists', href: Routes.pickingLists },
+    { label: 'Execute Task ' + taskId.substring(0, 8) + '...' },
+  ],
+  expiringStock: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Expiring Stock' },
+  ],
+  restockRequests: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Restock Requests' },
   ],
   warehouseDetail: (warehouseName: string) => [
     { label: 'Dashboard', href: Routes.dashboard },

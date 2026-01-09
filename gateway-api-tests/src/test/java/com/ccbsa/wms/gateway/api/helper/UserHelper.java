@@ -40,32 +40,19 @@ public class UserHelper {
     public String createUser(AuthenticationResult auth, String tenantId) {
         CreateUserRequest request = UserTestDataBuilder.buildCreateUserRequest(tenantId);
 
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> exchangeResult = webTestClient.post()
-                .uri("/api/v1/users")
-                .headers(headers -> {
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> exchangeResult = webTestClient.post().uri("/api/v1/users").headers(headers -> {
                     headers.setBearerAuth(auth.getAccessToken());
                     headers.set("X-Tenant-Id", tenantId);
-                })
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange()
-                .expectStatus().isCreated()
+                }).contentType(MediaType.APPLICATION_JSON).bodyValue(request).exchange().expectStatus().isCreated()
                 .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+                }).returnResult();
 
         ApiResponse<CreateUserResponse> apiResponse = exchangeResult.getResponseBody();
-        assertThat(apiResponse)
-                .as("API response should not be null")
-                .isNotNull();
-        assertThat(apiResponse.isSuccess())
-                .as("API response should be successful")
-                .isTrue();
+        assertThat(apiResponse).as("API response should not be null").isNotNull();
+        assertThat(apiResponse.isSuccess()).as("API response should be successful").isTrue();
 
         CreateUserResponse response = apiResponse.getData();
-        assertThat(response)
-                .as("Create user response data should not be null")
-                .isNotNull();
+        assertThat(response).as("Create user response data should not be null").isNotNull();
 
         return response.getUserId();
     }
@@ -76,16 +63,10 @@ public class UserHelper {
     public void assignRole(AuthenticationResult auth, String tenantId, String userId, String role) {
         AssignRoleRequest request = UserTestDataBuilder.buildAssignRoleRequest(role);
 
-        webTestClient.post()
-                .uri("/api/v1/users/" + userId + "/roles")
-                .headers(headers -> {
-                    headers.setBearerAuth(auth.getAccessToken());
-                    headers.set("X-Tenant-Id", tenantId);
-                })
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange()
-                .expectStatus().is2xxSuccessful();
+        webTestClient.post().uri("/api/v1/users/" + userId + "/roles").headers(headers -> {
+            headers.setBearerAuth(auth.getAccessToken());
+            headers.set("X-Tenant-Id", tenantId);
+        }).contentType(MediaType.APPLICATION_JSON).bodyValue(request).exchange().expectStatus().is2xxSuccessful();
     }
 }
 

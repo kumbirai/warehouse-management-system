@@ -873,6 +873,7 @@ mvn test jacoco:report
 ### Test Data Setup
 
 Tests should use test data builders and helpers to:
+
 - Create test tenants
 - Create test products
 - Create test locations
@@ -882,6 +883,7 @@ Tests should use test data builders and helpers to:
 ### Event Verification
 
 Tests should verify:
+
 - Events are published to Kafka
 - Events are consumed by listeners
 - Read models are updated

@@ -1,5 +1,6 @@
 package com.ccbsa.wms.stock.application.query;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -30,10 +31,13 @@ import com.ccbsa.wms.stock.application.dto.query.StockAvailabilityFefoResponseDT
 import com.ccbsa.wms.stock.application.dto.query.StockAvailabilityItemDTO;
 import com.ccbsa.wms.stock.application.dto.query.StockAvailabilityRequestDTO;
 import com.ccbsa.wms.stock.application.dto.query.StockAvailabilityResponseDTO;
+import com.ccbsa.wms.stock.application.dto.query.StockExpirationCheckResponseDTO;
 import com.ccbsa.wms.stock.application.dto.query.StockItemQueryDTO;
 import com.ccbsa.wms.stock.application.dto.query.StockItemsByClassificationResponseDTO;
 import com.ccbsa.wms.stock.application.service.exception.ProductServiceException;
 import com.ccbsa.wms.stock.application.service.port.service.ProductServicePort;
+import com.ccbsa.wms.stock.application.service.query.CheckStockExpirationQueryHandler;
+import com.ccbsa.wms.stock.application.service.query.GetExpiringStockQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.GetFEFOStockItemsQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.GetStockItemQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.GetStockItemsByClassificationQueryHandler;
@@ -41,6 +45,9 @@ import com.ccbsa.wms.stock.application.service.query.GetStockItemsByProductAndLo
 import com.ccbsa.wms.stock.application.service.query.GetStockItemsByProductQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.GetStockItemsQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.QueryStockAvailabilityForProductsQueryHandler;
+import com.ccbsa.wms.stock.application.service.query.dto.CheckStockExpirationQuery;
+import com.ccbsa.wms.stock.application.service.query.dto.CheckStockExpirationQueryResult;
+import com.ccbsa.wms.stock.application.service.query.dto.GetExpiringStockQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.GetFEFOStockItemsQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemQueryResult;
@@ -78,13 +85,17 @@ public class StockItemQueryController {
     private final GetStockItemsQueryHandler getStockItemsQueryHandler;
     private final GetFEFOStockItemsQueryHandler fefoStockItemsQueryHandler;
     private final QueryStockAvailabilityForProductsQueryHandler queryStockAvailabilityForProductsQueryHandler;
+    private final CheckStockExpirationQueryHandler checkStockExpirationQueryHandler;
+    private final GetExpiringStockQueryHandler getExpiringStockQueryHandler;
     private final ProductServicePort productServicePort;
 
     public StockItemQueryController(GetStockItemQueryHandler getStockItemQueryHandler, GetStockItemsByClassificationQueryHandler getStockItemsByClassificationQueryHandler,
                                     GetStockItemsByProductAndLocationQueryHandler getStockItemsByProductAndLocationQueryHandler,
                                     GetStockItemsByProductQueryHandler getStockItemsByProductQueryHandler, GetStockItemsQueryHandler getStockItemsQueryHandler,
                                     GetFEFOStockItemsQueryHandler fefoStockItemsQueryHandler,
-                                    QueryStockAvailabilityForProductsQueryHandler queryStockAvailabilityForProductsQueryHandler, ProductServicePort productServicePort) {
+                                    QueryStockAvailabilityForProductsQueryHandler queryStockAvailabilityForProductsQueryHandler,
+                                    CheckStockExpirationQueryHandler checkStockExpirationQueryHandler, GetExpiringStockQueryHandler getExpiringStockQueryHandler,
+                                    ProductServicePort productServicePort) {
         this.getStockItemQueryHandler = getStockItemQueryHandler;
         this.getStockItemsByClassificationQueryHandler = getStockItemsByClassificationQueryHandler;
         this.getStockItemsByProductAndLocationQueryHandler = getStockItemsByProductAndLocationQueryHandler;
@@ -92,6 +103,8 @@ public class StockItemQueryController {
         this.getStockItemsQueryHandler = getStockItemsQueryHandler;
         this.fefoStockItemsQueryHandler = fefoStockItemsQueryHandler;
         this.queryStockAvailabilityForProductsQueryHandler = queryStockAvailabilityForProductsQueryHandler;
+        this.checkStockExpirationQueryHandler = checkStockExpirationQueryHandler;
+        this.getExpiringStockQueryHandler = getExpiringStockQueryHandler;
         this.productServicePort = productServicePort;
     }
 
@@ -294,7 +307,11 @@ public class StockItemQueryController {
                             .expirationDate(item.getExpirationDate() != null ? item.getExpirationDate().getValue() : null).stockItemId(item.getStockItemId().getValueAsString())
                             .build()).collect(Collectors.toList());
 
-            StockAvailabilityFefoResponseDTO response = StockAvailabilityFefoResponseDTO.builder().productCode(request.getProductCode()).stockItems(stockItemDTOs).build();
+            // Create defensive copy for builder
+            StockAvailabilityFefoResponseDTO response = StockAvailabilityFefoResponseDTO.builder()
+                    .productCode(request.getProductCode())
+                    .stockItems(new java.util.ArrayList<>(stockItemDTOs))
+                    .build();
 
             return ApiResponseBuilder.ok(response);
         } catch (IllegalArgumentException e) {
@@ -382,8 +399,11 @@ public class StockItemQueryController {
                 return ApiResponseBuilder.error(org.springframework.http.HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "No valid products found");
             }
 
-            // Query stock availability for all products
-            QueryStockAvailabilityForProductsQuery query = QueryStockAvailabilityForProductsQuery.builder().tenantId(tenantIdValue).productQuantities(productQuantities).build();
+            // Query stock availability for all products (create defensive copy of map)
+            QueryStockAvailabilityForProductsQuery query = QueryStockAvailabilityForProductsQuery.builder()
+                    .tenantId(tenantIdValue)
+                    .productQuantities(new java.util.HashMap<>(productQuantities))
+                    .build();
 
             Map<ProductId, List<GetStockItemQueryResult>> results = queryStockAvailabilityForProductsQueryHandler.handle(query);
 
@@ -413,7 +433,15 @@ public class StockItemQueryController {
                 stockByProduct.put(productCode, stockItemDTOs);
             }
 
-            StockAvailabilityResponseDTO response = StockAvailabilityResponseDTO.builder().stockByProduct(stockByProduct).build();
+            // Create defensive copy of map and lists for builder
+            Map<String, List<StockAvailabilityItemDTO>> defensiveCopy = new java.util.HashMap<>();
+            stockByProduct.forEach((key, value) ->
+                    defensiveCopy.put(key, new java.util.ArrayList<>(value))
+            );
+
+            StockAvailabilityResponseDTO response = StockAvailabilityResponseDTO.builder()
+                    .stockByProduct(defensiveCopy)
+                    .build();
 
             return ApiResponseBuilder.ok(response);
         } catch (IllegalArgumentException e) {
@@ -427,6 +455,97 @@ public class StockItemQueryController {
             log.error("Error querying stock availability", e);
             return ApiResponseBuilder.error(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR",
                     "An unexpected error occurred while querying stock availability");
+        }
+    }
+
+    @GetMapping("/stock-items/check-expiration")
+    @Operation(summary = "Check Stock Expiration", description = "Checks if stock is expired for a product at a specific location")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER', 'SERVICE')")
+    public ResponseEntity<ApiResponse<StockExpirationCheckResponseDTO>> checkStockExpiration(@RequestHeader("X-Tenant-Id") String tenantId, @RequestParam String productCode,
+                                                                                             @RequestParam String locationId) {
+        try {
+            log.debug("Checking stock expiration for product: {}, location: {}, tenant: {}", productCode, locationId, tenantId);
+
+            // Validate request
+            if (productCode == null || productCode.trim().isEmpty()) {
+                return ApiResponseBuilder.error(org.springframework.http.HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Product code is required");
+            }
+            if (locationId == null || locationId.trim().isEmpty()) {
+                return ApiResponseBuilder.error(org.springframework.http.HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Location ID is required");
+            }
+
+            // Convert productCode to ProductId
+            TenantId tenantIdValue = TenantId.of(tenantId);
+            ProductCode productCodeValue = ProductCode.of(productCode);
+            ProductServicePort.ProductInfo productInfo = productServicePort.getProductByCode(productCodeValue, tenantIdValue)
+                    .orElseThrow(() -> new IllegalArgumentException("Product not found for code: " + productCode));
+
+            ProductId productIdValue = ProductId.of(productInfo.getProductId());
+            LocationId locationIdValue = LocationId.of(java.util.UUID.fromString(locationId));
+
+            // Create query
+            CheckStockExpirationQuery query = CheckStockExpirationQuery.builder().tenantId(tenantIdValue).productId(productIdValue).locationId(locationIdValue).build();
+
+            // Execute query
+            CheckStockExpirationQueryResult result = checkStockExpirationQueryHandler.handle(query);
+
+            // Map to response DTO
+            StockExpirationCheckResponseDTO response = StockExpirationCheckResponseDTO.builder().expired(result.isExpired()).expirationDate(result.getExpirationDate())
+                    .classification(result.getClassification() != null ? result.getClassification().name() : null)
+                    .daysUntilExpiration(result.getDaysUntilExpiration() != Integer.MAX_VALUE ? result.getDaysUntilExpiration() : null).message(result.getMessage()).build();
+
+            return ApiResponseBuilder.ok(response);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid request for stock expiration check: {}", e.getMessage());
+            return ApiResponseBuilder.error(org.springframework.http.HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", e.getMessage());
+        } catch (ProductServiceException e) {
+            log.error("Product service unavailable while checking stock expiration: {}", e.getMessage(), e);
+            return ApiResponseBuilder.error(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE, "SERVICE_UNAVAILABLE",
+                    "Product service is temporarily unavailable. Please try again later.");
+        } catch (Exception e) {
+            log.error("Error checking stock expiration", e);
+            return ApiResponseBuilder.error(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR",
+                    "An unexpected error occurred while checking stock expiration");
+        }
+    }
+
+    @GetMapping("/stock-items/expiring")
+    @Operation(summary = "Get Expiring Stock", description = "Gets stock items expiring within a date range, optionally filtered by classification")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER', 'SERVICE')")
+    public ResponseEntity<ApiResponse<List<StockItemQueryDTO>>> getExpiringStock(@RequestHeader("X-Tenant-Id") String tenantId, @RequestParam(required = false) String startDate,
+                                                                                 @RequestParam(required = false) String endDate,
+                                                                                 @RequestParam(required = false) String classification) {
+        try {
+            log.debug("Getting expiring stock for tenant: {}, startDate: {}, endDate: {}, classification: {}", tenantId, startDate, endDate, classification);
+
+            TenantId tenantIdValue = TenantId.of(tenantId);
+            LocalDate startDateValue = startDate != null ? LocalDate.parse(startDate) : null;
+            LocalDate endDateValue = endDate != null ? LocalDate.parse(endDate) : null;
+            StockClassification classificationValue = classification != null ? StockClassification.valueOf(classification) : null;
+
+            GetExpiringStockQuery query =
+                    GetExpiringStockQuery.builder().tenantId(tenantIdValue).startDate(startDateValue).endDate(endDateValue).classification(classificationValue).build();
+
+            List<GetStockItemQueryResult> results = getExpiringStockQueryHandler.handle(query);
+
+            List<StockItemQueryDTO> dtos = results.stream()
+                    .map(result -> StockItemQueryDTO.builder().stockItemId(result.getStockItemId().getValueAsString()).productId(result.getProductId().getValueAsString())
+                            .productCode(result.getProductCode()).productDescription(result.getProductDescription())
+                            .locationId(result.getLocationId() != null ? result.getLocationId().getValueAsString() : null).locationCode(result.getLocationCode())
+                            .locationName(result.getLocationName()).locationHierarchy(result.getLocationHierarchy()).quantity(result.getQuantity().getValue())
+                            .allocatedQuantity(result.getAllocatedQuantity() != null ? result.getAllocatedQuantity().getValue() : 0)
+                            .expirationDate(result.getExpirationDate() != null ? result.getExpirationDate().getValue() : null)
+                            .classification(result.getClassification() != null ? result.getClassification().name() : null).daysUntilExpiry(result.getDaysUntilExpiry())
+                            .createdAt(result.getCreatedAt()).lastModifiedAt(result.getLastModifiedAt()).build()).collect(Collectors.toList());
+
+            return ApiResponseBuilder.ok(dtos);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid request for expiring stock query: {}", e.getMessage());
+            return ApiResponseBuilder.error(org.springframework.http.HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", e.getMessage());
+        } catch (Exception e) {
+            log.error("Error querying expiring stock", e);
+            return ApiResponseBuilder.error(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR",
+                    "An unexpected error occurred while querying expiring stock");
         }
     }
 }

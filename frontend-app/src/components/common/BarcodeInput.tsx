@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, forwardRef } from 'react';
-import { TextField, InputAdornment, IconButton, TextFieldProps } from '@mui/material';
+import { forwardRef, useEffect, useRef, useState } from 'react';
+import { IconButton, InputAdornment, TextField, TextFieldProps } from '@mui/material';
 import { QrCodeScanner as BarcodeIcon } from '@mui/icons-material';
 import { BarcodeScanner } from '../../features/stock-management/components/BarcodeScanner';
 

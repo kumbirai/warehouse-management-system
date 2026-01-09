@@ -15,13 +15,13 @@ import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.location.application.service.port.data.LocationViewRepository;
 import com.ccbsa.wms.location.application.service.port.data.dto.LocationView;
 import com.ccbsa.wms.location.dataaccess.entity.LocationViewEntity;
 import com.ccbsa.wms.location.dataaccess.jpa.LocationViewJpaRepository;
 import com.ccbsa.wms.location.dataaccess.mapper.LocationViewEntityMapper;
-import com.ccbsa.wms.location.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationStatus;
 

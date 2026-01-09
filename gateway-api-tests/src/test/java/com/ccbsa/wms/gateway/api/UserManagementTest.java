@@ -51,19 +51,12 @@ public class UserManagementTest extends BaseIntegrationTest {
         CreateUserRequest request = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> exchangeResult = response
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> exchangeResult =
+                response.expectStatus().isCreated().expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                }).returnResult();
 
         ApiResponse<CreateUserResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
@@ -84,17 +77,10 @@ public class UserManagementTest extends BaseIntegrationTest {
         CreateUserRequest request = UserTestDataBuilder.buildCreateUserRequestWithUsername(username, testTenantId);
 
         // Create first user
-        authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, request)
-                .exchange()
-                .expectStatus().isCreated();
+        authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, request).exchange().expectStatus().isCreated();
 
         // Act - Try to create duplicate
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
         response.expectStatus().isBadRequest(); // or 409 CONFLICT
@@ -110,12 +96,7 @@ public class UserManagementTest extends BaseIntegrationTest {
         request.setEmailAddress("invalid-email-format");
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
         response.expectStatus().isBadRequest();
@@ -125,18 +106,12 @@ public class UserManagementTest extends BaseIntegrationTest {
     @Order(4)
     public void testCreateUser_MissingRequiredFields() {
         // Arrange
-        CreateUserRequest request = CreateUserRequest.builder()
-                .tenantId(testTenantId)
+        CreateUserRequest request = CreateUserRequest.builder().tenantId(testTenantId)
                 // Missing username, email, etc.
                 .build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
         response.expectStatus().isBadRequest();
@@ -147,16 +122,10 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testGetUserById_Success() {
         // Arrange - Create user
         CreateUserRequest request = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createExchangeResult = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createExchangeResult =
+                authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, request).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         ApiResponse<CreateUserResponse> createApiResponse = createExchangeResult.getResponseBody();
         assertThat(createApiResponse).isNotNull();
@@ -166,18 +135,11 @@ public class UserManagementTest extends BaseIntegrationTest {
         assertThat(createdUser).isNotNull();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/users/" + createdUser.getUserId(),
-                systemAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/users/" + createdUser.getUserId(), systemAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<UserResponse>> getExchangeResult = response
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<UserResponse>> getExchangeResult = response.expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
+        }).returnResult();
 
         ApiResponse<UserResponse> getApiResponse = getExchangeResult.getResponseBody();
         assertThat(getApiResponse).isNotNull();
@@ -197,11 +159,7 @@ public class UserManagementTest extends BaseIntegrationTest {
         String nonExistentUserId = "usr-" + System.currentTimeMillis();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/users/" + nonExistentUserId,
-                systemAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/users/" + nonExistentUserId, systemAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isNotFound();
@@ -215,17 +173,11 @@ public class UserManagementTest extends BaseIntegrationTest {
         // Arrange - Create a few users
         for (int i = 0; i < 3; i++) {
             CreateUserRequest request = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-            authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, request)
-                    .exchange()
-                    .expectStatus().isCreated();
+            authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, request).exchange().expectStatus().isCreated();
         }
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/users?page=0&size=10",
-                systemAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/users?page=0&size=10", systemAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isOk();
@@ -237,11 +189,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     @Order(13)
     public void testListUsers_WithPagination() {
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/users?page=0&size=5",
-                systemAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/users?page=0&size=5", systemAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isOk();
@@ -252,45 +200,27 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testUpdateUserProfile_Success() {
         // Arrange - Create user
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
-        UpdateUserProfileRequest updateRequest = UpdateUserProfileRequest.builder()
-                .firstName("UpdatedFirstName")
-                .lastName("UpdatedLastName")
-                .emailAddress("updated.email@example.com")
-                .build();
+        UpdateUserProfileRequest updateRequest =
+                UpdateUserProfileRequest.builder().firstName("UpdatedFirstName").lastName("UpdatedLastName").emailAddress("updated.email@example.com").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/users/" + userId + "/profile",
-                systemAdminAuth.getAccessToken(),
-                updateRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPut("/api/v1/users/" + userId + "/profile", systemAdminAuth.getAccessToken(), updateRequest).exchange();
 
         // Assert
         response.expectStatus().is2xxSuccessful();
 
         // Verify update by getting user
-        EntityExchangeResult<ApiResponse<UserResponse>> getResult = authenticatedGet(
-                "/api/v1/users/" + userId,
-                systemAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<UserResponse>> getResult =
+                authenticatedGet("/api/v1/users/" + userId, systemAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus().isOk()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
+                        }).returnResult();
 
         UserResponse updatedUser = getResult.getResponseBody().getData();
         assertThat(updatedUser.getFirstName()).isEqualTo("UpdatedFirstName");
@@ -302,16 +232,10 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testAssignRole_Success() {
         // Arrange - Create user
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createExchangeResult = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createExchangeResult =
+                authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         ApiResponse<CreateUserResponse> createApiResponse = createExchangeResult.getResponseBody();
         assertThat(createApiResponse).isNotNull();
@@ -321,26 +245,17 @@ public class UserManagementTest extends BaseIntegrationTest {
         assertThat(user).isNotNull();
 
         // Act - Assign role
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/users/" + user.getUserId() + "/roles",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.WAREHOUSE_MANAGER)
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/users/" + user.getUserId() + "/roles", systemAdminAuth.getAccessToken(), testTenantId,
+                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.WAREHOUSE_MANAGER)).exchange();
 
         // Assert
         response.expectStatus().is2xxSuccessful();
 
         // Verify role was assigned
-        EntityExchangeResult<ApiResponse<UserResponse>> getResult = authenticatedGet(
-                "/api/v1/users/" + user.getUserId(),
-                systemAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<UserResponse>> getResult =
+                authenticatedGet("/api/v1/users/" + user.getUserId(), systemAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus().isOk()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
+                        }).returnResult();
 
         UserResponse userWithRole = getResult.getResponseBody().getData();
         assertThat(userWithRole.getRoles()).isNotNull();
@@ -352,44 +267,25 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testAssignMultipleRoles_Success() {
         // Arrange - Create user
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Act - Assign multiple roles
-        authenticatedPost(
-                "/api/v1/users/" + userId + "/roles",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.PICKER)
-        ).exchange().expectStatus().is2xxSuccessful();
+        authenticatedPost("/api/v1/users/" + userId + "/roles", systemAdminAuth.getAccessToken(), testTenantId,
+                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.PICKER)).exchange().expectStatus().is2xxSuccessful();
 
-        authenticatedPost(
-                "/api/v1/users/" + userId + "/roles",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.STOCK_CLERK)
-        ).exchange().expectStatus().is2xxSuccessful();
+        authenticatedPost("/api/v1/users/" + userId + "/roles", systemAdminAuth.getAccessToken(), testTenantId,
+                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.STOCK_CLERK)).exchange().expectStatus().is2xxSuccessful();
 
         // Assert - Verify both roles assigned
-        EntityExchangeResult<ApiResponse<UserResponse>> getResult = authenticatedGet(
-                "/api/v1/users/" + userId,
-                systemAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<UserResponse>> getResult =
+                authenticatedGet("/api/v1/users/" + userId, systemAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus().isOk()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
+                        }).returnResult();
 
         UserResponse user = getResult.getResponseBody().getData();
         assertThat(user.getRoles()).contains(UserTestDataBuilder.Roles.PICKER);
@@ -401,46 +297,29 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testRemoveRole_Success() {
         // Arrange - Create user and assign role
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Assign role
-        authenticatedPost(
-                "/api/v1/users/" + userId + "/roles",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.PICKER)
-        ).exchange().expectStatus().is2xxSuccessful();
+        authenticatedPost("/api/v1/users/" + userId + "/roles", systemAdminAuth.getAccessToken(), testTenantId,
+                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.PICKER)).exchange().expectStatus().is2xxSuccessful();
 
         // Act - Remove role
-        WebTestClient.ResponseSpec response = authenticatedDelete(
-                "/api/v1/users/" + userId + "/roles/" + UserTestDataBuilder.Roles.PICKER,
-                systemAdminAuth.getAccessToken()
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedDelete("/api/v1/users/" + userId + "/roles/" + UserTestDataBuilder.Roles.PICKER, systemAdminAuth.getAccessToken()).exchange();
 
         // Assert
         response.expectStatus().is2xxSuccessful();
 
         // Verify role was removed
-        EntityExchangeResult<ApiResponse<UserResponse>> getResult = authenticatedGet(
-                "/api/v1/users/" + userId,
-                systemAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<UserResponse>> getResult =
+                authenticatedGet("/api/v1/users/" + userId, systemAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus().isOk()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
+                        }).returnResult();
 
         UserResponse user = getResult.getResponseBody().getData();
         assertThat(user.getRoles()).doesNotContain(UserTestDataBuilder.Roles.PICKER);
@@ -453,26 +332,16 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testAssignRole_InvalidRole() {
         // Arrange - Create user
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Act - Try to assign invalid role
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/users/" + userId + "/roles",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                UserTestDataBuilder.buildAssignRoleRequest("INVALID_ROLE")
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/users/" + userId + "/roles", systemAdminAuth.getAccessToken(), testTenantId,
+                UserTestDataBuilder.buildAssignRoleRequest("INVALID_ROLE")).exchange();
 
         // Assert
         response.expectStatus().isBadRequest();
@@ -483,47 +352,26 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testGetUserRoles_Success() {
         // Arrange - Create user and assign roles
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Assign roles
-        authenticatedPost(
-                "/api/v1/users/" + userId + "/roles",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.PICKER)
-        ).exchange().expectStatus().is2xxSuccessful();
+        authenticatedPost("/api/v1/users/" + userId + "/roles", systemAdminAuth.getAccessToken(), testTenantId,
+                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.PICKER)).exchange().expectStatus().is2xxSuccessful();
 
-        authenticatedPost(
-                "/api/v1/users/" + userId + "/roles",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.STOCK_CLERK)
-        ).exchange().expectStatus().is2xxSuccessful();
+        authenticatedPost("/api/v1/users/" + userId + "/roles", systemAdminAuth.getAccessToken(), testTenantId,
+                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.STOCK_CLERK)).exchange().expectStatus().is2xxSuccessful();
 
         // Act - Get user roles
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/users/" + userId + "/roles",
-                systemAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/users/" + userId + "/roles", systemAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<List<String>>> getResult = response
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<List<String>>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<List<String>>> getResult = response.expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<List<String>>>() {
+        }).returnResult();
 
         ApiResponse<List<String>> apiResponse = getResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
@@ -540,46 +388,27 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testActivateUser_Success() {
         // Arrange - Create and deactivate user
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Deactivate user first
-        authenticatedPut(
-                "/api/v1/users/" + userId + "/deactivate",
-                systemAdminAuth.getAccessToken(),
-                null
-        ).exchange().expectStatus().is2xxSuccessful();
+        authenticatedPut("/api/v1/users/" + userId + "/deactivate", systemAdminAuth.getAccessToken(), null).exchange().expectStatus().is2xxSuccessful();
 
         // Act - Activate user
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/users/" + userId + "/activate",
-                systemAdminAuth.getAccessToken(),
-                null
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPut("/api/v1/users/" + userId + "/activate", systemAdminAuth.getAccessToken(), null).exchange();
 
         // Assert
         response.expectStatus().is2xxSuccessful();
 
         // Verify status changed
-        EntityExchangeResult<ApiResponse<UserResponse>> getResult = authenticatedGet(
-                "/api/v1/users/" + userId,
-                systemAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<UserResponse>> getResult =
+                authenticatedGet("/api/v1/users/" + userId, systemAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus().isOk()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
+                        }).returnResult();
 
         UserResponse user = getResult.getResponseBody().getData();
         assertThat(user.getStatus()).isEqualTo("ACTIVE");
@@ -590,39 +419,24 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testDeactivateUser_Success() {
         // Arrange - Create user
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Act - Deactivate user
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/users/" + userId + "/deactivate",
-                systemAdminAuth.getAccessToken(),
-                null
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPut("/api/v1/users/" + userId + "/deactivate", systemAdminAuth.getAccessToken(), null).exchange();
 
         // Assert
         response.expectStatus().is2xxSuccessful();
 
         // Verify status changed
-        EntityExchangeResult<ApiResponse<UserResponse>> getResult = authenticatedGet(
-                "/api/v1/users/" + userId,
-                systemAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<UserResponse>> getResult =
+                authenticatedGet("/api/v1/users/" + userId, systemAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus().isOk()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
+                        }).returnResult();
 
         UserResponse user = getResult.getResponseBody().getData();
         assertThat(user.getStatus()).isEqualTo("INACTIVE");
@@ -635,39 +449,24 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testSuspendUser_Success() {
         // Arrange - Create user
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Act - Suspend user
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/users/" + userId + "/suspend",
-                systemAdminAuth.getAccessToken(),
-                null
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPut("/api/v1/users/" + userId + "/suspend", systemAdminAuth.getAccessToken(), null).exchange();
 
         // Assert
         response.expectStatus().is2xxSuccessful();
 
         // Verify status changed
-        EntityExchangeResult<ApiResponse<UserResponse>> getResult = authenticatedGet(
-                "/api/v1/users/" + userId,
-                systemAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<UserResponse>> getResult =
+                authenticatedGet("/api/v1/users/" + userId, systemAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus().isOk()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
+                        }).returnResult();
 
         UserResponse user = getResult.getResponseBody().getData();
         assertThat(user.getStatus()).isEqualTo("SUSPENDED");
@@ -678,35 +477,25 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testUserStatusTransitions_Success() {
         // Arrange - Create user
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Act & Assert - Test valid transitions
         // ACTIVE -> SUSPENDED
-        authenticatedPut("/api/v1/users/" + userId + "/suspend", systemAdminAuth.getAccessToken(), null)
-                .exchange().expectStatus().is2xxSuccessful();
+        authenticatedPut("/api/v1/users/" + userId + "/suspend", systemAdminAuth.getAccessToken(), null).exchange().expectStatus().is2xxSuccessful();
 
         // SUSPENDED -> ACTIVE
-        authenticatedPut("/api/v1/users/" + userId + "/activate", systemAdminAuth.getAccessToken(), null)
-                .exchange().expectStatus().is2xxSuccessful();
+        authenticatedPut("/api/v1/users/" + userId + "/activate", systemAdminAuth.getAccessToken(), null).exchange().expectStatus().is2xxSuccessful();
 
         // ACTIVE -> INACTIVE
-        authenticatedPut("/api/v1/users/" + userId + "/deactivate", systemAdminAuth.getAccessToken(), null)
-                .exchange().expectStatus().is2xxSuccessful();
+        authenticatedPut("/api/v1/users/" + userId + "/deactivate", systemAdminAuth.getAccessToken(), null).exchange().expectStatus().is2xxSuccessful();
 
         // INACTIVE -> ACTIVE
-        authenticatedPut("/api/v1/users/" + userId + "/activate", systemAdminAuth.getAccessToken(), null)
-                .exchange().expectStatus().is2xxSuccessful();
+        authenticatedPut("/api/v1/users/" + userId + "/activate", systemAdminAuth.getAccessToken(), null).exchange().expectStatus().is2xxSuccessful();
     }
 
     @Test
@@ -724,19 +513,12 @@ public class UserManagementTest extends BaseIntegrationTest {
         CreateUserRequest request = UserTestDataBuilder.buildCreateUserRequest(tenantId);
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/users",
-                auth.getAccessToken(),
-                tenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/users", auth.getAccessToken(), tenantId, request).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> exchangeResult = response
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> exchangeResult =
+                response.expectStatus().isCreated().expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                }).returnResult();
 
         ApiResponse<CreateUserResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
@@ -750,8 +532,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     // --- User Creation Tests (TENANT_ADMIN) ---
 
     private boolean shouldSkipTenantAdminTests() {
-        return tenantAdminUsername == null || tenantAdminUsername.isEmpty() ||
-                tenantAdminPassword == null || tenantAdminPassword.isEmpty();
+        return tenantAdminUsername == null || tenantAdminUsername.isEmpty() || tenantAdminPassword == null || tenantAdminPassword.isEmpty();
     }
 
     private AuthenticationResult getTenantAdminAuth() {
@@ -780,12 +561,8 @@ public class UserManagementTest extends BaseIntegrationTest {
         CreateUserRequest request = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/users",
-                auth.getAccessToken(),
-                testTenantId, // Different tenant
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/users", auth.getAccessToken(), testTenantId, // Different tenant
+                request).exchange();
 
         // Assert - Should be forbidden or return empty list
         int statusCode = response.returnResult(Void.class).getStatus().value();
@@ -807,32 +584,19 @@ public class UserManagementTest extends BaseIntegrationTest {
 
         // Create user in own tenant
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(tenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                auth.getAccessToken(),
-                tenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", auth.getAccessToken(), tenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/users/" + userId,
-                auth.getAccessToken(),
-                tenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/users/" + userId, auth.getAccessToken(), tenantId).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<UserResponse>> getResult = response
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<UserResponse>> getResult = response.expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
+        }).returnResult();
 
         ApiResponse<UserResponse> apiResponse = getResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
@@ -860,17 +624,11 @@ public class UserManagementTest extends BaseIntegrationTest {
         // Create users in own tenant
         for (int i = 0; i < 2; i++) {
             CreateUserRequest request = UserTestDataBuilder.buildCreateUserRequest(tenantId);
-            authenticatedPost("/api/v1/users", auth.getAccessToken(), tenantId, request)
-                    .exchange()
-                    .expectStatus().isCreated();
+            authenticatedPost("/api/v1/users", auth.getAccessToken(), tenantId, request).exchange().expectStatus().isCreated();
         }
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/users?page=0&size=10",
-                auth.getAccessToken(),
-                tenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/users?page=0&size=10", auth.getAccessToken(), tenantId).exchange();
 
         // Assert
         response.expectStatus().isOk();
@@ -893,24 +651,15 @@ public class UserManagementTest extends BaseIntegrationTest {
 
         // Create user in SYSTEM_ADMIN tenant
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                systemAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", systemAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String otherTenantUserId = createResult.getResponseBody().getData().getUserId();
 
         // Act - Try to access user from different tenant
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/users/" + otherTenantUserId,
-                auth.getAccessToken(),
-                testTenantId // Different tenant
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/users/" + otherTenantUserId, auth.getAccessToken(), testTenantId // Different tenant
         ).exchange();
 
         // Assert - Should be forbidden or not found
@@ -935,31 +684,19 @@ public class UserManagementTest extends BaseIntegrationTest {
 
         // Create user in own tenant
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(tenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                auth.getAccessToken(),
-                tenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", auth.getAccessToken(), tenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
-        UpdateUserProfileRequest updateRequest = UpdateUserProfileRequest.builder()
-                .firstName("TenantAdminUpdatedFirstName")
-                .lastName("TenantAdminUpdatedLastName")
-                .emailAddress("tenantadmin.updated@example.com")
-                .build();
+        UpdateUserProfileRequest updateRequest =
+                UpdateUserProfileRequest.builder().firstName("TenantAdminUpdatedFirstName").lastName("TenantAdminUpdatedLastName").emailAddress("tenantadmin.updated@example.com")
+                        .build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/users/" + userId + "/profile",
-                auth.getAccessToken(),
-                updateRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPut("/api/v1/users/" + userId + "/profile", auth.getAccessToken(), updateRequest).exchange();
 
         // Assert
         response.expectStatus().is2xxSuccessful();
@@ -980,26 +717,16 @@ public class UserManagementTest extends BaseIntegrationTest {
 
         // Create user in own tenant
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(tenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                auth.getAccessToken(),
-                tenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", auth.getAccessToken(), tenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Act - Assign role
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/users/" + userId + "/roles",
-                auth.getAccessToken(),
-                tenantId,
-                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.WAREHOUSE_MANAGER)
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/users/" + userId + "/roles", auth.getAccessToken(), tenantId,
+                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.WAREHOUSE_MANAGER)).exchange();
 
         // Assert
         response.expectStatus().is2xxSuccessful();
@@ -1020,44 +747,24 @@ public class UserManagementTest extends BaseIntegrationTest {
 
         // Create user in own tenant
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(tenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                auth.getAccessToken(),
-                tenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", auth.getAccessToken(), tenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Act - Assign multiple roles
-        authenticatedPost(
-                "/api/v1/users/" + userId + "/roles",
-                auth.getAccessToken(),
-                tenantId,
-                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.PICKER)
-        ).exchange().expectStatus().is2xxSuccessful();
+        authenticatedPost("/api/v1/users/" + userId + "/roles", auth.getAccessToken(), tenantId,
+                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.PICKER)).exchange().expectStatus().is2xxSuccessful();
 
-        authenticatedPost(
-                "/api/v1/users/" + userId + "/roles",
-                auth.getAccessToken(),
-                tenantId,
-                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.STOCK_CLERK)
-        ).exchange().expectStatus().is2xxSuccessful();
+        authenticatedPost("/api/v1/users/" + userId + "/roles", auth.getAccessToken(), tenantId,
+                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.STOCK_CLERK)).exchange().expectStatus().is2xxSuccessful();
 
         // Assert - Verify both roles assigned
-        EntityExchangeResult<ApiResponse<UserResponse>> getResult = authenticatedGet(
-                "/api/v1/users/" + userId,
-                auth.getAccessToken(),
-                tenantId
-        ).exchange()
-                .expectStatus().isOk()
+        EntityExchangeResult<ApiResponse<UserResponse>> getResult = authenticatedGet("/api/v1/users/" + userId, auth.getAccessToken(), tenantId).exchange().expectStatus().isOk()
                 .expectBody(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {
-                })
-                .returnResult();
+                }).returnResult();
 
         UserResponse user = getResult.getResponseBody().getData();
         assertThat(user.getRoles()).contains(UserTestDataBuilder.Roles.PICKER);
@@ -1081,32 +788,19 @@ public class UserManagementTest extends BaseIntegrationTest {
 
         // Create user in own tenant
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(tenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                auth.getAccessToken(),
-                tenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", auth.getAccessToken(), tenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Assign role first
-        authenticatedPost(
-                "/api/v1/users/" + userId + "/roles",
-                auth.getAccessToken(),
-                tenantId,
-                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.PICKER)
-        ).exchange().expectStatus().is2xxSuccessful();
+        authenticatedPost("/api/v1/users/" + userId + "/roles", auth.getAccessToken(), tenantId,
+                UserTestDataBuilder.buildAssignRoleRequest(UserTestDataBuilder.Roles.PICKER)).exchange().expectStatus().is2xxSuccessful();
 
         // Act - Remove role
-        WebTestClient.ResponseSpec response = authenticatedDelete(
-                "/api/v1/users/" + userId + "/roles/" + UserTestDataBuilder.Roles.PICKER,
-                auth.getAccessToken()
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedDelete("/api/v1/users/" + userId + "/roles/" + UserTestDataBuilder.Roles.PICKER, auth.getAccessToken()).exchange();
 
         // Assert
         response.expectStatus().is2xxSuccessful();
@@ -1127,32 +821,18 @@ public class UserManagementTest extends BaseIntegrationTest {
 
         // Create user in own tenant
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(tenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                auth.getAccessToken(),
-                tenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", auth.getAccessToken(), tenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Deactivate user first
-        authenticatedPut(
-                "/api/v1/users/" + userId + "/deactivate",
-                auth.getAccessToken(),
-                null
-        ).exchange().expectStatus().is2xxSuccessful();
+        authenticatedPut("/api/v1/users/" + userId + "/deactivate", auth.getAccessToken(), null).exchange().expectStatus().is2xxSuccessful();
 
         // Act - Activate user
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/users/" + userId + "/activate",
-                auth.getAccessToken(),
-                null
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPut("/api/v1/users/" + userId + "/activate", auth.getAccessToken(), null).exchange();
 
         // Assert
         response.expectStatus().is2xxSuccessful();
@@ -1173,25 +853,15 @@ public class UserManagementTest extends BaseIntegrationTest {
 
         // Create user in own tenant
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(tenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                auth.getAccessToken(),
-                tenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", auth.getAccessToken(), tenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Act - Deactivate user
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/users/" + userId + "/deactivate",
-                auth.getAccessToken(),
-                null
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPut("/api/v1/users/" + userId + "/deactivate", auth.getAccessToken(), null).exchange();
 
         // Assert
         response.expectStatus().is2xxSuccessful();
@@ -1212,25 +882,15 @@ public class UserManagementTest extends BaseIntegrationTest {
 
         // Create user in own tenant
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(tenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                auth.getAccessToken(),
-                tenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", auth.getAccessToken(), tenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Act - Suspend user
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/users/" + userId + "/suspend",
-                auth.getAccessToken(),
-                null
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPut("/api/v1/users/" + userId + "/suspend", auth.getAccessToken(), null).exchange();
 
         // Assert
         response.expectStatus().is2xxSuccessful();
@@ -1253,49 +913,35 @@ public class UserManagementTest extends BaseIntegrationTest {
 
         // Create user in own tenant
         CreateUserRequest createRequest = UserTestDataBuilder.buildCreateUserRequest(tenantId);
-        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult = authenticatedPost(
-                "/api/v1/users",
-                auth.getAccessToken(),
-                tenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateUserResponse>> createResult =
+                authenticatedPost("/api/v1/users", auth.getAccessToken(), tenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                        }).returnResult();
 
         String userId = createResult.getResponseBody().getData().getUserId();
 
         // Act & Assert - Test valid transitions
         // ACTIVE -> SUSPENDED
-        authenticatedPut("/api/v1/users/" + userId + "/suspend", auth.getAccessToken(), null)
-                .exchange().expectStatus().is2xxSuccessful();
+        authenticatedPut("/api/v1/users/" + userId + "/suspend", auth.getAccessToken(), null).exchange().expectStatus().is2xxSuccessful();
 
         // SUSPENDED -> ACTIVE
-        authenticatedPut("/api/v1/users/" + userId + "/activate", auth.getAccessToken(), null)
-                .exchange().expectStatus().is2xxSuccessful();
+        authenticatedPut("/api/v1/users/" + userId + "/activate", auth.getAccessToken(), null).exchange().expectStatus().is2xxSuccessful();
 
         // ACTIVE -> INACTIVE
-        authenticatedPut("/api/v1/users/" + userId + "/deactivate", auth.getAccessToken(), null)
-                .exchange().expectStatus().is2xxSuccessful();
+        authenticatedPut("/api/v1/users/" + userId + "/deactivate", auth.getAccessToken(), null).exchange().expectStatus().is2xxSuccessful();
 
         // INACTIVE -> ACTIVE
-        authenticatedPut("/api/v1/users/" + userId + "/activate", auth.getAccessToken(), null)
-                .exchange().expectStatus().is2xxSuccessful();
+        authenticatedPut("/api/v1/users/" + userId + "/activate", auth.getAccessToken(), null).exchange().expectStatus().is2xxSuccessful();
     }
 
     /**
      * Create authenticated PUT request with Bearer token and tenant context.
      */
-    private WebTestClient.RequestHeadersSpec<?> authenticatedPutWithTenant(
-            String uri, String accessToken, String tenantId, Object requestBody) {
-        WebTestClient.RequestBodySpec spec = webTestClient.put()
-                .uri(uri)
-                .contentType(MediaType.APPLICATION_JSON)
-                .headers(headers -> {
-                    RequestHeaderHelper.addAuthHeaders(headers, accessToken);
-                    RequestHeaderHelper.addTenantHeader(headers, tenantId);
-                });
+    private WebTestClient.RequestHeadersSpec<?> authenticatedPutWithTenant(String uri, String accessToken, String tenantId, Object requestBody) {
+        WebTestClient.RequestBodySpec spec = webTestClient.put().uri(uri).contentType(MediaType.APPLICATION_JSON).headers(headers -> {
+            RequestHeaderHelper.addAuthHeaders(headers, accessToken);
+            RequestHeaderHelper.addTenantHeader(headers, tenantId);
+        });
 
         if (requestBody != null) {
             return spec.bodyValue(requestBody);
@@ -1306,14 +952,11 @@ public class UserManagementTest extends BaseIntegrationTest {
     /**
      * Create authenticated DELETE request with Bearer token and tenant context.
      */
-    private WebTestClient.RequestHeadersSpec<?> authenticatedDeleteWithTenant(
-            String uri, String accessToken, String tenantId) {
-        return webTestClient.delete()
-                .uri(uri)
-                .headers(headers -> {
-                    RequestHeaderHelper.addAuthHeaders(headers, accessToken);
-                    RequestHeaderHelper.addTenantHeader(headers, tenantId);
-                });
+    private WebTestClient.RequestHeadersSpec<?> authenticatedDeleteWithTenant(String uri, String accessToken, String tenantId) {
+        return webTestClient.delete().uri(uri).headers(headers -> {
+            RequestHeaderHelper.addAuthHeaders(headers, accessToken);
+            RequestHeaderHelper.addTenantHeader(headers, tenantId);
+        });
     }
 }
 

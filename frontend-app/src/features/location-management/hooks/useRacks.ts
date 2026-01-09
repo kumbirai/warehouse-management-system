@@ -2,7 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { locationService } from '../services/locationService';
 import { LocationHierarchyQueryResult } from '../types/location';
 
-export const useRacks = (aisleId: string | null | undefined, tenantId: string | null | undefined) => {
+export const useRacks = (
+  aisleId: string | null | undefined,
+  tenantId: string | null | undefined
+) => {
   return useQuery<LocationHierarchyQueryResult, Error>({
     queryKey: ['racks', aisleId, tenantId],
     queryFn: async () => {

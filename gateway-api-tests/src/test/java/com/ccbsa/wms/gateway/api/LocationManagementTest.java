@@ -18,14 +18,18 @@ import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.ccbsa.common.application.api.ApiResponse;
+import com.ccbsa.wms.gateway.api.dto.AssignLocationsFEFORequest;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
+import com.ccbsa.wms.gateway.api.dto.BlockLocationRequest;
+import com.ccbsa.wms.gateway.api.dto.BlockLocationResultDTO;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationResponse;
 import com.ccbsa.wms.gateway.api.dto.ListLocationsResponse;
-import com.ccbsa.wms.gateway.api.dto.LocationResponse;
-import com.ccbsa.wms.gateway.api.dto.UpdateLocationRequest;
-import com.ccbsa.wms.gateway.api.dto.AssignLocationsFEFORequest;
 import com.ccbsa.wms.gateway.api.dto.LocationAvailabilityResponse;
+import com.ccbsa.wms.gateway.api.dto.LocationResponse;
+import com.ccbsa.wms.gateway.api.dto.UnblockLocationRequest;
+import com.ccbsa.wms.gateway.api.dto.UnblockLocationResultDTO;
+import com.ccbsa.wms.gateway.api.dto.UpdateLocationRequest;
 import com.ccbsa.wms.gateway.api.dto.UpdateLocationStatusRequest;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.StockItemTestDataBuilder;
@@ -35,10 +39,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Comprehensive integration tests for Location Management Service via Gateway.
- * 
+ *
  * Tests cover:
  * - Full CRUD operations for all location hierarchy levels
  * - Location status lifecycle transitions
+ * - Block and unblock location operations
  * - Location queries with filtering, pagination, and search
  * - Validation and error handling
  * - Authorization and tenant isolation
@@ -49,7 +54,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
     private static AuthenticationResult tenantAdminAuth;
     private static String testTenantId;
     private static CreateLocationResponse sharedWarehouse;
-    
+
     // Warehouse hierarchy test data
     private static CreateLocationResponse warehouse1;
     private static CreateLocationResponse warehouse2;
@@ -78,14 +83,14 @@ public class LocationManagementTest extends BaseIntegrationTest {
 
         // Note: Service availability check removed - tests will run and show actual errors
         // if service is not properly configured
-        
+
         // Setup warehouse hierarchies once after authentication
         if (!hierarchiesInitialized) {
             setupWarehouseHierarchies();
             hierarchiesInitialized = true;
         }
     }
-    
+
     /**
      * Sets up warehouse hierarchies for testing.
      * Creates 2 warehouses, each with complete location hierarchies:
@@ -104,74 +109,81 @@ public class LocationManagementTest extends BaseIntegrationTest {
         warehouse2Racks = new ArrayList<>();
         warehouse1Bins = new ArrayList<>();
         warehouse2Bins = new ArrayList<>();
-        
+
         // Create first warehouse with hierarchy
         warehouse1 = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        createLocationHierarchy(warehouse1, 2, 2, 2, 2, 
-                warehouse1Zones, warehouse1Aisles, warehouse1Racks, warehouse1Bins);
-        
+        createLocationHierarchy(warehouse1, 2, 2, 2, 2, warehouse1Zones, warehouse1Aisles, warehouse1Racks, warehouse1Bins);
+
         // Create second warehouse with hierarchy
         warehouse2 = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        createLocationHierarchy(warehouse2, 2, 2, 2, 2, 
-                warehouse2Zones, warehouse2Aisles, warehouse2Racks, warehouse2Bins);
+        createLocationHierarchy(warehouse2, 2, 2, 2, 2, warehouse2Zones, warehouse2Aisles, warehouse2Racks, warehouse2Bins);
     }
-    
+
+    /**
+     * Helper method to create a location and return the response.
+     */
+    private CreateLocationResponse createLocation(CreateLocationRequest request) {
+        EntityExchangeResult<ApiResponse<CreateLocationResponse>> exchangeResult =
+                authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                        }).returnResult();
+
+        ApiResponse<CreateLocationResponse> apiResponse = exchangeResult.getResponseBody();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isTrue();
+
+        CreateLocationResponse location = apiResponse.getData();
+        assertThat(location).isNotNull();
+        return location;
+    }
+
     /**
      * Creates a complete location hierarchy under a warehouse.
-     * 
-     * @param warehouse The warehouse to create hierarchy under
+     *
+     * @param warehouse         The warehouse to create hierarchy under
      * @param zonesPerWarehouse Number of zones to create
-     * @param aislesPerZone Number of aisles per zone
-     * @param racksPerAisle Number of racks per aisle
-     * @param binsPerRack Number of bins per rack
-     * @param zonesList List to store created zones
-     * @param aislesList List to store created aisles
-     * @param racksList List to store created racks
-     * @param binsList List to store created bins
+     * @param aislesPerZone     Number of aisles per zone
+     * @param racksPerAisle     Number of racks per aisle
+     * @param binsPerRack       Number of bins per rack
+     * @param zonesList         List to store created zones
+     * @param aislesList        List to store created aisles
+     * @param racksList         List to store created racks
+     * @param binsList          List to store created bins
      */
-    private void createLocationHierarchy(
-            CreateLocationResponse warehouse,
-            int zonesPerWarehouse,
-            int aislesPerZone,
-            int racksPerAisle,
-            int binsPerRack,
-            List<CreateLocationResponse> zonesList,
-            List<CreateLocationResponse> aislesList,
-            List<CreateLocationResponse> racksList,
-            List<CreateLocationResponse> binsList) {
-        
+    private void createLocationHierarchy(CreateLocationResponse warehouse, int zonesPerWarehouse, int aislesPerZone, int racksPerAisle, int binsPerRack,
+                                         List<CreateLocationResponse> zonesList, List<CreateLocationResponse> aislesList, List<CreateLocationResponse> racksList,
+                                         List<CreateLocationResponse> binsList) {
+
         // Create zones
         for (int z = 0; z < zonesPerWarehouse; z++) {
-            CreateLocationResponse zone = createLocation(
-                    LocationTestDataBuilder.buildZoneRequest(warehouse.getLocationId()));
+            CreateLocationResponse zone = createLocation(LocationTestDataBuilder.buildZoneRequest(warehouse.getLocationId()));
             zonesList.add(zone);
-            
+
             // Create aisles for this zone
             for (int a = 0; a < aislesPerZone; a++) {
-                CreateLocationResponse aisle = createLocation(
-                        LocationTestDataBuilder.buildAisleRequest(zone.getLocationId()));
+                CreateLocationResponse aisle = createLocation(LocationTestDataBuilder.buildAisleRequest(zone.getLocationId()));
                 aislesList.add(aisle);
-                
+
                 // Create racks for this aisle
                 for (int r = 0; r < racksPerAisle; r++) {
-                    CreateLocationResponse rack = createLocation(
-                            LocationTestDataBuilder.buildRackRequest(aisle.getLocationId()));
+                    CreateLocationResponse rack = createLocation(LocationTestDataBuilder.buildRackRequest(aisle.getLocationId()));
                     racksList.add(rack);
-                    
+
                     // Create bins for this rack
                     for (int b = 0; b < binsPerRack; b++) {
-                        CreateLocationResponse bin = createLocation(
-                                LocationTestDataBuilder.buildBinRequest(rack.getLocationId()));
+                        CreateLocationResponse bin = createLocation(LocationTestDataBuilder.buildBinRequest(rack.getLocationId()));
                         binsList.add(bin);
                     }
                 }
             }
         }
     }
-    
+
+    // ==================== LOCATION CREATION TESTS ====================
+
     /**
      * Helper method to get a random location from a list.
-     * 
+     *
      * @param locations List of locations
      * @return A random location from the list
      */
@@ -183,8 +195,6 @@ public class LocationManagementTest extends BaseIntegrationTest {
         return locations.get(index);
     }
 
-    // ==================== LOCATION CREATION TESTS ====================
-
     @Test
     @Order(1)
     public void testCreateWarehouse_Success() {
@@ -192,19 +202,12 @@ public class LocationManagementTest extends BaseIntegrationTest {
         CreateLocationRequest request = LocationTestDataBuilder.buildWarehouseRequest();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/location-management/locations",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<CreateLocationResponse>> exchangeResult = response
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateLocationResponse>> exchangeResult =
+                response.expectStatus().isCreated().expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                }).returnResult();
 
         ApiResponse<CreateLocationResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
@@ -215,7 +218,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(location.getLocationId()).isNotBlank();
         assertThat(location.getCode()).isEqualTo(request.getCode());
         assertThat(location.getPath()).isEqualTo("/" + request.getCode());
-        
+
         // Store shared warehouse for use in other tests
         sharedWarehouse = location;
     }
@@ -307,12 +310,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
         createLocation(request);
 
         // Act - Try to create duplicate
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/location-management/locations",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
         response.expectStatus().isBadRequest(); // or 409 CONFLICT
@@ -325,12 +323,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
         CreateLocationRequest request = LocationTestDataBuilder.buildZoneRequest(UUID.randomUUID().toString());
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/location-management/locations",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
         response.expectStatus().isBadRequest(); // or 404 NOT FOUND
@@ -345,7 +338,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(warehouse1Aisles).isNotEmpty();
         assertThat(warehouse1Racks).isNotEmpty();
         assertThat(warehouse1Bins).isNotEmpty();
-        
+
         CreateLocationResponse zone = warehouse1Zones.get(0);
         CreateLocationResponse aisle = warehouse1Aisles.get(0);
         CreateLocationResponse rack = warehouse1Racks.get(0);
@@ -353,42 +346,26 @@ public class LocationManagementTest extends BaseIntegrationTest {
 
         // Test 1: Try creating Zone with Bin as parent (should fail)
         CreateLocationRequest invalidRequest1 = LocationTestDataBuilder.buildZoneRequest(bin.getLocationId());
-        WebTestClient.ResponseSpec response1 = authenticatedPost(
-                "/api/v1/location-management/locations",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                invalidRequest1
-        ).exchange();
+        WebTestClient.ResponseSpec response1 =
+                authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, invalidRequest1).exchange();
         response1.expectStatus().isBadRequest();
 
         // Test 2: Try creating Aisle with Warehouse as parent (should fail - must be Zone)
         CreateLocationRequest invalidRequest2 = LocationTestDataBuilder.buildAisleRequest(warehouse1.getLocationId());
-        WebTestClient.ResponseSpec response2 = authenticatedPost(
-                "/api/v1/location-management/locations",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                invalidRequest2
-        ).exchange();
+        WebTestClient.ResponseSpec response2 =
+                authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, invalidRequest2).exchange();
         response2.expectStatus().isBadRequest();
 
         // Test 3: Try creating Rack with Zone as parent (should fail - must be Aisle)
         CreateLocationRequest invalidRequest3 = LocationTestDataBuilder.buildRackRequest(zone.getLocationId());
-        WebTestClient.ResponseSpec response3 = authenticatedPost(
-                "/api/v1/location-management/locations",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                invalidRequest3
-        ).exchange();
+        WebTestClient.ResponseSpec response3 =
+                authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, invalidRequest3).exchange();
         response3.expectStatus().isBadRequest();
 
         // Test 4: Try creating Bin with Aisle as parent (should fail - must be Rack)
         CreateLocationRequest invalidRequest4 = LocationTestDataBuilder.buildBinRequest(aisle.getLocationId());
-        WebTestClient.ResponseSpec response4 = authenticatedPost(
-                "/api/v1/location-management/locations",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                invalidRequest4
-        ).exchange();
+        WebTestClient.ResponseSpec response4 =
+                authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, invalidRequest4).exchange();
         response4.expectStatus().isBadRequest();
     }
 
@@ -396,22 +373,16 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Order(9)
     public void testCreateLocation_MissingRequiredFields() {
         // Arrange - Missing code
-        CreateLocationRequest request = CreateLocationRequest.builder()
-                .name("Test Location")
-                .type("WAREHOUSE")
-                .build();
+        CreateLocationRequest request = CreateLocationRequest.builder().name("Test Location").type("WAREHOUSE").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/location-management/locations",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
         response.expectStatus().isBadRequest();
     }
+
+    // ==================== LOCATION QUERY TESTS ====================
 
     @Test
     @Order(10)
@@ -420,17 +391,12 @@ public class LocationManagementTest extends BaseIntegrationTest {
         CreateLocationRequest request = LocationTestDataBuilder.buildWarehouseRequest();
 
         // Act
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri("/api/v1/location-management/locations")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange();
+        WebTestClient.ResponseSpec response =
+                webTestClient.post().uri("/api/v1/location-management/locations").contentType(MediaType.APPLICATION_JSON).bodyValue(request).exchange();
 
         // Assert
         response.expectStatus().isUnauthorized();
     }
-
-    // ==================== LOCATION QUERY TESTS ====================
 
     @Test
     @Order(10)
@@ -441,15 +407,10 @@ public class LocationManagementTest extends BaseIntegrationTest {
         }
 
         // Act
-        EntityExchangeResult<ApiResponse<ListLocationsResponse>> exchangeResult = authenticatedGet(
-                "/api/v1/location-management/locations?page=0&size=10",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<ListLocationsResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<ListLocationsResponse>> exchangeResult =
+                authenticatedGet("/api/v1/location-management/locations?page=0&size=10", tenantAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus().isOk()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<ListLocationsResponse>>() {
+                        }).returnResult();
 
         // Assert
         ApiResponse<ListLocationsResponse> apiResponse = exchangeResult.getResponseBody();
@@ -472,15 +433,10 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(warehouse1Zones).isNotEmpty();
 
         // Act
-        EntityExchangeResult<ApiResponse<ListLocationsResponse>> exchangeResult = authenticatedGet(
-                "/api/v1/location-management/locations?page=0&size=10",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<ListLocationsResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<ListLocationsResponse>> exchangeResult =
+                authenticatedGet("/api/v1/location-management/locations?page=0&size=10", tenantAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus().isOk()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<ListLocationsResponse>>() {
+                        }).returnResult();
 
         // Assert
         ApiResponse<ListLocationsResponse> apiResponse = exchangeResult.getResponseBody();
@@ -499,15 +455,10 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(warehouse1).isNotNull();
 
         // Act - Filter by AVAILABLE status
-        EntityExchangeResult<ApiResponse<ListLocationsResponse>> exchangeResult = authenticatedGet(
-                "/api/v1/location-management/locations?status=AVAILABLE&page=0&size=10",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<ListLocationsResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<ListLocationsResponse>> exchangeResult =
+                authenticatedGet("/api/v1/location-management/locations?status=AVAILABLE&page=0&size=10", tenantAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus()
+                        .isOk().expectBody(new ParameterizedTypeReference<ApiResponse<ListLocationsResponse>>() {
+                        }).returnResult();
 
         // Assert
         ApiResponse<ListLocationsResponse> apiResponse = exchangeResult.getResponseBody();
@@ -522,15 +473,10 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(warehouse1).isNotNull();
 
         // Act - Search by code
-        EntityExchangeResult<ApiResponse<ListLocationsResponse>> exchangeResult = authenticatedGet(
-                "/api/v1/location-management/locations?search=" + warehouse1.getCode() + "&page=0&size=10",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<ListLocationsResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<ListLocationsResponse>> exchangeResult =
+                authenticatedGet("/api/v1/location-management/locations?search=" + warehouse1.getCode() + "&page=0&size=10", tenantAdminAuth.getAccessToken(),
+                        testTenantId).exchange().expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<ListLocationsResponse>>() {
+                }).returnResult();
 
         // Assert
         ApiResponse<ListLocationsResponse> apiResponse = exchangeResult.getResponseBody();
@@ -545,15 +491,10 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(warehouse1).isNotNull();
 
         // Act
-        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedGet(
-                "/api/v1/location-management/locations/" + warehouse1.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult =
+                authenticatedGet("/api/v1/location-management/locations/" + warehouse1.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus()
+                        .isOk().expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                        }).returnResult();
 
         // Assert
         ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
@@ -567,6 +508,8 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(location.getPath()).isEqualTo(warehouse1.getPath());
     }
 
+    // ==================== LOCATION STATUS TESTS ====================
+
     @Test
     @Order(15)
     public void testGetLocationById_NotFound() {
@@ -574,36 +517,24 @@ public class LocationManagementTest extends BaseIntegrationTest {
         String nonExistentId = UUID.randomUUID().toString();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/location-management/locations/" + nonExistentId,
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/location-management/locations/" + nonExistentId, tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isNotFound();
     }
-
-    // ==================== LOCATION STATUS TESTS ====================
 
     @Test
     @Order(20)
     public void testUpdateLocationStatus_ToBlocked() {
         // Arrange - Use pre-created warehouse2 from setup (use warehouse2 to avoid affecting other tests)
         assertThat(warehouse2).isNotNull();
-        
-        UpdateLocationStatusRequest statusRequest = UpdateLocationStatusRequest.builder()
-                .status("BLOCKED")
-                .reason("Maintenance required")
-                .build();
+
+        UpdateLocationStatusRequest statusRequest = UpdateLocationStatusRequest.builder().status("BLOCKED").reason("Maintenance required").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + warehouse2.getLocationId() + "/status",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                statusRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + warehouse2.getLocationId() + "/status", tenantAdminAuth.getAccessToken(), testTenantId,
+                        statusRequest).exchange();
 
         // Assert
         // Note: If endpoint doesn't exist, this will fail appropriately
@@ -616,23 +547,28 @@ public class LocationManagementTest extends BaseIntegrationTest {
         }
     }
 
+    /**
+     * Helper method to create authenticated PUT request with tenant context.
+     */
+    private WebTestClient.RequestHeadersSpec<?> authenticatedPutWithTenant(String uri, String accessToken, String tenantId, Object requestBody) {
+        return webTestClient.put().uri(uri).contentType(MediaType.APPLICATION_JSON).headers(headers -> {
+            RequestHeaderHelper.addAuthHeaders(headers, accessToken);
+            RequestHeaderHelper.addTenantHeader(headers, tenantId);
+        }).bodyValue(requestBody);
+    }
+
     @Test
     @Order(21)
     public void testUpdateLocationStatus_ToAvailable() {
         // Arrange - Use pre-created warehouse2 from setup
         assertThat(warehouse2).isNotNull();
-        
-        UpdateLocationStatusRequest statusRequest = UpdateLocationStatusRequest.builder()
-                .status("AVAILABLE")
-                .build();
+
+        UpdateLocationStatusRequest statusRequest = UpdateLocationStatusRequest.builder().status("AVAILABLE").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + warehouse2.getLocationId() + "/status",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                statusRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + warehouse2.getLocationId() + "/status", tenantAdminAuth.getAccessToken(), testTenantId,
+                        statusRequest).exchange();
 
         // Assert
         try {
@@ -643,23 +579,20 @@ public class LocationManagementTest extends BaseIntegrationTest {
         }
     }
 
+    // ==================== LOCATION UPDATE TESTS ====================
+
     @Test
     @Order(22)
     public void testUpdateLocationStatus_InvalidStatus() {
         // Arrange - Use pre-created warehouse2 from setup
         assertThat(warehouse2).isNotNull();
-        
-        UpdateLocationStatusRequest statusRequest = UpdateLocationStatusRequest.builder()
-                .status("INVALID_STATUS")
-                .build();
+
+        UpdateLocationStatusRequest statusRequest = UpdateLocationStatusRequest.builder().status("INVALID_STATUS").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + warehouse2.getLocationId() + "/status",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                statusRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + warehouse2.getLocationId() + "/status", tenantAdminAuth.getAccessToken(), testTenantId,
+                        statusRequest).exchange();
 
         // Assert
         try {
@@ -675,49 +608,178 @@ public class LocationManagementTest extends BaseIntegrationTest {
     public void testUpdateLocationStatus_LocationNotFound() {
         // Arrange
         String nonExistentId = UUID.randomUUID().toString();
-        UpdateLocationStatusRequest statusRequest = UpdateLocationStatusRequest.builder()
-                .status("BLOCKED")
-                .build();
+        UpdateLocationStatusRequest statusRequest = UpdateLocationStatusRequest.builder().status("BLOCKED").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + nonExistentId + "/status",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                statusRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + nonExistentId + "/status", tenantAdminAuth.getAccessToken(), testTenantId,
+                        statusRequest).exchange();
 
         // Assert
         response.expectStatus().isNotFound();
     }
 
-    // ==================== LOCATION UPDATE TESTS ====================
+    // ==================== BLOCK/UNBLOCK LOCATION TESTS ====================
 
     @Test
     @Order(24)
+    public void testBlockLocation_Success() {
+        // Arrange - Use pre-created warehouse2 from setup to avoid affecting other tests
+        assertThat(warehouse2).isNotNull();
+        UUID locationId = UUID.fromString(warehouse2.getLocationId());
+        BlockLocationRequest request = BlockLocationRequest.builder().reason("Maintenance").build();
+
+        // Act
+        WebTestClient.ResponseSpec response =
+                authenticatedPost("/api/v1/location-management/locations/" + locationId + "/block", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
+
+        // Assert
+        EntityExchangeResult<ApiResponse<BlockLocationResultDTO>> exchangeResult =
+                response.expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<BlockLocationResultDTO>>() {
+                }).returnResult();
+
+        ApiResponse<BlockLocationResultDTO> apiResponse = exchangeResult.getResponseBody();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isTrue();
+
+        BlockLocationResultDTO result = apiResponse.getData();
+        assertThat(result).isNotNull();
+        assertThat(result.getLocationId()).isEqualTo(locationId);
+        assertThat(result.getStatus()).isEqualTo("BLOCKED");
+    }
+
+    @Test
+    @Order(25)
+    public void testBlockLocation_AlreadyBlocked() {
+        // Arrange - Create a new location for this test to avoid conflicts
+        CreateLocationResponse testLocation = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        UUID locationId = UUID.fromString(testLocation.getLocationId());
+        
+        // Block location first
+        BlockLocationRequest blockRequest = BlockLocationRequest.builder().reason("Initial block").build();
+        authenticatedPost("/api/v1/location-management/locations/" + locationId + "/block", tenantAdminAuth.getAccessToken(), testTenantId, blockRequest).exchange()
+                .expectStatus().isOk();
+
+        // Act - Try to block again
+        BlockLocationRequest request = BlockLocationRequest.builder().reason("Second block attempt").build();
+        WebTestClient.ResponseSpec response =
+                authenticatedPost("/api/v1/location-management/locations/" + locationId + "/block", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
+
+        // Assert - Should still be OK (idempotent) or Bad Request
+        int statusCode = response.expectBody().returnResult().getStatus().value();
+        assertThat(statusCode).isIn(200, 400);
+    }
+
+    @Test
+    @Order(26)
+    public void testUnblockLocation_Success() {
+        // Arrange - Create a new location for this test
+        CreateLocationResponse testLocation = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        UUID locationId = UUID.fromString(testLocation.getLocationId());
+        
+        // Block location first
+        BlockLocationRequest blockRequest = BlockLocationRequest.builder().reason("Temporary block").build();
+        authenticatedPost("/api/v1/location-management/locations/" + locationId + "/block", tenantAdminAuth.getAccessToken(), testTenantId, blockRequest).exchange()
+                .expectStatus().isOk();
+
+        UnblockLocationRequest request = UnblockLocationRequest.builder().reason("Maintenance complete").build();
+
+        // Act
+        WebTestClient.ResponseSpec response =
+                authenticatedPost("/api/v1/location-management/locations/" + locationId + "/unblock", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
+
+        // Assert
+        EntityExchangeResult<ApiResponse<UnblockLocationResultDTO>> exchangeResult =
+                response.expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<UnblockLocationResultDTO>>() {
+                }).returnResult();
+
+        ApiResponse<UnblockLocationResultDTO> apiResponse = exchangeResult.getResponseBody();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isTrue();
+
+        UnblockLocationResultDTO result = apiResponse.getData();
+        assertThat(result).isNotNull();
+        assertThat(result.getLocationId()).isEqualTo(locationId);
+        assertThat(result.getStatus()).isEqualTo("AVAILABLE");
+    }
+
+    @Test
+    @Order(27)
+    public void testUnblockLocation_NotBlocked() {
+        // Arrange - Create a new location (should be AVAILABLE by default)
+        CreateLocationResponse testLocation = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        UUID locationId = UUID.fromString(testLocation.getLocationId());
+
+        UnblockLocationRequest request = UnblockLocationRequest.builder().reason("Unblock attempt").build();
+
+        // Act
+        WebTestClient.ResponseSpec response =
+                authenticatedPost("/api/v1/location-management/locations/" + locationId + "/unblock", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
+
+        // Assert - Should still be OK (idempotent) or Bad Request
+        int statusCode = response.expectBody().returnResult().getStatus().value();
+        assertThat(statusCode).isIn(200, 400);
+    }
+
+    @Test
+    @Order(28)
+    public void testBlockUnblockCycle() {
+        // Arrange - Create a new location for this test
+        CreateLocationResponse testLocation = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        UUID locationId = UUID.fromString(testLocation.getLocationId());
+        
+        BlockLocationRequest blockRequest = BlockLocationRequest.builder().reason("Test cycle").build();
+
+        // Act - Block
+        authenticatedPost("/api/v1/location-management/locations/" + locationId + "/block", tenantAdminAuth.getAccessToken(), testTenantId, blockRequest).exchange()
+                .expectStatus().isOk();
+
+        // Verify location is blocked
+        EntityExchangeResult<ApiResponse<LocationResponse>> getResult =
+                authenticatedGet("/api/v1/location-management/locations/" + locationId, tenantAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus().isOk()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                        }).returnResult();
+
+        ApiResponse<LocationResponse> getApiResponse = getResult.getResponseBody();
+        assertThat(getApiResponse).isNotNull();
+        LocationResponse location = getApiResponse.getData();
+        assertThat(location).isNotNull();
+        assertThat(location.getStatus()).isEqualTo("BLOCKED");
+
+        // Unblock
+        UnblockLocationRequest unblockRequest = UnblockLocationRequest.builder().reason("Test complete").build();
+        authenticatedPost("/api/v1/location-management/locations/" + locationId + "/unblock", tenantAdminAuth.getAccessToken(), testTenantId, unblockRequest).exchange()
+                .expectStatus().isOk();
+
+        // Verify location is available
+        EntityExchangeResult<ApiResponse<LocationResponse>> getResult2 =
+                authenticatedGet("/api/v1/location-management/locations/" + locationId, tenantAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus().isOk()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                        }).returnResult();
+
+        ApiResponse<LocationResponse> getApiResponse2 = getResult2.getResponseBody();
+        assertThat(getApiResponse2).isNotNull();
+        LocationResponse location2 = getApiResponse2.getData();
+        assertThat(location2).isNotNull();
+        assertThat(location2.getStatus()).isEqualTo("AVAILABLE");
+    }
+
+    // ==================== LOCATION UPDATE TESTS ====================
+
+    @Test
+    @Order(29)
     public void testUpdateLocation_Success() {
         // Arrange - Create location first
         CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-A")
-                .aisle("AISLE-01")
-                .rack("RACK-02")
-                .level("LEVEL-03")
-                .description("Updated location description")
-                .build();
+
+        UpdateLocationRequest updateRequest =
+                UpdateLocationRequest.builder().zone("ZONE-A").aisle("AISLE-01").rack("RACK-02").level("LEVEL-03").description("Updated location description").build();
 
         // Act
-        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange().expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                }).returnResult();
 
         // Assert
         ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
@@ -736,31 +798,19 @@ public class LocationManagementTest extends BaseIntegrationTest {
     }
 
     @Test
-    @Order(25)
+    @Order(30)
     public void testUpdateLocation_WithBarcode() {
         // Arrange - Create location first
         CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-B")
-                .aisle("AISLE-02")
-                .rack("RACK-03")
-                .level("LEVEL-04")
-                .barcode("UPDATEDBARCODE123")
-                .description("Location with updated barcode")
-                .build();
+
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder().zone("ZONE-B").aisle("AISLE-02").rack("RACK-03").level("LEVEL-04").barcode("UPDATEDBARCODE123")
+                .description("Location with updated barcode").build();
 
         // Act
-        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange().expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                }).returnResult();
 
         // Assert
         ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
@@ -774,110 +824,92 @@ public class LocationManagementTest extends BaseIntegrationTest {
     }
 
     @Test
-    @Order(26)
+    @Order(31)
     public void testUpdateLocation_DuplicateBarcode() {
         // Arrange - Create two locations
         CreateLocationResponse location1 = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
         CreateLocationResponse location2 = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
+
         // Get location1's barcode
         LocationResponse location1Details = getLocationById(location1.getLocationId());
         String location1Barcode = location1Details.getBarcode();
         assertThat(location1Barcode).isNotBlank();
 
         // Try to update location2 with location1's barcode
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-C")
-                .aisle("AISLE-03")
-                .rack("RACK-04")
-                .level("LEVEL-05")
-                .barcode(location1Barcode)
-                .build();
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder().zone("ZONE-C").aisle("AISLE-03").rack("RACK-04").level("LEVEL-05").barcode(location1Barcode).build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location2.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location2.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange();
 
         // Assert - Should fail with duplicate barcode error
         response.expectStatus().isBadRequest(); // or 409 CONFLICT
     }
 
+    /**
+     * Helper method to get a location by ID and return the response.
+     */
+    private LocationResponse getLocationById(String locationId) {
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult =
+                authenticatedGet("/api/v1/location-management/locations/" + locationId, tenantAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus().isOk()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                        }).returnResult();
+
+        ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isTrue();
+
+        return apiResponse.getData();
+    }
+
     @Test
-    @Order(27)
+    @Order(32)
     public void testUpdateLocation_LocationNotFound() {
         // Arrange
         String nonExistentId = UUID.randomUUID().toString();
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-D")
-                .aisle("AISLE-04")
-                .rack("RACK-05")
-                .level("LEVEL-06")
-                .build();
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder().zone("ZONE-D").aisle("AISLE-04").rack("RACK-05").level("LEVEL-06").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + nonExistentId,
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + nonExistentId, tenantAdminAuth.getAccessToken(), testTenantId, updateRequest).exchange();
 
         // Assert
         response.expectStatus().isNotFound();
     }
 
     @Test
-    @Order(28)
+    @Order(33)
     public void testUpdateLocation_WithoutAuthentication() {
         // Arrange - Create location first
         CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-E")
-                .aisle("AISLE-05")
-                .rack("RACK-06")
-                .level("LEVEL-07")
-                .build();
+
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder().zone("ZONE-E").aisle("AISLE-05").rack("RACK-06").level("LEVEL-07").build();
 
         // Act - Try without authentication
-        WebTestClient.ResponseSpec response = webTestClient.put()
-                .uri("/api/v1/location-management/locations/" + location.getLocationId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(updateRequest)
-                .exchange();
+        WebTestClient.ResponseSpec response =
+                webTestClient.put().uri("/api/v1/location-management/locations/" + location.getLocationId()).contentType(MediaType.APPLICATION_JSON).bodyValue(updateRequest)
+                        .exchange();
 
         // Assert
         response.expectStatus().isUnauthorized();
     }
 
+    // ==================== VALIDATION TESTS ====================
+
     @Test
-    @Order(29)
+    @Order(34)
     public void testUpdateLocation_OnlyCoordinates() {
         // Arrange - Create location first
         CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-F")
-                .aisle("AISLE-06")
-                .rack("RACK-07")
-                .level("LEVEL-08")
-                .build();
+
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder().zone("ZONE-F").aisle("AISLE-06").rack("RACK-07").level("LEVEL-08").build();
 
         // Act
-        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange().expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                }).returnResult();
 
         // Assert
         ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
@@ -893,33 +925,22 @@ public class LocationManagementTest extends BaseIntegrationTest {
     }
 
     @Test
-    @Order(30)
+    @Order(35)
     public void testUpdateLocation_OnlyDescription() {
         // Arrange - Create location first
         CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
+
         // Get current coordinates to preserve them
         LocationResponse currentLocation = getLocationById(location.getLocationId());
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone(currentLocation.getCoordinates().getZone())
-                .aisle(currentLocation.getCoordinates().getAisle())
-                .rack(currentLocation.getCoordinates().getRack())
-                .level(currentLocation.getCoordinates().getLevel())
-                .description("Only description updated")
-                .build();
+
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder().zone(currentLocation.getCoordinates().getZone()).aisle(currentLocation.getCoordinates().getAisle())
+                .rack(currentLocation.getCoordinates().getRack()).level(currentLocation.getCoordinates().getLevel()).description("Only description updated").build();
 
         // Act
-        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange().expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                }).returnResult();
 
         // Assert
         ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
@@ -934,33 +955,22 @@ public class LocationManagementTest extends BaseIntegrationTest {
     }
 
     @Test
-    @Order(31)
+    @Order(36)
     public void testUpdateLocation_SameBarcode() {
         // Arrange - Create location first
         CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
         LocationResponse currentLocation = getLocationById(location.getLocationId());
         String currentBarcode = currentLocation.getBarcode();
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-G")
-                .aisle("AISLE-07")
-                .rack("RACK-08")
-                .level("LEVEL-09")
-                .barcode(currentBarcode) // Same barcode should be allowed
-                .description("Updated with same barcode")
-                .build();
+
+        UpdateLocationRequest updateRequest =
+                UpdateLocationRequest.builder().zone("ZONE-G").aisle("AISLE-07").rack("RACK-08").level("LEVEL-09").barcode(currentBarcode) // Same barcode should be allowed
+                        .description("Updated with same barcode").build();
 
         // Act
-        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange().expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                }).returnResult();
 
         // Assert
         ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
@@ -973,155 +983,19 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(updatedLocation.getDescription()).isEqualTo("Updated with same barcode");
     }
 
-    // ==================== VALIDATION TESTS ====================
-
     @Test
-    @Order(32)
+    @Order(37)
     public void testUpdateLocation_ZoneExceedsMaxLength() {
         // Arrange - Create location first
         CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-EXCEEDS-10") // 15 characters - exceeds 10
-                .aisle("AISLE-01")
-                .rack("RACK-02")
-                .level("LEVEL-03")
-                .build();
+
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder().zone("ZONE-EXCEEDS-10") // 15 characters - exceeds 10
+                .aisle("AISLE-01").rack("RACK-02").level("LEVEL-03").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
-
-        // Assert
-        response.expectStatus().isBadRequest();
-    }
-
-    @Test
-    @Order(33)
-    public void testUpdateLocation_AisleExceedsMaxLength() {
-        // Arrange - Create location first
-        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-A")
-                .aisle("AISLE-EXCEEDS-10") // 15 characters - exceeds 10
-                .rack("RACK-02")
-                .level("LEVEL-03")
-                .build();
-
-        // Act
-        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
-
-        // Assert
-        response.expectStatus().isBadRequest();
-    }
-
-    @Test
-    @Order(34)
-    public void testUpdateLocation_RackExceedsMaxLength() {
-        // Arrange - Create location first
-        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-A")
-                .aisle("AISLE-01")
-                .rack("RACK-EXCEEDS-10") // 15 characters - exceeds 10
-                .level("LEVEL-03")
-                .build();
-
-        // Act
-        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
-
-        // Assert
-        response.expectStatus().isBadRequest();
-    }
-
-    @Test
-    @Order(35)
-    public void testUpdateLocation_LevelExceedsMaxLength() {
-        // Arrange - Create location first
-        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-A")
-                .aisle("AISLE-01")
-                .rack("RACK-02")
-                .level("LEVEL-EXCEEDS-10") // 16 characters - exceeds 10
-                .build();
-
-        // Act
-        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
-
-        // Assert
-        response.expectStatus().isBadRequest();
-    }
-
-    @Test
-    @Order(36)
-    public void testUpdateLocation_BarcodeTooShort() {
-        // Arrange - Create location first
-        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-A")
-                .aisle("AISLE-01")
-                .rack("RACK-02")
-                .level("LEVEL-03")
-                .barcode("SHORT") // 5 characters - less than minimum 8
-                .build();
-
-        // Act
-        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
-
-        // Assert
-        response.expectStatus().isBadRequest();
-    }
-
-    @Test
-    @Order(37)
-    public void testUpdateLocation_BarcodeTooLong() {
-        // Arrange - Create location first
-        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-A")
-                .aisle("AISLE-01")
-                .rack("RACK-02")
-                .level("LEVEL-03")
-                .barcode("BARCODE123456789012345") // 23 characters - exceeds maximum 20
-                .build();
-
-        // Act
-        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange();
 
         // Assert
         response.expectStatus().isBadRequest();
@@ -1129,25 +1003,17 @@ public class LocationManagementTest extends BaseIntegrationTest {
 
     @Test
     @Order(38)
-    public void testUpdateLocation_BarcodeInvalidCharacters() {
+    public void testUpdateLocation_AisleExceedsMaxLength() {
         // Arrange - Create location first
         CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-A")
-                .aisle("AISLE-01")
-                .rack("RACK-02")
-                .level("LEVEL-03")
-                .barcode("BARCODE-123") // Contains hyphen - invalid
-                .build();
+
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder().zone("ZONE-A").aisle("AISLE-EXCEEDS-10") // 15 characters - exceeds 10
+                .rack("RACK-02").level("LEVEL-03").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange();
 
         // Assert
         response.expectStatus().isBadRequest();
@@ -1155,29 +1021,117 @@ public class LocationManagementTest extends BaseIntegrationTest {
 
     @Test
     @Order(39)
-    public void testUpdateLocation_ValidBarcode() {
+    public void testUpdateLocation_RackExceedsMaxLength() {
         // Arrange - Create location first
         CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        
-        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder()
-                .zone("ZONE-A")
-                .aisle("AISLE-01")
-                .rack("RACK-02")
-                .level("LEVEL-03")
-                .barcode("VALIDBARCODE123") // 15 characters, alphanumeric - valid
+
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder().zone("ZONE-A").aisle("AISLE-01").rack("RACK-EXCEEDS-10") // 15 characters - exceeds 10
+                .level("LEVEL-03").build();
+
+        // Act
+        WebTestClient.ResponseSpec response =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange();
+
+        // Assert
+        response.expectStatus().isBadRequest();
+    }
+
+    @Test
+    @Order(40)
+    public void testUpdateLocation_LevelExceedsMaxLength() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+
+        UpdateLocationRequest updateRequest =
+                UpdateLocationRequest.builder().zone("ZONE-A").aisle("AISLE-01").rack("RACK-02").level("LEVEL-EXCEEDS-10") // 16 characters - exceeds 10
+                        .build();
+
+        // Act
+        WebTestClient.ResponseSpec response =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange();
+
+        // Assert
+        response.expectStatus().isBadRequest();
+    }
+
+    @Test
+    @Order(41)
+    public void testUpdateLocation_BarcodeTooShort() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+
+        UpdateLocationRequest updateRequest =
+                UpdateLocationRequest.builder().zone("ZONE-A").aisle("AISLE-01").rack("RACK-02").level("LEVEL-03").barcode("SHORT") // 5 characters - less than minimum 8
+                        .build();
+
+        // Act
+        WebTestClient.ResponseSpec response =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange();
+
+        // Assert
+        response.expectStatus().isBadRequest();
+    }
+
+    // ==================== LOCATION HIERARCHY TESTS ====================
+
+    @Test
+    @Order(42)
+    public void testUpdateLocation_BarcodeTooLong() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+
+        UpdateLocationRequest updateRequest = UpdateLocationRequest.builder().zone("ZONE-A").aisle("AISLE-01").rack("RACK-02").level("LEVEL-03")
+                .barcode("BARCODE123456789012345") // 23 characters - exceeds maximum 20
                 .build();
 
         // Act
-        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
-                })
-                .returnResult();
+        WebTestClient.ResponseSpec response =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange();
+
+        // Assert
+        response.expectStatus().isBadRequest();
+    }
+
+    // ==================== AUTHORIZATION TESTS ====================
+
+    @Test
+    @Order(43)
+    public void testUpdateLocation_BarcodeInvalidCharacters() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+
+        UpdateLocationRequest updateRequest =
+                UpdateLocationRequest.builder().zone("ZONE-A").aisle("AISLE-01").rack("RACK-02").level("LEVEL-03").barcode("BARCODE-123") // Contains hyphen - invalid
+                        .build();
+
+        // Act
+        WebTestClient.ResponseSpec response =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange();
+
+        // Assert
+        response.expectStatus().isBadRequest();
+    }
+
+    @Test
+    @Order(44)
+    public void testUpdateLocation_ValidBarcode() {
+        // Arrange - Create location first
+        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+
+        UpdateLocationRequest updateRequest =
+                UpdateLocationRequest.builder().zone("ZONE-A").aisle("AISLE-01").rack("RACK-02").level("LEVEL-03").barcode("VALIDBARCODE123") // 15 characters, alphanumeric - valid
+                        .build();
+
+        // Act
+        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult =
+                authenticatedPutWithTenant("/api/v1/location-management/locations/" + location.getLocationId(), tenantAdminAuth.getAccessToken(), testTenantId,
+                        updateRequest).exchange().expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
+                }).returnResult();
 
         // Assert
         ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
@@ -1189,7 +1143,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(updatedLocation.getBarcode()).isEqualTo("VALIDBARCODE123");
     }
 
-    // ==================== LOCATION HIERARCHY TESTS ====================
+    // ==================== HELPER METHODS ====================
 
     @Test
     @Order(50)
@@ -1200,7 +1154,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(warehouse1Aisles).isNotEmpty();
         assertThat(warehouse1Racks).isNotEmpty();
         assertThat(warehouse1Bins).isNotEmpty();
-        
+
         CreateLocationResponse zone = warehouse1Zones.get(0);
         CreateLocationResponse aisle = warehouse1Aisles.get(0);
         CreateLocationResponse rack = warehouse1Racks.get(0);
@@ -1218,16 +1172,11 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(binLocation.getPath()).contains(bin.getCode());
     }
 
-    // ==================== AUTHORIZATION TESTS ====================
-
     @Test
-    @Order(40)
+    @Order(45)
     public void testListLocations_WithoutTenantHeader() {
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/location-management/locations?page=0&size=10",
-                tenantAdminAuth.getAccessToken()
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/location-management/locations?page=0&size=10", tenantAdminAuth.getAccessToken()).exchange();
 
         // Assert
         // Should fail without tenant header or use default tenant from token
@@ -1239,79 +1188,16 @@ public class LocationManagementTest extends BaseIntegrationTest {
     }
 
     @Test
-    @Order(41)
+    @Order(46)
     public void testGetLocation_Unauthorized() {
         // Arrange - Use pre-created warehouse1 from setup
         assertThat(warehouse1).isNotNull();
 
         // Act - Try without authentication
-        WebTestClient.ResponseSpec response = webTestClient.get()
-                .uri("/api/v1/location-management/locations/" + warehouse1.getLocationId())
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.get().uri("/api/v1/location-management/locations/" + warehouse1.getLocationId()).exchange();
 
         // Assert
         response.expectStatus().isUnauthorized();
-    }
-
-    // ==================== HELPER METHODS ====================
-
-    /**
-     * Helper method to create a location and return the response.
-     */
-    private CreateLocationResponse createLocation(CreateLocationRequest request) {
-        EntityExchangeResult<ApiResponse<CreateLocationResponse>> exchangeResult = authenticatedPost(
-                "/api/v1/location-management/locations",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                })
-                .returnResult();
-
-        ApiResponse<CreateLocationResponse> apiResponse = exchangeResult.getResponseBody();
-        assertThat(apiResponse).isNotNull();
-        assertThat(apiResponse.isSuccess()).isTrue();
-
-        CreateLocationResponse location = apiResponse.getData();
-        assertThat(location).isNotNull();
-        return location;
-    }
-
-    /**
-     * Helper method to get a location by ID and return the response.
-     */
-    private LocationResponse getLocationById(String locationId) {
-        EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedGet(
-                "/api/v1/location-management/locations/" + locationId,
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {
-                })
-                .returnResult();
-
-        ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
-        assertThat(apiResponse).isNotNull();
-        assertThat(apiResponse.isSuccess()).isTrue();
-
-        return apiResponse.getData();
-    }
-
-    /**
-     * Helper method to create authenticated PUT request with tenant context.
-     */
-    private WebTestClient.RequestHeadersSpec<?> authenticatedPutWithTenant(String uri, String accessToken, String tenantId, Object requestBody) {
-        return webTestClient.put()
-                .uri(uri)
-                .contentType(MediaType.APPLICATION_JSON)
-                .headers(headers -> {
-                    RequestHeaderHelper.addAuthHeaders(headers, accessToken);
-                    RequestHeaderHelper.addTenantHeader(headers, tenantId);
-                })
-                .bodyValue(requestBody);
     }
 
     // ==================== SPRINT 3: LOCATION AVAILABILITY TESTS ====================
@@ -1323,16 +1209,19 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(warehouse2).isNotNull();
         String locationId = warehouse2.getLocationId();
 
+        // Ensure location is available (unblock if it was blocked by previous tests)
+        LocationResponse location = getLocationById(locationId);
+        if ("BLOCKED".equals(location.getStatus())) {
+            UnblockLocationRequest unblockRequest = UnblockLocationRequest.builder().reason("Test setup").build();
+            authenticatedPost("/api/v1/location-management/locations/" + locationId + "/unblock", tenantAdminAuth.getAccessToken(), testTenantId, unblockRequest).exchange()
+                    .expectStatus().isOk();
+        }
+
         // Act - Check availability
-        EntityExchangeResult<ApiResponse<LocationAvailabilityResponse>> exchangeResult = authenticatedGet(
-                "/api/v1/location-management/locations/" + locationId + "/check-availability?requiredQuantity=100",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange()
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationAvailabilityResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<LocationAvailabilityResponse>> exchangeResult =
+                authenticatedGet("/api/v1/location-management/locations/" + locationId + "/check-availability?requiredQuantity=100", tenantAdminAuth.getAccessToken(),
+                        testTenantId).exchange().expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<LocationAvailabilityResponse>>() {
+                }).returnResult();
 
         // Assert
         ApiResponse<LocationAvailabilityResponse> apiResponse = exchangeResult.getResponseBody();
@@ -1350,11 +1239,9 @@ public class LocationManagementTest extends BaseIntegrationTest {
         String nonExistentLocationId = UUID.randomUUID().toString();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/location-management/locations/" + nonExistentLocationId + "/check-availability?requiredQuantity=100",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedGet("/api/v1/location-management/locations/" + nonExistentLocationId + "/check-availability?requiredQuantity=100", tenantAdminAuth.getAccessToken(),
+                        testTenantId).exchange();
 
         // Assert
         response.expectStatus().isNotFound();
@@ -1382,21 +1269,12 @@ public class LocationManagementTest extends BaseIntegrationTest {
         BigDecimal quantity = BigDecimal.valueOf(100);
         LocalDate expirationDate = LocalDate.now().plusDays(30);
 
-        AssignLocationsFEFORequest fefoRequest =
-                StockItemTestDataBuilder.buildFEFOAssignmentRequest(
-                        UUID.randomUUID().toString(), // Mock stock item ID
-                        quantity,
-                        expirationDate,
-                        "NEAR_EXPIRY"
-                );
+        AssignLocationsFEFORequest fefoRequest = StockItemTestDataBuilder.buildFEFOAssignmentRequest(UUID.randomUUID().toString(), // Mock stock item ID
+                quantity, expirationDate, "NEAR_EXPIRY");
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/location-management/locations/assign-fefo",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                fefoRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPost("/api/v1/location-management/locations/assign-fefo", tenantAdminAuth.getAccessToken(), testTenantId, fefoRequest).exchange();
 
         // Assert - May succeed or fail depending on whether stock items exist
         // Accept both 200 OK (if stock items exist) or 400/404 (if they don't)

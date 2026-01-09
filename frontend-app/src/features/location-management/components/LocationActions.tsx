@@ -130,28 +130,44 @@ export const LocationActions = ({
         >
           {availableActions.includes('block') && (
             <Tooltip title="Block location" arrow>
-              <Button disabled={isLoading} onClick={() => openDialog('block')} aria-label="Block location">
+              <Button
+                disabled={isLoading}
+                onClick={() => openDialog('block')}
+                aria-label="Block location"
+              >
                 Block
               </Button>
             </Tooltip>
           )}
           {availableActions.includes('unblock') && (
             <Tooltip title="Unblock location" arrow>
-              <Button disabled={isLoading} onClick={() => openDialog('unblock')} aria-label="Unblock location">
+              <Button
+                disabled={isLoading}
+                onClick={() => openDialog('unblock')}
+                aria-label="Unblock location"
+              >
                 Unblock
               </Button>
             </Tooltip>
           )}
           {availableActions.includes('reserve') && (
             <Tooltip title="Reserve location" arrow>
-              <Button disabled={isLoading} onClick={() => openDialog('reserve')} aria-label="Reserve location">
+              <Button
+                disabled={isLoading}
+                onClick={() => openDialog('reserve')}
+                aria-label="Reserve location"
+              >
                 Reserve
               </Button>
             </Tooltip>
           )}
           {availableActions.includes('release') && (
             <Tooltip title="Release location" arrow>
-              <Button disabled={isLoading} onClick={() => openDialog('release')} aria-label="Release location">
+              <Button
+                disabled={isLoading}
+                onClick={() => openDialog('release')}
+                aria-label="Release location"
+              >
                 Release
               </Button>
             </Tooltip>

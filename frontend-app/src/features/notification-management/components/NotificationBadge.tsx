@@ -27,7 +27,7 @@ export const NotificationBadge = () => {
   });
 
   const unreadNotifications = notificationsResponse?.data || [];
-  const unreadCount = unreadNotifications.filter((n) => n.status === 'DELIVERED').length;
+  const unreadCount = unreadNotifications.filter(n => n.status === 'DELIVERED').length;
 
   return (
     <IconButton

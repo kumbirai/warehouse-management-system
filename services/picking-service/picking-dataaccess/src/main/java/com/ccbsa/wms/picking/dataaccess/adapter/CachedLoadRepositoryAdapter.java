@@ -16,6 +16,7 @@ import com.ccbsa.wms.picking.application.service.port.repository.LoadRepository;
 import com.ccbsa.wms.picking.domain.core.entity.Load;
 import com.ccbsa.wms.picking.domain.core.valueobject.LoadId;
 import com.ccbsa.wms.picking.domain.core.valueobject.LoadStatus;
+import com.ccbsa.wms.picking.domain.core.valueobject.PickingListId;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -64,5 +65,11 @@ public class CachedLoadRepositoryAdapter extends CachedRepositoryDecorator<Load,
     public List<Load> findByTenantId(TenantId tenantId, LoadStatus status, int page, int size) {
         // Collections NOT cached
         return baseRepository.findByTenantId(tenantId, status, page, size);
+    }
+
+    @Override
+    public Optional<PickingListId> findPickingListIdByLoadId(LoadId loadId, TenantId tenantId) {
+        // Not cached - direct query
+        return baseRepository.findPickingListIdByLoadId(loadId, tenantId);
     }
 }

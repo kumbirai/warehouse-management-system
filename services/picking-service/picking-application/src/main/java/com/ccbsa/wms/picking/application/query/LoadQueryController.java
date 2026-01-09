@@ -59,13 +59,27 @@ public class LoadQueryController {
                             .productCode(lineItemResult.getProductCode()).productDescription(lineItemResult.getProductDescription()).quantity(lineItemResult.getQuantity())
                             .notes(lineItemResult.getNotes()).build()).collect(Collectors.toList()) : List.of();
 
-            return LoadQueryResultDTO.OrderQueryResultDTO.builder().orderId(orderResult.getOrderId()).orderNumber(orderResult.getOrderNumber())
-                    .customerCode(orderResult.getCustomerCode()).customerName(orderResult.getCustomerName()).priority(orderResult.getPriority()).status(orderResult.getStatus())
-                    .lineItems(lineItemDTOs).build();
+            // Create defensive copy of line items list for builder
+            return LoadQueryResultDTO.OrderQueryResultDTO.builder()
+                    .orderId(orderResult.getOrderId())
+                    .orderNumber(orderResult.getOrderNumber())
+                    .customerCode(orderResult.getCustomerCode())
+                    .customerName(orderResult.getCustomerName())
+                    .priority(orderResult.getPriority())
+                    .status(orderResult.getStatus())
+                    .lineItems(new java.util.ArrayList<>(lineItemDTOs))
+                    .build();
         }).collect(Collectors.toList()) : List.of();
 
-        return LoadQueryResultDTO.builder().id(result.getId().getValueAsString()).loadNumber(result.getLoadNumber().getValue()).status(result.getStatus().name())
-                .createdAt(result.getCreatedAt()).plannedAt(result.getPlannedAt()).orders(orderDTOs).build();
+        // Create defensive copy of orders list for builder
+        return LoadQueryResultDTO.builder()
+                .id(result.getId().getValueAsString())
+                .loadNumber(result.getLoadNumber().getValue())
+                .status(result.getStatus().name())
+                .createdAt(result.getCreatedAt())
+                .plannedAt(result.getPlannedAt())
+                .orders(new java.util.ArrayList<>(orderDTOs))
+                .build();
     }
 
     @GetMapping("/{id}/orders")
@@ -85,11 +99,22 @@ public class LoadQueryController {
                             .productCode(lineItemResult.getProductCode()).productDescription(lineItemResult.getProductDescription()).quantity(lineItemResult.getQuantity())
                             .notes(lineItemResult.getNotes()).build()).collect(Collectors.toList()) : List.of();
 
-            return ListOrdersByLoadQueryResultDTO.OrderQueryResultDTO.builder().orderId(orderResult.getOrderId()).orderNumber(orderResult.getOrderNumber())
-                    .customerCode(orderResult.getCustomerCode()).customerName(orderResult.getCustomerName()).priority(orderResult.getPriority()).status(orderResult.getStatus())
-                    .lineItems(lineItemDTOs).build();
+            // Create defensive copy of line items list for builder
+            return ListOrdersByLoadQueryResultDTO.OrderQueryResultDTO.builder()
+                    .orderId(orderResult.getOrderId())
+                    .orderNumber(orderResult.getOrderNumber())
+                    .customerCode(orderResult.getCustomerCode())
+                    .customerName(orderResult.getCustomerName())
+                    .priority(orderResult.getPriority())
+                    .status(orderResult.getStatus())
+                    .lineItems(new java.util.ArrayList<>(lineItemDTOs))
+                    .build();
         }).collect(Collectors.toList()) : List.of();
 
-        return ListOrdersByLoadQueryResultDTO.builder().loadId(result.getLoadId()).orders(orderDTOs).build();
+        // Create defensive copy of orders list for builder
+        return ListOrdersByLoadQueryResultDTO.builder()
+                .loadId(result.getLoadId())
+                .orders(new java.util.ArrayList<>(orderDTOs))
+                .build();
     }
 }

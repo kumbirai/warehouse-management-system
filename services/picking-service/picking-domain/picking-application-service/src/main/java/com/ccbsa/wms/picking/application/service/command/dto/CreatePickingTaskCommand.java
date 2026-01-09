@@ -1,10 +1,12 @@
 package com.ccbsa.wms.picking.application.service.command.dto;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -15,9 +17,11 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Defensive copies are created in constructor and getter returns defensive copy")
 public final class CreatePickingTaskCommand {
     private final TenantId tenantId;
     private final String orderId;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Defensive copies are created in constructor")
     private final List<PickingItemCommand> items;
     private final String priority;
     private final LocalDate dueDate;
@@ -34,9 +38,19 @@ public final class CreatePickingTaskCommand {
         }
         this.tenantId = tenantId;
         this.orderId = orderId;
-        this.items = items != null ? List.copyOf(items) : List.of();
+        // Create defensive copy (items is already validated as non-null above)
+        this.items = List.copyOf(items);
         this.priority = priority;
         this.dueDate = dueDate;
+    }
+
+    /**
+     * Returns a defensive copy of the items list to prevent external modification.
+     *
+     * @return unmodifiable copy of the items list
+     */
+    public List<PickingItemCommand> getItems() {
+        return Collections.unmodifiableList(items);
     }
 
     /**

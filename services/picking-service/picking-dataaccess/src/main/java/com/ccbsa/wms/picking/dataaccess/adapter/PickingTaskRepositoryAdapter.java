@@ -13,12 +13,12 @@ import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.picking.application.service.port.repository.PickingTaskRepository;
 import com.ccbsa.wms.picking.dataaccess.entity.PickingTaskEntity;
 import com.ccbsa.wms.picking.dataaccess.jpa.PickingTaskJpaRepository;
 import com.ccbsa.wms.picking.dataaccess.mapper.PickingTaskEntityMapper;
-import com.ccbsa.wms.picking.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.picking.domain.core.entity.PickingTask;
 import com.ccbsa.wms.picking.domain.core.valueobject.LoadId;
 import com.ccbsa.wms.picking.domain.core.valueobject.OrderId;

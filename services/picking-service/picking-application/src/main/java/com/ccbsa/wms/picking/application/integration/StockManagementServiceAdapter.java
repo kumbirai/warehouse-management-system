@@ -46,70 +46,6 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
     }
 
     @Override
-    public List<StockAvailabilityInfo> queryAvailableStockByFEFO(String productCode, int quantity) {
-        log.debug("Querying available stock by FEFO for product: {}, quantity: {}", productCode, quantity);
-
-        try {
-            String url = String.format("%s/api/v1/stock-management/stock/query-availability-fefo", stockManagementServiceUrl);
-            log.debug("Calling stock management service: {}", url);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Content-Type", "application/json");
-
-            StockAvailabilityFefoRequest request = new StockAvailabilityFefoRequest();
-            request.setProductCode(productCode);
-            request.setQuantity(quantity);
-
-            HttpEntity<StockAvailabilityFefoRequest> entity = new HttpEntity<>(request, headers);
-            ResponseEntity<ApiResponse<StockAvailabilityFefoResponse>> response =
-                    restTemplate.exchange(url, HttpMethod.POST, entity, new ParameterizedTypeReference<ApiResponse<StockAvailabilityFefoResponse>>() {
-                    });
-
-            ApiResponse<StockAvailabilityFefoResponse> responseBody = response.getBody();
-            if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
-                StockAvailabilityFefoResponse stockResponse = responseBody.getData();
-                return convertToStockAvailabilityInfoList(stockResponse);
-            }
-
-            log.warn("Stock management service returned unexpected response");
-            return List.of();
-        } catch (HttpClientErrorException.Unauthorized e) {
-            log.error("Unauthorized access to stock-management-service: productCode={}, status={}, response={}", productCode, e.getStatusCode(), e.getResponseBodyAsString(), e);
-            throw new StockManagementServiceException("Stock management service authentication failed. Please check service account configuration.", e);
-        } catch (HttpServerErrorException e) {
-            log.error("Stock management service returned server error: productCode={}, status={}, response={}", productCode, e.getStatusCode(), e.getResponseBodyAsString(), e);
-            throw new StockManagementServiceException(String.format("Stock management service error (status %s): %s", e.getStatusCode(),
-                    e.getResponseBodyAsString() != null ? e.getResponseBodyAsString() : e.getMessage()), e);
-        } catch (IllegalArgumentException e) {
-            // Handle LoadBalancer service discovery failures
-            if (e.getMessage() != null && e.getMessage().contains("Service Instance cannot be null")) {
-                log.error(
-                        "Stock management service not found in service registry (Eureka). Please ensure stock-management-service is running and registered with Eureka: "
-                                + "productCode={}, "
-                                + "serviceUrl={}", productCode, stockManagementServiceUrl, e);
-                throw new StockManagementServiceException(
-                        "Stock management service is not available. The service may not be running or not registered with service discovery. Please contact system administrator.",
-                        e);
-            }
-            log.error("Invalid argument when calling stock-management-service: productCode={}, error={}", productCode, e.getMessage(), e);
-            throw new StockManagementServiceException(String.format("Stock management service error: %s", e.getMessage()), e);
-        } catch (RestClientException e) {
-            log.error("Failed to query stock availability by FEFO from stock-management-service: productCode={}, error={}", productCode, e.getMessage(), e);
-            throw new StockManagementServiceException("Stock management service is temporarily unavailable. Please try again later.", e);
-        }
-    }
-
-    private List<StockAvailabilityInfo> convertToStockAvailabilityInfoList(StockAvailabilityFefoResponse response) {
-        if (response == null || response.getStockItems() == null) {
-            return List.of();
-        }
-
-        return response.getStockItems().stream()
-                .map(item -> StockAvailabilityInfo.builder().locationId(item.getLocationId()).productCode(response.getProductCode()).availableQuantity(item.getAvailableQuantity())
-                        .expirationDate(item.getExpirationDate()).stockItemId(item.getStockItemId()).build()).toList();
-    }
-
-    @Override
     public Map<String, List<StockAvailabilityInfo>> queryAvailableStockForProducts(Map<String, Integer> productQuantities) {
         log.debug("Querying available stock for {} products", productQuantities.size());
 
@@ -170,6 +106,136 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
                 entry -> entry.getValue().stream()
                         .map(item -> StockAvailabilityInfo.builder().locationId(item.getLocationId()).productCode(entry.getKey()).availableQuantity(item.getAvailableQuantity())
                                 .expirationDate(item.getExpirationDate()).stockItemId(item.getStockItemId()).build()).toList()));
+    }
+
+    @Override
+    public boolean isStockExpired(String productCode, String locationId) {
+        log.debug("Checking if stock is expired for product: {}, location: {}", productCode, locationId);
+
+        try {
+            String url = String.format("%s/api/v1/stock-management/stock-items/check-expiration?productCode=%s&locationId=%s", stockManagementServiceUrl, productCode, locationId);
+            log.debug("Calling stock management service: {}", url);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Content-Type", "application/json");
+
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+            ResponseEntity<ApiResponse<StockExpirationCheckResponse>> response =
+                    restTemplate.exchange(url, HttpMethod.GET, entity, new ParameterizedTypeReference<ApiResponse<StockExpirationCheckResponse>>() {
+                    });
+
+            ApiResponse<StockExpirationCheckResponse> responseBody = response.getBody();
+            if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
+                return responseBody.getData().isExpired();
+            }
+
+            log.warn("Stock management service returned unexpected response for expiration check");
+            // Default to expired for safety
+            return true;
+        } catch (HttpClientErrorException.Unauthorized e) {
+            log.error("Unauthorized access to stock-management-service: productCode={}, locationId={}, status={}, response={}", productCode, locationId, e.getStatusCode(),
+                    e.getResponseBodyAsString(), e);
+            throw new StockManagementServiceException("Stock management service authentication failed. Please check service account configuration.", e);
+        } catch (HttpServerErrorException e) {
+            log.error("Stock management service returned server error: productCode={}, locationId={}, status={}, response={}", productCode, locationId, e.getStatusCode(),
+                    e.getResponseBodyAsString(), e);
+            throw new StockManagementServiceException(String.format("Stock management service error (status %s): %s", e.getStatusCode(),
+                    e.getResponseBodyAsString() != null ? e.getResponseBodyAsString() : e.getMessage()), e);
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage() != null && e.getMessage().contains("Service Instance cannot be null")) {
+                log.error("Stock management service not found in service registry (Eureka). Please ensure stock-management-service is running and registered with Eureka: "
+                        + "productCode={}, locationId={}, serviceUrl={}", productCode, locationId, stockManagementServiceUrl, e);
+                throw new StockManagementServiceException(
+                        "Stock management service is not available. The service may not be running or not registered with service discovery. Please contact system administrator.",
+                        e);
+            }
+            log.error("Invalid argument when calling stock-management-service: productCode={}, locationId={}, error={}", productCode, locationId, e.getMessage(), e);
+            throw new StockManagementServiceException(String.format("Stock management service error: %s", e.getMessage()), e);
+        } catch (RestClientException e) {
+            log.error("Failed to check stock expiration from stock-management-service: productCode={}, locationId={}, error={}", productCode, locationId, e.getMessage(), e);
+            // Default to expired for safety
+            return true;
+        }
+    }
+
+    @Override
+    public boolean checkStockAvailability(String productCode, String locationId, int quantity) {
+        log.debug("Checking stock availability for product: {}, location: {}, quantity: {}", productCode, locationId, quantity);
+
+        try {
+            // Query available stock by FEFO for the product
+            List<StockAvailabilityInfo> availableStock = queryAvailableStockByFEFO(productCode, quantity);
+
+            // Check if we have sufficient stock at the specified location
+            return availableStock.stream().filter(item -> item.getLocationId() != null && item.getLocationId().equals(locationId))
+                    .mapToInt(StockAvailabilityInfo::getAvailableQuantity).sum() >= quantity;
+        } catch (StockManagementServiceException e) {
+            log.error("Failed to check stock availability: productCode={}, locationId={}, quantity={}, error={}", productCode, locationId, quantity, e.getMessage(), e);
+            // Default to unavailable for safety
+            return false;
+        }
+    }
+
+    @Override
+    public List<StockAvailabilityInfo> queryAvailableStockByFEFO(String productCode, int quantity) {
+        log.debug("Querying available stock by FEFO for product: {}, quantity: {}", productCode, quantity);
+
+        try {
+            String url = String.format("%s/api/v1/stock-management/stock/query-availability-fefo", stockManagementServiceUrl);
+            log.debug("Calling stock management service: {}", url);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Content-Type", "application/json");
+
+            StockAvailabilityFefoRequest request = new StockAvailabilityFefoRequest();
+            request.setProductCode(productCode);
+            request.setQuantity(quantity);
+
+            HttpEntity<StockAvailabilityFefoRequest> entity = new HttpEntity<>(request, headers);
+            ResponseEntity<ApiResponse<StockAvailabilityFefoResponse>> response =
+                    restTemplate.exchange(url, HttpMethod.POST, entity, new ParameterizedTypeReference<ApiResponse<StockAvailabilityFefoResponse>>() {
+                    });
+
+            ApiResponse<StockAvailabilityFefoResponse> responseBody = response.getBody();
+            if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
+                StockAvailabilityFefoResponse stockResponse = responseBody.getData();
+                return convertToStockAvailabilityInfoList(stockResponse);
+            }
+
+            log.warn("Stock management service returned unexpected response");
+            return List.of();
+        } catch (HttpClientErrorException.Unauthorized e) {
+            log.error("Unauthorized access to stock-management-service: productCode={}, status={}, response={}", productCode, e.getStatusCode(), e.getResponseBodyAsString(), e);
+            throw new StockManagementServiceException("Stock management service authentication failed. Please check service account configuration.", e);
+        } catch (HttpServerErrorException e) {
+            log.error("Stock management service returned server error: productCode={}, status={}, response={}", productCode, e.getStatusCode(), e.getResponseBodyAsString(), e);
+            throw new StockManagementServiceException(String.format("Stock management service error (status %s): %s", e.getStatusCode(),
+                    e.getResponseBodyAsString() != null ? e.getResponseBodyAsString() : e.getMessage()), e);
+        } catch (IllegalArgumentException e) {
+            // Handle LoadBalancer service discovery failures
+            if (e.getMessage() != null && e.getMessage().contains("Service Instance cannot be null")) {
+                log.error("Stock management service not found in service registry (Eureka). Please ensure stock-management-service is running and registered with Eureka: "
+                        + "productCode={}, " + "serviceUrl={}", productCode, stockManagementServiceUrl, e);
+                throw new StockManagementServiceException(
+                        "Stock management service is not available. The service may not be running or not registered with service discovery. Please contact system administrator.",
+                        e);
+            }
+            log.error("Invalid argument when calling stock-management-service: productCode={}, error={}", productCode, e.getMessage(), e);
+            throw new StockManagementServiceException(String.format("Stock management service error: %s", e.getMessage()), e);
+        } catch (RestClientException e) {
+            log.error("Failed to query stock availability by FEFO from stock-management-service: productCode={}, error={}", productCode, e.getMessage(), e);
+            throw new StockManagementServiceException("Stock management service is temporarily unavailable. Please try again later.", e);
+        }
+    }
+
+    private List<StockAvailabilityInfo> convertToStockAvailabilityInfoList(StockAvailabilityFefoResponse response) {
+        if (response == null || response.getStockItems() == null) {
+            return List.of();
+        }
+
+        return response.getStockItems().stream()
+                .map(item -> StockAvailabilityInfo.builder().locationId(item.getLocationId()).productCode(response.getProductCode()).availableQuantity(item.getAvailableQuantity())
+                        .expirationDate(item.getExpirationDate()).stockItemId(item.getStockItemId()).build()).toList();
     }
 
     /**
@@ -289,6 +355,57 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
 
         public void setStockItems(List<StockItemDTO> stockItems) {
             this.stockItems = stockItems;
+        }
+    }
+
+    /**
+     * Response DTO for Stock Expiration Check
+     */
+    private static class StockExpirationCheckResponse {
+        private boolean expired;
+        private LocalDate expirationDate;
+        private String classification;
+        private Integer daysUntilExpiration;
+        private String message;
+
+        public boolean isExpired() {
+            return expired;
+        }
+
+        public void setExpired(boolean expired) {
+            this.expired = expired;
+        }
+
+        public LocalDate getExpirationDate() {
+            return expirationDate;
+        }
+
+        public void setExpirationDate(LocalDate expirationDate) {
+            this.expirationDate = expirationDate;
+        }
+
+        public String getClassification() {
+            return classification;
+        }
+
+        public void setClassification(String classification) {
+            this.classification = classification;
+        }
+
+        public Integer getDaysUntilExpiration() {
+            return daysUntilExpiration;
+        }
+
+        public void setDaysUntilExpiration(Integer daysUntilExpiration) {
+            this.daysUntilExpiration = daysUntilExpiration;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
         }
     }
 }

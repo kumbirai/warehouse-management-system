@@ -1009,6 +1009,7 @@ class ExpirationCheckSchedulerIntegrationTest {
 ## Implementation Checklist
 
 ### Frontend
+
 - [ ] Create `ExpiringStockDashboard` page
 - [ ] Create `ExpirationAlertCard` component
 - [ ] Create `ExpiringStockList` component
@@ -1017,6 +1018,7 @@ class ExpirationCheckSchedulerIntegrationTest {
 - [ ] Test UI with mock data
 
 ### Backend - Domain Core
+
 - [ ] Add `checkExpiration()` method to `StockItem`
 - [ ] Create `StockClassification` enum
 - [ ] Create `StockExpiringAlertEvent`
@@ -1024,6 +1026,7 @@ class ExpirationCheckSchedulerIntegrationTest {
 - [ ] Write unit tests for expiration logic
 
 ### Backend - Scheduled Job
+
 - [ ] Create `ExpirationCheckScheduler`
 - [ ] Create `CheckExpirationDatesCommandHandler`
 - [ ] Configure cron schedule
@@ -1031,6 +1034,7 @@ class ExpirationCheckSchedulerIntegrationTest {
 - [ ] Test scheduled job execution
 
 ### Backend - Query
+
 - [ ] Create `GetExpiringStockQuery`
 - [ ] Create `GetExpiringStockQueryHandler`
 - [ ] Add query endpoint in controller
@@ -1038,6 +1042,7 @@ class ExpirationCheckSchedulerIntegrationTest {
 - [ ] Write integration tests
 
 ### Notification Integration
+
 - [ ] Create `StockExpirationEventListener` in Notification Service
 - [ ] Handle `StockExpiringAlertEvent`
 - [ ] Handle `StockExpiredEvent`
@@ -1045,12 +1050,14 @@ class ExpirationCheckSchedulerIntegrationTest {
 - [ ] Test event consumption
 
 ### Gateway API Tests
+
 - [ ] Test expiring stock query endpoint
 - [ ] Test filtering by classification
 - [ ] Test date range filtering
 - [ ] Verify scheduled job runs correctly
 
 ### Documentation
+
 - [ ] Document expiration checking process
 - [ ] Document classification levels
 - [ ] Update API documentation

@@ -36,10 +36,12 @@ public final class GetStockItemQueryResult {
     private final ConsignmentId consignmentId;
     private final LocalDateTime createdAt;
     private final LocalDateTime lastModifiedAt;
+    private final Integer daysUntilExpiry;
 
     public GetStockItemQueryResult(StockItemId stockItemId, ProductId productId, String productCode, String productDescription, LocationId locationId, String locationCode,
                                    String locationName, String locationHierarchy, Quantity quantity, Quantity allocatedQuantity, ExpirationDate expirationDate,
-                                   StockClassification classification, ConsignmentId consignmentId, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
+                                   StockClassification classification, ConsignmentId consignmentId, LocalDateTime createdAt, LocalDateTime lastModifiedAt,
+                                   Integer daysUntilExpiry) {
         if (stockItemId == null) {
             throw new IllegalArgumentException("StockItemId is required");
         }
@@ -67,6 +69,7 @@ public final class GetStockItemQueryResult {
         this.consignmentId = consignmentId;
         this.createdAt = createdAt;
         this.lastModifiedAt = lastModifiedAt;
+        this.daysUntilExpiry = daysUntilExpiry;
     }
 }
 

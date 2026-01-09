@@ -31,16 +31,19 @@ defines port interfaces.
 **RECOMMENDED**: Use Lombok for all DTOs (Commands, Queries, Results) in this layer.
 
 **Handlers (Command/Query)**:
+
 - Use `@Slf4j` for logging instead of manual logger declaration
 - Use `@RequiredArgsConstructor` for dependency injection (fields marked `final`)
 
 **DTOs (Commands, Queries, Results)**:
+
 - Use `@Getter` for field accessors
 - Use `@Builder` for fluent object construction
 - Use `@ToString` for debugging (avoid for sensitive data)
 - Use `@EqualsAndHashCode` for value comparison (if needed)
 
 **Anti-Patterns to Avoid:**
+
 - `@Data` - Too broad, prefer specific annotations
 - `@Value` - Only for truly immutable value objects
 - Avoid Lombok if DTOs contain complex validation logic
@@ -906,6 +909,7 @@ public class {Action}{DomainObject}Command {
 ```
 
 **Key Lombok Annotations Explained:**
+
 - `@Getter` - Generates getters for all fields
 - `@Builder` - Generates builder pattern (use: `Command.builder().field(value).build()`)
 - `@ToString` - Generates toString() for debugging
@@ -1200,8 +1204,8 @@ public class {Action}{DomainObject}CommandHandler {
 **Document Control**
 
 - **Version History:**
-  - v1.1 (2025-01) - Added Lombok usage guidelines and templates for DTOs and handlers
-  - v1.0 (2025-01) - Initial template creation
+    - v1.1 (2025-01) - Added Lombok usage guidelines and templates for DTOs and handlers
+    - v1.0 (2025-01) - Initial template creation
 - **Review Cycle:** Review when application service patterns change
 - **Distribution:** All development team members
 

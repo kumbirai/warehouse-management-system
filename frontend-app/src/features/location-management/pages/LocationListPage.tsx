@@ -80,11 +80,7 @@ export const LocationListPage = () => {
       actions={
         <Stack direction="row" spacing={1}>
           {navigationState.level !== 'warehouse' && (
-            <Button
-              variant="outlined"
-              startIcon={<ArrowBackIcon />}
-              onClick={navigateUp}
-            >
+            <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={navigateUp}>
               Back
             </Button>
           )}
@@ -105,7 +101,7 @@ export const LocationListPage = () => {
         isLoading={isLoading}
         error={error}
         level={navigationState.level}
-        onExpand={(locationId) => {
+        onExpand={locationId => {
           switch (navigationState.level) {
             case 'warehouse':
               navigateToZone(locationId);

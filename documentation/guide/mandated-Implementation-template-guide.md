@@ -16,7 +16,8 @@
 
 ## Overview
 
-This document provides the overarching guide for implementing production-grade microservices following **Domain-Driven Design**, **Clean Hexagonal Architecture**, **CQRS**, and **Event-Driven Choreography** principles. All templates have been systematically designed to ensure strict adherence to these principles.
+This document provides the overarching guide for implementing production-grade microservices following **Domain-Driven Design**, **Clean Hexagonal Architecture**, **CQRS**, and *
+*Event-Driven Choreography** principles. All templates have been systematically designed to ensure strict adherence to these principles.
 
 ## Lombok Usage Policy
 
@@ -25,6 +26,7 @@ This document provides the overarching guide for implementing production-grade m
 ### Domain Core Modules (`*-domain-core`)
 
 **NO LOMBOK** - Pure Java implementation required:
+
 - Domain core must remain framework-agnostic
 - Manual builder patterns required
 - Manual getters/setters required
@@ -34,6 +36,7 @@ This document provides the overarching guide for implementing production-grade m
 ### All Other Modules
 
 **LOMBOK RECOMMENDED** - Use Lombok to reduce boilerplate:
+
 - Application Service (`*-application-service`) - Commands, queries, results
 - Application Layer (`*-application`) - DTOs, mappers
 - Data Access (`*-dataaccess`) - JPA entities, adapters
@@ -41,6 +44,7 @@ This document provides the overarching guide for implementing production-grade m
 - Container (`*-container`) - Configuration classes
 
 **Recommended Lombok Annotations:**
+
 - `@Getter` / `@Setter` - For fields requiring accessors
 - `@Builder` - For complex object construction
 - `@NoArgsConstructor` / `@AllArgsConstructor` - For constructors
@@ -50,6 +54,7 @@ This document provides the overarching guide for implementing production-grade m
 - `@RequiredArgsConstructor` - For dependency injection
 
 **Lombok Anti-Patterns to Avoid:**
+
 - `@Data` - Too broad, use specific annotations instead
 - `@Value` - Use for truly immutable classes only
 - Avoid Lombok in classes with complex business logic validation
@@ -211,6 +216,7 @@ Production-grade service account authentication for event-driven and background 
 - **Lombok recommended for configuration and adapter classes**
 
 ---
+
 ## Critical Architectural Principles
 
 ### 1. Repository Interface Placement

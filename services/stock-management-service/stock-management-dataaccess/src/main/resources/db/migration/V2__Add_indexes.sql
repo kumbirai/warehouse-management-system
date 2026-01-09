@@ -21,6 +21,7 @@ CREATE INDEX IF NOT EXISTS idx_stock_items_location_id ON stock_items(location_i
 CREATE INDEX IF NOT EXISTS idx_stock_items_consignment_id ON stock_items(consignment_id);
 CREATE INDEX IF NOT EXISTS idx_stock_items_classification ON stock_items(tenant_id, classification);
 CREATE INDEX IF NOT EXISTS idx_stock_items_expiration_date ON stock_items(expiration_date) WHERE expiration_date IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_stock_items_expiration_classification ON stock_items(expiration_date, classification) WHERE expiration_date IS NOT NULL;
 
 -- Indexes for stock_allocations table
 CREATE INDEX IF NOT EXISTS idx_stock_allocations_tenant ON stock_allocations(tenant_id);
@@ -50,4 +51,11 @@ CREATE INDEX IF NOT EXISTS idx_stock_level_thresholds_product ON stock_level_thr
 CREATE INDEX IF NOT EXISTS idx_stock_level_thresholds_location ON stock_level_thresholds(location_id) WHERE location_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_stock_level_thresholds_tenant_product ON stock_level_thresholds(tenant_id, product_id);
 CREATE INDEX IF NOT EXISTS idx_stock_level_thresholds_tenant_product_location ON stock_level_thresholds(tenant_id, product_id, location_id) WHERE location_id IS NOT NULL;
+
+-- Indexes for restock_requests table
+CREATE INDEX IF NOT EXISTS idx_restock_requests_tenant_product ON restock_requests(tenant_id, product_id);
+CREATE INDEX IF NOT EXISTS idx_restock_requests_tenant_location ON restock_requests(tenant_id, location_id) WHERE location_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_restock_requests_status ON restock_requests(status);
+CREATE INDEX IF NOT EXISTS idx_restock_requests_created_at ON restock_requests(created_at);
+CREATE INDEX IF NOT EXISTS idx_restock_requests_tenant_status ON restock_requests(tenant_id, status);
 

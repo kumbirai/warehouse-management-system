@@ -55,6 +55,7 @@
 ### FEFO Planning Algorithm
 
 **Objectives:**
+
 1. Pick stock with earliest expiration date first (FEFO)
 2. Minimize warehouse travel distance
 3. Maximize picking efficiency
@@ -135,6 +136,7 @@ public int calculateProximityScore(Location location) {
 **Advanced: Traveling Salesman Problem (TSP) for Route Optimization**
 
 For future enhancement, implement TSP for optimal picking route:
+
 - Nearest Neighbor algorithm
 - 2-Opt optimization
 - Genetic algorithm for larger loads
@@ -991,15 +993,15 @@ class PlanPickingLocationsIntegrationTest {
 
 ## Acceptance Criteria Validation
 
-| Acceptance Criteria | Implementation | Status |
-|---------------------|----------------|--------|
-| AC1: Optimize based on FEFO | FEFO algorithm with expiration date sorting | ✅ Planned |
-| AC2: Consider location proximity | Proximity scoring algorithm | ✅ Planned |
-| AC3: Generate picking sequence | Sequence optimization algorithm | ✅ Planned |
-| AC4: Create PickingTask entities | PickingTask domain model | ✅ Planned |
-| AC5: Publish LoadPlannedEvent | Event publishing | ✅ Planned |
-| AC6: Publish PickingTaskCreatedEvent | Event publishing | ✅ Planned |
-| AC7: Exclude expired stock | Stock query filters | ✅ Planned |
+| Acceptance Criteria                  | Implementation                              | Status    |
+|--------------------------------------|---------------------------------------------|-----------|
+| AC1: Optimize based on FEFO          | FEFO algorithm with expiration date sorting | ✅ Planned |
+| AC2: Consider location proximity     | Proximity scoring algorithm                 | ✅ Planned |
+| AC3: Generate picking sequence       | Sequence optimization algorithm             | ✅ Planned |
+| AC4: Create PickingTask entities     | PickingTask domain model                    | ✅ Planned |
+| AC5: Publish LoadPlannedEvent        | Event publishing                            | ✅ Planned |
+| AC6: Publish PickingTaskCreatedEvent | Event publishing                            | ✅ Planned |
+| AC7: Exclude expired stock           | Stock query filters                         | ✅ Planned |
 
 ---
 

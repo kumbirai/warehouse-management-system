@@ -14,13 +14,13 @@ import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.picking.application.service.port.data.PickingListViewRepository;
 import com.ccbsa.wms.picking.application.service.query.dto.PickingListView;
 import com.ccbsa.wms.picking.dataaccess.entity.LoadEntity;
 import com.ccbsa.wms.picking.dataaccess.entity.OrderEntity;
 import com.ccbsa.wms.picking.dataaccess.entity.PickingListEntity;
-import com.ccbsa.wms.picking.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.picking.domain.core.valueobject.PickingListId;
 import com.ccbsa.wms.picking.domain.core.valueobject.PickingListReference;
 import com.ccbsa.wms.picking.domain.core.valueobject.PickingListStatus;
@@ -248,10 +248,15 @@ public class PickingListViewRepositoryAdapter implements PickingListViewReposito
         // Initialize loads collection to avoid lazy loading issues
         entities.forEach(entity -> {
             if (entity.getLoads() != null) {
-                entity.getLoads().size(); // Initialize collection
+                @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT",
+                        justification = "size() call is intentional to force initialization of lazy-loaded collections")
+                int loadsSize = entity.getLoads().size(); // Initialize collection
                 entity.getLoads().forEach(load -> {
                     if (load.getOrders() != null) {
-                        load.getOrders().size(); // Initialize orders collection
+                        @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT",
+                                justification = "size() call is intentional to force initialization of lazy-loaded collections")
+                        int ordersSize = load.getOrders().size(); // Initialize orders collection
+                        // Sizes are intentionally not used - collection initialization is the side effect
                     }
                 });
             }

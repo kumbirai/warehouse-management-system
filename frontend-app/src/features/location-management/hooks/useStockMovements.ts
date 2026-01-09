@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { stockMovementService, StockMovement, StockMovementListFilters } from '../services/stockMovementService';
+import {
+  StockMovement,
+  StockMovementListFilters,
+  stockMovementService,
+} from '../services/stockMovementService';
 import { logger } from '../../../utils/logger';
 
 export interface UseStockMovementsResult {
@@ -10,7 +14,10 @@ export interface UseStockMovementsResult {
   refetch: () => Promise<void>;
 }
 
-export const useStockMovements = (filters: StockMovementListFilters, tenantId: string): UseStockMovementsResult => {
+export const useStockMovements = (
+  filters: StockMovementListFilters,
+  tenantId: string
+): UseStockMovementsResult => {
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,4 +85,3 @@ export const useStockMovements = (filters: StockMovementListFilters, tenantId: s
 
   return { movements, totalCount, isLoading, error, refetch: fetchMovements };
 };
-

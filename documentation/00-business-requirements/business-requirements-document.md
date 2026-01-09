@@ -298,7 +298,8 @@ capability to:
 
 #### FR-4.1: Product Barcode Support (Barcode-First Principle)
 
-- **Requirement**: ALL stock items MUST have product barcodes for easy identification. **Barcode scanning is the primary input method** - manual entry is provided as a fallback when scanning fails or is unavailable.
+- **Requirement**: ALL stock items MUST have product barcodes for easy identification. **Barcode scanning is the primary input method** - manual entry is provided as a fallback
+  when scanning fails or is unavailable.
 - **Details**:
     - **Primary Method:** System must support scanning product barcodes for identification (handheld scanner or camera)
     - **Fallback Method:** Manual keyboard input when scanning fails or is unavailable

@@ -8,6 +8,7 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.picking.domain.core.entity.Load;
 import com.ccbsa.wms.picking.domain.core.valueobject.LoadId;
 import com.ccbsa.wms.picking.domain.core.valueobject.LoadStatus;
+import com.ccbsa.wms.picking.domain.core.valueobject.PickingListId;
 
 /**
  * Repository Port: LoadRepository
@@ -50,4 +51,13 @@ public interface LoadRepository {
      * @return List of Load aggregates
      */
     List<Load> findByTenantId(TenantId tenantId, LoadStatus status, int page, int size);
+
+    /**
+     * Finds the PickingListId for a given LoadId.
+     *
+     * @param loadId   Load identifier
+     * @param tenantId Tenant identifier
+     * @return Optional PickingListId if found
+     */
+    Optional<PickingListId> findPickingListIdByLoadId(LoadId loadId, TenantId tenantId);
 }

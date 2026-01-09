@@ -9,6 +9,8 @@ package com.ccbsa.wms.picking.domain.core.valueobject;
  * - PENDING: Picking task is pending execution
  * - IN_PROGRESS: Picking task is in progress
  * - COMPLETED: Picking task has been completed
+ * - PARTIALLY_COMPLETED: Picking task has been partially completed
+ * - CANCELLED: Picking task has been cancelled
  */
 public enum PickingTaskStatus {
     /**
@@ -24,5 +26,15 @@ public enum PickingTaskStatus {
     /**
      * Picking task has been completed
      */
-    COMPLETED
+    COMPLETED,
+
+    /**
+     * Picking task has been partially completed
+     */
+    PARTIALLY_COMPLETED,
+
+    /**
+     * Picking task has been cancelled
+     */
+    CANCELLED
 }

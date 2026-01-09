@@ -26,13 +26,7 @@ export const PageBreadcrumbs: React.FC<PageBreadcrumbsProps> = ({ items }) => {
         }
 
         return (
-          <Link
-            key={index}
-            component={RouterLink}
-            to={item.href}
-            underline="hover"
-            color="inherit"
-          >
+          <Link key={index} component={RouterLink} to={item.href} underline="hover" color="inherit">
             {item.label}
           </Link>
         );

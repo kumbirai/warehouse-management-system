@@ -21,7 +21,7 @@ export const useMarkAsRead = () => {
       queryClient.setQueryData(['notification', notificationId, user?.tenantId], data);
       logger.info('Notification marked as read', { notificationId });
     },
-    onError: (error) => {
+    onError: error => {
       logger.error('Failed to mark notification as read:', error);
     },
   });

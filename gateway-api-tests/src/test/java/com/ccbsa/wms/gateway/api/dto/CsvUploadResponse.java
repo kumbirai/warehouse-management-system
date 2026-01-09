@@ -21,7 +21,7 @@ public class CsvUploadResponse {
     private Integer createdConsignments;  // Matches UploadConsignmentCsvResultDTO field name
     private Integer errorRows;  // Matches UploadConsignmentCsvResultDTO field name
     private List<CsvUploadError> errors;
-    
+
     // Legacy fields for backward compatibility (if needed by other tests)
     @Deprecated
     private Integer createdCount;
@@ -29,7 +29,7 @@ public class CsvUploadResponse {
     private Integer updatedCount;
     @Deprecated
     private Integer errorCount;
-    
+
     /**
      * Convenience method to calculate success count (created consignments).
      * For consignment CSV upload, success = createdConsignments (no updates).
@@ -37,7 +37,7 @@ public class CsvUploadResponse {
     public Integer getSuccessCount() {
         return createdConsignments != null ? createdConsignments : (createdCount != null ? createdCount : 0);
     }
-    
+
     /**
      * Convenience method for failure count (alias for errorRows/errorCount).
      */

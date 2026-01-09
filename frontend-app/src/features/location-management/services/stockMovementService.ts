@@ -1,9 +1,9 @@
 import apiClient from '../../../services/apiClient';
-import { ApiResponse } from '../../../types/api';
+import {ApiResponse} from '../../../types/api';
 
 /**
  * Stock Movement Service
- * 
+ *
  * Handles API calls for stock movement operations.
  */
 
@@ -13,7 +13,12 @@ export interface CreateStockMovementRequest {
   sourceLocationId: string;
   destinationLocationId: string;
   quantity: number;
-  movementType: 'RECEIVING_TO_STORAGE' | 'STORAGE_TO_PICKING' | 'INTER_STORAGE' | 'PICKING_TO_SHIPPING' | 'OTHER';
+  movementType:
+    | 'RECEIVING_TO_STORAGE'
+    | 'STORAGE_TO_PICKING'
+    | 'INTER_STORAGE'
+    | 'PICKING_TO_SHIPPING'
+    | 'OTHER';
   reason: 'PICKING' | 'RESTOCKING' | 'REORGANIZATION' | 'DAMAGE' | 'CORRECTION' | 'OTHER';
 }
 
@@ -141,14 +146,11 @@ export const stockMovementService = {
     movementId: string,
     tenantId: string
   ): Promise<ApiResponse<StockMovement>> {
-    const response = await apiClient.get<ApiResponse<StockMovement>>(
-      `${BASE_PATH}/${movementId}`,
-      {
-        headers: {
-          'X-Tenant-Id': tenantId,
-        },
-      }
-    );
+    const response = await apiClient.get<ApiResponse<StockMovement>>(`${BASE_PATH}/${movementId}`, {
+      headers: {
+        'X-Tenant-Id': tenantId,
+      },
+    });
     return response.data;
   },
 
@@ -162,7 +164,8 @@ export const stockMovementService = {
     const params = new URLSearchParams();
     if (filters.stockItemId) params.append('stockItemId', filters.stockItemId);
     if (filters.sourceLocationId) params.append('sourceLocationId', filters.sourceLocationId);
-    if (filters.destinationLocationId) params.append('destinationLocationId', filters.destinationLocationId);
+    if (filters.destinationLocationId)
+      params.append('destinationLocationId', filters.destinationLocationId);
     if (filters.status) params.append('status', filters.status);
     if (filters.page !== undefined) params.append('page', filters.page.toString());
     if (filters.size !== undefined) params.append('size', filters.size.toString());
@@ -178,4 +181,3 @@ export const stockMovementService = {
     return response.data;
   },
 };
-

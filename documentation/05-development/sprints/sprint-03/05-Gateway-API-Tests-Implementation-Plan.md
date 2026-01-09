@@ -606,19 +606,19 @@ mvn test -Dtest=*Sprint3*Test jacoco:report
 ### Test Environment Setup
 
 1. **Start Services:**
-   - Gateway Service
-   - Stock Management Service
-   - Location Management Service
-   - Eureka Server
-   - Kafka
-   - PostgreSQL
-   - Keycloak
+    - Gateway Service
+    - Stock Management Service
+    - Location Management Service
+    - Eureka Server
+    - Kafka
+    - PostgreSQL
+    - Keycloak
 
 2. **Test Data:**
-   - Create test tenant
-   - Create test users
-   - Create test products
-   - Create test locations
+    - Create test tenant
+    - Create test users
+    - Create test products
+    - Create test locations
 
 ---
 

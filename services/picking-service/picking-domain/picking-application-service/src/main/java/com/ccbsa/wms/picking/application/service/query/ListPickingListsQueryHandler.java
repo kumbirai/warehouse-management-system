@@ -29,7 +29,13 @@ public class ListPickingListsQueryHandler {
 
         int totalPages = (int) Math.ceil((double) totalElements / query.getSize());
 
-        return ListPickingListsQueryResult.builder().pickingLists(pickingLists).totalElements((int) totalElements).page(query.getPage()).size(query.getSize())
-                .totalPages(totalPages).build();
+        // Create defensive copy of picking lists for builder
+        return ListPickingListsQueryResult.builder()
+                .pickingLists(new java.util.ArrayList<>(pickingLists))
+                .totalElements((int) totalElements)
+                .page(query.getPage())
+                .size(query.getSize())
+                .totalPages(totalPages)
+                .build();
     }
 }

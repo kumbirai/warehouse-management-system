@@ -14,12 +14,12 @@ import com.ccbsa.common.domain.valueobject.StockClassification;
 import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.stock.application.service.port.repository.StockItemRepository;
 import com.ccbsa.wms.stock.dataaccess.entity.StockItemEntity;
 import com.ccbsa.wms.stock.dataaccess.jpa.StockItemJpaRepository;
 import com.ccbsa.wms.stock.dataaccess.mapper.StockItemEntityMapper;
-import com.ccbsa.wms.stock.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.stock.domain.core.entity.StockItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
 
@@ -252,6 +252,12 @@ public class StockItemRepositoryAdapter implements StockItemRepository {
         prepareSchema(tenantId);
 
         return jpaRepository.findByTenantIdAndId(tenantId.getValue(), stockItemId.getValue()).map(mapper::toDomain);
+    }
+
+    @Override
+    public List<StockItem> findByTenantId(TenantId tenantId) {
+        prepareSchema(tenantId);
+        return jpaRepository.findByTenantId(tenantId.getValue()).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 }
 

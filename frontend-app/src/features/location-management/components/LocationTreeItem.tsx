@@ -1,21 +1,13 @@
 import { useState } from 'react';
+import { Box, Chip, IconButton, ListItem, ListItemButton, Stack, Typography } from '@mui/material';
 import {
-  Box,
-  IconButton,
-  ListItem,
-  ListItemButton,
-  Stack,
-  Typography,
-  Chip,
-} from '@mui/material';
-import {
-  ExpandMore as ExpandMoreIcon,
   ChevronRight as ChevronRightIcon,
+  ExpandMore as ExpandMoreIcon,
   LocationOn as LocationIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { LocationHierarchyItem } from '../types/location';
-import { StatusBadge, getStatusVariant } from '../../../components/common';
+import { getStatusVariant, StatusBadge } from '../../../components/common';
 
 interface LocationTreeItemProps {
   item: LocationHierarchyItem;
@@ -98,13 +90,21 @@ export const LocationTreeItem = ({
                   {displayName}
                 </Typography>
                 {item.location.code && item.location.code !== displayName && (
-                  <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontFamily: 'monospace' }}
+                  >
                     ({item.location.code})
                   </Typography>
                 )}
               </Stack>
               {item.location.description && (
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 0.5 }}
+                >
                   {item.location.description}
                 </Typography>
               )}

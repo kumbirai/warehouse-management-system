@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
 
@@ -18,6 +19,7 @@ import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
 @SpringBootApplication(scanBasePackages = {"com.ccbsa.wms.stock", "com.ccbsa.wms.common.security", "com.ccbsa.common.cache"})
 @EnableJpaRepositories(basePackages = "com.ccbsa.wms.stock.dataaccess.jpa")
 @EntityScan(basePackages = "com.ccbsa.wms.stock.dataaccess.entity")
+@EnableScheduling
 @Import(MultiTenantDataAccessConfig.class)
 public class StockManagementServiceApplication {
     public static void main(String[] args) {

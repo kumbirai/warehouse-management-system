@@ -17,14 +17,8 @@ public class UserTestDataBuilder {
         String firstName = TestData.firstName();
         String lastName = TestData.lastName();
 
-        return CreateUserRequest.builder()
-                .tenantId(tenantId)
-                .username(username)
-                .emailAddress(generateEmailFromUsername(username))
-                .password(TestData.password())
-                .firstName(firstName)
-                .lastName(lastName)
-                .build();
+        return CreateUserRequest.builder().tenantId(tenantId).username(username).emailAddress(generateEmailFromUsername(username)).password(TestData.password())
+                .firstName(firstName).lastName(lastName).build();
     }
 
     /**
@@ -48,31 +42,21 @@ public class UserTestDataBuilder {
         String username = generateUsernameFromName(firstName, lastName);
         String email = generateEmailFromUsername(username);
 
-        return CreateUserRequest.builder()
-                .tenantId(tenantId)
-                .username(username)
-                .emailAddress(email)
-                .password(TestData.password())
-                .firstName(firstName)
-                .lastName(lastName)
-                .build();
+        return CreateUserRequest.builder().tenantId(tenantId).username(username).emailAddress(email).password(TestData.password()).firstName(firstName).lastName(lastName).build();
     }
 
     /**
      * Generates a username from first name and last name.
      */
     private static String generateUsernameFromName(String firstName, String lastName) {
-        String base = (firstName + "." + lastName).toLowerCase(Locale.ROOT)
-                .replaceAll("[^a-z0-9.]", "");
+        String base = (firstName + "." + lastName).toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9.]", "");
         String unique = UUID.randomUUID().toString().substring(0, 3).replace("-", "");
         return base + "." + unique;
     }
 
     public static AssignRoleRequest buildAssignRoleRequest(String roleName) {
         // Note: roleId is the same as roleName in this system
-        return AssignRoleRequest.builder()
-                .roleId(roleName)
-                .build();
+        return AssignRoleRequest.builder().roleId(roleName).build();
     }
 
     /**

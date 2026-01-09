@@ -57,9 +57,9 @@ Automated restock requests ensure:
 - **Trigger:** Stock level falls below minimum threshold
 - **Calculation:** Requested quantity = Maximum - Current quantity
 - **Priority:**
-  - HIGH: Stock below 50% of minimum
-  - MEDIUM: Stock between 50-80% of minimum
-  - LOW: Stock between 80-100% of minimum
+    - HIGH: Stock below 50% of minimum
+    - MEDIUM: Stock between 50-80% of minimum
+    - LOW: Stock between 80-100% of minimum
 - **Deduplication:** Only one active restock request per product
 
 ---
@@ -748,6 +748,7 @@ void shouldPreventDuplicateRestockRequests() {
 ## Implementation Checklist
 
 ### Frontend
+
 - [ ] Create `RestockRequestsDashboard` page
 - [ ] Create `RestockRequestList` component
 - [ ] Create `RestockRequestFilters` component
@@ -756,6 +757,7 @@ void shouldPreventDuplicateRestockRequests() {
 - [ ] Test UI with mock data
 
 ### Backend - Domain Core
+
 - [ ] Create `RestockRequest` aggregate
 - [ ] Create `RestockPriority` enum
 - [ ] Create `RestockRequestStatus` enum
@@ -763,6 +765,7 @@ void shouldPreventDuplicateRestockRequests() {
 - [ ] Write unit tests
 
 ### Backend - Application Service
+
 - [ ] Create `GenerateRestockRequestCommand`
 - [ ] Create `GenerateRestockRequestCommandHandler`
 - [ ] Add deduplication logic
@@ -770,24 +773,28 @@ void shouldPreventDuplicateRestockRequests() {
 - [ ] Write unit tests
 
 ### Backend - Event Listener
+
 - [ ] Create `StockLevelEventListener`
 - [ ] Handle `StockLevelBelowMinimumEvent`
 - [ ] Trigger restock request generation
 - [ ] Test event consumption
 
 ### D365 Integration (Optional)
+
 - [ ] Create event listener in Integration Service
 - [ ] Implement D365 restock request API call
 - [ ] Add retry logic
 - [ ] Test D365 integration
 
 ### Gateway API Tests
+
 - [ ] Test restock request generation
 - [ ] Test duplicate prevention
 - [ ] Test priority calculation
 - [ ] Test D365 integration
 
 ### Documentation
+
 - [ ] Document restock logic
 - [ ] Document priority calculation
 - [ ] Update API documentation

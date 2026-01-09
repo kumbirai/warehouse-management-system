@@ -13,13 +13,13 @@ import org.springframework.stereotype.Repository;
 import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.application.service.port.repository.StockLevelThresholdRepository;
 import com.ccbsa.wms.stock.dataaccess.entity.StockLevelThresholdEntity;
 import com.ccbsa.wms.stock.dataaccess.jpa.StockLevelThresholdJpaRepository;
 import com.ccbsa.wms.stock.dataaccess.mapper.StockLevelThresholdEntityMapper;
-import com.ccbsa.wms.stock.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.stock.domain.core.entity.StockLevelThreshold;
 import com.ccbsa.wms.stock.domain.core.valueobject.StockLevelThresholdId;
 

@@ -12,9 +12,12 @@ const stockMovementSchema = z.object({
   sourceLocationId: z.string().min(1, 'Source location is required'),
   destinationLocationId: z.string().min(1, 'Destination location is required'),
   quantity: z.number().positive('Quantity must be positive').int('Quantity must be an integer'),
-  movementType: z.enum(['RECEIVING_TO_STORAGE', 'STORAGE_TO_PICKING', 'INTER_STORAGE', 'PICKING_TO_SHIPPING', 'OTHER'], {
-    required_error: 'Movement type is required',
-  }),
+  movementType: z.enum(
+    ['RECEIVING_TO_STORAGE', 'STORAGE_TO_PICKING', 'INTER_STORAGE', 'PICKING_TO_SHIPPING', 'OTHER'],
+    {
+      required_error: 'Movement type is required',
+    }
+  ),
   reason: z.enum(['PICKING', 'RESTOCKING', 'REORGANIZATION', 'DAMAGE', 'CORRECTION', 'OTHER'], {
     required_error: 'Reason is required',
   }),
@@ -175,4 +178,3 @@ export const StockMovementForm = ({
     </Paper>
   );
 };
-

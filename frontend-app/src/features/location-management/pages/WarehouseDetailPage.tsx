@@ -13,10 +13,7 @@ export const WarehouseDetailPage = () => {
   const { user } = useAuth();
 
   // Call hooks unconditionally before any early returns
-  const { warehouse, isLoading, error } = useWarehouse(
-    warehouseId || '',
-    user?.tenantId || ''
-  );
+  const { warehouse, isLoading, error } = useWarehouse(warehouseId || '', user?.tenantId || '');
 
   // Handle missing warehouse ID
   if (!warehouseId) {

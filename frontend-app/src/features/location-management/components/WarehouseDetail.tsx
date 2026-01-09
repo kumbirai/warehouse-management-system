@@ -65,7 +65,10 @@ export const WarehouseDetail = ({ warehouse }: WarehouseDetailProps) => {
                 Status
               </Typography>
               <Box mt={0.5}>
-                <StatusBadge label={warehouse.status} variant={getStatusVariant(warehouse.status)} />
+                <StatusBadge
+                  label={warehouse.status}
+                  variant={getStatusVariant(warehouse.status)}
+                />
               </Box>
             </Box>
 
@@ -124,7 +127,8 @@ export const WarehouseDetail = ({ warehouse }: WarehouseDetailProps) => {
                   Hierarchy
                 </Typography>
                 <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                  {warehouse.coordinates.zone}-{warehouse.coordinates.aisle}-{warehouse.coordinates.rack}-{warehouse.coordinates.level}
+                  {warehouse.coordinates.zone}-{warehouse.coordinates.aisle}-
+                  {warehouse.coordinates.rack}-{warehouse.coordinates.level}
                 </Typography>
               </Box>
             )}

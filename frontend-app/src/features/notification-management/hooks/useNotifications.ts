@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { notificationService } from '../services/notificationService';
-import { NotificationListFilters } from '../types/notification';
+import { Notification, NotificationListFilters } from '../types/notification';
 import { useAuth } from '../../../hooks/useAuth';
-import { Notification } from '../types/notification';
 
 export interface UseNotificationsResult {
   data?: {

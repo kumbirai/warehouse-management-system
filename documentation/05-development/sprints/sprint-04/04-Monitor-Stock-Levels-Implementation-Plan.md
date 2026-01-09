@@ -179,6 +179,7 @@
 ```
 
 **Stock Level Status Colors:**
+
 - NORMAL: Green (stock above minimum)
 - LOW: Yellow (stock approaching minimum)
 - CRITICAL: Red (stock below minimum)
@@ -980,28 +981,28 @@ GetStockLevelsByProductAndLocationQueryHandler
 ### Unit Tests
 
 1. **StockLevel Value Object Tests**
-   - Test creation with valid values
-   - Test validation (total = available + allocated)
-   - Test status calculation (NORMAL, LOW, CRITICAL, OUT_OF_STOCK)
-   - Test capacity checks
+    - Test creation with valid values
+    - Test validation (total = available + allocated)
+    - Test status calculation (NORMAL, LOW, CRITICAL, OUT_OF_STOCK)
+    - Test capacity checks
 
 2. **Query Handler Tests**
-   - GetStockLevelsByProductAndLocationQueryHandler
-   - GetLowStockItemsQueryHandler
-   - Test aggregation logic
-   - Test filtering by product/location
+    - GetStockLevelsByProductAndLocationQueryHandler
+    - GetLowStockItemsQueryHandler
+    - Test aggregation logic
+    - Test filtering by product/location
 
 ### Integration Tests
 
 1. **Event Listener Tests**
-   - Test stock level recalculation on events
-   - Test snapshot creation/update
-   - Verify eventual consistency
+    - Test stock level recalculation on events
+    - Test snapshot creation/update
+    - Verify eventual consistency
 
 2. **Repository Tests**
-   - Test snapshot persistence
-   - Test queries by product/location
-   - Test low stock queries
+    - Test snapshot persistence
+    - Test queries by product/location
+    - Test low stock queries
 
 ### Gateway API Tests
 

@@ -24,7 +24,7 @@ public class PickingCacheInvalidationListener extends CacheInvalidationEventList
 
     @KafkaListener(topics = "picking-events", groupId = "picking-cache-invalidation", containerFactory = "kafkaListenerContainerFactory")
     public void handlePickingEvent(Object event) {
-        if (event instanceof PickingListReceivedEvent received) {
+        if (event instanceof PickingListReceivedEvent) {
             // No invalidation - cache-aside pattern
             // Cache will be populated on next read
         } else if (event instanceof LoadPlannedEvent planned) {

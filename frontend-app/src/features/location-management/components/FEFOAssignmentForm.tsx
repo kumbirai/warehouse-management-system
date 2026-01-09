@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Checkbox,
@@ -12,7 +13,6 @@ import {
   TableHead,
   TableRow,
   Typography,
-  Alert,
 } from '@mui/material';
 import { StockItem } from '../../stock-management/types/stockManagement';
 import { AssignLocationsFEFORequest, StockItemAssignmentRequest } from '../types/location';
@@ -33,7 +33,7 @@ export const FEFOAssignmentForm = ({
   const [selectedStockItemIds, setSelectedStockItemIds] = useState<Set<string>>(new Set());
 
   // Filter to only unassigned stock items (no locationId)
-  const unassignedStockItems = stockItems.filter((item) => !item.locationId);
+  const unassignedStockItems = stockItems.filter(item => !item.locationId);
 
   const handleToggleSelection = (stockItemId: string) => {
     const newSelection = new Set(selectedStockItemIds);
@@ -49,7 +49,7 @@ export const FEFOAssignmentForm = ({
     if (selectedStockItemIds.size === unassignedStockItems.length) {
       setSelectedStockItemIds(new Set());
     } else {
-      setSelectedStockItemIds(new Set(unassignedStockItems.map((item) => item.stockItemId)));
+      setSelectedStockItemIds(new Set(unassignedStockItems.map(item => item.stockItemId)));
     }
   };
 
@@ -59,8 +59,8 @@ export const FEFOAssignmentForm = ({
     }
 
     const stockItemRequests: StockItemAssignmentRequest[] = unassignedStockItems
-      .filter((item) => selectedStockItemIds.has(item.stockItemId))
-      .map((item) => ({
+      .filter(item => selectedStockItemIds.has(item.stockItemId))
+      .map(item => ({
         stockItemId: item.stockItemId,
         quantity: item.quantity,
         expirationDate: item.expirationDate,
@@ -79,7 +79,8 @@ export const FEFOAssignmentForm = ({
   }
 
   const allSelected = selectedStockItemIds.size === unassignedStockItems.length;
-  const someSelected = selectedStockItemIds.size > 0 && selectedStockItemIds.size < unassignedStockItems.length;
+  const someSelected =
+    selectedStockItemIds.size > 0 && selectedStockItemIds.size < unassignedStockItems.length;
 
   return (
     <Paper sx={{ p: 3 }}>
@@ -87,8 +88,9 @@ export const FEFOAssignmentForm = ({
         Select Stock Items for FEFO Assignment
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Select unassigned stock items to automatically assign locations using the First-Expiring-First-Out
-        (FEFO) algorithm. The system will prioritize items with earlier expiration dates.
+        Select unassigned stock items to automatically assign locations using the
+        First-Expiring-First-Out (FEFO) algorithm. The system will prioritize items with earlier
+        expiration dates.
       </Typography>
 
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -126,7 +128,7 @@ export const FEFOAssignmentForm = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {unassignedStockItems.map((item) => (
+            {unassignedStockItems.map(item => (
               <TableRow
                 key={item.stockItemId}
                 hover
@@ -138,7 +140,7 @@ export const FEFOAssignmentForm = ({
                   <Checkbox
                     checked={selectedStockItemIds.has(item.stockItemId)}
                     onChange={() => handleToggleSelection(item.stockItemId)}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={e => e.stopPropagation()}
                     aria-label={`Select stock item ${item.stockItemId}`}
                   />
                 </TableCell>

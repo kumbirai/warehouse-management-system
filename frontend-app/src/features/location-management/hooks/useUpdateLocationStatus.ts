@@ -57,7 +57,11 @@ export const useUpdateLocationStatus = (): UseUpdateLocationStatusResult => {
         if (!reason || !reason.trim()) {
           throw new Error('Reason is required for blocking a location');
         }
-        const response = await locationStatusService.blockLocation(locationId, reason.trim(), tenantId);
+        const response = await locationStatusService.blockLocation(
+          locationId,
+          reason.trim(),
+          tenantId
+        );
         if (response.error) {
           throw new Error(response.error.message || 'Failed to block location');
         }

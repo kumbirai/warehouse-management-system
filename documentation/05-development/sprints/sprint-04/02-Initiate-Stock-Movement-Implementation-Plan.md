@@ -42,6 +42,7 @@
 **Component:** `InitiateStockMovementForm.tsx`
 
 **Features:**
+
 - Source location selector (autocomplete)
 - Destination location selector (autocomplete)
 - Stock item selector with available quantity display
@@ -61,6 +62,7 @@
 7. System creates movement and displays confirmation
 
 **Form Validation:**
+
 - Source and destination cannot be same
 - Quantity must be positive and ≤ available quantity
 - Destination must have sufficient capacity

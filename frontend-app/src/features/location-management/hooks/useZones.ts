@@ -2,7 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { locationService } from '../services/locationService';
 import { LocationHierarchyQueryResult } from '../types/location';
 
-export const useZones = (warehouseId: string | null | undefined, tenantId: string | null | undefined) => {
+export const useZones = (
+  warehouseId: string | null | undefined,
+  tenantId: string | null | undefined
+) => {
   return useQuery<LocationHierarchyQueryResult, Error>({
     queryKey: ['zones', warehouseId, tenantId],
     queryFn: async () => {

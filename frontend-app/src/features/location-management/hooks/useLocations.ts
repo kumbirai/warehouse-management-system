@@ -211,7 +211,7 @@ export const useLocations = (filters: LocationListFilters): UseLocationsResult =
     if (filtersKeyRef.current === filtersKey) {
       return;
     }
-    
+
     filtersKeyRef.current = filtersKey;
     fetchLocations();
 

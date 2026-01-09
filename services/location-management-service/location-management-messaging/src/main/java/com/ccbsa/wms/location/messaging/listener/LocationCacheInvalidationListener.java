@@ -40,7 +40,7 @@ public class LocationCacheInvalidationListener extends CacheInvalidationEventLis
     @KafkaListener(topics = "location-management-events", groupId = "location-management-service-cache-invalidation", containerFactory =
             "externalEventKafkaListenerContainerFactory")
     public void handleLocationEvent(Object event) {
-        if (event instanceof LocationCreatedEvent created) {
+        if (event instanceof LocationCreatedEvent) {
             // Location created - evict hierarchy caches to reflect new location in hierarchy
             log.debug("Location created, evicting hierarchy caches");
             hierarchyCacheInvalidationPort.evictAll();

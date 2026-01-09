@@ -68,9 +68,9 @@
 1. User navigates to "Stock Management" → "Stock Items" → "Assign Location"
 2. User selects stock item(s) to assign
 3. System shows available locations with:
-   - Location code and barcode
-   - Current capacity and available space
-   - FEFO suggestions (if applicable)
+    - Location code and barcode
+    - Current capacity and available space
+    - FEFO suggestions (if applicable)
 4. User selects location(s) or confirms FEFO suggestions
 5. System validates assignment (capacity, availability)
 6. User confirms assignment

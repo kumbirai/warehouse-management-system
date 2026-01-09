@@ -1,8 +1,11 @@
 package com.ccbsa.wms.picking.application.dto.query;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,6 +16,7 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Defensive copies are created in callers before passing to builder, and getters return defensive copies")
 public class PickingListQueryResultDTO {
     private final String id;
     private final String pickingListReference;
@@ -22,20 +26,48 @@ public class PickingListQueryResultDTO {
     private final int loadCount;
     private final int totalOrderCount;
     private final String notes;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Defensive copies are created in callers before passing to builder")
     private final List<LoadQueryResultDTO> loads;
+
+    /**
+     * Returns a defensive copy of the loads list to prevent external modification.
+     *
+     * @return unmodifiable copy of the loads list
+     */
+    public List<LoadQueryResultDTO> getLoads() {
+        if (loads == null) {
+            return Collections.emptyList();
+        }
+        return Collections.unmodifiableList(new ArrayList<>(loads));
+    }
 
     @Getter
     @Builder
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Defensive copies are created in callers before passing to builder, and getter returns defensive copy")
     public static class LoadQueryResultDTO {
         private final String loadId;
         private final String loadNumber;
         private final String status;
         private final int orderCount;
+        @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Defensive copies are created in callers before passing to builder")
         private final List<OrderQueryResultDTO> orders;
+
+        /**
+         * Returns a defensive copy of the orders list to prevent external modification.
+         *
+         * @return unmodifiable copy of the orders list
+         */
+        public List<OrderQueryResultDTO> getOrders() {
+            if (orders == null) {
+                return Collections.emptyList();
+            }
+            return Collections.unmodifiableList(new ArrayList<>(orders));
+        }
     }
 
     @Getter
     @Builder
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Defensive copies are created in callers before passing to builder, and getter returns defensive copy")
     public static class OrderQueryResultDTO {
         private final String orderId;
         private final String orderNumber;
@@ -43,7 +75,20 @@ public class PickingListQueryResultDTO {
         private final String customerName;
         private final String priority;
         private final String status;
+        @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Defensive copies are created in callers before passing to builder")
         private final List<OrderLineItemQueryResultDTO> lineItems;
+
+        /**
+         * Returns a defensive copy of the line items list to prevent external modification.
+         *
+         * @return unmodifiable copy of the line items list
+         */
+        public List<OrderLineItemQueryResultDTO> getLineItems() {
+            if (lineItems == null) {
+                return Collections.emptyList();
+            }
+            return Collections.unmodifiableList(new ArrayList<>(lineItems));
+        }
     }
 
     @Getter

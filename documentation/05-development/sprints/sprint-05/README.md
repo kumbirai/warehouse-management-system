@@ -11,7 +11,8 @@
 
 ## Overview
 
-Sprint 5 focuses on implementing picking list management to enable warehouse operators to efficiently process picking operations. This sprint builds on the foundation laid in Sprints 1-4, adding critical picking management capabilities.
+Sprint 5 focuses on implementing picking list management to enable warehouse operators to efficiently process picking operations. This sprint builds on the foundation laid in
+Sprints 1-4, adding critical picking management capabilities.
 
 ### Key Features
 

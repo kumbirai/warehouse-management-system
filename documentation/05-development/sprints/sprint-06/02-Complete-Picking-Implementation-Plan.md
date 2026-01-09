@@ -742,6 +742,7 @@ void shouldRejectCompletionWithPendingTasks() {
 ## Implementation Checklist
 
 ### Frontend
+
 - [ ] Create `PickingListCompletionPage` component
 - [ ] Create `PickingListSummary` component
 - [ ] Create `useCompletePickingList` hook
@@ -750,6 +751,7 @@ void shouldRejectCompletionWithPendingTasks() {
 - [ ] Test UI with mock data
 
 ### Backend - Domain Core
+
 - [ ] Add `complete()` method to `PickingList` aggregate
 - [ ] Create `PickingListStatus` enum
 - [ ] Create `PickingCompletedEvent` domain event
@@ -758,32 +760,38 @@ void shouldRejectCompletionWithPendingTasks() {
 - [ ] Write unit tests
 
 ### Backend - Application Service
+
 - [ ] Create `CompletePickingListCommand`
 - [ ] Create `CompletePickingListCommandHandler`
 - [ ] Add task completion validation
 - [ ] Write unit tests
 
 ### Backend - Application Layer
+
 - [ ] Create/update `PickingListCommandController`
 - [ ] Add endpoint: `POST /api/v1/picking/picking-lists/{id}/complete`
 - [ ] Add authentication
 - [ ] Add exception handling
 
 ### Backend - Data Access
+
 - [ ] Update `PickingListEntity` with completion fields
 - [ ] Update `PickingListEntityMapper`
 - [ ] Add database migration script
 
 ### Event Consumers (Returns Service)
+
 - [ ] Create listener for `PickingCompletedEvent`
 - [ ] Prepare for potential returns processing
 
 ### Gateway API Tests
+
 - [ ] Test successful completion
 - [ ] Test rejection with pending tasks
 - [ ] Test rejection when already completed
 
 ### Documentation
+
 - [ ] Update API documentation
 - [ ] Document completion workflow
 - [ ] Create user guide

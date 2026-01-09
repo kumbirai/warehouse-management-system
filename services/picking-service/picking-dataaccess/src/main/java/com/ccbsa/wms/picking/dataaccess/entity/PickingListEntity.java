@@ -54,6 +54,12 @@ public class PickingListEntity {
     @Column(name = "picking_list_reference", length = 50)
     private String pickingListReference;
 
+    @Column(name = "completed_at")
+    private ZonedDateTime completedAt;
+
+    @Column(name = "completed_by_user_id", length = 255)
+    private String completedByUserId;
+
     @Version
     @Column(name = "version", nullable = false)
     private Long version;

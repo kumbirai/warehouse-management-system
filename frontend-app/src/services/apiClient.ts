@@ -244,7 +244,10 @@ apiClient.interceptors.response.use(
 
       // Reset circuit breaker if enough time has passed
       const now = Date.now();
-      if (circuitBreaker.isOpen && now - circuitBreaker.lastFailureTime > CIRCUIT_BREAKER_CONFIG.resetTimeout) {
+      if (
+        circuitBreaker.isOpen &&
+        now - circuitBreaker.lastFailureTime > CIRCUIT_BREAKER_CONFIG.resetTimeout
+      ) {
         logger.info('Circuit breaker reset, allowing retries again', { url: urlKey });
         circuitBreaker.isOpen = false;
         circuitBreaker.failures = 0;
@@ -278,17 +281,20 @@ apiClient.interceptors.response.use(
       // Retry if under max retries
       if (retryCount < maxRetries) {
         originalRequest._retryCount = retryCount + 1;
-        
+
         // Exponential backoff with jitter to prevent thundering herd
         const baseDelay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
         const jitter = Math.random() * 1000; // Random jitter up to 1s
         const backoffDelay = baseDelay + jitter;
 
-        logger.warn(`Retrying request after ${Math.round(backoffDelay)}ms (attempt ${retryCount + 1}/${maxRetries})`, {
-          url: originalRequest.url,
-          status: error.response.status,
-          circuitBreakerFailures: circuitBreaker.failures,
-        });
+        logger.warn(
+          `Retrying request after ${Math.round(backoffDelay)}ms (attempt ${retryCount + 1}/${maxRetries})`,
+          {
+            url: originalRequest.url,
+            status: error.response.status,
+            circuitBreakerFailures: circuitBreaker.failures,
+          }
+        );
 
         // Store updated circuit breaker state
         circuitBreakers.set(urlKey, circuitBreaker);
@@ -304,7 +310,7 @@ apiClient.interceptors.response.use(
         retryCount,
         circuitBreakerFailures: circuitBreaker.failures,
       });
-      
+
       // Update circuit breaker
       circuitBreakers.set(urlKey, circuitBreaker);
       return Promise.reject(error);

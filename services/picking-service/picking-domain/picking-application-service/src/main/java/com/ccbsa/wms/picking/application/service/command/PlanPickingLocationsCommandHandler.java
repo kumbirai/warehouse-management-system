@@ -91,9 +91,13 @@ public class PlanPickingLocationsCommandHandler {
             load.clearDomainEvents();
         }
 
-        // 11. Return result
+        // 11. Return result (create defensive copy of task IDs list)
         List<PickingTaskId> taskIds = pickingTasks.stream().map(PickingTask::getId).toList();
-        return PlanPickingLocationsResult.builder().loadId(load.getId()).pickingTaskIds(taskIds).totalTasks(pickingTasks.size()).build();
+        return PlanPickingLocationsResult.builder()
+                .loadId(load.getId())
+                .pickingTaskIds(new java.util.ArrayList<>(taskIds))
+                .totalTasks(pickingTasks.size())
+                .build();
     }
 
     private Map<String, Integer> collectProductQuantities(Load load) {

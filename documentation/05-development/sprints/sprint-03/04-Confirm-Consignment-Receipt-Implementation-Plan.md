@@ -66,11 +66,11 @@
 
 1. User navigates to "Stock Management" → "Consignments" → Select consignment
 2. System displays consignment details:
-   - Consignment reference
-   - Warehouse ID
-   - Received date
-   - Line items with quantities and expiration dates
-   - Current status (RECEIVED)
+    - Consignment reference
+    - Warehouse ID
+    - Received date
+    - Line items with quantities and expiration dates
+    - Current status (RECEIVED)
 3. User reviews consignment details
 4. User clicks "Confirm Consignment" button
 5. System validates consignment is in RECEIVED status

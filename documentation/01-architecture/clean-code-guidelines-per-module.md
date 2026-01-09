@@ -2,9 +2,11 @@
 
 ## Overview
 
-This document provides comprehensive clean code guidelines and things to look out for in each module of the microservice architecture. These guidelines are based on Domain-Driven Design (DDD), Clean Hexagonal Architecture, CQRS, and Event-Driven Design principles as defined in the Service Architecture Document.
+This document provides comprehensive clean code guidelines and things to look out for in each module of the microservice architecture. These guidelines are based on Domain-Driven
+Design (DDD), Clean Hexagonal Architecture, CQRS, and Event-Driven Design principles as defined in the Service Architecture Document.
 
 **Related Documents:**
+
 - [Mandated Implementation Template Guide](../guide/mandated-Implementation-template-guide.md)
 - [Service Architecture Document](Service_Architecture_Document.md)
 - [Domain Core Templates](../guide/01-mandated-domain-core-templates.md)
@@ -36,6 +38,7 @@ This document provides comprehensive clean code guidelines and things to look ou
 ### Domain Core Modules (`*-domain-core`)
 
 **NO LOMBOK** - Pure Java implementation required:
+
 - Domain core must remain framework-agnostic
 - Manual builder patterns required
 - Manual getters/setters required
@@ -45,6 +48,7 @@ This document provides comprehensive clean code guidelines and things to look ou
 ### All Other Modules
 
 **LOMBOK RECOMMENDED** - Use Lombok to reduce boilerplate:
+
 - Application Service (`*-application-service`) - Commands, queries, results
 - Application Layer (`*-application`) - DTOs, mappers
 - Data Access (`*-dataaccess`) - JPA entities, adapters
@@ -52,6 +56,7 @@ This document provides comprehensive clean code guidelines and things to look ou
 - Container (`*-container`) - Configuration classes
 
 **Recommended Lombok Annotations:**
+
 - `@Getter` / `@Setter` - For fields requiring accessors
 - `@Builder` - For complex object construction
 - `@NoArgsConstructor` / `@AllArgsConstructor` - For constructors
@@ -61,6 +66,7 @@ This document provides comprehensive clean code guidelines and things to look ou
 - `@RequiredArgsConstructor` - For dependency injection
 
 **Lombok Anti-Patterns to Avoid:**
+
 - `@Data` - Too broad, use specific annotations instead
 - `@Value` - Use for truly immutable classes only
 - Avoid Lombok in classes with complex business logic validation
@@ -114,10 +120,13 @@ public class CreateConsignmentResultDTO {
 ```
 
 ---
+
 ## Domain Core Module
 
 ### Module Purpose
-The domain core module (`{service}-domain/{service}-domain-core`) contains pure business logic and domain entities. It is the innermost layer with **NO external dependencies** except `common-domain`.
+
+The domain core module (`{service}-domain/{service}-domain-core`) contains pure business logic and domain entities. It is the innermost layer with **NO external dependencies**
+except `common-domain`.
 
 ### Package Structure
 
@@ -133,6 +142,7 @@ com.ccbsa.wms.{service}.domain.core/
 ### Clean Code Principles
 
 #### ✅ **DO: Pure Java Implementation**
+
 - Use **only pure Java** with no framework dependencies
 - **NO Lombok annotations** - implement manually (Builder, getters, toString)
 - **NO Spring Boot dependencies** in domain core
@@ -140,6 +150,7 @@ com.ccbsa.wms.{service}.domain.core/
 - Use `String.format()` for `toString()` methods instead of Lombok
 
 **Example:**
+
 ```java
 // ✅ CORRECT: Manual Builder pattern
 public static Builder builder() {
@@ -169,6 +180,7 @@ public String toString() {
 ```
 
 #### ✅ **DO: Rich Domain Model**
+
 - Encapsulate business logic within entities
 - Use value objects for complex data types
 - Implement business invariants in domain objects
@@ -176,6 +188,7 @@ public String toString() {
 - Business methods should use **ubiquitous language** from the domain
 
 **Example:**
+
 ```java
 // ✅ CORRECT: Rich domain entity with business logic
 public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
@@ -201,6 +214,7 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
 ```
 
 #### ✅ **DO: Correct Entity Inheritance**
+
 - Extend `TenantAwareAggregateRoot<ID>` for tenant-aware aggregates
 - Extend `AggregateRoot<ID>` for non-tenant aggregates
 - **Use inherited `getId()` and `setId(ID id)` methods from BaseEntity**
@@ -209,6 +223,7 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
 - **NEVER declare `private final ID id` field** - ID is managed by BaseEntity
 
 **Example:**
+
 ```java
 // ✅ CORRECT: Proper entity inheritance
 public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
@@ -236,16 +251,18 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
 ```
 
 #### ❌ **AVOID: Incorrect Entity Inheritance**
+
 - **Problem**: Wrong inheritance pattern or ID field management
 - **Signs**:
-  - `extends AggregateRoot<ID>` instead of `TenantAwareAggregateRoot<ID>` for tenant-aware entities
-  - `private final ConsignmentId id` field declaration
-  - Implementing custom `getId()` method instead of using inherited one
-  - Using `this.id` directly instead of `this.getId()`
-  - Setting `this.id = builder.id` instead of `super.setId(builder.id)`
+    - `extends AggregateRoot<ID>` instead of `TenantAwareAggregateRoot<ID>` for tenant-aware entities
+    - `private final ConsignmentId id` field declaration
+    - Implementing custom `getId()` method instead of using inherited one
+    - Using `this.id` directly instead of `this.getId()`
+    - Setting `this.id = builder.id` instead of `super.setId(builder.id)`
 - **Solution**: Follow correct inheritance pattern with proper ID management
 
 **Example:**
+
 ```java
 // ❌ WRONG: Incorrect entity inheritance
 public class StockConsignment extends AggregateRoot<ConsignmentId> {
@@ -263,16 +280,19 @@ public class StockConsignment extends AggregateRoot<ConsignmentId> {
 ```
 
 #### ❌ **AVOID: God Entities**
+
 - **Problem**: Entities with too many responsibilities
 - **Signs**: Large classes with 20+ fields, multiple concerns
 - **Solution**: Split into multiple focused entities or use composition
 
 #### ❌ **AVOID: Primitive Obsession**
+
 - **Problem**: Using primitives instead of value objects
 - **Signs**: `String email`, `String phoneNumber`, `int quantity`, `LocalDate expirationDate`
 - **Solution**: Create value objects like `Email`, `PhoneNumber`, `Quantity`, `ExpirationDate`
 
 **Example:**
+
 ```java
 // ❌ WRONG: Primitive obsession
 public class StockConsignment {
@@ -290,11 +310,13 @@ public class StockConsignment {
 ```
 
 #### ❌ **AVOID: Anemic Domain Model**
+
 - **Problem**: Entities with only getters/setters, no business logic
 - **Signs**: Data containers without behavior
 - **Solution**: Move business logic into entities
 
 **Example:**
+
 ```java
 // ❌ WRONG: Anemic domain model
 public class StockConsignment {
@@ -310,14 +332,16 @@ public class StockConsignment {
 ```
 
 #### ❌ **AVOID: Leaky Abstractions**
+
 - **Problem**: Domain objects exposing implementation details
 - **Signs**:
-  - Public setters for internal state
-  - Exposing collections directly (not defensive copies)
-  - JPA annotations in domain entities
+    - Public setters for internal state
+    - Exposing collections directly (not defensive copies)
+    - JPA annotations in domain entities
 - **Solution**: Use proper encapsulation and business methods
 
 **Example:**
+
 ```java
 // ❌ WRONG: Leaky abstraction
 public List<ConsignmentLine> getLines() {
@@ -333,6 +357,7 @@ public List<ConsignmentLine> getLines() {
 ### Code Examples
 
 #### ✅ **Good: Rich Domain Entity**
+
 ```java
 public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
     // NO ID field - inherited from BaseEntity
@@ -469,6 +494,7 @@ public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
 ```
 
 #### ✅ **Good: Value Object**
+
 ```java
 public final class ExpirationDate {
     private final LocalDate value;
@@ -531,10 +557,13 @@ public final class ExpirationDate {
 8. **Incorrect Inheritance**: Wrong base class or manual ID field management
 
 ---
+
 ## Application Service Module
 
 ### Module Purpose
-The application service module (`{service}-domain/{service}-application-service`) orchestrates use cases and defines port interfaces. It handles transaction boundaries and coordinates between different layers.
+
+The application service module (`{service}-domain/{service}-application-service`) orchestrates use cases and defines port interfaces. It handles transaction boundaries and
+coordinates between different layers.
 
 ### Package Structure
 
@@ -554,12 +583,14 @@ com.ccbsa.wms.{service}.application.service/
 ### Clean Code Principles
 
 #### ✅ **DO: Lombok Usage (RECOMMENDED)**
+
 - **Use Lombok for all DTOs** (Commands, Queries, Results) to reduce boilerplate
 - **Handlers**: Use `@Slf4j` for logging and `@RequiredArgsConstructor` for dependency injection
 - **DTOs**: Use `@Getter`, `@Builder`, `@ToString`, `@EqualsAndHashCode` as appropriate
 - **Anti-Patterns**: Avoid `@Data` (too broad), avoid `@Value` (only for truly immutable classes)
 
 **Example:**
+
 ```java
 // ✅ CORRECT: Command handler with Lombok
 @Slf4j
@@ -597,12 +628,14 @@ public class ConfirmConsignmentResult {
 ```
 
 #### ✅ **DO: Single Responsibility**
+
 - Each handler should handle one use case
 - Clear separation of concerns (command vs query)
 - Focused, cohesive functionality
 - One transaction per handler method
 
 **Example:**
+
 ```java
 // ✅ CORRECT: Focused handler with single responsibility
 @Component
@@ -644,13 +677,15 @@ public class ConfirmConsignmentCommandHandler {
 ```
 
 #### ✅ **DO: Use Case Naming**
+
 - Use "Handler" suffix for implementation classes
 - Use descriptive names that reflect the use case
 - Follow CQRS naming conventions:
-  - Commands: `{Action}{DomainObject}CommandHandler`
-  - Queries: `Get{DomainObject}QueryHandler` or `List{DomainObject}sQueryHandler`
+    - Commands: `{Action}{DomainObject}CommandHandler`
+    - Queries: `Get{DomainObject}QueryHandler` or `List{DomainObject}sQueryHandler`
 
 #### ✅ **DO: Transaction Management**
+
 - Keep transactions as small as possible
 - Publish events **after successful commits**
 - Handle rollback scenarios properly
@@ -658,23 +693,26 @@ public class ConfirmConsignmentCommandHandler {
 - Use `@Transactional(readOnly = true)` for query handlers
 
 #### ✅ **DO: Error Handling**
+
 - Use specific exception types
 - Provide meaningful error messages
 - Log errors appropriately
 - Don't swallow exceptions
 
 #### ✅ **DO: CQRS Separation**
+
 - **Command handlers**:
-  - Use **repository ports** for aggregate persistence (write model)
-  - Return command-specific results (NOT full domain entities)
-  - Publish domain events after successful commit
+    - Use **repository ports** for aggregate persistence (write model)
+    - Return command-specific results (NOT full domain entities)
+    - Publish domain events after successful commit
 - **Query handlers**:
-  - Use **data ports** for read model access (projections)
-  - Return optimized query results (denormalized DTOs)
-  - Read-only transactions
-  - NO event publishing
+    - Use **data ports** for read model access (projections)
+    - Return optimized query results (denormalized DTOs)
+    - Read-only transactions
+    - NO event publishing
 
 **Example:**
+
 ```java
 // ✅ CORRECT: Query handler using data port (read model)
 @Component
@@ -701,16 +739,19 @@ public class GetConsignmentQueryHandler {
 ```
 
 #### ❌ **AVOID: Fat Handlers**
+
 - **Problem**: Handlers with too many responsibilities
 - **Signs**: Large classes with multiple concerns, complex logic
 - **Solution**: Split into multiple focused handlers
 
 #### ❌ **AVOID: Business Logic in Handlers**
+
 - **Problem**: Business logic in application layer
 - **Signs**: Complex calculations, validation logic (use ApplicationValidator instead)
 - **Solution**: Move to domain layer
 
 **Example:**
+
 ```java
 // ❌ WRONG: Business logic in handler
 @Component
@@ -753,21 +794,25 @@ public class ConfirmConsignmentCommandHandler {
 ```
 
 #### ❌ **AVOID: Direct Database Access**
+
 - **Problem**: Bypassing domain layer
 - **Signs**: Direct JPA repository calls, SQL queries
 - **Solution**: Use domain services and repositories
 
 #### ❌ **AVOID: Tight Coupling**
+
 - **Problem**: Hard dependencies on concrete implementations
 - **Signs**: Direct instantiation, concrete class references
 - **Solution**: Use dependency injection and interfaces (ports)
 
 #### ❌ **AVOID: Returning Domain Entities from Commands**
+
 - **Problem**: Violates CQRS principles
 - **Signs**: Command handlers returning full aggregates
 - **Solution**: Return command-specific result DTOs
 
 **Example:**
+
 ```java
 // ❌ WRONG: Returning domain entity from command
 @Transactional
@@ -797,12 +842,14 @@ public ConfirmConsignmentResult handle(ConfirmConsignmentCommand command) {
 ```
 
 #### ❌ **AVOID: Query Handlers Using Repository Ports**
+
 - **Problem**: Queries accessing write model directly
 - **Signs**: Query handlers injecting repository ports instead of data ports
 - **Solution**: Use data ports for read models (projections)
 - **Exception**: Critical queries requiring immediate consistency may use repository ports
 
 **Example:**
+
 ```java
 // ❌ WRONG: Query handler using repository port (write model)
 @Component
@@ -841,6 +888,7 @@ public class GetConsignmentQueryHandler {
 - **Event Publisher Ports** (`port.messaging`): For event publishing
 
 **Example:**
+
 ```java
 // ✅ CORRECT: Repository port in application service layer
 package com.ccbsa.wms.stock.application.service.port.repository;
@@ -869,7 +917,9 @@ public interface StockConsignmentRepository {
 ## Data Access Module
 
 ### Module Purpose
-The data access module (`{service}-dataaccess`) contains database adapters and implements repository interfaces. It handles data persistence and retrieval with **mandatory** distributed caching.
+
+The data access module (`{service}-dataaccess`) contains database adapters and implements repository interfaces. It handles data persistence and retrieval with **mandatory**
+distributed caching.
 
 ### Package Structure
 
@@ -893,11 +943,13 @@ com.ccbsa.wms.{service}.dataaccess/
 ### Clean Code Principles
 
 #### ✅ **DO: Lombok Usage (RECOMMENDED)**
+
 - **JPA Entities**: Use `@Getter`, `@Setter`, `@NoArgsConstructor` for JPA entities
 - **Adapters and Mappers**: Use `@Slf4j` for logging and `@RequiredArgsConstructor` for dependency injection
 - **Anti-Patterns**: Avoid `@Data` on JPA entities (can cause issues with lazy loading and equals/hashCode)
 
 **Example:**
+
 ```java
 // ✅ CORRECT: JPA entity with Lombok
 @Entity
@@ -933,12 +985,14 @@ public class StockConsignmentEntityMapper {
 ```
 
 #### ✅ **DO: Repository Pattern**
+
 - Implement repository interfaces from application service layer
 - Use proper naming conventions (`{DomainObject}RepositoryAdapter`)
 - Handle exceptions appropriately
 - **CRITICAL**: All repository adapters MUST set PostgreSQL `search_path` for schema-per-tenant pattern
 
 **Example:**
+
 ```java
 @Repository
 public class StockConsignmentRepositoryAdapter implements StockConsignmentRepository {
@@ -1013,6 +1067,7 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
 ```
 
 #### ✅ **DO: Entity Mapping**
+
 - Use proper JPA annotations
 - Implement proper equals/hashCode
 - Handle lazy loading correctly
@@ -1020,6 +1075,7 @@ public class StockConsignmentRepositoryAdapter implements StockConsignmentReposi
 - Use `@Table(schema = "tenant_schema")` for tenant-aware entities
 
 **Example:**
+
 ```java
 @Entity
 @Table(name = "stock_consignments", schema = "tenant_schema")
@@ -1054,12 +1110,14 @@ public class StockConsignmentEntity {
 ```
 
 #### ✅ **DO: Optimistic Locking with Version Fields**
+
 - Use `@Version` annotation for optimistic locking
 - **CRITICAL**: Never set `version = 0` for new entities in mapper
 - Always check entity existence before saving
 - Preserve JPA managed state when updating existing entities
 
 **Example:**
+
 ```java
 // ✅ CORRECT: Entity mapper handling version correctly
 @Component
@@ -1099,6 +1157,7 @@ public class StockConsignmentEntityMapper {
 ```
 
 #### ✅ **DO: Cached Repository Adapters (MANDATORY)**
+
 - **ALL repository adapters MUST have cached decorator**
 - Use decorator pattern extending `CachedRepositoryDecorator`
 - Annotate with `@Primary` to ensure injection over base adapter
@@ -1106,6 +1165,7 @@ public class StockConsignmentEntityMapper {
 - Implement event-driven cache invalidation
 
 **Example:**
+
 ```java
 @Repository
 @Primary  // ✅ Ensures this adapter is injected instead of base adapter
@@ -1155,47 +1215,56 @@ public class CachedStockConsignmentRepositoryAdapter
 ```
 
 #### ✅ **DO: Query Optimization**
+
 - Use appropriate query methods
 - Implement pagination for large datasets
 - Use projections for read-only operations
 - Create indexes for common queries
 
 #### ✅ **DO: Transaction Management**
+
 - Use appropriate transaction boundaries
 - Handle rollback scenarios
 - Use read-only transactions for queries
 
 #### ❌ **AVOID: Anemic Repositories**
+
 - **Problem**: Repositories with only CRUD operations
 - **Signs**: Generic save/find/delete methods only
 - **Solution**: Add domain-specific query methods
 
 #### ❌ **AVOID: N+1 Query Problem**
+
 - **Problem**: Multiple database calls for related data
 - **Signs**: Loops with database calls, lazy loading issues
 - **Solution**: Use joins, projections, or batch loading
 
 #### ❌ **AVOID: Leaky Abstractions**
+
 - **Problem**: Exposing database-specific details
 - **Signs**: JPA annotations in domain objects, SQL in repositories
 - **Solution**: Use proper mapping and abstraction
 
 #### ❌ **AVOID: Fat Repositories**
+
 - **Problem**: Repositories with too many responsibilities
 - **Signs**: Large classes with multiple concerns
 - **Solution**: Split into focused repositories
 
 #### ❌ **AVOID: Missing Schema-Per-Tenant Support**
+
 - **Problem**: Not setting `search_path` for tenant-specific queries
 - **Signs**: Queries returning data from wrong tenant
 - **Solution**: Always set `search_path` before querying by tenantId
 
 #### ❌ **AVOID: Missing Cached Decorator**
+
 - **Problem**: Repository adapter without cached decorator
 - **Signs**: No `Cached{DomainObject}RepositoryAdapter` class
 - **Solution**: Create cached decorator with `@Primary` annotation
 
 #### ❌ **AVOID: Version Field Errors**
+
 - **Problem**: Setting `version = 0` for new entities causes optimistic locking errors
 - **Signs**: "Row was updated or deleted by another transaction" errors
 - **Solution**: Don't set version for new entities, let Hibernate manage it
@@ -1218,6 +1287,7 @@ public class CachedStockConsignmentRepositoryAdapter
 ## Application Module
 
 ### Module Purpose
+
 The application module (`{service}-application`) contains REST API controllers and handles HTTP requests. It implements CQRS patterns with separate command and query controllers.
 
 ### Package Structure
@@ -1236,12 +1306,14 @@ com.ccbsa.wms.{service}.application/
 ### Clean Code Principles
 
 #### ✅ **DO: Lombok Usage (MANDATORY)**
+
 - **Controllers**: Use `@Slf4j` for logging and `@RequiredArgsConstructor` for dependency injection
 - **DTOs**: Use `@Getter`, `@Setter`, `@NoArgsConstructor`, `@AllArgsConstructor`, `@Builder` for all DTOs
 - **Mappers**: Use `@Component` and `@RequiredArgsConstructor` if mapper has dependencies
 - **Anti-Patterns**: Avoid `@Data` (too broad), prefer specific annotations
 
 **Example:**
+
 ```java
 // ✅ CORRECT: Controller with Lombok
 @Slf4j
@@ -1277,12 +1349,14 @@ public class StockConsignmentDTOMapper {
 ```
 
 #### ✅ **DO: CQRS Separation**
+
 - Separate command and query controllers
 - Use appropriate HTTP methods (POST/PUT/DELETE for commands, GET for queries)
 - Follow REST conventions
 - Return standardized API responses
 
 **Example:**
+
 ```java
 // ✅ CORRECT: Separate command and query controllers
 @RestController
@@ -1331,12 +1405,14 @@ public class StockConsignmentQueryController {
 ```
 
 #### ✅ **DO: Response Standardization**
+
 - Use standardized `ApiResponse<T>` format
 - Include proper HTTP status codes
 - Provide consistent error handling
 - Use `ApiResponseBuilder` for creating responses
 
 **Example:**
+
 ```java
 // ✅ CORRECT: Standardized responses
 return ApiResponseBuilder.ok(dto);                    // 200 OK
@@ -1345,18 +1421,21 @@ return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error); // 404 Not Found
 ```
 
 #### ✅ **DO: Security Implementation**
+
 - Use method-level security with `@PreAuthorize`
 - Validate user permissions
 - Extract tenant context from headers (`X-Tenant-Id`)
 - Implement correlation ID tracking (`X-Correlation-Id`)
 
 #### ✅ **DO: Global Exception Handling**
+
 - **MANDATORY**: Extend `BaseGlobalExceptionHandler` from `common-application`
 - Add service-specific exception handlers
 - Return consistent error responses using `ApiError` and `ApiResponse`
 - Include request ID and path in error responses
 
 **Example:**
+
 ```java
 @RestControllerAdvice
 public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
@@ -1380,22 +1459,26 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
 ```
 
 #### ✅ **DO: API Documentation**
+
 - Use OpenAPI annotations (`@Tag`, `@Operation`)
 - Document all endpoints with meaningful descriptions
 - Include parameter descriptions
 - Document response types
 
 #### ❌ **AVOID: Fat Controllers**
+
 - **Problem**: Controllers with too many responsibilities
 - **Signs**: Large classes with multiple concerns
 - **Solution**: Split into focused controllers (command vs query)
 
 #### ❌ **AVOID: Business Logic in Controllers**
+
 - **Problem**: Business logic in presentation layer
 - **Signs**: Complex calculations, validation logic
 - **Solution**: Move to application service layer
 
 **Example:**
+
 ```java
 // ❌ WRONG: Business logic in controller
 @PostMapping("/{id}/confirm")
@@ -1426,16 +1509,19 @@ public ResponseEntity<ApiResponse<ConfirmConsignmentResultDTO>> confirmConsignme
 ```
 
 #### ❌ **AVOID: Direct Database Access**
+
 - **Problem**: Bypassing application service layer
 - **Signs**: Direct repository calls, SQL queries
 - **Solution**: Use application service layer
 
 #### ❌ **AVOID: Exposing Domain Entities**
+
 - **Problem**: Returning domain entities directly in API responses
 - **Signs**: Controllers returning aggregates
 - **Solution**: Use DTOs as anti-corruption layer
 
 **Example:**
+
 ```java
 // ❌ WRONG: Exposing domain entity
 @GetMapping("/{id}")
@@ -1457,6 +1543,7 @@ public ResponseEntity<ApiResponse<ConsignmentQueryResultDTO>> getConsignment(
 ```
 
 #### ❌ **AVOID: Inconsistent Error Handling**
+
 - **Problem**: Different error handling patterns
 - **Signs**: Inconsistent error responses, different status codes
 - **Solution**: Use centralized global exception handler extending `BaseGlobalExceptionHandler`
@@ -1487,6 +1574,7 @@ public ResponseEntity<ApiResponse<ConsignmentQueryResultDTO>> getConsignment(
 ## Messaging Module
 
 ### Module Purpose
+
 The messaging module (`{service}-messaging`) handles event publishing and consumption. It implements event-driven patterns and ensures loose coupling between services.
 
 ### Package Structure
@@ -1508,11 +1596,13 @@ com.ccbsa.wms.{service}.messaging/
 ### Clean Code Principles
 
 #### ✅ **DO: Lombok Usage (RECOMMENDED)**
+
 - **Event Listeners and Publishers**: Use `@Slf4j` for logging and `@RequiredArgsConstructor` for dependency injection
 - **Event Mappers**: Use `@Component` and `@RequiredArgsConstructor` if mapper has dependencies
 - **Configuration Classes**: Use `@Configuration` with `@RequiredArgsConstructor` for dependency injection
 
 **Example:**
+
 ```java
 // ✅ CORRECT: Event listener with Lombok
 @Slf4j
@@ -1547,12 +1637,14 @@ public class StockManagementConfiguration {
 ```
 
 #### ✅ **DO: Event-Driven Design**
+
 - Use domain events for communication between services
 - Implement proper event serialization
 - Handle event versioning
 - Include event metadata for traceability
 
 **Example:**
+
 ```java
 @Component
 public class StockManagementEventPublisherImpl implements StockManagementEventPublisher {
@@ -1595,12 +1687,14 @@ public class StockManagementEventPublisherImpl implements StockManagementEventPu
 ```
 
 #### ✅ **DO: Error Handling**
+
 - Implement retry mechanisms with exponential backoff
 - Use dead letter queues for failed events
 - Handle poison messages
 - Implement idempotency checks
 
 **Example:**
+
 ```java
 @Component
 public class LocationAssignedEventListener {
@@ -1649,18 +1743,21 @@ public class LocationAssignedEventListener {
 ```
 
 #### ✅ **DO: Event Versioning**
+
 - Support event schema evolution
 - Maintain backward compatibility
 - Use proper event naming (`{DomainObject}{Action}Event`)
 - Include version field in events
 
 #### ✅ **DO: Idempotency**
+
 - Ensure events can be processed multiple times
 - Use idempotency keys (event IDs)
 - Handle duplicate events gracefully
 - Store processed event IDs
 
 #### ✅ **DO: Kafka Configuration**
+
 - **CRITICAL**: Import `KafkaConfig` via `@Import(KafkaConfig.class)`
 - **CRITICAL**: Use `@Qualifier("kafkaObjectMapper")` for all Kafka ObjectMapper injection
 - Configure consumer factories with proper deserialization
@@ -1668,6 +1765,7 @@ public class LocationAssignedEventListener {
 - Configure concurrency and batch sizes
 
 **Example:**
+
 ```java
 @Configuration
 @Import({ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class})
@@ -1693,11 +1791,13 @@ public class StockManagementConfiguration {
 ```
 
 #### ✅ **DO: Cache Invalidation Listeners (MANDATORY)**
+
 - All services MUST implement cache invalidation listeners
 - Listen to domain events and invalidate affected caches
 - Extend `CacheInvalidationEventListener` from `common-cache`
 
 **Example:**
+
 ```java
 @Component
 public class StockConsignmentCacheInvalidationListener extends CacheInvalidationEventListener {
@@ -1724,26 +1824,31 @@ public class StockConsignmentCacheInvalidationListener extends CacheInvalidation
 ```
 
 #### ❌ **AVOID: Tight Coupling**
+
 - **Problem**: Direct dependencies between services
 - **Signs**: Hard-coded service names, direct calls
 - **Solution**: Use events for communication
 
 #### ❌ **AVOID: Event Anemia**
+
 - **Problem**: Events with no meaningful data
 - **Signs**: Empty events, generic event types
 - **Solution**: Include relevant business data in events
 
 #### ❌ **AVOID: Missing Error Handling**
+
 - **Problem**: No error handling for message processing
 - **Signs**: Unhandled exceptions, message loss
 - **Solution**: Implement proper error handling with retries and DLQ
 
 #### ❌ **AVOID: Event Spaghetti**
+
 - **Problem**: Too many events with unclear purposes
 - **Signs**: Confusing event flow, hard to understand
 - **Solution**: Simplify event model
 
 #### ❌ **AVOID: Missing ObjectMapper Qualifier**
+
 - **Problem**: Using wrong ObjectMapper for Kafka serialization
 - **Signs**: Type information missing from events, deserialization errors
 - **Solution**: Always use `@Qualifier("kafkaObjectMapper")`
@@ -1751,6 +1856,7 @@ public class StockConsignmentCacheInvalidationListener extends CacheInvalidation
 ### Event Metadata and Traceability
 
 **Event Publishing Flow:**
+
 1. Command handler executes business logic
 2. Domain events generated by aggregate
 3. Event publisher extracts correlation ID from `CorrelationContext`
@@ -1759,6 +1865,7 @@ public class StockConsignmentCacheInvalidationListener extends CacheInvalidation
 6. Event published to Kafka with metadata
 
 **Event Consumption Flow:**
+
 1. Event listener receives event from Kafka
 2. Event listener extracts correlation ID from event metadata
 3. Event listener sets correlation ID in `CorrelationContext`
@@ -1783,6 +1890,7 @@ public class StockConsignmentCacheInvalidationListener extends CacheInvalidation
 ## Container Module
 
 ### Module Purpose
+
 The container module (`{service}-container`) provides application bootstrap and configuration. It wires together all modules and provides runtime configuration.
 
 ### Package Structure
@@ -1802,11 +1910,13 @@ com.ccbsa.wms.{service}.container/
 ### Clean Code Principles
 
 #### ✅ **DO: Lombok Usage (RECOMMENDED)**
+
 - **Configuration Classes**: Use `@Configuration` with `@RequiredArgsConstructor` for dependency injection
 - **Health Indicators**: Use `@Component` with `@RequiredArgsConstructor` for dependency injection
 - **Anti-Patterns**: Avoid field injection, prefer constructor injection via `@RequiredArgsConstructor`
 
 **Example:**
+
 ```java
 // ✅ CORRECT: Configuration with Lombok
 @Configuration
@@ -1837,12 +1947,14 @@ public class DatabaseHealthIndicator implements HealthIndicator {
 ```
 
 #### ✅ **DO: Configuration Management**
+
 - Use centralized configuration
 - Support environment-specific configs
 - Validate configuration on startup
 - Import necessary configurations (`@Import`)
 
 **Example:**
+
 ```java
 @Configuration
 @Import({ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class})
@@ -1861,21 +1973,23 @@ public class StockManagementConfiguration {
 ```
 
 #### ✅ **DO: ObjectMapper Separation (CRITICAL)**
+
 - **REST API ObjectMapper** (`@Primary`):
-  - Built from `Jackson2ObjectMapperBuilder` in `WebMvcConfig`
-  - NO type information included (clean JSON for frontend)
-  - Used automatically by Spring MVC
+    - Built from `Jackson2ObjectMapperBuilder` in `WebMvcConfig`
+    - NO type information included (clean JSON for frontend)
+    - Used automatically by Spring MVC
 - **Kafka ObjectMapper** (`kafkaObjectMapper`):
-  - Provided by `KafkaConfig` in `common-messaging` module
-  - Includes type information (@class property)
-  - MUST be imported via `@Import(KafkaConfig.class)`
-  - MUST be injected with `@Qualifier("kafkaObjectMapper")`
+    - Provided by `KafkaConfig` in `common-messaging` module
+    - Includes type information (@class property)
+    - MUST be imported via `@Import(KafkaConfig.class)`
+    - MUST be injected with `@Qualifier("kafkaObjectMapper")`
 - **Redis Cache ObjectMapper** (`redisCacheObjectMapper`):
-  - Provided by `CacheConfiguration` in `common-cache` module
-  - Includes type information for polymorphic cache values
-  - MUST be injected with `@Qualifier("redisCacheObjectMapper")`
+    - Provided by `CacheConfiguration` in `common-cache` module
+    - Includes type information for polymorphic cache values
+    - MUST be injected with `@Qualifier("redisCacheObjectMapper")`
 
 **Example:**
+
 ```java
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
@@ -1893,16 +2007,19 @@ public class WebMvcConfig implements WebMvcConfigurer {
 ```
 
 #### ✅ **DO: Dependency Injection**
+
 - Use constructor injection (not field injection)
 - Use proper bean scopes
 - Avoid circular dependencies
 
 #### ✅ **DO: Health Checks**
+
 - Implement health check endpoints
 - Monitor critical dependencies
 - Provide meaningful health status
 
 **Example:**
+
 ```java
 @Component
 public class DatabaseHealthIndicator implements HealthIndicator {
@@ -1930,31 +2047,37 @@ public class DatabaseHealthIndicator implements HealthIndicator {
 ```
 
 #### ✅ **DO: Logging Configuration**
+
 - Use structured logging (Logback)
 - Configure appropriate log levels
 - Include correlation IDs in logs
 
 #### ❌ **AVOID: Configuration Anemia**
+
 - **Problem**: Hard-coded configuration values
 - **Signs**: Magic numbers, hard-coded strings
 - **Solution**: Use external configuration (application.yml)
 
 #### ❌ **AVOID: Fat Configuration**
+
 - **Problem**: Too many configuration classes
 - **Signs**: Large configuration files, multiple concerns
 - **Solution**: Split into focused configuration classes
 
 #### ❌ **AVOID: Missing Validation**
+
 - **Problem**: No configuration validation
 - **Signs**: Runtime failures due to invalid config
 - **Solution**: Validate configuration on startup
 
 #### ❌ **AVOID: Tight Coupling**
+
 - **Problem**: Hard dependencies on concrete implementations
 - **Signs**: Direct instantiation, concrete class references
 - **Solution**: Use dependency injection and interfaces
 
 #### ❌ **AVOID: ObjectMapper Confusion**
+
 - **Problem**: Using wrong ObjectMapper for specific use case
 - **Signs**: Type information in REST responses, missing type info in Kafka events
 - **Solution**: Use explicit `@Qualifier` for named ObjectMappers
@@ -1975,6 +2098,7 @@ public class DatabaseHealthIndicator implements HealthIndicator {
 ## Frontend Module
 
 ### Module Purpose
+
 The frontend module (`frontend-app`) provides the user interface with CQRS compliance and real-time event streaming.
 
 ### Package Structure
@@ -1998,11 +2122,13 @@ frontend-app/src/
 ### Clean Code Principles
 
 #### ✅ **DO: CQRS-Compliant API Integration**
+
 - Separate command and query API calls
 - Use proper HTTP methods
 - Handle responses appropriately
 
 **Example:**
+
 ```typescript
 // ✅ CORRECT: Separate command and query services
 class ConsignmentCommandService {
@@ -2028,12 +2154,14 @@ class ConsignmentQueryService {
 ```
 
 #### ✅ **DO: Correlation ID Management**
+
 - Generate correlation ID per user session
 - Include in all API requests via `X-Correlation-Id` header
 - Include in all log entries
 - Clear on logout
 
 **Example:**
+
 ```typescript
 class CorrelationIdService {
   private correlationId: string | null = null;
@@ -2052,11 +2180,13 @@ class CorrelationIdService {
 ```
 
 #### ✅ **DO: TypeScript Types**
+
 - Define types for all DTOs
 - Use strict type checking
 - Avoid `any` type
 
 **Example:**
+
 ```typescript
 interface ConsignmentQueryResult {
   id: string;
@@ -2074,11 +2204,13 @@ enum ConsignmentStatus {
 ```
 
 #### ✅ **DO: Error Handling**
+
 - Handle API errors gracefully
 - Provide user feedback
 - Log errors with correlation ID
 
 **Example:**
+
 ```typescript
 try {
   const result = await consignmentService.confirmConsignment(id);
@@ -2093,11 +2225,13 @@ try {
 ```
 
 #### ❌ **AVOID: Missing Correlation ID**
+
 - **Problem**: API requests without correlation ID
 - **Signs**: No traceability for user actions
 - **Solution**: Include correlation ID in all API requests
 
 #### ❌ **AVOID: Type Unsafe Code**
+
 - **Problem**: Using `any` type everywhere
 - **Signs**: No type safety, runtime errors
 - **Solution**: Define proper TypeScript types
@@ -2111,17 +2245,20 @@ try {
 This section provides coding standards and best practices for Java implementation to ensure consistency, readability, and maintainability across all modules.
 
 #### Field Naming Conventions
+
 - Use **camelCase** for field names
 - Prefer **descriptive** names
 - Boolean fields should be named without the `is` prefix unless necessary for clarity
-  - Example: `enabled`, `active`, `visible`
+    - Example: `enabled`, `active`, `visible`
 
 #### Getter and Setter Methods
+
 - Getter methods should follow the `get*()` pattern
 - For boolean fields, getter methods should follow the `is*()` pattern
 - Setter methods should follow the `set*()` pattern
 
 **Example:**
+
 ```java
 private boolean enabled;
 
@@ -2137,26 +2274,31 @@ public void setEnabled(boolean enabled) {
 ### SOLID Principles
 
 #### 1. **Single Responsibility Principle (SRP)**
+
 - Each class should have only one reason to change
 - Focus on one concern per class
 - Keep methods small and focused
 
 #### 2. **Open/Closed Principle (OCP)**
+
 - Open for extension, closed for modification
 - Use interfaces and abstractions
 - Implement strategy patterns
 
 #### 3. **Liskov Substitution Principle (LSP)**
+
 - Derived classes must be substitutable for base classes
 - Maintain behavioral contracts
 - Avoid breaking inheritance hierarchies
 
 #### 4. **Interface Segregation Principle (ISP)**
+
 - Clients should not depend on interfaces they don't use
 - Create focused, cohesive interfaces
 - Avoid fat interfaces
 
 #### 5. **Dependency Inversion Principle (DIP)**
+
 - Depend on abstractions, not concretions
 - Use dependency injection
 - Implement proper layering
@@ -2164,16 +2306,19 @@ public void setEnabled(boolean enabled) {
 ### Additional Principles
 
 #### 6. **Don't Repeat Yourself (DRY)**
+
 - Avoid code duplication
 - Extract common functionality
 - Use shared components
 
 #### 7. **Keep It Simple, Stupid (KISS)**
+
 - Prefer simple solutions
 - Avoid over-engineering
 - Make code readable
 
 #### 8. **You Aren't Gonna Need It (YAGNI)**
+
 - Don't implement features until needed
 - Avoid premature optimization
 - Focus on current requirements
@@ -2181,7 +2326,9 @@ public void setEnabled(boolean enabled) {
 ## Architectural Anti-Patterns Summary
 
 ### Repository Interface Misplacement
+
 **❌ WRONG:**
+
 ```java
 // Domain core with repository interface
 package com.ccbsa.wms.stock.domain.core.repository;
@@ -2189,6 +2336,7 @@ public interface StockConsignmentRepository { }
 ```
 
 **✅ CORRECT:**
+
 ```java
 // Application service with repository port
 package com.ccbsa.wms.stock.application.service.port.repository;
@@ -2196,7 +2344,9 @@ public interface StockConsignmentRepository { }
 ```
 
 ### Infrastructure Concerns in Domain
+
 **❌ WRONG:**
+
 ```java
 @Entity
 @Table(name = "stock_consignments")
@@ -2207,6 +2357,7 @@ public class StockConsignment extends AggregateRoot<ConsignmentId> {
 ```
 
 **✅ CORRECT:**
+
 ```java
 // Domain entity (pure Java)
 public class StockConsignment extends TenantAwareAggregateRoot<ConsignmentId> {
@@ -2223,7 +2374,9 @@ public class StockConsignmentEntity {
 ```
 
 ### Missing Anti-Corruption Layer
+
 **❌ WRONG:**
+
 ```java
 @RestController
 public class ConsignmentController {
@@ -2235,6 +2388,7 @@ public class ConsignmentController {
 ```
 
 **✅ CORRECT:**
+
 ```java
 @RestController
 public class ConsignmentQueryController {
@@ -2250,13 +2404,17 @@ public class ConsignmentQueryController {
 
 ## Conclusion
 
-These clean code guidelines ensure that each module in the microservice architecture maintains high quality, readability, and maintainability. By following these principles and avoiding the common anti-patterns, developers can create production-grade code that aligns with the architectural principles of Domain-Driven Design, Clean Hexagonal Architecture, CQRS, and Event-Driven Design.
+These clean code guidelines ensure that each module in the microservice architecture maintains high quality, readability, and maintainability. By following these principles and
+avoiding the common anti-patterns, developers can create production-grade code that aligns with the architectural principles of Domain-Driven Design, Clean Hexagonal Architecture,
+CQRS, and Event-Driven Design.
 
-**Remember**: Clean code is not just about following rules—it's about writing code that is easy to understand, maintain, and extend. Always prioritize readability and maintainability over cleverness or brevity.
+**Remember**: Clean code is not just about following rules—it's about writing code that is easy to understand, maintain, and extend. Always prioritize readability and
+maintainability over cleverness or brevity.
 
 ### Implementation Checklists
 
 #### Domain Core Module
+
 - [ ] Entity extends `TenantAwareAggregateRoot<ID>` (not manual ID field)
 - [ ] Entity uses public static `Builder builder()` pattern
 - [ ] Builder validates all required fields in `build()` method
@@ -2269,6 +2427,7 @@ These clean code guidelines ensure that each module in the microservice architec
 - [ ] No external dependencies (except `common-domain`)
 
 #### Application Service Module
+
 - [ ] Command handlers annotated with `@Component` and `@Transactional`
 - [ ] Query handlers annotated with `@Component` and `@Transactional(readOnly = true)`
 - [ ] Repository interfaces defined in `port.repository` package
@@ -2285,6 +2444,7 @@ These clean code guidelines ensure that each module in the microservice architec
 - [ ] **Handlers use `@RequiredArgsConstructor` for dependency injection**
 
 #### Application Layer Module
+
 - [ ] Command controllers separate from query controllers
 - [ ] Controllers annotated with `@RestController` and `@Tag`
 - [ ] Endpoints annotated with `@Operation` for OpenAPI
@@ -2298,6 +2458,7 @@ These clean code guidelines ensure that each module in the microservice architec
 - [ ] **Controllers use `@RequiredArgsConstructor` for dependency injection**
 
 #### Data Access Module
+
 - [ ] Repository adapters implement application service repository interfaces
 - [ ] JPA entities separate from domain entities
 - [ ] Entity mappers convert between JPA and domain entities
@@ -2309,6 +2470,7 @@ These clean code guidelines ensure that each module in the microservice architec
 - [ ] **Lombok used for adapters and mappers** (`@Slf4j`, `@RequiredArgsConstructor`)
 
 #### Messaging Module
+
 - [ ] Event publisher implements `EventPublisher` interface
 - [ ] Event listeners annotated with `@KafkaListener`
 - [ ] Event correlation IDs tracked in event metadata
@@ -2322,6 +2484,7 @@ These clean code guidelines ensure that each module in the microservice architec
 - [ ] **Lombok used for event listeners and publishers** (`@Slf4j`, `@RequiredArgsConstructor`)
 
 #### Container Module
+
 - [ ] Main application class annotated with `@SpringBootApplication`
 - [ ] Configuration classes for database, Kafka, security
 - [ ] Health indicators for monitoring
@@ -2336,9 +2499,10 @@ These clean code guidelines ensure that each module in the microservice architec
 
 **Document Version:** 1.1  
 **Date:** 2025-01-22  
-**Status:** Approved  
+**Status:** Approved
 
 **Version History:**
+
 - v1.1 (2025-01-22): Added comprehensive Lombok usage policy and guidelines for all modules
 - v1.0 (2025-12-22): Initial creation based on warehouse management system templates
 
@@ -2347,6 +2511,7 @@ These clean code guidelines ensure that each module in the microservice architec
 **Distribution:** All development team members
 
 **Related Documents:**
+
 - [Mandated Implementation Template Guide](../guide/mandated-Implementation-template-guide.md)
 - [Service Architecture Document](Service_Architecture_Document.md)
 - [Production-Grade Caching Strategy](../caching/README.md)

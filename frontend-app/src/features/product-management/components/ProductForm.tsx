@@ -81,7 +81,9 @@ export const ProductForm = ({
 
   const productCode = watch('productCode');
   const debouncedProductCode = useDebounce(productCode, 500);
-  const [validationState, setValidationState] = useState<'idle' | 'validating' | 'valid' | 'invalid'>('idle');
+  const [validationState, setValidationState] = useState<
+    'idle' | 'validating' | 'valid' | 'invalid'
+  >('idle');
 
   // Check product code uniqueness (only for create, not update)
   useEffect(() => {
@@ -334,7 +336,11 @@ export const ProductForm = ({
               isSubmitting={isSubmitting}
               submitLabel={isUpdate ? 'Update Product' : 'Create Product'}
               cancelLabel="Cancel"
-              submitDisabled={!!productCodeError || validationState === 'validating' || validationState === 'invalid'}
+              submitDisabled={
+                !!productCodeError ||
+                validationState === 'validating' ||
+                validationState === 'invalid'
+              }
             />
           </Grid>
         </Grid>

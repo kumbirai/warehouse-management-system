@@ -40,50 +40,27 @@ public class AuthenticationHelper {
      * @return AuthenticationResult with tokens and user context
      */
     public AuthenticationResult login(String username, String password) {
-        LoginRequest loginRequest = LoginRequest.builder()
-                .username(username)
-                .password(password)
-                .build();
+        LoginRequest loginRequest = LoginRequest.builder().username(username).password(password).build();
 
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri(LOGIN_ENDPOINT)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(loginRequest)
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.post().uri(LOGIN_ENDPOINT).contentType(MediaType.APPLICATION_JSON).bodyValue(loginRequest).exchange();
 
         // Extract ApiResponse using ParameterizedTypeReference for proper generic type handling
         // This ensures correct deserialization of ApiResponse<LoginResponse>
-        EntityExchangeResult<ApiResponse<LoginResponse>> exchangeResult = response
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<LoginResponse>> exchangeResult = response.expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {
+        }).returnResult();
 
         // Extract ApiResponse from the exchange result
         ApiResponse<LoginResponse> apiResponse = exchangeResult.getResponseBody();
 
-        assertThat(apiResponse)
-                .as("API response should not be null. Status: %d, Response body: %s",
-                        exchangeResult.getStatus().value(),
-                        exchangeResult.getResponseBodyContent() != null
-                                ? new String(exchangeResult.getResponseBodyContent())
-                                : "null")
-                .isNotNull();
-        assertThat(apiResponse.isSuccess())
-                .as("API response should be successful. Error: %s",
-                        apiResponse.getError() != null ? apiResponse.getError().getMessage() : "none")
+        assertThat(apiResponse).as("API response should not be null. Status: %d, Response body: %s", exchangeResult.getStatus().value(),
+                exchangeResult.getResponseBodyContent() != null ? new String(exchangeResult.getResponseBodyContent()) : "null").isNotNull();
+        assertThat(apiResponse.isSuccess()).as("API response should be successful. Error: %s", apiResponse.getError() != null ? apiResponse.getError().getMessage() : "none")
                 .isTrue();
 
         LoginResponse loginResponse = apiResponse.getData();
-        assertThat(loginResponse)
-                .as("Login response data should not be null")
-                .isNotNull();
-        assertThat(loginResponse.getAccessToken())
-                .as("Access token should not be blank")
-                .isNotBlank();
-        assertThat(loginResponse.getUserContext())
-                .as("User context should not be null")
-                .isNotNull();
+        assertThat(loginResponse).as("Login response data should not be null").isNotNull();
+        assertThat(loginResponse.getAccessToken()).as("Access token should not be blank").isNotBlank();
+        assertThat(loginResponse.getUserContext()).as("User context should not be null").isNotNull();
 
         // Extract refresh token from cookie
         HttpHeaders headers = exchangeResult.getResponseHeaders();
@@ -92,12 +69,8 @@ public class AuthenticationHelper {
         assertThat(refreshTokenCookie).isNotNull();
         assertThat(refreshTokenCookie.getValue()).isNotBlank();
 
-        return AuthenticationResult.builder()
-                .accessToken(loginResponse.getAccessToken())
-                .refreshTokenCookie(refreshTokenCookie)
-                .userContext(loginResponse.getUserContext())
-                .expiresIn(loginResponse.getExpiresIn() != null ? loginResponse.getExpiresIn().longValue() : null)
-                .build();
+        return AuthenticationResult.builder().accessToken(loginResponse.getAccessToken()).refreshTokenCookie(refreshTokenCookie).userContext(loginResponse.getUserContext())
+                .expiresIn(loginResponse.getExpiresIn() != null ? loginResponse.getExpiresIn().longValue() : null).build();
     }
 
     /**
@@ -107,31 +80,18 @@ public class AuthenticationHelper {
      * @return AuthenticationResult with new tokens
      */
     public AuthenticationResult refreshToken(ResponseCookie refreshTokenCookie) {
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri(REFRESH_ENDPOINT)
-                .cookie(refreshTokenCookie.getName(), refreshTokenCookie.getValue())
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.post().uri(REFRESH_ENDPOINT).cookie(refreshTokenCookie.getName(), refreshTokenCookie.getValue()).exchange();
 
         // Extract ApiResponse using ParameterizedTypeReference for proper generic type handling
-        EntityExchangeResult<ApiResponse<LoginResponse>> exchangeResult = response
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<LoginResponse>> exchangeResult = response.expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {
+        }).returnResult();
 
         // Extract ApiResponse from the exchange result
         ApiResponse<LoginResponse> apiResponse = exchangeResult.getResponseBody();
 
-        assertThat(apiResponse)
-                .as("API response should not be null. Status: %d, Response body: %s",
-                        exchangeResult.getStatus().value(),
-                        exchangeResult.getResponseBodyContent() != null
-                                ? new String(exchangeResult.getResponseBodyContent())
-                                : "null")
-                .isNotNull();
-        assertThat(apiResponse.isSuccess())
-                .as("API response should be successful. Error: %s",
-                        apiResponse.getError() != null ? apiResponse.getError().getMessage() : "none")
+        assertThat(apiResponse).as("API response should not be null. Status: %d, Response body: %s", exchangeResult.getStatus().value(),
+                exchangeResult.getResponseBodyContent() != null ? new String(exchangeResult.getResponseBodyContent()) : "null").isNotNull();
+        assertThat(apiResponse.isSuccess()).as("API response should be successful. Error: %s", apiResponse.getError() != null ? apiResponse.getError().getMessage() : "none")
                 .isTrue();
 
         LoginResponse loginResponse = apiResponse.getData();
@@ -142,12 +102,8 @@ public class AuthenticationHelper {
         HttpHeaders headers = exchangeResult.getResponseHeaders();
         ResponseCookie newRefreshTokenCookie = CookieExtractor.extractRefreshTokenCookie(headers);
 
-        return AuthenticationResult.builder()
-                .accessToken(loginResponse.getAccessToken())
-                .refreshTokenCookie(newRefreshTokenCookie)
-                .userContext(loginResponse.getUserContext())
-                .expiresIn(loginResponse.getExpiresIn() != null ? loginResponse.getExpiresIn().longValue() : null)
-                .build();
+        return AuthenticationResult.builder().accessToken(loginResponse.getAccessToken()).refreshTokenCookie(newRefreshTokenCookie).userContext(loginResponse.getUserContext())
+                .expiresIn(loginResponse.getExpiresIn() != null ? loginResponse.getExpiresIn().longValue() : null).build();
     }
 
     /**
@@ -156,10 +112,7 @@ public class AuthenticationHelper {
      * @param refreshTokenCookie the refresh token cookie to invalidate
      */
     public void logout(ResponseCookie refreshTokenCookie) {
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri(LOGOUT_ENDPOINT)
-                .cookie(refreshTokenCookie.getName(), refreshTokenCookie.getValue())
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.post().uri(LOGOUT_ENDPOINT).cookie(refreshTokenCookie.getName(), refreshTokenCookie.getValue()).exchange();
 
         response.expectStatus().isOk();
 

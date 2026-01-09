@@ -9,6 +9,7 @@ import { useValidateConsignment } from '../hooks/useValidateConsignment';
 import { ConfirmConsignmentDialog } from '../components/ConfirmConsignmentDialog';
 import { useAuth } from '../../../hooks/useAuth';
 import { useState } from 'react';
+import { logger } from '../../../utils/logger';
 import {
   OPERATOR,
   STOCK_CLERK,
@@ -43,7 +44,13 @@ export const ConsignmentDetailPage = () => {
       await refetch();
     } catch (err) {
       // Error is handled by the hook
-      console.error('Failed to validate consignment:', err);
+      logger.error(
+        'Failed to validate consignment',
+        err instanceof Error ? err : new Error(String(err)),
+        {
+          consignmentId,
+        }
+      );
     }
   };
 

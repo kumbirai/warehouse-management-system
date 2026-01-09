@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.product.application.service.port.data.ProductViewRepository;
 import com.ccbsa.wms.product.application.service.port.data.dto.ProductView;
@@ -21,7 +22,6 @@ import com.ccbsa.wms.product.dataaccess.entity.ProductViewEntity;
 import com.ccbsa.wms.product.dataaccess.jpa.ProductBarcodeJpaRepository;
 import com.ccbsa.wms.product.dataaccess.jpa.ProductViewJpaRepository;
 import com.ccbsa.wms.product.dataaccess.mapper.ProductViewEntityMapper;
-import com.ccbsa.wms.product.dataaccess.schema.TenantSchemaProvisioner;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityManager;

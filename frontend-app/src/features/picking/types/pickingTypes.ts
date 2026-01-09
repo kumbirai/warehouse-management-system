@@ -9,7 +9,7 @@ import {ApiResponse} from '../../../types/api';
 export type PickingListStatus = 'RECEIVED' | 'PROCESSING' | 'PLANNED' | 'COMPLETED';
 export type LoadStatus = 'CREATED' | 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED';
 export type OrderStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-export type PickingTaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+export type PickingTaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'PARTIALLY_COMPLETED';
 export type Priority = 'HIGH' | 'NORMAL' | 'LOW';
 
 // CSV Upload Types
@@ -151,3 +151,52 @@ export interface ListOrdersByLoadQueryResult {
 }
 
 export type ListOrdersByLoadApiResponse = ApiResponse<ListOrdersByLoadQueryResult>;
+
+// Picking Task Types
+export interface PickingTaskQueryResult {
+  taskId: string;
+  loadId: string;
+  orderId: string;
+  productCode: string;
+  locationId: string;
+  quantity: number;
+  status: PickingTaskStatus;
+  sequence: number;
+  pickedQuantity?: number;
+  pickedByUserId?: string;
+  pickedAt?: string;
+  isPartialPicking?: boolean;
+  partialReason?: string;
+}
+
+export interface ListPickingTasksQueryResult {
+  pickingTasks: PickingTaskQueryResult[];
+  totalElements: number;
+  page: number;
+  size: number;
+  totalPages: number;
+}
+
+export type ListPickingTasksApiResponse = ApiResponse<ListPickingTasksQueryResult>;
+
+export interface ExecutePickingTaskRequest {
+  pickedQuantity: number;
+  isPartialPicking?: boolean;
+  partialReason?: string;
+}
+
+export interface ExecutePickingTaskResponse {
+  taskId: string;
+  status: PickingTaskStatus;
+  pickedQuantity: number;
+  isPartialPicking: boolean;
+}
+
+export type ExecutePickingTaskApiResponse = ApiResponse<ExecutePickingTaskResponse>;
+
+export interface CompletePickingListResponse {
+  pickingListId: string;
+  status: PickingListStatus;
+}
+
+export type CompletePickingListApiResponse = ApiResponse<CompletePickingListResponse>;

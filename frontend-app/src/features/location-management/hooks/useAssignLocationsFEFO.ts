@@ -21,7 +21,7 @@ export const useAssignLocationsFEFO = () => {
       queryClient.invalidateQueries({ queryKey: ['locations'] });
       logger.info('FEFO location assignment completed successfully');
     },
-    onError: (error) => {
+    onError: error => {
       logger.error('Failed to assign locations via FEFO:', error);
     },
   });

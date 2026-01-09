@@ -9,24 +9,12 @@ import com.ccbsa.wms.gateway.api.dto.CreateReconciliationCountRequest;
  */
 public class ReconciliationTestDataBuilder {
 
-    public static CreateReconciliationCountRequest buildCreateReconciliationCountRequest(
-            String locationId, String userId) {
-        return CreateReconciliationCountRequest.builder()
-                .locationId(locationId)
-                .countType("CYCLE_COUNT")
-                .scheduledDate(LocalDate.now().plusDays(1))
-                .assignedTo(userId)
-                .build();
+    public static CreateReconciliationCountRequest buildCreateReconciliationCountRequest(String locationId, String userId) {
+        return CreateReconciliationCountRequest.builder().locationId(locationId).countType("CYCLE_COUNT").scheduledDate(LocalDate.now().plusDays(1)).assignedTo(userId).build();
     }
 
-    public static CreateReconciliationCountRequest buildCreateReconciliationCountRequestWithType(
-            String locationId, String userId, String countType) {
-        return CreateReconciliationCountRequest.builder()
-                .locationId(locationId)
-                .countType(countType)
-                .scheduledDate(LocalDate.now().plusDays(1))
-                .assignedTo(userId)
-                .build();
+    public static CreateReconciliationCountRequest buildCreateReconciliationCountRequestWithType(String locationId, String userId, String countType) {
+        return CreateReconciliationCountRequest.builder().locationId(locationId).countType(countType).scheduledDate(LocalDate.now().plusDays(1)).assignedTo(userId).build();
     }
 }
 

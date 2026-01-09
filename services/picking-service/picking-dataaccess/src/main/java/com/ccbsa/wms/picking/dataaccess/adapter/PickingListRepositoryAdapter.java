@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.hibernate.Session;
 import org.springframework.data.domain.PageRequest;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.picking.application.service.port.repository.PickingListRepository;
 import com.ccbsa.wms.picking.dataaccess.entity.LoadEntity;
@@ -23,7 +25,6 @@ import com.ccbsa.wms.picking.dataaccess.entity.OrderLineItemEntity;
 import com.ccbsa.wms.picking.dataaccess.entity.PickingListEntity;
 import com.ccbsa.wms.picking.dataaccess.jpa.PickingListJpaRepository;
 import com.ccbsa.wms.picking.dataaccess.mapper.PickingListEntityMapper;
-import com.ccbsa.wms.picking.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.picking.domain.core.entity.PickingList;
 import com.ccbsa.wms.picking.domain.core.valueobject.PickingListId;
 import com.ccbsa.wms.picking.domain.core.valueobject.PickingListStatus;
@@ -210,6 +211,8 @@ public class PickingListRepositoryAdapter implements PickingListRepository {
     }
 
     @Override
+    @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE",
+            justification = "Local variable may appear unused but is necessary for query execution side effects")
     public Optional<PickingList> findByIdAndTenantId(PickingListId id, TenantId tenantId) {
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
@@ -296,7 +299,7 @@ public class PickingListRepositoryAdapter implements PickingListRepository {
 
             // Step 4: Batch fetch lineItems for all orders to avoid N+1 query problem
             if (!orders.isEmpty()) {
-                List<java.util.UUID> orderIds = orders.stream().map(OrderEntity::getId).distinct().toList();
+                List<UUID> orderIds = orders.stream().map(OrderEntity::getId).distinct().toList();
 
                 jakarta.persistence.Query lineItemsQuery =
                         entityManager.createQuery("SELECT o FROM OrderEntity o " + "LEFT JOIN FETCH o.lineItems " + "WHERE o.id IN :orderIds", OrderEntity.class);
@@ -306,7 +309,11 @@ public class PickingListRepositoryAdapter implements PickingListRepository {
 
                 // Hibernate will merge the loaded lineItems with the already-loaded orders
                 // The query execution loads lineItems into persistence context
-                ordersWithLineItems.size(); // Force execution and initialization
+                // Force execution and initialization by accessing the collection
+                @SuppressFBWarnings(value = {"RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT", "DLS_DEAD_LOCAL_STORE"},
+                        justification = "size() call is intentional to force query execution and initialize lazy-loaded collections. Variable intentionally unused.")
+                int size = ordersWithLineItems.size(); // Force execution and initialization
+                // size is intentionally unused - query execution is the side effect
             }
         }
 

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { stockMovementService } from '../services/stockMovementService';
-import { CreateStockMovementRequest } from '../services/stockMovementService';
+import { CreateStockMovementRequest, stockMovementService } from '../services/stockMovementService';
 import { logger } from '../../../utils/logger';
 
 export interface UseCreateStockMovementResult {
@@ -30,7 +29,9 @@ export const useCreateStockMovement = (): UseCreateStockMovementResult => {
         throw new Error('Invalid response from server');
       }
 
-      logger.info('Stock movement created successfully', { movementId: response.data.stockMovementId });
+      logger.info('Stock movement created successfully', {
+        movementId: response.data.stockMovementId,
+      });
       navigate(`/stock-movements/${response.data.stockMovementId}`);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to create stock movement');
@@ -44,4 +45,3 @@ export const useCreateStockMovement = (): UseCreateStockMovementResult => {
 
   return { createStockMovement, isLoading, error };
 };
-

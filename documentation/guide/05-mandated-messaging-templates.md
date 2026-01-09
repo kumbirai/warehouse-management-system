@@ -17,21 +17,25 @@ Templates for the **Messaging** module (`{service}-messaging`). Handles event-dr
 **RECOMMENDED**: Use Lombok for event publishers and listeners to reduce boilerplate.
 
 **Event Publishers**:
+
 - Use `@Slf4j` for logging
 - Use `@RequiredArgsConstructor` for dependency injection
 - Use `@Component` for Spring bean registration
 
 **Event Listeners**:
+
 - Use `@Slf4j` for logging
 - Use `@RequiredArgsConstructor` for dependency injection (if needed)
 - Use `@Component` for Spring bean registration
 - Combine with `@KafkaListener` for event consumption
 
 **Configuration Classes**:
+
 - Use `@Configuration` for Spring configuration
 - Use `@RequiredArgsConstructor` if configuration has dependencies
 
 **Example:**
+
 ```java
 // Event Publisher with Lombok
 @Slf4j
@@ -527,7 +531,7 @@ public class {Service}Configuration {
 **Document Control**
 
 - **Version History:**
-  - v1.1 (2025-01) - Added comprehensive Lombok usage guidelines for publishers, listeners, and configuration
-  - v1.0 (2025-01) - Initial template creation
+    - v1.1 (2025-01) - Added comprehensive Lombok usage guidelines for publishers, listeners, and configuration
+    - v1.0 (2025-01) - Initial template creation
 - **Review Cycle:** Review when messaging patterns change
 

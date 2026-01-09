@@ -7,7 +7,9 @@ interface NotificationItemProps {
   notification: Notification;
 }
 
-const getStatusColor = (status: Notification['status']): 'default' | 'primary' | 'success' | 'error' => {
+const getStatusColor = (
+  status: Notification['status']
+): 'default' | 'primary' | 'success' | 'error' => {
   switch (status) {
     case 'READ':
       return 'default';
@@ -23,7 +25,7 @@ const getStatusColor = (status: Notification['status']): 'default' | 'primary' |
 };
 
 const getTypeLabel = (type: Notification['type']): string => {
-  return type.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+  return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };
 
 const formatTimeAgo = (dateString: string): string => {
@@ -60,7 +62,9 @@ export const NotificationItem = ({ notification }: NotificationItemProps) => {
       }}
     >
       <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}
+        >
           <Typography variant="subtitle1" component="div" sx={{ fontWeight: isUnread ? 600 : 400 }}>
             {notification.title}
           </Typography>

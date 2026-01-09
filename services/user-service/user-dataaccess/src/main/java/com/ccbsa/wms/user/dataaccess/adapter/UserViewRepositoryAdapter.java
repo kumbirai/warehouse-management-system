@@ -19,13 +19,13 @@ import org.springframework.stereotype.Repository;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.user.application.service.port.data.UserViewRepository;
 import com.ccbsa.wms.user.application.service.port.data.dto.UserView;
 import com.ccbsa.wms.user.dataaccess.entity.UserViewEntity;
 import com.ccbsa.wms.user.dataaccess.jpa.UserViewJpaRepository;
 import com.ccbsa.wms.user.dataaccess.mapper.UserViewEntityMapper;
-import com.ccbsa.wms.user.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.user.domain.core.valueobject.UserStatus;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;

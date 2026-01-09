@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 import com.ccbsa.common.domain.valueobject.LoadNumber;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.picking.application.service.port.repository.LoadRepository;
 import com.ccbsa.wms.picking.dataaccess.entity.LoadEntity;
@@ -23,10 +24,10 @@ import com.ccbsa.wms.picking.dataaccess.entity.OrderEntity;
 import com.ccbsa.wms.picking.dataaccess.entity.OrderLineItemEntity;
 import com.ccbsa.wms.picking.dataaccess.jpa.LoadJpaRepository;
 import com.ccbsa.wms.picking.dataaccess.mapper.LoadEntityMapper;
-import com.ccbsa.wms.picking.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.picking.domain.core.entity.Load;
 import com.ccbsa.wms.picking.domain.core.valueobject.LoadId;
 import com.ccbsa.wms.picking.domain.core.valueobject.LoadStatus;
+import com.ccbsa.wms.picking.domain.core.valueobject.PickingListId;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityManager;
@@ -266,5 +267,27 @@ public class LoadRepositoryAdapter implements LoadRepository {
         }
 
         return entities.stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public Optional<PickingListId> findPickingListIdByLoadId(LoadId loadId, TenantId tenantId) {
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null || !contextTenantId.getValue().equals(tenantId.getValue())) {
+            throw new IllegalStateException("TenantContext mismatch");
+        }
+
+        String schemaName = schemaResolver.resolveSchema();
+        schemaProvisioner.ensureSchemaReady(schemaName);
+        validateSchemaName(schemaName);
+
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        Optional<LoadEntity> loadEntity = jpaRepository.findByTenantIdAndId(tenantId.getValue(), loadId.getValue());
+        if (loadEntity.isEmpty() || loadEntity.get().getPickingList() == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(PickingListId.of(loadEntity.get().getPickingList().getId()));
     }
 }

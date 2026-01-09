@@ -17,21 +17,25 @@ Templates for the **Container** module (`{service}-container`). Bootstraps appli
 **RECOMMENDED**: Use Lombok for configuration classes to reduce boilerplate.
 
 **Configuration Classes**:
+
 - Use `@Configuration` for Spring configuration
 - Use `@RequiredArgsConstructor` for dependency injection (if needed)
 - Use `@ConditionalOnProperty` or `@ConditionalOnMissingBean` for conditional beans
 - Configuration classes are typically simple, use Lombok sparingly
 
 **Bean Factory Classes**:
+
 - Use `@Configuration` for bean factory registration
 - Use `@RequiredArgsConstructor` if factory has dependencies
 - Use `@Bean` methods for explicit bean creation
 
 **Health Indicators**:
+
 - Usually simple enough without Lombok
 - Implement `HealthIndicator` interface directly
 
 **Example:**
+
 ```java
 // Configuration with Lombok
 @Configuration
@@ -338,7 +342,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 **Document Control**
 
 - **Version History:**
-  - v1.1 (2025-01) - Added Lombok usage guidelines for configuration and bean factory classes
-  - v1.0 (2025-01) - Initial template creation
+    - v1.1 (2025-01) - Added Lombok usage guidelines for configuration and bean factory classes
+    - v1.0 (2025-01) - Initial template creation
 - **Review Cycle:** Review when container patterns change
 

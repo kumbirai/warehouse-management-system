@@ -15,6 +15,7 @@ import com.ccbsa.common.domain.valueobject.StockClassification;
 import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.application.service.port.data.StockItemViewRepository;
@@ -22,7 +23,6 @@ import com.ccbsa.wms.stock.application.service.port.data.dto.StockItemView;
 import com.ccbsa.wms.stock.dataaccess.entity.StockItemViewEntity;
 import com.ccbsa.wms.stock.dataaccess.jpa.StockItemViewJpaRepository;
 import com.ccbsa.wms.stock.dataaccess.mapper.StockItemViewEntityMapper;
-import com.ccbsa.wms.stock.dataaccess.schema.TenantSchemaProvisioner;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.EntityManager;

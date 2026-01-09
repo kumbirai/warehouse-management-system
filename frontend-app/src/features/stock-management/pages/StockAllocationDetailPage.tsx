@@ -7,6 +7,7 @@ import { useStockAllocation } from '../hooks/useStockAllocation';
 import { useReleaseStockAllocation } from '../hooks/useReleaseStockAllocation';
 import { useAuth } from '../../../hooks/useAuth';
 import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
+import { logger } from '../../../utils/logger';
 
 export const StockAllocationDetailPage = () => {
   const { allocationId } = useParams<{ allocationId: string }>();
@@ -32,7 +33,14 @@ export const StockAllocationDetailPage = () => {
       await refetch();
     } catch (err) {
       // Error is handled by the hook
-      console.error('Failed to release allocation:', err);
+      logger.error(
+        'Failed to release allocation',
+        err instanceof Error ? err : new Error(String(err)),
+        {
+          allocationId,
+          tenantId: user?.tenantId,
+        }
+      );
     }
   };
 

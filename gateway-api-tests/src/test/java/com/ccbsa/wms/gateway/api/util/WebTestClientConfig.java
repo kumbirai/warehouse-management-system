@@ -33,35 +33,22 @@ public class WebTestClientConfig {
         if (isHttps) {
             try {
                 // Configure SSL context to trust all certificates (for self-signed certs in dev/test)
-                SslContext sslContext = SslContextBuilder
-                        .forClient()
-                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
-                        .build();
+                SslContext sslContext = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
 
                 // Create HTTP client with SSL support for HTTPS URLs
-                HttpClient httpClient = HttpClient.create()
-                        .secure(sslContextSpec -> sslContextSpec.sslContext(sslContext));
+                HttpClient httpClient = HttpClient.create().secure(sslContextSpec -> sslContextSpec.sslContext(sslContext));
 
-                return WebTestClient.bindToServer(new ReactorClientHttpConnector(httpClient))
-                        .baseUrl(baseUrl)
-                        .responseTimeout(DEFAULT_TIMEOUT)
-                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
-                        .build();
+                return WebTestClient.bindToServer(new ReactorClientHttpConnector(httpClient)).baseUrl(baseUrl).responseTimeout(DEFAULT_TIMEOUT)
+                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE)).build();
             } catch (SSLException e) {
                 // Fallback to default configuration if SSL setup fails
-                return WebTestClient.bindToServer()
-                        .baseUrl(baseUrl)
-                        .responseTimeout(DEFAULT_TIMEOUT)
-                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
-                        .build();
+                return WebTestClient.bindToServer().baseUrl(baseUrl).responseTimeout(DEFAULT_TIMEOUT)
+                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE)).build();
             }
         } else {
             // For HTTP URLs, use plain HTTP client without SSL
-            return WebTestClient.bindToServer()
-                    .baseUrl(baseUrl)
-                    .responseTimeout(DEFAULT_TIMEOUT)
-                    .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
-                    .build();
+            return WebTestClient.bindToServer().baseUrl(baseUrl).responseTimeout(DEFAULT_TIMEOUT)
+                    .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE)).build();
         }
     }
 
@@ -79,34 +66,21 @@ public class WebTestClientConfig {
         if (isHttps) {
             try {
                 // Configure SSL context to trust all certificates (for self-signed certs in dev/test)
-                SslContext sslContext = SslContextBuilder
-                        .forClient()
-                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
-                        .build();
+                SslContext sslContext = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
 
                 // Create HTTP client with SSL support for HTTPS URLs
-                HttpClient httpClient = HttpClient.create()
-                        .secure(sslContextSpec -> sslContextSpec.sslContext(sslContext));
+                HttpClient httpClient = HttpClient.create().secure(sslContextSpec -> sslContextSpec.sslContext(sslContext));
 
-                return WebTestClient.bindToServer(new ReactorClientHttpConnector(httpClient))
-                        .baseUrl(baseUrl)
-                        .responseTimeout(timeout)
-                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
-                        .build();
+                return WebTestClient.bindToServer(new ReactorClientHttpConnector(httpClient)).baseUrl(baseUrl).responseTimeout(timeout)
+                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE)).build();
             } catch (SSLException e) {
                 // Fallback to default configuration if SSL setup fails
-                return WebTestClient.bindToServer()
-                        .baseUrl(baseUrl)
-                        .responseTimeout(timeout)
-                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
+                return WebTestClient.bindToServer().baseUrl(baseUrl).responseTimeout(timeout).codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
                         .build();
             }
         } else {
             // For HTTP URLs, use plain HTTP client without SSL
-            return WebTestClient.bindToServer()
-                    .baseUrl(baseUrl)
-                    .responseTimeout(timeout)
-                    .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
+            return WebTestClient.bindToServer().baseUrl(baseUrl).responseTimeout(timeout).codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(DEFAULT_BUFFER_SIZE))
                     .build();
         }
     }

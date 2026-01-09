@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useWarehouses } from './useWarehouses';
 import { useZones } from './useZones';
@@ -107,7 +107,7 @@ export const useLocationHierarchy = (): UseLocationHierarchyResult => {
   }, []);
 
   const navigateToAisle = useCallback((zoneId: string) => {
-    setNavigationState((prev) => ({
+    setNavigationState(prev => ({
       level: 'aisle',
       warehouseId: prev.warehouseId,
       zoneId,
@@ -115,7 +115,7 @@ export const useLocationHierarchy = (): UseLocationHierarchyResult => {
   }, []);
 
   const navigateToRack = useCallback((aisleId: string) => {
-    setNavigationState((prev) => ({
+    setNavigationState(prev => ({
       level: 'rack',
       warehouseId: prev.warehouseId,
       zoneId: prev.zoneId,
@@ -124,7 +124,7 @@ export const useLocationHierarchy = (): UseLocationHierarchyResult => {
   }, []);
 
   const navigateToBin = useCallback((rackId: string) => {
-    setNavigationState((prev) => ({
+    setNavigationState(prev => ({
       level: 'bin',
       warehouseId: prev.warehouseId,
       zoneId: prev.zoneId,
@@ -134,7 +134,7 @@ export const useLocationHierarchy = (): UseLocationHierarchyResult => {
   }, []);
 
   const navigateUp = useCallback(() => {
-    setNavigationState((prev) => {
+    setNavigationState(prev => {
       switch (prev.level) {
         case 'bin':
           return {

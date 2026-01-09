@@ -50,9 +50,15 @@ export const StockMovementDetail = ({
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 label={movement.status}
-                color={getStatusVariant(movement.status) === 'success' ? 'success' : 
-                       getStatusVariant(movement.status) === 'error' ? 'error' : 
-                       getStatusVariant(movement.status) === 'warning' ? 'warning' : 'default'}
+                color={
+                  getStatusVariant(movement.status) === 'success'
+                    ? 'success'
+                    : getStatusVariant(movement.status) === 'error'
+                      ? 'error'
+                      : getStatusVariant(movement.status) === 'warning'
+                        ? 'warning'
+                        : 'default'
+                }
                 size="small"
               />
             </Box>
@@ -179,12 +185,7 @@ export const StockMovementDetail = ({
               </Button>
             )}
             {canCancel && onCancel && (
-              <Button
-                variant="outlined"
-                color="error"
-                onClick={onCancel}
-                disabled={isCancelling}
-              >
+              <Button variant="outlined" color="error" onClick={onCancel} disabled={isCancelling}>
                 {isCancelling ? 'Cancelling...' : 'Cancel Movement'}
               </Button>
             )}
@@ -194,4 +195,3 @@ export const StockMovementDetail = ({
     </Box>
   );
 };
-

@@ -722,13 +722,13 @@ Move to `common-domain` module if not already present:
 
 ### Glossary
 
-| Term                   | Definition                                           |
-|------------------------|------------------------------------------------------|
-| **FEFO**               | First Expiring First Out                             |
-| **Picking Task**       | Individual task to pick specific product from location |
-| **Partial Picking**    | Picking less quantity than requested                 |
+| Term                     | Definition                                                   |
+|--------------------------|--------------------------------------------------------------|
+| **FEFO**                 | First Expiring First Out                                     |
+| **Picking Task**         | Individual task to pick specific product from location       |
+| **Partial Picking**      | Picking less quantity than requested                         |
 | **Stock Classification** | Classification by expiration (CRITICAL, NEAR_EXPIRY, NORMAL) |
-| **Restock Request**    | Automated request to replenish stock below minimum   |
+| **Restock Request**      | Automated request to replenish stock below minimum           |
 
 ---
 

@@ -16,7 +16,7 @@ const locationSchema = z.object({
     .optional()
     .or(z.literal(''))
     .refine(
-      (val) => {
+      val => {
         if (!val || val.trim().length === 0) {
           return true; // Optional field, empty is allowed
         }

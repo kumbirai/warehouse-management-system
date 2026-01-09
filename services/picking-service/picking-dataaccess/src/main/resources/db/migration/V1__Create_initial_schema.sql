@@ -38,6 +38,13 @@ CREATE TABLE IF NOT EXISTS picking_lists
     received_at TIMESTAMP WITH TIME ZONE NOT NULL,
     processed_at TIMESTAMP WITH TIME ZONE,
                                notes VARCHAR (1000),
+    picking_list_reference VARCHAR
+(
+    50
+),
+    completed_at TIMESTAMP
+                           WITH TIME ZONE,
+                               completed_by_user_id VARCHAR (255),
     version BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT chk_picking_lists_status CHECK
 (
@@ -50,6 +57,18 @@ CREATE TABLE IF NOT EXISTS picking_lists
     'COMPLETED'
 ))
     );
+
+-- Create picking_list_reference_counters table
+CREATE TABLE IF NOT EXISTS picking_list_reference_counters
+(
+    key
+    VARCHAR
+(
+    255
+) PRIMARY KEY,
+    sequence INTEGER NOT NULL DEFAULT 0,
+    last_updated TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+                               );
 
 -- Create loads table
 CREATE TABLE IF NOT EXISTS loads
@@ -211,6 +230,17 @@ CREATE TABLE IF NOT EXISTS picking_tasks
     >=
     0
 ),
+    picked_quantity INTEGER,
+    picked_by_user_id VARCHAR
+(
+    255
+),
+    picked_at TIMESTAMP,
+    is_partial_picking BOOLEAN DEFAULT FALSE,
+    partial_reason VARCHAR
+(
+    500
+),
     CONSTRAINT chk_picking_tasks_status CHECK
 (
     status
@@ -218,13 +248,17 @@ CREATE TABLE IF NOT EXISTS picking_tasks
 (
     'PENDING',
     'IN_PROGRESS',
-    'COMPLETED'
+    'COMPLETED',
+    'PARTIALLY_COMPLETED',
+    'CANCELLED'
 ))
     );
 
 -- Add table comments
 COMMENT
 ON TABLE picking_lists IS 'Validation table for Hibernate schema validation. NOT used at runtime - all operations use tenant-specific schemas.';
+COMMENT
+ON TABLE picking_list_reference_counters IS 'Counter table for generating unique picking list references per tenant per day. Key format: {tenantId}_{YYYYMMDD}';
 COMMENT
 ON TABLE loads IS 'Validation table for loads. NOT used at runtime - all operations use tenant-specific schemas.';
 COMMENT
@@ -248,7 +282,21 @@ ON COLUMN picking_lists.processed_at IS 'Timestamp when picking list was process
 COMMENT
 ON COLUMN picking_lists.notes IS 'Optional notes';
 COMMENT
+ON COLUMN picking_lists.picking_list_reference IS 'Human-readable picking list reference (format: PICK-{YYYYMMDD}-{sequence}). Unique per tenant.';
+COMMENT
+ON COLUMN picking_lists.completed_at IS 'Timestamp when the picking list was completed (nullable)';
+COMMENT
+ON COLUMN picking_lists.completed_by_user_id IS 'User ID who completed the picking list (nullable)';
+COMMENT
 ON COLUMN picking_lists.version IS 'Optimistic locking version for concurrency control';
+
+-- Add column comments for picking_list_reference_counters table
+COMMENT
+ON COLUMN picking_list_reference_counters.key IS 'Counter key: {tenantId}_{YYYYMMDD}';
+COMMENT
+ON COLUMN picking_list_reference_counters.sequence IS 'Current sequence number for the key';
+COMMENT
+ON COLUMN picking_list_reference_counters.last_updated IS 'Timestamp when counter was last updated';
 
 -- Add column comments for loads table
 COMMENT
@@ -314,6 +362,16 @@ ON COLUMN picking_tasks.location_id IS 'Location identifier';
 COMMENT
 ON COLUMN picking_tasks.quantity IS 'Quantity to pick (must be positive)';
 COMMENT
-ON COLUMN picking_tasks.status IS 'Picking task status: PENDING, IN_PROGRESS, COMPLETED';
+ON COLUMN picking_tasks.status IS 'Picking task status: PENDING, IN_PROGRESS, COMPLETED, PARTIALLY_COMPLETED, CANCELLED';
 COMMENT
 ON COLUMN picking_tasks.sequence IS 'Sequence number for picking order (must be >= 0)';
+COMMENT
+ON COLUMN picking_tasks.picked_quantity IS 'Actual quantity picked (may be less than required quantity for partial picking)';
+COMMENT
+ON COLUMN picking_tasks.picked_by_user_id IS 'User ID who executed the picking task';
+COMMENT
+ON COLUMN picking_tasks.picked_at IS 'Timestamp when the picking task was executed';
+COMMENT
+ON COLUMN picking_tasks.is_partial_picking IS 'Indicates if this was a partial picking (picked quantity < required quantity)';
+COMMENT
+ON COLUMN picking_tasks.partial_reason IS 'Reason for partial picking (required when is_partial_picking is true)';

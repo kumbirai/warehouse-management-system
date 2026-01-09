@@ -30,32 +30,19 @@ public class StockHelper {
     public String createConsignment(AuthenticationResult auth, String tenantId, String productId, String locationId) {
         CreateConsignmentRequest request = ConsignmentTestDataBuilder.buildCreateConsignmentRequest(productId, locationId);
 
-        EntityExchangeResult<ApiResponse<CreateConsignmentResponse>> exchangeResult = webTestClient.post()
-                .uri("/api/v1/stock-management/consignments")
-                .headers(headers -> {
+        EntityExchangeResult<ApiResponse<CreateConsignmentResponse>> exchangeResult = webTestClient.post().uri("/api/v1/stock-management/consignments").headers(headers -> {
                     headers.setBearerAuth(auth.getAccessToken());
                     headers.set("X-Tenant-Id", tenantId);
-                })
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange()
-                .expectStatus().isCreated()
+                }).contentType(MediaType.APPLICATION_JSON).bodyValue(request).exchange().expectStatus().isCreated()
                 .expectBody(new ParameterizedTypeReference<ApiResponse<CreateConsignmentResponse>>() {
-                })
-                .returnResult();
+                }).returnResult();
 
         ApiResponse<CreateConsignmentResponse> apiResponse = exchangeResult.getResponseBody();
-        assertThat(apiResponse)
-                .as("API response should not be null")
-                .isNotNull();
-        assertThat(apiResponse.isSuccess())
-                .as("API response should be successful")
-                .isTrue();
+        assertThat(apiResponse).as("API response should not be null").isNotNull();
+        assertThat(apiResponse.isSuccess()).as("API response should be successful").isTrue();
 
         CreateConsignmentResponse response = apiResponse.getData();
-        assertThat(response)
-                .as("Create consignment response data should not be null")
-                .isNotNull();
+        assertThat(response).as("Create consignment response data should not be null").isNotNull();
 
         return response.getConsignmentId();
     }
@@ -63,37 +50,22 @@ public class StockHelper {
     /**
      * Create consignment with specific quantity.
      */
-    public String createConsignmentWithQuantity(
-            AuthenticationResult auth, String tenantId, String productId, String locationId, int quantity) {
-        CreateConsignmentRequest request = ConsignmentTestDataBuilder.buildCreateConsignmentRequestWithQuantity(
-                productId, locationId, quantity);
+    public String createConsignmentWithQuantity(AuthenticationResult auth, String tenantId, String productId, String locationId, int quantity) {
+        CreateConsignmentRequest request = ConsignmentTestDataBuilder.buildCreateConsignmentRequestWithQuantity(productId, locationId, quantity);
 
-        EntityExchangeResult<ApiResponse<CreateConsignmentResponse>> exchangeResult = webTestClient.post()
-                .uri("/api/v1/stock-management/consignments")
-                .headers(headers -> {
+        EntityExchangeResult<ApiResponse<CreateConsignmentResponse>> exchangeResult = webTestClient.post().uri("/api/v1/stock-management/consignments").headers(headers -> {
                     headers.setBearerAuth(auth.getAccessToken());
                     headers.set("X-Tenant-Id", tenantId);
-                })
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange()
-                .expectStatus().isCreated()
+                }).contentType(MediaType.APPLICATION_JSON).bodyValue(request).exchange().expectStatus().isCreated()
                 .expectBody(new ParameterizedTypeReference<ApiResponse<CreateConsignmentResponse>>() {
-                })
-                .returnResult();
+                }).returnResult();
 
         ApiResponse<CreateConsignmentResponse> apiResponse = exchangeResult.getResponseBody();
-        assertThat(apiResponse)
-                .as("API response should not be null")
-                .isNotNull();
-        assertThat(apiResponse.isSuccess())
-                .as("API response should be successful")
-                .isTrue();
+        assertThat(apiResponse).as("API response should not be null").isNotNull();
+        assertThat(apiResponse.isSuccess()).as("API response should be successful").isTrue();
 
         CreateConsignmentResponse response = apiResponse.getData();
-        assertThat(response)
-                .as("Create consignment response data should not be null")
-                .isNotNull();
+        assertThat(response).as("Create consignment response data should not be null").isNotNull();
 
         return response.getConsignmentId();
     }

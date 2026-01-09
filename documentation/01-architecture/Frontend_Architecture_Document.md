@@ -1168,15 +1168,18 @@ const syncSlice = createSlice({
 
 ### Barcode-First Input Principle
 
-**Core Principle:** Barcode scanning is the **primary input method** for all identifier fields. Manual keyboard input is provided as a **fallback** when scanning fails or is unavailable.
+**Core Principle:** Barcode scanning is the **primary input method** for all identifier fields. Manual keyboard input is provided as a **fallback** when scanning fails or is
+unavailable.
 
 **Rationale:**
+
 - Reduces manual input errors
 - Improves data entry speed
 - Enhances warehouse operational efficiency
 - Minimizes typing errors in identifier fields
 
 **Implementation Strategy:**
+
 1. **Primary:** Barcode scanning (handheld scanner or camera)
 2. **Fallback:** Manual keyboard input
 3. **Always provide both options** for maximum flexibility
@@ -1304,6 +1307,7 @@ const BarcodeInput: React.FC<BarcodeInputProps> = ({
 ```
 
 **Key Features:**
+
 - **Auto-focus:** Fields auto-focus for handheld scanner compatibility
 - **Camera button:** Always visible for camera scanning option
 - **Manual input:** Full keyboard support as fallback
@@ -1356,25 +1360,25 @@ class BarcodeValidationService {
 **Where to Use BarcodeInput:**
 
 1. **Product Identification:**
-   - Product forms (primary barcode, secondary barcodes)
-   - Consignment entry (product code lookup)
-   - Stock count (product identification)
-   - Product search fields
+    - Product forms (primary barcode, secondary barcodes)
+    - Consignment entry (product code lookup)
+    - Stock count (product identification)
+    - Product search fields
 
 2. **Location Identification:**
-   - Location forms (location barcode)
-   - Location assignment (assign location to stock)
-   - Stock movement (source/target locations)
-   - Location search fields
+    - Location forms (location barcode)
+    - Location assignment (assign location to stock)
+    - Stock movement (source/target locations)
+    - Location search fields
 
 3. **Consignment Management:**
-   - Consignment search (by reference or barcode)
-   - Product lookup in consignment line items
+    - Consignment search (by reference or barcode)
+    - Product lookup in consignment line items
 
 4. **Any Identifier Field:**
-   - Any field that can be scanned should use BarcodeInput
-   - Reduces manual input errors
-   - Improves operational efficiency
+    - Any field that can be scanned should use BarcodeInput
+    - Reduces manual input errors
+    - Improves operational efficiency
 
 **Implementation Pattern:**
 

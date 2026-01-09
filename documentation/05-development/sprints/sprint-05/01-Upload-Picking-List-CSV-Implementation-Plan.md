@@ -73,29 +73,29 @@
 
 1. User navigates to "Upload Picking List" page
 2. System displays upload form with:
-   - CSV template download link
-   - File upload area (drag-and-drop or browse)
-   - Upload button (disabled until file selected)
+    - CSV template download link
+    - File upload area (drag-and-drop or browse)
+    - Upload button (disabled until file selected)
 3. User downloads CSV template (optional)
 4. User selects or drags CSV file to upload area
 5. System validates file:
-   - File type must be .csv
-   - File size must be ≤ 10MB
-   - Shows file info (name, size, last modified)
+    - File type must be .csv
+    - File size must be ≤ 10MB
+    - Shows file info (name, size, last modified)
 6. User clicks "Upload" button
 7. System displays upload progress:
-   - Uploading... (0-50%)
-   - Processing... (50-90%)
-   - Validating... (90-100%)
+    - Uploading... (0-50%)
+    - Processing... (50-90%)
+    - Validating... (90-100%)
 8. System displays results:
-   - Success: "Successfully created X picking lists from Y rows"
-   - Partial Success: "Created X picking lists, Y errors found"
-   - Failure: "Upload failed, Z errors found"
+    - Success: "Successfully created X picking lists from Y rows"
+    - Partial Success: "Created X picking lists, Y errors found"
+    - Failure: "Upload failed, Z errors found"
 9. If errors, system displays error table:
-   - Row number
-   - Field name
-   - Error message
-   - Invalid value
+    - Row number
+    - Field name
+    - Error message
+    - Invalid value
 10. User can download error report (CSV)
 11. User can fix errors and re-upload
 
@@ -253,21 +253,21 @@ LOAD-002,ORD-003,CUST-003,DEF Ltd,PROD-001,75,LOW,
 
 ### Required Columns
 
-| Column Name    | Data Type | Description                        | Validation Rules                                      |
-|----------------|-----------|------------------------------------|----------------------------------------------------- |
-| Load Number    | String    | Unique load identifier             | Required, max 50 chars, alphanumeric with dashes     |
-| Order Number   | String    | Unique order identifier            | Required, max 50 chars, alphanumeric with dashes     |
-| Customer Code  | String    | Customer identifier                | Required, max 50 chars, alphanumeric                 |
-| Product Code   | String    | Product identifier                 | Required, max 50 chars, must exist in Product master |
-| Quantity       | Decimal   | Quantity to pick                   | Required, positive number, max 10000                 |
+| Column Name   | Data Type | Description             | Validation Rules                                     |
+|---------------|-----------|-------------------------|------------------------------------------------------|
+| Load Number   | String    | Unique load identifier  | Required, max 50 chars, alphanumeric with dashes     |
+| Order Number  | String    | Unique order identifier | Required, max 50 chars, alphanumeric with dashes     |
+| Customer Code | String    | Customer identifier     | Required, max 50 chars, alphanumeric                 |
+| Product Code  | String    | Product identifier      | Required, max 50 chars, must exist in Product master |
+| Quantity      | Decimal   | Quantity to pick        | Required, positive number, max 10000                 |
 
 ### Optional Columns
 
-| Column Name    | Data Type | Description                        | Validation Rules                                      |
-|----------------|-----------|------------------------------------|----------------------------------------------------- |
-| Customer Name  | String    | Customer display name              | Optional, max 200 chars                              |
-| Priority       | String    | Picking priority                   | Optional, enum: HIGH, NORMAL, LOW (default: NORMAL)  |
-| Notes          | String    | Additional notes                   | Optional, max 500 chars                              |
+| Column Name   | Data Type | Description           | Validation Rules                                    |
+|---------------|-----------|-----------------------|-----------------------------------------------------|
+| Customer Name | String    | Customer display name | Optional, max 200 chars                             |
+| Priority      | String    | Picking priority      | Optional, enum: HIGH, NORMAL, LOW (default: NORMAL) |
+| Notes         | String    | Additional notes      | Optional, max 500 chars                             |
 
 ### CSV File Requirements
 
@@ -292,28 +292,28 @@ LOAD-2025-002,ORD-003,CUST-003,DEF Ltd,PROD-004,120,LOW,
 ### Validation Rules
 
 1. **File Validation:**
-   - File must be .csv format
-   - File size must be ≤ 10MB
-   - File must be UTF-8 encoded
-   - File must not be empty
+    - File must be .csv format
+    - File size must be ≤ 10MB
+    - File must be UTF-8 encoded
+    - File must not be empty
 
 2. **Header Validation:**
-   - All required columns must be present
-   - Column names are case-insensitive
-   - Extra columns are ignored
+    - All required columns must be present
+    - Column names are case-insensitive
+    - Extra columns are ignored
 
 3. **Row Validation:**
-   - Required fields must not be empty
-   - Quantity must be positive decimal number
-   - Priority must be valid enum value (if provided)
-   - Product Code must exist in Product master data
-   - Customer Code must be valid format
+    - Required fields must not be empty
+    - Quantity must be positive decimal number
+    - Priority must be valid enum value (if provided)
+    - Product Code must exist in Product master data
+    - Customer Code must be valid format
 
 4. **Business Validation:**
-   - Load Number can have multiple orders
-   - Order Number can have multiple products (line items)
-   - Customer Code must be consistent within same Order Number
-   - Product Code availability will be checked during picking planning
+    - Load Number can have multiple orders
+    - Order Number can have multiple products (line items)
+    - Customer Code must be consistent within same Order Number
+    - Product Code availability will be checked during picking planning
 
 ---
 
@@ -322,6 +322,7 @@ LOAD-2025-002,ORD-003,CUST-003,DEF Ltd,PROD-004,120,LOW,
 ### Value Objects (Common Domain)
 
 **LoadNumber**
+
 - Package: `com.ccbsa.common.domain.valueobject`
 - Immutable value object representing load identifier
 - Validation: Not null, max 50 chars, alphanumeric with dashes
@@ -377,6 +378,7 @@ public class LoadNumber {
 ```
 
 **OrderNumber**
+
 - Package: `com.ccbsa.common.domain.valueobject`
 - Immutable value object representing order identifier
 - Validation: Not null, max 50 chars, alphanumeric with dashes
@@ -432,6 +434,7 @@ public class OrderNumber {
 ```
 
 **CustomerInfo**
+
 - Package: `com.ccbsa.common.domain.valueobject`
 - Immutable value object representing customer information
 - Contains customer code and name
@@ -492,6 +495,7 @@ public class CustomerInfo {
 ```
 
 **Priority**
+
 - Package: `com.ccbsa.common.domain.valueobject`
 - Enum representing picking priority
 
@@ -529,6 +533,7 @@ public enum Priority {
 ### Domain Model (Picking Service)
 
 **PickingList Aggregate Root**
+
 - Package: `com.ccbsa.wms.picking.domain.core.entity`
 - Aggregate root for picking list
 - Contains loads, orders, and line items
@@ -640,6 +645,7 @@ public class PickingList extends AggregateRoot<PickingListId> {
 ```
 
 **Load Aggregate Root**
+
 - Package: `com.ccbsa.wms.picking.domain.core.entity`
 - Aggregate for load containing multiple orders
 
@@ -872,6 +878,7 @@ Due to the length, let me continue with the application service layer and the re
 ### Unit Tests
 
 **Domain Core Tests:**
+
 - PickingList creation and validation
 - Load creation and validation
 - Order creation and validation
@@ -879,6 +886,7 @@ Due to the length, let me continue with the application service layer and the re
 - Event publishing verification
 
 **CSV Parser Tests:**
+
 - Valid CSV parsing
 - Invalid CSV format handling
 - Missing required columns
@@ -887,6 +895,7 @@ Due to the length, let me continue with the application service layer and the re
 - Large file handling (streaming)
 
 **Command Handler Tests:**
+
 - Valid command handling
 - Invalid command handling
 - Product validation
@@ -896,12 +905,14 @@ Due to the length, let me continue with the application service layer and the re
 ### Integration Tests
 
 **Service Integration Tests:**
+
 - CSV upload end-to-end
 - Product Service integration
 - Database persistence
 - Event publishing to Kafka
 
 **Repository Tests:**
+
 - PickingList repository operations
 - Load repository operations
 - Order repository operations
@@ -918,17 +929,17 @@ Due to the length, let me continue with the application service layer and the re
 
 ## Acceptance Criteria Validation
 
-| Acceptance Criteria | Implementation | Status |
-|---------------------|----------------|--------|
+| Acceptance Criteria                                        | Implementation                                            | Status    |
+|------------------------------------------------------------|-----------------------------------------------------------|-----------|
 | AC1: System accepts CSV file uploads through web interface | PickingListCsvUploadForm.tsx component with drag-and-drop | ✅ Planned |
-| AC2: CSV format includes required fields | CSV format specification documented | ✅ Planned |
-| AC3: System validates CSV file format and columns | CSV parser with validation | ✅ Planned |
-| AC4: System provides clear error messages | Error display component with detailed messages | ✅ Planned |
-| AC5: System processes CSV and creates picking lists | UploadPickingListCsvCommandHandler | ✅ Planned |
-| AC6: System displays upload progress | Upload progress indicator component | ✅ Planned |
-| AC7: System supports CSV up to 10MB | File size validation | ✅ Planned |
-| AC8: System logs all CSV upload events | Audit logging in command handler | ✅ Planned |
-| AC9: System publishes PickingListReceivedEvent | Event publishing after successful creation | ✅ Planned |
+| AC2: CSV format includes required fields                   | CSV format specification documented                       | ✅ Planned |
+| AC3: System validates CSV file format and columns          | CSV parser with validation                                | ✅ Planned |
+| AC4: System provides clear error messages                  | Error display component with detailed messages            | ✅ Planned |
+| AC5: System processes CSV and creates picking lists        | UploadPickingListCsvCommandHandler                        | ✅ Planned |
+| AC6: System displays upload progress                       | Upload progress indicator component                       | ✅ Planned |
+| AC7: System supports CSV up to 10MB                        | File size validation                                      | ✅ Planned |
+| AC8: System logs all CSV upload events                     | Audit logging in command handler                          | ✅ Planned |
+| AC9: System publishes PickingListReceivedEvent             | Event publishing after successful creation                | ✅ Planned |
 
 ---
 

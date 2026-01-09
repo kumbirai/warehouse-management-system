@@ -117,17 +117,17 @@
 **Barcode-First Implementation:**
 
 - **Primary Method:** Barcode scanning
-  - Handheld scanner support (USB/Bluetooth - acts as keyboard)
-  - Camera-based scanning (ZXing library via camera button)
-  - Auto-focus on barcode fields for optimal scanner UX
+    - Handheld scanner support (USB/Bluetooth - acts as keyboard)
+    - Camera-based scanning (ZXing library via camera button)
+    - Auto-focus on barcode fields for optimal scanner UX
 - **Fallback Method:** Manual keyboard input
-  - Full keyboard support when scanning fails
-  - Clear helper text: "Scan barcode first, or enter manually if scanning fails"
+    - Full keyboard support when scanning fails
+    - Clear helper text: "Scan barcode first, or enter manually if scanning fails"
 - **Features:**
-  - Product lookup by barcode
-  - Product information display
-  - Error handling for invalid barcodes
-  - Auto-population of product details when barcode is validated
+    - Product lookup by barcode
+    - Product information display
+    - Error handling for invalid barcodes
+    - Auto-population of product details when barcode is validated
 
 ---
 
@@ -479,6 +479,7 @@ export const LineItemRow: React.FC<LineItemRowProps> = ({
 ```
 
 **Key Features:**
+
 - **BarcodeInput for product code:** Primary scanning, manual input as fallback
 - **Auto-focus:** First line item auto-focuses for scanner workflow
 - **Clear helper text:** Guides users to scan first

@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.application.context.CorrelationContext;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
-import com.ccbsa.wms.notification.dataaccess.schema.TenantSchemaProvisioner;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

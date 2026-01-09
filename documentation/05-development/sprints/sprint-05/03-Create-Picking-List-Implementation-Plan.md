@@ -988,13 +988,13 @@ class PickingListRepositoryIntegrationTest {
 
 ## Acceptance Criteria Validation
 
-| Acceptance Criteria | Implementation | Status |
-|---------------------|----------------|--------|
-| AC1: Create PickingList aggregate | PickingList.builder() pattern | ✅ Planned |
-| AC2: Create Load aggregate | Load.builder() pattern | ✅ Planned |
-| AC3: Create Order entities | Order.builder() pattern | ✅ Planned |
-| AC4: Set status to RECEIVED | PickingList.initializePickingList() | ✅ Planned |
-| AC5: Publish PickingListReceivedEvent | Event publisher implementation | ✅ Planned |
+| Acceptance Criteria                   | Implementation                      | Status    |
+|---------------------------------------|-------------------------------------|-----------|
+| AC1: Create PickingList aggregate     | PickingList.builder() pattern       | ✅ Planned |
+| AC2: Create Load aggregate            | Load.builder() pattern              | ✅ Planned |
+| AC3: Create Order entities            | Order.builder() pattern             | ✅ Planned |
+| AC4: Set status to RECEIVED           | PickingList.initializePickingList() | ✅ Planned |
+| AC5: Publish PickingListReceivedEvent | Event publisher implementation      | ✅ Planned |
 
 ---
 

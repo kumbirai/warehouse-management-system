@@ -89,5 +89,13 @@ public interface StockItemRepository {
      * @return Optional stock item
      */
     Optional<StockItem> findById(StockItemId stockItemId);
+
+    /**
+     * Finds all stock items for a tenant.
+     *
+     * @param tenantId Tenant ID
+     * @return List of stock items
+     */
+    List<StockItem> findByTenantId(TenantId tenantId);
 }
 

@@ -26,6 +26,7 @@ Templates for the **Data Access** module (`{service}-dataaccess`). Implements re
 **MANDATORY**: Use Lombok for JPA entities, adapters, and mappers to reduce boilerplate.
 
 **JPA Entities**:
+
 - Use `@Getter` / `@Setter` for field accessors
 - Use `@NoArgsConstructor` for JPA requirement (no-arg constructor)
 - Use `@AllArgsConstructor` for full constructor (optional)
@@ -34,15 +35,18 @@ Templates for the **Data Access** module (`{service}-dataaccess`). Implements re
 - **Avoid** `@EqualsAndHashCode` on entities (use ID-based comparison only)
 
 **Repository Adapters**:
+
 - Use `@Slf4j` for logging
 - Use `@RequiredArgsConstructor` for dependency injection
 - Use `@Repository` for Spring bean registration
 
 **Mappers**:
+
 - Use `@Component` for Spring bean registration
 - Use `@RequiredArgsConstructor` if mapper has dependencies
 
 **Example:**
+
 ```java
 // JPA Entity with Lombok
 @Entity
@@ -920,9 +924,9 @@ See [Production-Grade Caching Strategy](../caching/README.md) for complete imple
 1. **Redis Connection Failures**: Catch `RedisConnectionFailureException` and log as warning (not error)
 2. **Timeout Protection**: Redis command timeout is configured to 2 seconds in `CacheConfiguration`
 3. **Graceful Degradation**: Cache failures must NOT break application - always continue without cache
-4. **Logging Levels**: 
-   - Connection failures: `log.warn()` (expected in degraded scenarios)
-   - Other errors: `log.warn()` with error message (not full stack trace for performance)
+4. **Logging Levels**:
+    - Connection failures: `log.warn()` (expected in degraded scenarios)
+    - Other errors: `log.warn()` with error message (not full stack trace for performance)
 
 The base `CachedRepositoryDecorator.saveWithCache()` method implements this pattern automatically.
 Services that override `save()` directly must follow the same pattern.

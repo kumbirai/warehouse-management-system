@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import { CameraAlt as CameraIcon, Close as CloseIcon } from '@mui/icons-material';
+import { logger } from '../../../utils/logger';
 
 interface BarcodeScannerProps {
   open: boolean;
@@ -62,7 +63,9 @@ export const BarcodeScanner = ({ open, onClose, onScan }: BarcodeScannerProps) =
               }
               if (err && !(err instanceof Error && err.message.includes('No QR Code'))) {
                 // Ignore "No QR Code" errors as they're expected during scanning
-                console.debug('Barcode scanning error:', err);
+                logger.debug('Barcode scanning error', {
+                  error: err instanceof Error ? err.message : String(err),
+                });
               }
             }
           );
@@ -71,7 +74,9 @@ export const BarcodeScanner = ({ open, onClose, onScan }: BarcodeScannerProps) =
         const errorMessage = err instanceof Error ? err.message : 'Failed to start camera';
         setError(errorMessage);
         setIsScanning(false);
-        console.error('Barcode scanner error:', err);
+        logger.error('Barcode scanner error', err instanceof Error ? err : new Error(String(err)), {
+          errorMessage,
+        });
       }
     };
 

@@ -1,9 +1,13 @@
 import { useState } from 'react';
-import { stockMovementService, CancelStockMovementRequest } from '../services/stockMovementService';
+import { CancelStockMovementRequest, stockMovementService } from '../services/stockMovementService';
 import { logger } from '../../../utils/logger';
 
 export interface UseCancelStockMovementResult {
-  cancelStockMovement: (movementId: string, request: CancelStockMovementRequest, tenantId: string) => Promise<void>;
+  cancelStockMovement: (
+    movementId: string,
+    request: CancelStockMovementRequest,
+    tenantId: string
+  ) => Promise<void>;
   isLoading: boolean;
   error: Error | null;
 }
@@ -12,12 +16,20 @@ export const useCancelStockMovement = (): UseCancelStockMovementResult => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const cancelStockMovement = async (movementId: string, request: CancelStockMovementRequest, tenantId: string) => {
+  const cancelStockMovement = async (
+    movementId: string,
+    request: CancelStockMovementRequest,
+    tenantId: string
+  ) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await stockMovementService.cancelStockMovement(movementId, request, tenantId);
+      const response = await stockMovementService.cancelStockMovement(
+        movementId,
+        request,
+        tenantId
+      );
 
       if (response.error) {
         throw new Error(response.error.message || 'Failed to cancel stock movement');
@@ -40,4 +52,3 @@ export const useCancelStockMovement = (): UseCancelStockMovementResult => {
 
   return { cancelStockMovement, isLoading, error };
 };
-

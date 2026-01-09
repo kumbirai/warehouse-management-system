@@ -735,14 +735,14 @@ class PickingListQueryGatewayTest extends BaseIntegrationTest {
 
 ## Acceptance Criteria Validation
 
-| Test Category | Coverage | Status |
-|---------------|----------|--------|
-| CSV Upload | Valid CSV, Invalid CSV, File size, Product validation, Auth | ✅ Planned |
-| Manual Creation | Valid request, Missing fields, Invalid data, Duplicates | ✅ Planned |
-| Location Planning | Valid planning, Insufficient stock, Already planned, FEFO | ✅ Planned |
-| Queries | List picking lists, Get by ID, Get orders by load, Pagination | ✅ Planned |
-| Error Handling | 400, 401, 404, 409, 413 responses | ✅ Planned |
-| Multi-tenant | Tenant isolation | ✅ Planned |
+| Test Category     | Coverage                                                      | Status    |
+|-------------------|---------------------------------------------------------------|-----------|
+| CSV Upload        | Valid CSV, Invalid CSV, File size, Product validation, Auth   | ✅ Planned |
+| Manual Creation   | Valid request, Missing fields, Invalid data, Duplicates       | ✅ Planned |
+| Location Planning | Valid planning, Insufficient stock, Already planned, FEFO     | ✅ Planned |
+| Queries           | List picking lists, Get by ID, Get orders by load, Pagination | ✅ Planned |
+| Error Handling    | 400, 401, 404, 409, 413 responses                             | ✅ Planned |
+| Multi-tenant      | Tenant isolation                                              | ✅ Planned |
 
 ---
 

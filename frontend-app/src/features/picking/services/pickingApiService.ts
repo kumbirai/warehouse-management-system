@@ -1,4 +1,5 @@
 import apiClient from '../../../services/apiClient';
+import { ApiResponse } from '../../../types/api';
 import {
   CreatePickingListApiResponse,
   CreatePickingListRequest,
@@ -118,6 +119,113 @@ export const pickingApiService = {
   async listOrdersByLoad(loadId: string, tenantId: string): Promise<ListOrdersByLoadApiResponse> {
     const response = await apiClient.get<ListOrdersByLoadApiResponse>(
       `${PICKING_BASE_PATH}/loads/${loadId}/orders`,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Lists picking tasks with filters and pagination.
+   */
+  async listPickingTasks(
+    filters: {
+      status?: string;
+      page?: number;
+      size?: number;
+    },
+    tenantId: string
+  ): Promise<
+    ApiResponse<{
+      pickingTasks: Array<{
+        taskId: string;
+        loadId: string;
+        orderId: string;
+        productCode: string;
+        locationId: string;
+        quantity: number;
+        status: string;
+        sequence: number;
+      }>;
+      totalElements: number;
+      page: number;
+      size: number;
+      totalPages: number;
+    }>
+  > {
+    const params = new URLSearchParams();
+    if (filters.status) params.append('status', filters.status);
+    if (filters.page !== undefined) params.append('page', filters.page.toString());
+    if (filters.size !== undefined) params.append('size', filters.size.toString());
+
+    const response = await apiClient.get<
+      ApiResponse<{
+        pickingTasks: Array<{
+          taskId: string;
+          loadId: string;
+          orderId: string;
+          productCode: string;
+          locationId: string;
+          quantity: number;
+          status: string;
+          sequence: number;
+        }>;
+        totalElements: number;
+        page: number;
+        size: number;
+        totalPages: number;
+      }>
+    >(`${PICKING_BASE_PATH}/tasks?${params.toString()}`, {
+      headers: {
+        'X-Tenant-Id': tenantId,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Executes a picking task.
+   */
+  async executePickingTask(
+    pickingTaskId: string,
+    request: { pickedQuantity: number; isPartialPicking?: boolean; partialReason?: string },
+    tenantId: string
+  ): Promise<
+    ApiResponse<{
+      taskId: string;
+      status: string;
+      pickedQuantity: number;
+      isPartialPicking: boolean;
+    }>
+  > {
+    const response = await apiClient.post<
+      ApiResponse<{
+        taskId: string;
+        status: string;
+        pickedQuantity: number;
+        isPartialPicking: boolean;
+      }>
+    >(`${PICKING_BASE_PATH}/picking-tasks/${pickingTaskId}/execute`, request, {
+      headers: {
+        'X-Tenant-Id': tenantId,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Completes a picking list.
+   */
+  async completePickingList(
+    pickingListId: string,
+    tenantId: string
+  ): Promise<ApiResponse<{ pickingListId: string; status: string }>> {
+    const response = await apiClient.post<ApiResponse<{ pickingListId: string; status: string }>>(
+      `${PICKING_BASE_PATH}/picking-lists/${pickingListId}/complete`,
+      {},
       {
         headers: {
           'X-Tenant-Id': tenantId,

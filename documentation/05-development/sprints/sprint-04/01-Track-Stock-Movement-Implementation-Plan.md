@@ -70,11 +70,11 @@
 1. User navigates to Stock Movement History
 2. System displays list of recent movements
 3. User can filter by:
-   - Movement type (RECEIVING_TO_STORAGE, STORAGE_TO_PICKING, INTER_STORAGE, PICKING_TO_SHIPPING)
-   - Date range
-   - Source/destination location
-   - User who performed movement
-   - Product
+    - Movement type (RECEIVING_TO_STORAGE, STORAGE_TO_PICKING, INTER_STORAGE, PICKING_TO_SHIPPING)
+    - Date range
+    - Source/destination location
+    - User who performed movement
+    - Product
 4. User can click on movement to view detailed information
 5. User can track movement path visually on warehouse map (future enhancement)
 
@@ -159,6 +159,7 @@
 ```
 
 **Movement Type Icons:**
+
 - RECEIVING_TO_STORAGE: 📦 → 🏪
 - STORAGE_TO_PICKING: 🏪 → 📋
 - INTER_STORAGE: 🏪 → 🏪
@@ -1016,7 +1017,6 @@ public class ListStockMovementsQueryHandler {
 }
 ```
 
-
 ### Phase 4: Data Access (location-management-dataaccess)
 
 **Files to Create:**
@@ -1171,28 +1171,28 @@ Event Listeners:
 ### Unit Tests
 
 1. **StockMovement Aggregate Tests**
-   - Test movement creation with builder
-   - Test complete() method with valid status
-   - Test complete() method with invalid status (should throw)
-   - Test cancel() method with valid status
-   - Test cancel() method without reason (should throw)
-   - Test source/destination validation (cannot be same)
+    - Test movement creation with builder
+    - Test complete() method with valid status
+    - Test complete() method with invalid status (should throw)
+    - Test cancel() method with valid status
+    - Test cancel() method without reason (should throw)
+    - Test source/destination validation (cannot be same)
 
 2. **Command Handler Tests**
-   - CreateStockMovementCommandHandler
-   - CompleteStockMovementCommandHandler
-   - CancelStockMovementCommandHandler
+    - CreateStockMovementCommandHandler
+    - CompleteStockMovementCommandHandler
+    - CancelStockMovementCommandHandler
 
 ### Integration Tests
 
 1. **Repository Tests**
-   - Save and retrieve movement
-   - Find by stock item ID
-   - Find by source/destination location
+    - Save and retrieve movement
+    - Find by stock item ID
+    - Find by source/destination location
 
 2. **Event Publishing Tests**
-   - Verify events published after commit
-   - Verify event correlation IDs
+    - Verify events published after commit
+    - Verify event correlation IDs
 
 ### Gateway API Tests
 

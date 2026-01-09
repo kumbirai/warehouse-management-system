@@ -1,17 +1,17 @@
 import { ReactNode } from 'react';
 import {
+  Box,
+  Card,
+  CardContent,
+  Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Card,
-  CardContent,
-  Stack,
   Typography,
-  Box,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -55,7 +55,7 @@ export function ResponsiveTable<T>({
   if (isMobile) {
     return (
       <Stack spacing={2}>
-        {data.map((item) => (
+        {data.map(item => (
           <Card
             key={getRowKey(item)}
             onClick={onRowClick ? () => onRowClick(item) : undefined}
@@ -70,8 +70,8 @@ export function ResponsiveTable<T>({
               ) : (
                 <Stack spacing={1.5}>
                   {columns
-                    .filter((col) => !col.hideOnMobile)
-                    .map((column) => (
+                    .filter(col => !col.hideOnMobile)
+                    .map(column => (
                       <Box key={column.key}>
                         <Typography variant="caption" color="text.secondary" display="block">
                           {column.label}
@@ -94,20 +94,20 @@ export function ResponsiveTable<T>({
       <Table>
         <TableHead>
           <TableRow>
-            {columns.map((column) => (
+            {columns.map(column => (
               <TableCell key={column.key}>{column.label}</TableCell>
             ))}
           </TableRow>
         </TableHead>
         <TableBody>
-          {data.map((item) => (
+          {data.map(item => (
             <TableRow
               key={getRowKey(item)}
               onClick={onRowClick ? () => onRowClick(item) : undefined}
               hover={!!onRowClick}
               sx={{ cursor: onRowClick ? 'pointer' : 'default' }}
             >
-              {columns.map((column) => (
+              {columns.map(column => (
                 <TableCell key={column.key}>{column.render(item)}</TableCell>
               ))}
             </TableRow>

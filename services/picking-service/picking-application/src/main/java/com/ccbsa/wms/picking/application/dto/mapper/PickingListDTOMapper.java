@@ -46,8 +46,14 @@ public class PickingListDTOMapper {
 
         List<String> pickingListIds = result.getCreatedPickingListIds().stream().map(PickingListId::getValueAsString).collect(Collectors.toList());
 
-        return UploadPickingListCsvResultDTO.builder().totalRows(result.getTotalRows()).successfulRows(result.getSuccessfulRows()).errorRows(result.getErrorRows())
-                .createdPickingListIds(pickingListIds).errors(errorDTOs).build();
+        // Create defensive copies for builder
+        return UploadPickingListCsvResultDTO.builder()
+                .totalRows(result.getTotalRows())
+                .successfulRows(result.getSuccessfulRows())
+                .errorRows(result.getErrorRows())
+                .createdPickingListIds(new java.util.ArrayList<>(pickingListIds))
+                .errors(new java.util.ArrayList<>(errorDTOs))
+                .build();
     }
 
     public CreatePickingListCommand toCreateCommand(CreatePickingListCommandDTO dto, String tenantId) {
@@ -81,7 +87,7 @@ public class PickingListDTOMapper {
         PickingListStatus statusEnum = null;
         if (status != null && !status.trim().isEmpty()) {
             try {
-                statusEnum = PickingListStatus.valueOf(status.toUpperCase());
+                statusEnum = PickingListStatus.valueOf(status.toUpperCase(java.util.Locale.ROOT));
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException(
                         String.format("Invalid picking list status: '%s'. Valid values are: %s", status, java.util.Arrays.toString(PickingListStatus.values())));
@@ -98,20 +104,41 @@ public class PickingListDTOMapper {
                                 .productCode(lineItemResult.getProductCode()).productDescription(lineItemResult.getProductDescription()).quantity(lineItemResult.getQuantity())
                                 .notes(lineItemResult.getNotes()).build()).collect(Collectors.toList()) : List.of();
 
-                return PickingListQueryResultDTO.OrderQueryResultDTO.builder().orderId(orderResult.getOrderId()).orderNumber(orderResult.getOrderNumber())
-                        .customerCode(orderResult.getCustomerCode()).customerName(orderResult.getCustomerName()).priority(orderResult.getPriority()).status(orderResult.getStatus())
-                        .lineItems(lineItemDTOs).build();
+                // Create defensive copy of line items list for builder
+                return PickingListQueryResultDTO.OrderQueryResultDTO.builder()
+                        .orderId(orderResult.getOrderId())
+                        .orderNumber(orderResult.getOrderNumber())
+                        .customerCode(orderResult.getCustomerCode())
+                        .customerName(orderResult.getCustomerName())
+                        .priority(orderResult.getPriority())
+                        .status(orderResult.getStatus())
+                        .lineItems(new java.util.ArrayList<>(lineItemDTOs))
+                        .build();
             }).collect(Collectors.toList()) : List.of();
 
-            return PickingListQueryResultDTO.LoadQueryResultDTO.builder().loadId(loadResult.getLoadId()).loadNumber(loadResult.getLoadNumber()).status(loadResult.getStatus())
-                    .orderCount(loadResult.getOrderCount()).orders(orderDTOs).build();
+            // Create defensive copy of orders list for builder
+            return PickingListQueryResultDTO.LoadQueryResultDTO.builder()
+                    .loadId(loadResult.getLoadId())
+                    .loadNumber(loadResult.getLoadNumber())
+                    .status(loadResult.getStatus())
+                    .orderCount(loadResult.getOrderCount())
+                    .orders(new java.util.ArrayList<>(orderDTOs))
+                    .build();
         }).collect(Collectors.toList()) : List.of();
 
         String statusValue = result.getStatus() != null ? result.getStatus().name() : null;
-        return PickingListQueryResultDTO.builder().id(result.getId().getValueAsString())
-                .pickingListReference(result.getPickingListReference() != null ? result.getPickingListReference().getValue() : null).status(statusValue)
-                .receivedAt(result.getReceivedAt()).processedAt(result.getProcessedAt()).loadCount(result.getLoadCount()).totalOrderCount(result.getTotalOrderCount())
-                .notes(result.getNotes()).loads(loadDTOs).build();
+        // Create defensive copy of loads list for builder
+        return PickingListQueryResultDTO.builder()
+                .id(result.getId().getValueAsString())
+                .pickingListReference(result.getPickingListReference() != null ? result.getPickingListReference().getValue() : null)
+                .status(statusValue)
+                .receivedAt(result.getReceivedAt())
+                .processedAt(result.getProcessedAt())
+                .loadCount(result.getLoadCount())
+                .totalOrderCount(result.getTotalOrderCount())
+                .notes(result.getNotes())
+                .loads(new java.util.ArrayList<>(loadDTOs))
+                .build();
     }
 
     public ListPickingListsQueryResultDTO toListQueryResultDTO(ListPickingListsQueryResult result) {
@@ -122,7 +149,13 @@ public class PickingListDTOMapper {
                     .loadCount(view.getLoadCount()).totalOrderCount(view.getTotalOrderCount()).build();
         }).collect(Collectors.toList());
 
-        return ListPickingListsQueryResultDTO.builder().pickingLists(viewDTOs).totalElements(result.getTotalElements()).page(result.getPage()).size(result.getSize())
-                .totalPages(result.getTotalPages()).build();
+        // Create defensive copy of picking lists for builder
+        return ListPickingListsQueryResultDTO.builder()
+                .pickingLists(new java.util.ArrayList<>(viewDTOs))
+                .totalElements(result.getTotalElements())
+                .page(result.getPage())
+                .size(result.getSize())
+                .totalPages(result.getTotalPages())
+                .build();
     }
 }

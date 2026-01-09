@@ -666,7 +666,8 @@ public class ExecutePickingTaskCommand {
 
 #### Command Handler: ExecutePickingTaskCommandHandler
 
-**Location:** `services/picking-service/picking-domain/picking-application-service/src/main/java/com/ccbsa/wms/picking/application/service/command/ExecutePickingTaskCommandHandler.java`
+**Location:**
+`services/picking-service/picking-domain/picking-application-service/src/main/java/com/ccbsa/wms/picking/application/service/command/ExecutePickingTaskCommandHandler.java`
 
 ```java
 package com.ccbsa.wms.picking.application.service.command;
@@ -1327,7 +1328,9 @@ public class PartialPickingCompletedEvent extends PickingEvent<PickingTask> {
 
 ---
 
-I'll continue with the remaining sections of this implementation plan in the next message due to length. Would you like me to continue with the Data Access Layer, Service Integration, Testing Strategy, and Implementation Checklist sections?
+I'll continue with the remaining sections of this implementation plan in the next message due to length. Would you like me to continue with the Data Access Layer, Service
+Integration, Testing Strategy, and Implementation Checklist sections?
+
 ## Data Access Layer
 
 ### PickingTask Repository
@@ -1550,7 +1553,8 @@ public class PickingTaskEntityMapper {
 
 ### Stock Management Service Port
 
-**Location:** `services/picking-service/picking-domain/picking-application-service/src/main/java/com/ccbsa/wms/picking/application/service/port/service/StockManagementServicePort.java`
+**Location:**
+`services/picking-service/picking-domain/picking-application-service/src/main/java/com/ccbsa/wms/picking/application/service/port/service/StockManagementServicePort.java`
 
 ```java
 package com.ccbsa.wms.picking.application.service.port.service;
@@ -1907,7 +1911,8 @@ class PickingTaskTest {
 
 #### Command Handler Tests
 
-**Location:** `services/picking-service/picking-domain/picking-application-service/src/test/java/com/ccbsa/wms/picking/application/service/command/ExecutePickingTaskCommandHandlerTest.java`
+**Location:**
+`services/picking-service/picking-domain/picking-application-service/src/test/java/com/ccbsa/wms/picking/application/service/command/ExecutePickingTaskCommandHandlerTest.java`
 
 ```java
 package com.ccbsa.wms.picking.application.service.command;
@@ -2181,6 +2186,7 @@ class PickingTaskExecutionTest extends BaseIntegrationTest {
 ## Implementation Checklist
 
 ### Frontend Implementation
+
 - [ ] Create `PickingTaskExecutionPage` component
 - [ ] Create `PickingTaskDetail` component
 - [ ] Create `LocationDisplay` component
@@ -2193,6 +2199,7 @@ class PickingTaskExecutionTest extends BaseIntegrationTest {
 - [ ] Test UI components with mock data
 
 ### Backend - Domain Core
+
 - [ ] Create `PickingTask` aggregate with `execute()` and `executePartial()` methods
 - [ ] Create `PickingTaskStatus` enum
 - [ ] Create `TaskSequence` value object
@@ -2204,6 +2211,7 @@ class PickingTaskExecutionTest extends BaseIntegrationTest {
 - [ ] Test event publishing
 
 ### Backend - Application Service
+
 - [ ] Create `ExecutePickingTaskCommand`
 - [ ] Create `ExecutePickingTaskResult`
 - [ ] Create `ExecutePickingTaskCommandHandler`
@@ -2213,6 +2221,7 @@ class PickingTaskExecutionTest extends BaseIntegrationTest {
 - [ ] Test error scenarios
 
 ### Backend - Application Layer
+
 - [ ] Create `PickingTaskCommandController`
 - [ ] Create `ExecutePickingTaskRequest` DTO
 - [ ] Add endpoint: `POST /api/v1/picking/picking-tasks/{id}/execute`
@@ -2222,6 +2231,7 @@ class PickingTaskExecutionTest extends BaseIntegrationTest {
 - [ ] Document API with OpenAPI annotations
 
 ### Backend - Data Access
+
 - [ ] Create `PickingTaskEntity` JPA entity
 - [ ] Create `PickingTaskJpaRepository`
 - [ ] Create `PickingTaskEntityMapper`
@@ -2230,6 +2240,7 @@ class PickingTaskExecutionTest extends BaseIntegrationTest {
 - [ ] Test repository operations
 
 ### Backend - Service Integration
+
 - [ ] Create `StockManagementServicePort` interface
 - [ ] Create `StockManagementServiceAdapter`
 - [ ] Create `StockManagementServiceClient` REST client
@@ -2238,30 +2249,35 @@ class PickingTaskExecutionTest extends BaseIntegrationTest {
 - [ ] Test service integration with mocks
 
 ### Backend - Messaging
+
 - [ ] Create `PickingEventPublisher` implementation
 - [ ] Configure Kafka producer for picking events
 - [ ] Test event publishing to Kafka
 - [ ] Verify event serialization
 
 ### Event Consumers (Stock Management Service)
+
 - [ ] Create event listener for `PickingTaskCompletedEvent`
 - [ ] Update stock levels when picking completed
 - [ ] Create event listener for `PartialPickingCompletedEvent`
 - [ ] Test event consumption and stock updates
 
 ### Event Consumers (Location Management Service)
+
 - [ ] Create event listener for `PickingTaskCompletedEvent`
 - [ ] Create stock movement record
 - [ ] Update location status
 - [ ] Test event consumption and movement tracking
 
 ### Gateway Configuration
+
 - [ ] Add route for picking task execution endpoint
 - [ ] Configure rate limiting
 - [ ] Add request/response logging
 - [ ] Test gateway routing
 
 ### Integration Testing
+
 - [ ] Write gateway API test for successful execution
 - [ ] Write gateway API test for partial picking
 - [ ] Write gateway API test for expired stock rejection
@@ -2270,6 +2286,7 @@ class PickingTaskExecutionTest extends BaseIntegrationTest {
 - [ ] Test end-to-end flow from UI to database
 
 ### Documentation
+
 - [ ] Update API documentation (OpenAPI spec)
 - [ ] Document execution workflow
 - [ ] Document error codes and messages
@@ -2277,6 +2294,7 @@ class PickingTaskExecutionTest extends BaseIntegrationTest {
 - [ ] Update architecture documentation
 
 ### Deployment
+
 - [ ] Update database schema (Flyway migration)
 - [ ] Configure environment variables
 - [ ] Deploy picking service

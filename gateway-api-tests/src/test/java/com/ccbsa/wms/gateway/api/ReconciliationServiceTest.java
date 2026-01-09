@@ -46,16 +46,10 @@ public class ReconciliationServiceTest extends BaseIntegrationTest {
 
             // Create location and user for tests
             CreateLocationRequest locationRequest = LocationTestDataBuilder.buildWarehouseRequest();
-            EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationExchangeResult = authenticatedPost(
-                    "/api/v1/location-management/locations",
-                    tenantAdminAuth.getAccessToken(),
-                    testTenantId,
-                    locationRequest
-            ).exchange()
-                    .expectStatus().isCreated()
-                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                    })
-                    .returnResult();
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationExchangeResult =
+                    authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, locationRequest).exchange().expectStatus()
+                            .isCreated().expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                            }).returnResult();
 
             ApiResponse<CreateLocationResponse> locationApiResponse = locationExchangeResult.getResponseBody();
             assertThat(locationApiResponse).isNotNull();
@@ -65,16 +59,10 @@ public class ReconciliationServiceTest extends BaseIntegrationTest {
             testLocationId = location.getLocationId();
 
             CreateUserRequest userRequest = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-            EntityExchangeResult<ApiResponse<CreateUserResponse>> userExchangeResult = authenticatedPost(
-                    "/api/v1/users",
-                    tenantAdminAuth.getAccessToken(),
-                    testTenantId,
-                    userRequest
-            ).exchange()
-                    .expectStatus().isCreated()
-                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                    })
-                    .returnResult();
+            EntityExchangeResult<ApiResponse<CreateUserResponse>> userExchangeResult =
+                    authenticatedPost("/api/v1/users", tenantAdminAuth.getAccessToken(), testTenantId, userRequest).exchange().expectStatus().isCreated()
+                            .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                            }).returnResult();
 
             ApiResponse<CreateUserResponse> userApiResponse = userExchangeResult.getResponseBody();
             assertThat(userApiResponse).isNotNull();
@@ -91,23 +79,15 @@ public class ReconciliationServiceTest extends BaseIntegrationTest {
     @Order(1)
     public void testCreateReconciliationCount_Success() {
         // Arrange
-        CreateReconciliationCountRequest request = ReconciliationTestDataBuilder.buildCreateReconciliationCountRequest(
-                testLocationId, testUserId);
+        CreateReconciliationCountRequest request = ReconciliationTestDataBuilder.buildCreateReconciliationCountRequest(testLocationId, testUserId);
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/reconciliation/counts",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/reconciliation/counts", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<CreateReconciliationCountResponse>> exchangeResult = response
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateReconciliationCountResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateReconciliationCountResponse>> exchangeResult =
+                response.expectStatus().isCreated().expectBody(new ParameterizedTypeReference<ApiResponse<CreateReconciliationCountResponse>>() {
+                }).returnResult();
 
         ApiResponse<CreateReconciliationCountResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
@@ -123,11 +103,7 @@ public class ReconciliationServiceTest extends BaseIntegrationTest {
     @Order(2)
     public void testListReconciliationCounts_Success() {
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/reconciliation/counts?page=0&size=10",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/reconciliation/counts?page=0&size=10", tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isOk();

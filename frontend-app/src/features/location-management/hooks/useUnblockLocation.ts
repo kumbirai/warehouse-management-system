@@ -40,4 +40,3 @@ export const useUnblockLocation = (): UseUnblockLocationResult => {
 
   return { unblockLocation, isLoading, error };
 };
-

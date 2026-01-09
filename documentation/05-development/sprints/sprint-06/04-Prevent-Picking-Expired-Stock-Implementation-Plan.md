@@ -442,6 +442,7 @@ describe('Expired Stock Prevention', () => {
 ## Implementation Checklist
 
 ### Frontend
+
 - [ ] Add expired stock validation to `PickingTaskExecutionPage`
 - [ ] Create `ExpiredStockIndicator` component
 - [ ] Disable picking button for expired stock
@@ -450,6 +451,7 @@ describe('Expired Stock Prevention', () => {
 - [ ] Test UI with expired stock scenarios
 
 ### Backend - Stock Management Service
+
 - [ ] Add `canBePicked()` method to `StockItem` domain model
 - [ ] Filter expired stock in FEFO queries
 - [ ] Create `StockExpirationCheckQuery` and handler
@@ -457,12 +459,14 @@ describe('Expired Stock Prevention', () => {
 - [ ] Write unit tests for expiration validation
 
 ### Backend - Picking Service
+
 - [ ] Add expiration validation in `ExecutePickingTaskCommandHandler`
 - [ ] Create `ExpiredStockException`
 - [ ] Query Stock Management Service for expiration status
 - [ ] Write unit tests for picking validation
 
 ### Audit Logging
+
 - [ ] Create `ExpiredStockAuditLogger`
 - [ ] Create `AuditLog` entity and repository
 - [ ] Log all attempts to pick expired stock
@@ -470,18 +474,21 @@ describe('Expired Stock Prevention', () => {
 - [ ] Test audit log creation
 
 ### Database
+
 - [ ] Add indexes for expiration queries
 - [ ] Add audit_logs table migration
 - [ ] Optimize query performance
 - [ ] Test query execution plans
 
 ### Integration Tests
+
 - [ ] Test picking rejection for expired stock
 - [ ] Test FEFO query excludes expired stock
 - [ ] Test audit logging
 - [ ] Test end-to-end workflow
 
 ### Documentation
+
 - [ ] Document expiration validation logic
 - [ ] Document audit logging process
 - [ ] Update API documentation
@@ -493,10 +500,10 @@ describe('Expired Stock Prevention', () => {
 
 ### Error Codes
 
-| Code | Message | HTTP Status | Action |
-|------|---------|-------------|--------|
-| EXPIRED_STOCK | Cannot pick expired stock | 400 | Display error, prevent picking |
-| STOCK_EXPIRING_SOON | Stock expires within 7 days | 200 (Warning) | Allow picking, show warning |
+| Code                | Message                     | HTTP Status   | Action                         |
+|---------------------|-----------------------------|---------------|--------------------------------|
+| EXPIRED_STOCK       | Cannot pick expired stock   | 400           | Display error, prevent picking |
+| STOCK_EXPIRING_SOON | Stock expires within 7 days | 200 (Warning) | Allow picking, show warning    |
 
 ### Error Response Format
 
@@ -531,13 +538,13 @@ describe('Expired Stock Prevention', () => {
 ### Monitoring
 
 - **Metrics:**
-  - Count of expired stock picking attempts
-  - Average expiration check query time
-  - Number of expired stock items in system
+    - Count of expired stock picking attempts
+    - Average expiration check query time
+    - Number of expired stock items in system
 
 - **Alerts:**
-  - Alert when expired stock picking attempts exceed threshold
-  - Alert when query performance degrades
+    - Alert when expired stock picking attempts exceed threshold
+    - Alert when query performance degrades
 
 ---
 

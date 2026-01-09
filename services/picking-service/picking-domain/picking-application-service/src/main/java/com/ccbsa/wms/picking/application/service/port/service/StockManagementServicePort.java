@@ -31,4 +31,23 @@ public interface StockManagementServicePort {
      * @return Map of product codes to lists of StockAvailabilityInfo
      */
     Map<String, List<StockAvailabilityInfo>> queryAvailableStockForProducts(Map<String, Integer> productQuantities);
+
+    /**
+     * Checks if stock is expired for a product at a specific location.
+     *
+     * @param productCode Product code
+     * @param locationId  Location ID
+     * @return true if stock is expired, false otherwise
+     */
+    boolean isStockExpired(String productCode, String locationId);
+
+    /**
+     * Checks if sufficient stock is available at a location.
+     *
+     * @param productCode Product code
+     * @param locationId  Location ID
+     * @param quantity    Required quantity
+     * @return true if stock is available, false otherwise
+     */
+    boolean checkStockAvailability(String productCode, String locationId, int quantity);
 }

@@ -66,9 +66,9 @@
 
 1. User views location assignment dashboard
 2. System displays warehouse location map with:
-   - Locations color-coded by expiration date priority
-   - Picking zones highlighted
-   - Available locations marked
+    - Locations color-coded by expiration date priority
+    - Picking zones highlighted
+    - Available locations marked
 3. User can view stock items awaiting location assignment
 4. System shows suggested locations based on FEFO principles
 5. User can manually override or confirm automatic assignment

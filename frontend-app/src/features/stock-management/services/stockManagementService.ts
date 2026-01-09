@@ -394,4 +394,141 @@ export const stockManagementService = {
     );
     return response.data;
   },
+
+  /**
+   * Checks if stock is expired for a product at a location.
+   * Uses productCode (not productId) as the backend converts it internally.
+   */
+  async checkStockExpiration(
+    productCode: string,
+    locationId: string,
+    tenantId: string
+  ): Promise<ApiResponse<{ expired: boolean; classification: string; message: string }>> {
+    const params = new URLSearchParams();
+    params.append('productCode', productCode);
+    params.append('locationId', locationId);
+
+    const response = await apiClient.get<
+      ApiResponse<{ expired: boolean; classification: string; message: string }>
+    >(`${STOCK_MANAGEMENT_BASE_PATH}/stock-items/check-expiration?${params.toString()}`, {
+      headers: {
+        'X-Tenant-Id': tenantId,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Gets expiring stock items within a date range.
+   */
+  async getExpiringStock(
+    filters: {
+      startDate?: string;
+      endDate?: string;
+      classification?: string;
+    },
+    tenantId: string
+  ): Promise<
+    ApiResponse<
+      Array<{
+        stockItemId: string;
+        productId: string;
+        productCode: string;
+        locationId: string;
+        quantity: number;
+        expirationDate: string;
+        classification: string;
+        daysUntilExpiry?: number;
+      }>
+    >
+  > {
+    const params = new URLSearchParams();
+    if (filters.startDate) params.append('startDate', filters.startDate);
+    if (filters.endDate) params.append('endDate', filters.endDate);
+    if (filters.classification) params.append('classification', filters.classification);
+
+    const response = await apiClient.get<
+      ApiResponse<
+        Array<{
+          stockItemId: string;
+          productId: string;
+          productCode: string;
+          locationId: string;
+          quantity: number;
+          expirationDate: string;
+          classification: string;
+          daysUntilExpiry?: number;
+        }>
+      >
+    >(`${STOCK_MANAGEMENT_BASE_PATH}/stock-items/expiring?${params.toString()}`, {
+      headers: {
+        'X-Tenant-Id': tenantId,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Lists restock requests with filters.
+   */
+  async listRestockRequests(
+    filters: {
+      status?: string;
+      priority?: string;
+      productId?: string;
+      page?: number;
+      size?: number;
+    },
+    tenantId: string
+  ): Promise<
+    ApiResponse<{
+      requests: Array<{
+        restockRequestId: string;
+        productId: string;
+        locationId?: string;
+        currentQuantity: number;
+        minimumQuantity: number;
+        maximumQuantity?: number;
+        requestedQuantity: number;
+        priority: string;
+        status: string;
+        createdAt: string;
+        sentToD365At?: string;
+        d365OrderReference?: string;
+      }>;
+      totalCount: number;
+    }>
+  > {
+    const params = new URLSearchParams();
+    if (filters.status) params.append('status', filters.status);
+    if (filters.priority) params.append('priority', filters.priority);
+    if (filters.productId) params.append('productId', filters.productId);
+    if (filters.page) params.append('page', filters.page.toString());
+    if (filters.size) params.append('size', filters.size.toString());
+
+    const response = await apiClient.get<
+      ApiResponse<{
+        requests: Array<{
+          restockRequestId: string;
+          productId: string;
+          locationId?: string;
+          currentQuantity: number;
+          minimumQuantity: number;
+          maximumQuantity?: number;
+          requestedQuantity: number;
+          priority: string;
+          status: string;
+          createdAt: string;
+          sentToD365At?: string;
+          d365OrderReference?: string;
+        }>;
+        totalCount: number;
+      }>
+    >(`${STOCK_MANAGEMENT_BASE_PATH}/restock-requests?${params.toString()}`, {
+      headers: {
+        'X-Tenant-Id': tenantId,
+      },
+    });
+    return response.data;
+  },
 };

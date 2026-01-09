@@ -115,12 +115,12 @@
 1. User navigates to "Stock Management" → "Stock Allocations"
 2. System displays list of allocations
 3. User can filter by:
-   - Product
-   - Location
-   - Allocation type
-   - Reference ID
-   - Status
-   - Date range
+    - Product
+    - Location
+    - Allocation type
+    - Reference ID
+    - Status
+    - Date range
 4. User can click on allocation to view details
 5. User can release allocation (if not yet picked)
 
@@ -163,10 +163,10 @@
 2. System queries available stock by product
 3. System sorts by expiration date (earliest first)
 4. System displays suggested locations with:
-   - Location code
-   - Expiration date
-   - Available quantity
-   - Distance to picking zone (if available)
+    - Location code
+    - Expiration date
+    - Available quantity
+    - Distance to picking zone (if available)
 5. User can select suggested location or scan/enter different location
 
 ---

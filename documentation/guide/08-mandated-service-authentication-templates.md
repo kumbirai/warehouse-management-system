@@ -16,17 +16,20 @@
 
 ## Overview
 
-This document provides **production-grade templates** for implementing service-to-service authentication using OAuth2 **client_credentials grant** (service account tokens). This solution addresses the critical issue where **event listeners and background jobs lack HTTP request context** and therefore cannot forward user JWT tokens.
+This document provides **production-grade templates** for implementing service-to-service authentication using OAuth2 **client_credentials grant** (service account tokens). This
+solution addresses the critical issue where **event listeners and background jobs lack HTTP request context** and therefore cannot forward user JWT tokens.
 
 ### Problem Statement
 
 **Event-driven architecture challenge:**
+
 - Event listeners (`@KafkaListener`) process messages asynchronously
 - No HTTP request context available in event processing threads
 - Cannot extract Authorization header from `RequestContextHolder`
 - Inter-service calls from event listeners fail with `401 Unauthorized`
 
 **Traditional approach (broken for events):**
+
 ```java
 // ❌ BROKEN: Fails for event listeners (no HTTP context)
 String authHeader = request.getHeader("Authorization");
@@ -34,6 +37,7 @@ headers.set("Authorization", authHeader);
 ```
 
 **Solution: Service Account Authentication**
+
 - Automatic token management with OAuth2 client_credentials grant
 - Transparent header injection via RestTemplate interceptor
 - Works for both HTTP context (forwards user token) and event-driven calls (uses service account token)
@@ -53,6 +57,7 @@ headers.set("Authorization", authHeader);
 ### Authentication Flow
 
 #### HTTP Request Context Flow (User Token)
+
 ```
 User Request → Gateway (JWT) → Service A → RestTemplate Interceptor
                                                 ↓
@@ -62,6 +67,7 @@ User Request → Gateway (JWT) → Service A → RestTemplate Interceptor
 ```
 
 #### Event-Driven Flow (Service Account Token)
+
 ```
 Kafka Event → Event Listener → Service Adapter → RestTemplate Interceptor
                                                         ↓
@@ -85,6 +91,7 @@ Kafka Event → Event Listener → Service Adapter → RestTemplate Interceptor
 **Purpose:** Production-grade service account token management with caching and automatic refresh.
 
 ### Key Features
+
 - OAuth2 client_credentials grant integration with Keycloak
 - Thread-safe token caching with expiry tracking
 - Automatic token refresh before expiry (60-second buffer)
@@ -207,6 +214,7 @@ public class ServiceAccountTokenProvider {
 **Purpose:** Automatic authentication header injection for all RestTemplate calls.
 
 ### Key Features
+
 - Dual-mode authentication (user token OR service account token)
 - Automatic detection of HTTP request context availability
 - Transparent header forwarding (Authorization, X-Tenant-Id)
@@ -429,6 +437,7 @@ public class ProductServiceAdapter implements ProductServicePort {
 ```
 
 **Key Points:**
+
 - No manual Authorization header extraction
 - No `RequestContextHolder` usage
 - No HTTP context checking
@@ -454,6 +463,7 @@ keycloak:
 ```
 
 **Environment Variables:**
+
 - `KEYCLOAK_TOKEN_ENDPOINT` - Keycloak token endpoint URL
 - `SERVICE_ACCOUNT_CLIENT_ID` - Service account client ID (e.g., `wms-service-account`)
 - `SERVICE_ACCOUNT_CLIENT_SECRET` - Service account client secret (must be set in production)
@@ -598,6 +608,7 @@ class TenantCreatedEventListenerIntegrationTest {
 ### Step 1: Update Service Adapters
 
 **Before:**
+
 ```java
 // ❌ Remove manual header extraction
 String authHeader = getAuthorizationHeader();
@@ -607,6 +618,7 @@ if (authHeader != null) {
 ```
 
 **After:**
+
 ```java
 // ✅ Just set X-Tenant-Id, authentication is automatic
 headers.set("X-Tenant-Id", tenantId.getValue());
@@ -615,12 +627,14 @@ headers.set("X-Tenant-Id", tenantId.getValue());
 ### Step 2: Remove Helper Methods
 
 Delete these methods from service adapters:
+
 - `getAuthorizationHeader()`
 - `getTenantIdHeader()`
 
 ### Step 3: Update Configuration
 
 Add to service container configuration:
+
 ```java
 @Import({..., ServiceAccountAuthenticationConfig.class})
 ```
@@ -628,6 +642,7 @@ Add to service container configuration:
 ### Step 4: Add Configuration Properties
 
 Add to `application.yml`:
+
 ```yaml
 keycloak:
   service-account:
@@ -650,6 +665,7 @@ keycloak:
 **Cause:** Service account client secret not configured
 
 **Solution:**
+
 ```bash
 export SERVICE_ACCOUNT_CLIENT_SECRET=<secret>
 ```
@@ -683,25 +699,26 @@ export SERVICE_ACCOUNT_CLIENT_SECRET=<secret>
 ## Security Considerations
 
 1. **Service Account Permissions**
-   - Grant minimal required roles
-   - Use separate service accounts per service if needed
-   - Audit service account token usage
+    - Grant minimal required roles
+    - Use separate service accounts per service if needed
+    - Audit service account token usage
 
 2. **Token Security**
-   - Never log full tokens
-   - Use HTTPS for token endpoint
-   - Secure client secret in vault/secrets manager
+    - Never log full tokens
+    - Use HTTPS for token endpoint
+    - Secure client secret in vault/secrets manager
 
 3. **Token Expiry**
-   - Default expiry: 5 minutes (Keycloak default)
-   - Refresh buffer: 60 seconds before expiry
-   - Automatic refresh on cache miss
+    - Default expiry: 5 minutes (Keycloak default)
+    - Refresh buffer: 60 seconds before expiry
+    - Automatic refresh on cache miss
 
 ---
 
 ## Summary
 
 This implementation provides **production-grade service-to-service authentication** with:
+
 - ✅ Automatic token management with caching
 - ✅ Transparent authentication for HTTP and event-driven calls
 - ✅ Zero code changes required in service adapters
@@ -711,6 +728,7 @@ This implementation provides **production-grade service-to-service authenticatio
 - ✅ Compatible with Eureka service discovery
 
 **Critical for:**
+
 - Event listeners (`@KafkaListener`)
 - Scheduled jobs (`@Scheduled`)
 - Background tasks
@@ -719,6 +737,7 @@ This implementation provides **production-grade service-to-service authenticatio
 ---
 
 **Document Control:**
+
 - Version: 1.0
 - Date: 2025-01
 - Status: Approved

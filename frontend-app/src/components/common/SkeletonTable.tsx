@@ -1,4 +1,13 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Skeleton } from '@mui/material';
+import {
+  Paper,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from '@mui/material';
 
 interface SkeletonTableProps {
   rows?: number;

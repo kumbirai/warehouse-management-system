@@ -37,14 +37,8 @@ public class CsvTestDataGenerator {
                 String barcode = TestData.barcode();
                 String unitOfMeasure = TestData.unitOfMeasure();
                 String category = TestData.productCategory();
-                
-                writer.write(String.format("%s,%s,%s,%s,%s,\n",
-                        productCode,
-                        description,
-                        barcode,
-                        unitOfMeasure,
-                        category
-                ));
+
+                writer.write(String.format("%s,%s,%s,%s,%s,\n", productCode, description, barcode, unitOfMeasure, category));
             }
         }
 
@@ -66,21 +60,15 @@ public class CsvTestDataGenerator {
             // Write rows - each row is a line item, multiple rows with same ConsignmentReference form one consignment
             String consignmentRef = "CONS-TEST-" + System.currentTimeMillis();
             LocalDateTime receivedDate = LocalDateTime.now();
-            
+
             for (int i = 0; i < rowCount; i++) {
                 // Use same consignment reference for all rows (single consignment with multiple line items)
                 // Or use different reference for each row (multiple consignments)
                 String currentConsignmentRef = rowCount == 1 ? consignmentRef : consignmentRef + "-" + i;
                 String expirationDate = TestData.expirationDate() != null ? TestData.expirationDate().toString() : "";
-                
-                writer.write(String.format("%s,%s,%d,%s,%s,%s\n",
-                        currentConsignmentRef,
-                        productCode,
-                        TestData.stockQuantity(),
-                        receivedDate.toString(),
-                        warehouseId,
-                        expirationDate
-                ));
+
+                writer.write(
+                        String.format("%s,%s,%d,%s,%s,%s\n", currentConsignmentRef, productCode, TestData.stockQuantity(), receivedDate.toString(), warehouseId, expirationDate));
             }
         }
 

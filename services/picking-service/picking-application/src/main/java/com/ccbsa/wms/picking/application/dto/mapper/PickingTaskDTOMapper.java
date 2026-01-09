@@ -37,8 +37,14 @@ public class PickingTaskDTOMapper {
                         .orderId(task.getOrderId().getValueAsString()).productCode(task.getProductCode().getValue()).locationId(task.getLocationId().getValueAsString())
                         .quantity(task.getQuantity().getValue()).status(task.getStatus().name()).sequence(task.getSequence()).build()).collect(Collectors.toList());
 
-        return ListPickingTasksQueryResultDTO.builder().pickingTasks(taskDTOs).totalElements(result.getTotalElements()).page(result.getPage()).size(result.getSize())
-                .totalPages(result.getTotalPages()).build();
+        // Create defensive copy of picking tasks for builder
+        return ListPickingTasksQueryResultDTO.builder()
+                .pickingTasks(new java.util.ArrayList<>(taskDTOs))
+                .totalElements(result.getTotalElements())
+                .page(result.getPage())
+                .size(result.getSize())
+                .totalPages(result.getTotalPages())
+                .build();
     }
 
     public CreatePickingTaskCommand toCreateCommand(CreatePickingTaskCommandDTO commandDTO, String tenantId) {

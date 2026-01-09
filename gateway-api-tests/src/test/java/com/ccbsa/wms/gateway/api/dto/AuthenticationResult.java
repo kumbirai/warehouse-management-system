@@ -33,9 +33,7 @@ public class AuthenticationResult {
      * @return true if user has role
      */
     public boolean hasRole(String role) {
-        return userContext != null &&
-                userContext.getRoles() != null &&
-                userContext.getRoles().contains(role);
+        return userContext != null && userContext.getRoles() != null && userContext.getRoles().contains(role);
     }
 }
 

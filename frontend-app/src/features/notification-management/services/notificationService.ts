@@ -12,9 +12,7 @@ export const notificationService = {
    * Note: Backend returns a list directly, not paginated response.
    * We'll handle pagination on the frontend.
    */
-  async listNotifications(
-    filters: NotificationListFilters
-  ): Promise<NotificationListApiResponse> {
+  async listNotifications(filters: NotificationListFilters): Promise<NotificationListApiResponse> {
     const headers: Record<string, string> = {};
     if (filters.tenantId) {
       headers['X-Tenant-Id'] = filters.tenantId;
@@ -66,10 +64,7 @@ export const notificationService = {
   /**
    * Marks a notification as read.
    */
-  async markAsRead(
-    notificationId: string,
-    tenantId: string
-  ): Promise<ApiResponse<Notification>> {
+  async markAsRead(notificationId: string, tenantId: string): Promise<ApiResponse<Notification>> {
     const response = await apiClient.put<ApiResponse<Notification>>(
       `${BASE_PATH}/${notificationId}/mark-as-read`,
       {},

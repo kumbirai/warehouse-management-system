@@ -10,22 +10,24 @@
 
 ## User Stories
 
-| Story ID | Title | Priority | Points | Status |
-|----------|-------|----------|--------|--------|
-| US-6.3.1 | Execute Picking Task | Must Have | 8 | Not Started |
-| US-6.3.2 | Complete Picking | Must Have | 5 | Not Started |
-| US-2.1.3 | Track Expiration Dates and Generate Alerts | Must Have | 5 | Not Started |
-| US-2.1.4 | Prevent Picking of Expired Stock | Must Have | 3 | Not Started |
-| US-5.1.3 | Generate Restock Request | Must Have | 5 | Not Started |
+| Story ID | Title                                      | Priority  | Points | Status      |
+|----------|--------------------------------------------|-----------|--------|-------------|
+| US-6.3.1 | Execute Picking Task                       | Must Have | 8      | Not Started |
+| US-6.3.2 | Complete Picking                           | Must Have | 5      | Not Started |
+| US-2.1.3 | Track Expiration Dates and Generate Alerts | Must Have | 5      | Not Started |
+| US-2.1.4 | Prevent Picking of Expired Stock           | Must Have | 3      | Not Started |
+| US-5.1.3 | Generate Restock Request                   | Must Have | 5      | Not Started |
 
 ---
 
 ## Implementation Plans
 
 ### 00. Sprint Master Plan
+
 **File:** [00-Sprint-06-Implementation-Plan.md](00-Sprint-06-Implementation-Plan.md)
 
 **Contents:**
+
 - Sprint overview and success criteria
 - Architecture compliance (DDD, Clean Hexagonal, CQRS, Event-Driven)
 - Service segregation and responsibilities
@@ -37,116 +39,128 @@
 ---
 
 ### 01. Execute Picking Task (US-6.3.1) - 8 Points
+
 **File:** [01-Execute-Picking-Task-Implementation-Plan.md](01-Execute-Picking-Task-Implementation-Plan.md)
 
 **Contents:**
+
 - **Frontend:** Complete React/TypeScript implementation
-  - `PickingTaskExecutionPage` with real-time validation
-  - Custom hooks for picking task execution
-  - Location guidance and quantity input components
-  
+    - `PickingTaskExecutionPage` with real-time validation
+    - Custom hooks for picking task execution
+    - Location guidance and quantity input components
+
 - **Backend:** Clean Hexagonal Architecture
-  - Domain Core: `PickingTask` aggregate with business logic
-  - Application Service: `ExecutePickingTaskCommandHandler`
-  - REST API: `POST /api/v1/picking/picking-tasks/{id}/execute`
-  - Service Integration: Stock Management and Location Management
-  
+    - Domain Core: `PickingTask` aggregate with business logic
+    - Application Service: `ExecutePickingTaskCommandHandler`
+    - REST API: `POST /api/v1/picking/picking-tasks/{id}/execute`
+    - Service Integration: Stock Management and Location Management
+
 - **Events:**
-  - `PickingTaskCompletedEvent`
-  - `PartialPickingCompletedEvent`
-  
+    - `PickingTaskCompletedEvent`
+    - `PartialPickingCompletedEvent`
+
 - **Testing:** 50+ checkpoint implementation checklist
 
 ---
 
 ### 02. Complete Picking (US-6.3.2) - 5 Points
+
 **File:** [02-Complete-Picking-Implementation-Plan.md](02-Complete-Picking-Implementation-Plan.md)
 
 **Contents:**
+
 - **Frontend:** Picking completion workflow
-  - `PickingListCompletionPage` with validation
-  - Task status summary and progress tracking
-  - Completion confirmation workflow
-  
+    - `PickingListCompletionPage` with validation
+    - Task status summary and progress tracking
+    - Completion confirmation workflow
+
 - **Backend:** Picking list completion
-  - Domain Core: `PickingList.complete()` method
-  - Validation: All tasks completed or partial
-  - Status management and audit trail
-  
+    - Domain Core: `PickingList.complete()` method
+    - Validation: All tasks completed or partial
+    - Status management and audit trail
+
 - **Events:**
-  - `PickingCompletedEvent`
-  
+    - `PickingCompletedEvent`
+
 - **Integration:** Triggers returns processing preparation
 
 ---
 
 ### 03. Track Expiration Dates (US-2.1.3) - 5 Points
+
 **File:** [03-Track-Expiration-Dates-Implementation-Plan.md](03-Track-Expiration-Dates-Implementation-Plan.md)
 
 **Contents:**
+
 - **Frontend:** Expiring stock dashboard
-  - `ExpiringStockDashboard` with real-time alerts
-  - Classification cards (CRITICAL, NEAR_EXPIRY, EXPIRED)
-  - Date range filtering and reporting
-  
+    - `ExpiringStockDashboard` with real-time alerts
+    - Classification cards (CRITICAL, NEAR_EXPIRY, EXPIRED)
+    - Date range filtering and reporting
+
 - **Backend:** Scheduled expiration checking
-  - Daily scheduled job: `ExpirationCheckScheduler`
-  - Classification logic: 0-7 days (CRITICAL), 8-30 days (NEAR_EXPIRY)
-  - Automated notification generation
-  
+    - Daily scheduled job: `ExpirationCheckScheduler`
+    - Classification logic: 0-7 days (CRITICAL), 8-30 days (NEAR_EXPIRY)
+    - Automated notification generation
+
 - **Events:**
-  - `StockExpiringAlertEvent`
-  - `StockExpiredEvent`
-  - `StockClassifiedEvent`
-  
+    - `StockExpiringAlertEvent`
+    - `StockExpiredEvent`
+    - `StockClassifiedEvent`
+
 - **Notification Integration:** Alert warehouse managers
 
 ---
 
 ### 04. Prevent Picking Expired Stock (US-2.1.4) - 3 Points
+
 **File:** [04-Prevent-Picking-Expired-Stock-Implementation-Plan.md](04-Prevent-Picking-Expired-Stock-Implementation-Plan.md)
 
 **Contents:**
+
 - **Frontend:** Expired stock warnings
-  - `ExpiredStockIndicator` component
-  - Disabled picking buttons for expired stock
-  - Clear visual error messages
-  
+    - `ExpiredStockIndicator` component
+    - Disabled picking buttons for expired stock
+    - Clear visual error messages
+
 - **Backend:** Expiration validation
-  - Query-level filtering: Exclude expired stock from FEFO queries
-  - Execution validation: Check expiration before picking
-  - Audit logging: Track all expired stock picking attempts
-  
+    - Query-level filtering: Exclude expired stock from FEFO queries
+    - Execution validation: Check expiration before picking
+    - Audit logging: Track all expired stock picking attempts
+
 - **Integration:** Stock Management Service expiration checks
 
 ---
 
 ### 05. Generate Restock Request (US-5.1.3) - 5 Points
+
 **File:** [05-Generate-Restock-Request-Implementation-Plan.md](05-Generate-Restock-Request-Implementation-Plan.md)
 
 **Contents:**
+
 - **Frontend:** Restock requests dashboard
-  - `RestockRequestsDashboard` with priority filtering
-  - Request status tracking and management
-  - High-priority alerts
-  
+    - `RestockRequestsDashboard` with priority filtering
+    - Request status tracking and management
+    - High-priority alerts
+
 - **Backend:** Automated restock generation
-  - Event-driven trigger: `StockLevelBelowMinimumEvent`
-  - Priority calculation: HIGH (<50%), MEDIUM (50-80%), LOW (80-100%)
-  - Duplicate prevention logic
-  - Quantity calculation: Maximum - Current
-  
+    - Event-driven trigger: `StockLevelBelowMinimumEvent`
+    - Priority calculation: HIGH (<50%), MEDIUM (50-80%), LOW (80-100%)
+    - Duplicate prevention logic
+    - Quantity calculation: Maximum - Current
+
 - **Events:**
-  - `RestockRequestGeneratedEvent`
-  
+    - `RestockRequestGeneratedEvent`
+
 - **D365 Integration (Optional):** Send restock requests to D365
 
 ---
 
 ### 06. Gateway API Tests
+
 **File:** [06-Gateway-API-Tests-Implementation-Plan.md](06-Gateway-API-Tests-Implementation-Plan.md)
 
 **Contents:**
+
 - Comprehensive integration test suite
 - Test scenarios for all 5 user stories
 - End-to-end workflow testing
@@ -158,6 +172,7 @@
 ## Architecture Compliance
 
 ### Domain-Driven Design (DDD)
+
 - **Bounded Contexts:** Clear boundaries (Picking, Stock Management, Location Management, Notification)
 - **Aggregates:** PickingTask, PickingList, StockItem, RestockRequest
 - **Value Objects:** Quantity, ExpirationDate, StockClassification, RestockPriority
@@ -165,18 +180,21 @@
 - **Ubiquitous Language:** Consistent terminology across codebase
 
 ### Clean Hexagonal Architecture
+
 - **Domain Core:** Pure Java, no framework dependencies
 - **Application Service:** Port interfaces, use case orchestration
 - **Infrastructure:** Adapters implement ports (REST, JPA, Kafka)
 - **Dependency Direction:** Domain ← Application ← Infrastructure
 
 ### CQRS
+
 - **Command Side:** POST/PUT/DELETE operations modify state
 - **Query Side:** GET operations read optimized views
 - **Read Models:** Denormalized projections for queries
 - **Separation:** Command and Query controllers separate
 
 ### Event-Driven Choreography
+
 - **Domain Events:** Published after successful state changes
 - **Asynchronous Processing:** Services react to events independently
 - **Eventual Consistency:** Acceptable for cross-service operations
@@ -187,7 +205,9 @@
 ## Service Segregation
 
 ### Picking Service
+
 **Responsibilities:**
+
 - Execute picking tasks with validation
 - Complete picking operations
 - Track picking progress
@@ -198,7 +218,9 @@
 ---
 
 ### Stock Management Service
+
 **Responsibilities:**
+
 - Track expiration dates (scheduled job)
 - Generate expiration alerts
 - Prevent picking expired stock
@@ -210,7 +232,9 @@
 ---
 
 ### Location Management Service
+
 **Responsibilities:**
+
 - Track stock movements during picking
 - Update location status
 - Maintain location capacity
@@ -220,7 +244,9 @@
 ---
 
 ### Notification Service
+
 **Responsibilities:**
+
 - Create notifications for expiring stock
 - Create notifications for restock requests
 - Display alerts in dashboard
@@ -230,7 +256,9 @@
 ---
 
 ### Integration Service (Optional - D365)
+
 **Responsibilities:**
+
 - Send restock requests to D365
 - Handle D365 API errors with retry
 
@@ -271,6 +299,7 @@
 ## Implementation Order
 
 ### Phase 1: Prevent Picking Expired Stock (Days 1-2)
+
 **Rationale:** Foundation for safe picking operations
 
 1. Implement `StockItem.canBePicked()` method
@@ -282,6 +311,7 @@
 ---
 
 ### Phase 2: Execute Picking Task (Days 3-5)
+
 **Rationale:** Core picking execution functionality
 
 1. Implement picking task execution UI
@@ -294,6 +324,7 @@
 ---
 
 ### Phase 3: Complete Picking (Days 6-7)
+
 **Rationale:** Complete picking workflow
 
 1. Implement picking completion UI
@@ -304,6 +335,7 @@
 ---
 
 ### Phase 4: Track Expiration Dates (Days 8-9)
+
 **Rationale:** Proactive expiration management
 
 1. Implement scheduled job for expiration checking
@@ -315,6 +347,7 @@
 ---
 
 ### Phase 5: Generate Restock Requests (Day 10)
+
 **Rationale:** Automated inventory replenishment
 
 1. Implement `StockLevel.checkMinimumThreshold()` method
@@ -342,16 +375,19 @@ Move these to `common-domain` module:
 ## Testing Strategy
 
 ### Unit Tests
+
 - **Domain Core:** Pure Java testing with JUnit 5
 - **Coverage Target:** >80%
 - **Focus:** Business rules, validation, event publishing
 
 ### Integration Tests
+
 - **Gateway API Tests:** End-to-end testing through gateway
 - **Event Flow Tests:** Verify event publishing and consumption
 - **Service Integration:** Test service-to-service communication
 
 ### Performance Tests
+
 - **Query Optimization:** Expiration queries with large datasets
 - **Concurrent Picking:** Multiple operators picking simultaneously
 - **Scheduled Jobs:** Expiration check performance
@@ -361,6 +397,7 @@ Move these to `common-domain` module:
 ## Dependencies
 
 ### Prerequisites from Previous Sprints
+
 - ✅ Stock Management Service operational (Sprint 1-3)
 - ✅ Stock items with expiration dates created (Sprint 3-4)
 - ✅ Stock levels tracked per product/location (Sprint 3-4)
@@ -369,6 +406,7 @@ Move these to `common-domain` module:
 - ✅ Picking tasks created (Sprint 5)
 
 ### External Dependencies
+
 - **Kafka:** Event streaming
 - **PostgreSQL:** Database storage
 - **Spring Boot:** Application framework
@@ -380,15 +418,19 @@ Move these to `common-domain` module:
 ## Risk Mitigation
 
 ### Risk 1: Real-Time Stock Level Updates
+
 **Mitigation:** Optimistic locking, retry logic, real-time stock display
 
 ### Risk 2: Expiration Date Accuracy
+
 **Mitigation:** Validation on receipt, scheduled checks, UI validation, system-level prevention
 
 ### Risk 3: Duplicate Restock Requests
+
 **Mitigation:** Status tracking, pending request checks, idempotent event handlers
 
 ### Risk 4: D365 Integration Failures (Optional)
+
 **Mitigation:** Retry logic, dead letter queue, error alerts, manual submission fallback
 
 ---
@@ -396,15 +438,18 @@ Move these to `common-domain` module:
 ## Success Metrics
 
 ### Velocity Metrics
+
 - **Planned Points:** 26
 - **Target Completion:** 100%
 
 ### Quality Metrics
+
 - **Test Coverage:** >80%
 - **Code Review:** All code reviewed
 - **Defect Rate:** <5% post-deployment
 
 ### Business Metrics
+
 - **Picking Accuracy:** Target >95%
 - **Expired Stock Incidents:** Zero
 - **Restock Request Timeliness:** <1 hour from threshold breach
@@ -414,11 +459,13 @@ Move these to `common-domain` module:
 ## Documentation
 
 ### User Guides
+
 - Picking task execution workflow
 - Expiring stock dashboard usage
 - Restock request management
 
 ### Technical Documentation
+
 - API specifications (OpenAPI)
 - Event schemas
 - Database migrations

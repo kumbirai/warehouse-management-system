@@ -11,7 +11,8 @@
 
 ## Overview
 
-Sprint 3 focuses on implementing stock classification by expiration dates and FEFO (First Expiring First Out) location assignment. This sprint builds on the foundation laid in Sprint 1 and Sprint 2, adding critical warehouse management capabilities.
+Sprint 3 focuses on implementing stock classification by expiration dates and FEFO (First Expiring First Out) location assignment. This sprint builds on the foundation laid in
+Sprint 1 and Sprint 2, adding critical warehouse management capabilities.
 
 ### Key Features
 

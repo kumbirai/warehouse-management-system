@@ -35,25 +35,15 @@ public class AuthenticationTest extends BaseIntegrationTest {
     @Order(1)
     public void testLogin_Success() {
         // Arrange
-        LoginRequest request = LoginRequest.builder()
-                .username(systemAdminUsername)
-                .password(systemAdminPassword)
-                .build();
+        LoginRequest request = LoginRequest.builder().username(systemAdminUsername).password(systemAdminPassword).build();
 
         // Act
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri("/api/v1/bff/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.post().uri("/api/v1/bff/auth/login").contentType(MediaType.APPLICATION_JSON).bodyValue(request).exchange();
 
         // Assert
         // Extract ApiResponse wrapper using ParameterizedTypeReference
-        EntityExchangeResult<ApiResponse<LoginResponse>> exchangeResult = response
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<LoginResponse>> exchangeResult = response.expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {
+        }).returnResult();
 
         ApiResponse<LoginResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
@@ -75,17 +65,10 @@ public class AuthenticationTest extends BaseIntegrationTest {
     @Order(2)
     public void testLogin_InvalidUsername() {
         // Arrange
-        LoginRequest request = LoginRequest.builder()
-                .username("nonexistent")
-                .password(systemAdminPassword)
-                .build();
+        LoginRequest request = LoginRequest.builder().username("nonexistent").password(systemAdminPassword).build();
 
         // Act
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri("/api/v1/bff/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.post().uri("/api/v1/bff/auth/login").contentType(MediaType.APPLICATION_JSON).bodyValue(request).exchange();
 
         // Assert
         response.expectStatus().isUnauthorized();
@@ -95,17 +78,10 @@ public class AuthenticationTest extends BaseIntegrationTest {
     @Order(3)
     public void testLogin_InvalidPassword() {
         // Arrange
-        LoginRequest request = LoginRequest.builder()
-                .username(systemAdminUsername)
-                .password("WrongPassword")
-                .build();
+        LoginRequest request = LoginRequest.builder().username(systemAdminUsername).password("WrongPassword").build();
 
         // Act
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri("/api/v1/bff/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.post().uri("/api/v1/bff/auth/login").contentType(MediaType.APPLICATION_JSON).bodyValue(request).exchange();
 
         // Assert
         response.expectStatus().isUnauthorized();
@@ -115,16 +91,10 @@ public class AuthenticationTest extends BaseIntegrationTest {
     @Order(4)
     public void testLogin_MissingUsername() {
         // Arrange
-        LoginRequest request = LoginRequest.builder()
-                .password(systemAdminPassword)
-                .build();
+        LoginRequest request = LoginRequest.builder().password(systemAdminPassword).build();
 
         // Act
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri("/api/v1/bff/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.post().uri("/api/v1/bff/auth/login").contentType(MediaType.APPLICATION_JSON).bodyValue(request).exchange();
 
         // Assert
         response.expectStatus().isBadRequest();
@@ -134,16 +104,10 @@ public class AuthenticationTest extends BaseIntegrationTest {
     @Order(5)
     public void testLogin_MissingPassword() {
         // Arrange
-        LoginRequest request = LoginRequest.builder()
-                .username(systemAdminUsername)
-                .build();
+        LoginRequest request = LoginRequest.builder().username(systemAdminUsername).build();
 
         // Act
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri("/api/v1/bff/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.post().uri("/api/v1/bff/auth/login").contentType(MediaType.APPLICATION_JSON).bodyValue(request).exchange();
 
         // Assert
         response.expectStatus().isBadRequest();
@@ -158,18 +122,13 @@ public class AuthenticationTest extends BaseIntegrationTest {
         AuthenticationResult auth = loginAsSystemAdmin();
 
         // Act - Refresh token
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri("/api/v1/bff/auth/refresh")
-                .cookie(auth.getRefreshTokenCookie().getName(), auth.getRefreshTokenCookie().getValue())
-                .exchange();
+        WebTestClient.ResponseSpec response =
+                webTestClient.post().uri("/api/v1/bff/auth/refresh").cookie(auth.getRefreshTokenCookie().getName(), auth.getRefreshTokenCookie().getValue()).exchange();
 
         // Assert
         // Extract ApiResponse wrapper
-        EntityExchangeResult<ApiResponse<LoginResponse>> exchangeResult = response
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<LoginResponse>> exchangeResult = response.expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<LoginResponse>>() {
+        }).returnResult();
 
         ApiResponse<LoginResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
@@ -190,9 +149,7 @@ public class AuthenticationTest extends BaseIntegrationTest {
     @Order(11)
     public void testRefreshToken_MissingCookie() {
         // Act
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri("/api/v1/bff/auth/refresh")
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.post().uri("/api/v1/bff/auth/refresh").exchange();
 
         // Assert
         // The endpoint returns 400 BAD_REQUEST for validation errors (missing refresh token)
@@ -210,21 +167,16 @@ public class AuthenticationTest extends BaseIntegrationTest {
         ExecutorService executor = Executors.newFixedThreadPool(5);
 
         // Act - Send 5 concurrent refresh requests
-        List<CompletableFuture<WebTestClient.ResponseSpec>> futures = List.of(
+        List<CompletableFuture<WebTestClient.ResponseSpec>> futures = List.of(CompletableFuture.supplyAsync(() -> refreshTokenRequest(auth.getRefreshTokenCookie()), executor),
                 CompletableFuture.supplyAsync(() -> refreshTokenRequest(auth.getRefreshTokenCookie()), executor),
                 CompletableFuture.supplyAsync(() -> refreshTokenRequest(auth.getRefreshTokenCookie()), executor),
                 CompletableFuture.supplyAsync(() -> refreshTokenRequest(auth.getRefreshTokenCookie()), executor),
-                CompletableFuture.supplyAsync(() -> refreshTokenRequest(auth.getRefreshTokenCookie()), executor),
-                CompletableFuture.supplyAsync(() -> refreshTokenRequest(auth.getRefreshTokenCookie()), executor)
-        );
+                CompletableFuture.supplyAsync(() -> refreshTokenRequest(auth.getRefreshTokenCookie()), executor));
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
         // Assert - Only one request should succeed, others should fail or wait
-        long successCount = futures.stream()
-                .map(CompletableFuture::join)
-                .filter(r -> r.returnResult(LoginResponse.class).getStatus().is2xxSuccessful())
-                .count();
+        long successCount = futures.stream().map(CompletableFuture::join).filter(r -> r.returnResult(LoginResponse.class).getStatus().is2xxSuccessful()).count();
 
         // At least one should succeed, but ideally only one
         assertThat(successCount).isGreaterThanOrEqualTo(1);
@@ -235,10 +187,7 @@ public class AuthenticationTest extends BaseIntegrationTest {
     // ==================== JWT TOKEN VALIDATION TESTS ====================
 
     private WebTestClient.ResponseSpec refreshTokenRequest(ResponseCookie refreshTokenCookie) {
-        return webTestClient.post()
-                .uri("/api/v1/bff/auth/refresh")
-                .cookie(refreshTokenCookie.getName(), refreshTokenCookie.getValue())
-                .exchange();
+        return webTestClient.post().uri("/api/v1/bff/auth/refresh").cookie(refreshTokenCookie.getName(), refreshTokenCookie.getValue()).exchange();
     }
 
     // ==================== LOGOUT TESTS ====================
@@ -279,8 +228,7 @@ public class AuthenticationTest extends BaseIntegrationTest {
 
         // Extract roles from user context to set X-Role header
         // This helps the TenantContextInterceptor recognize SYSTEM_ADMIN and bypass tenant validation
-        String rolesHeader = auth.getUserContext() != null && auth.getUserContext().getRoles() != null
-                ? String.join(",", auth.getUserContext().getRoles())
+        String rolesHeader = auth.getUserContext() != null && auth.getUserContext().getRoles() != null ? String.join(",", auth.getUserContext().getRoles())
                 : "SYSTEM_ADMIN"; // Fallback for SYSTEM_ADMIN
 
         // For SYSTEM_ADMIN, tenant ID might be null, but interceptor may require it
@@ -288,10 +236,8 @@ public class AuthenticationTest extends BaseIntegrationTest {
         String effectiveTenantId = tenantId != null ? tenantId : "SYSTEM";
 
         // Act
-        WebTestClient.RequestBodySpec requestSpec = webTestClient.post()
-                .uri("/api/v1/bff/auth/logout")
-                .cookie(auth.getRefreshTokenCookie().getName(), auth.getRefreshTokenCookie().getValue())
-                .headers(headers -> {
+        WebTestClient.RequestBodySpec requestSpec =
+                webTestClient.post().uri("/api/v1/bff/auth/logout").cookie(auth.getRefreshTokenCookie().getName(), auth.getRefreshTokenCookie().getValue()).headers(headers -> {
                     RequestHeaderHelper.addAuthHeaders(headers, auth.getAccessToken());
                     // Add X-Role header to help interceptor recognize SYSTEM_ADMIN
                     headers.set("X-Role", rolesHeader);
@@ -299,9 +245,7 @@ public class AuthenticationTest extends BaseIntegrationTest {
                     RequestHeaderHelper.addTenantHeader(headers, effectiveTenantId);
                 });
 
-        WebTestClient.ResponseSpec response = requestSpec
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{}") // Empty body as per API spec
+        WebTestClient.ResponseSpec response = requestSpec.contentType(MediaType.APPLICATION_JSON).bodyValue("{}") // Empty body as per API spec
                 .exchange();
 
         // Assert

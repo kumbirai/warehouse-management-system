@@ -15,12 +15,12 @@ import org.springframework.stereotype.Repository;
 import com.ccbsa.common.domain.valueobject.LoadNumber;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.picking.application.service.port.data.LoadViewRepository;
 import com.ccbsa.wms.picking.application.service.query.dto.LoadView;
 import com.ccbsa.wms.picking.dataaccess.entity.LoadEntity;
 import com.ccbsa.wms.picking.dataaccess.jpa.LoadJpaRepository;
-import com.ccbsa.wms.picking.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.picking.domain.core.valueobject.LoadId;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;

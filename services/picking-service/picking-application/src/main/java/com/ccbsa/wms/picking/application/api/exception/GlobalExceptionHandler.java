@@ -14,7 +14,9 @@ import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.application.api.ApiResponseBuilder;
 import com.ccbsa.common.application.api.RequestContext;
 import com.ccbsa.common.application.api.exception.BaseGlobalExceptionHandler;
+import com.ccbsa.wms.picking.domain.core.exception.ExpiredStockException;
 import com.ccbsa.wms.picking.domain.core.exception.PickingListNotFoundException;
+import com.ccbsa.wms.picking.domain.core.exception.PickingTaskNotFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,28 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
 
         ApiError error = ApiError.builder("PICKING_LIST_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
+    }
+
+    @ExceptionHandler(PickingTaskNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePickingTaskNotFoundException(PickingTaskNotFoundException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        logger.warn("Picking task not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+
+        ApiError error = ApiError.builder("PICKING_TASK_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
+        return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
+    }
+
+    @ExceptionHandler(ExpiredStockException.class)
+    public ResponseEntity<ApiResponse<Void>> handleExpiredStockException(ExpiredStockException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        logger.warn("Attempt to pick expired stock: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+
+        ApiError error = ApiError.builder("EXPIRED_STOCK", ex.getMessage()).path(path).requestId(requestId).build();
+        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
     }
 
     /**

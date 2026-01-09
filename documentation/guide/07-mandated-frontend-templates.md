@@ -49,82 +49,82 @@ The Frontend application follows a strict feature-based package structure:
 \`\`\`
 frontend-app/
 ├── src/
-│   ├── components/
-│   │   ├── common/                     # Shared UI components
-│   │   │   ├── PageBreadcrumbs.tsx
-│   │   │   ├── PageHeader.tsx
-│   │   │   ├── LoadingSpinner.tsx
-│   │   │   ├── EmptyState.tsx
-│   │   │   ├── ActionDialog.tsx
-│   │   │   ├── FilterBar.tsx
-│   │   │   ├── StatusBadge.tsx
-│   │   │   ├── FormActions.tsx
-│   │   │   ├── ResponsiveTable.tsx
-│   │   │   ├── Pagination.tsx
-│   │   │   ├── SkeletonTable.tsx
-│   │   │   ├── SkeletonCard.tsx
-│   │   │   ├── SkeletonForm.tsx
-│   │   │   ├── ErrorBoundaryWithRetry.tsx
-│   │   │   └── index.ts
-│   │   ├── layouts/                    # Page layout components
-│   │   │   ├── DetailPageLayout.tsx
-│   │   │   ├── FormPageLayout.tsx
-│   │   │   ├── ListPageLayout.tsx
-│   │   │   ├── DashboardPageLayout.tsx
-│   │   │   └── index.ts
-│   │   ├── layout/                     # App-level layout
-│   │   │   └── Header.tsx
-│   │   └── auth/                       # Authentication components
-│   │       └── ProtectedRoute.tsx
-│   ├── features/                       # Feature modules
-│   │   └── {feature-name}/
-│   │       ├── components/             # Feature-specific components
-│   │       │   ├── {Feature}List.tsx
-│   │       │   ├── {Feature}Detail.tsx
-│   │       │   ├── {Feature}Form.tsx
-│   │       │   └── {Feature}Actions.tsx
-│   │       ├── pages/                  # Page components
-│   │       │   ├── {Feature}ListPage.tsx
-│   │       │   ├── {Feature}DetailPage.tsx
-│   │       │   ├── {Feature}CreatePage.tsx
-│   │       │   └── {Feature}EditPage.tsx
-│   │       ├── hooks/                  # Feature-specific hooks
-│   │       │   ├── use{Features}.ts
-│   │       │   ├── use{Feature}.ts
-│   │       │   └── useCreate{Feature}.ts
-│   │       ├── services/               # API service clients
-│   │       │   └── {feature}Service.ts
-│   │       └── types/                  # TypeScript types
-│   │           └── {feature}.ts
-│   ├── services/                       # Shared services
-│   │   ├── apiClient.ts                # Base API client
-│   │   └── correlationIdService.ts     # Correlation ID service
-│   ├── utils/                          # Utility functions
-│   │   ├── dateUtils.ts
-│   │   ├── validationUtils.ts
-│   │   ├── navigationUtils.ts
-│   │   ├── logger.ts
-│   │   └── theme.ts
-│   ├── hooks/                          # Shared custom hooks
-│   │   ├── useTenant.ts
-│   │   └── useToast.ts
-│   ├── store/                          # Global state (Redux/Zustand)
-│   │   └── index.ts
-│   └── App.tsx
+│ ├── components/
+│ │ ├── common/ # Shared UI components
+│ │ │ ├── PageBreadcrumbs.tsx
+│ │ │ ├── PageHeader.tsx
+│ │ │ ├── LoadingSpinner.tsx
+│ │ │ ├── EmptyState.tsx
+│ │ │ ├── ActionDialog.tsx
+│ │ │ ├── FilterBar.tsx
+│ │ │ ├── StatusBadge.tsx
+│ │ │ ├── FormActions.tsx
+│ │ │ ├── ResponsiveTable.tsx
+│ │ │ ├── Pagination.tsx
+│ │ │ ├── SkeletonTable.tsx
+│ │ │ ├── SkeletonCard.tsx
+│ │ │ ├── SkeletonForm.tsx
+│ │ │ ├── ErrorBoundaryWithRetry.tsx
+│ │ │ └── index.ts
+│ │ ├── layouts/ # Page layout components
+│ │ │ ├── DetailPageLayout.tsx
+│ │ │ ├── FormPageLayout.tsx
+│ │ │ ├── ListPageLayout.tsx
+│ │ │ ├── DashboardPageLayout.tsx
+│ │ │ └── index.ts
+│ │ ├── layout/ # App-level layout
+│ │ │ └── Header.tsx
+│ │ └── auth/ # Authentication components
+│ │ └── ProtectedRoute.tsx
+│ ├── features/ # Feature modules
+│ │ └── {feature-name}/
+│ │ ├── components/ # Feature-specific components
+│ │ │ ├── {Feature}List.tsx
+│ │ │ ├── {Feature}Detail.tsx
+│ │ │ ├── {Feature}Form.tsx
+│ │ │ └── {Feature}Actions.tsx
+│ │ ├── pages/ # Page components
+│ │ │ ├── {Feature}ListPage.tsx
+│ │ │ ├── {Feature}DetailPage.tsx
+│ │ │ ├── {Feature}CreatePage.tsx
+│ │ │ └── {Feature}EditPage.tsx
+│ │ ├── hooks/ # Feature-specific hooks
+│ │ │ ├── use{Features}.ts
+│ │ │ ├── use{Feature}.ts
+│ │ │ └── useCreate{Feature}.ts
+│ │ ├── services/ # API service clients
+│ │ │ └── {feature}Service.ts
+│ │ └── types/ # TypeScript types
+│ │ └── {feature}.ts
+│ ├── services/ # Shared services
+│ │ ├── apiClient.ts # Base API client
+│ │ └── correlationIdService.ts # Correlation ID service
+│ ├── utils/ # Utility functions
+│ │ ├── dateUtils.ts
+│ │ ├── validationUtils.ts
+│ │ ├── navigationUtils.ts
+│ │ ├── logger.ts
+│ │ └── theme.ts
+│ ├── hooks/ # Shared custom hooks
+│ │ ├── useTenant.ts
+│ │ └── useToast.ts
+│ ├── store/ # Global state (Redux/Zustand)
+│ │ └── index.ts
+│ └── App.tsx
 └── public/
 \`\`\`
 
 ### Package Naming Conventions
 
-| Type | Convention | Example |
-|------|-----------|---------|
-| Feature directory | kebab-case | `tenant-management`, `location-management` |
-| Component files | PascalCase.tsx | `TenantList.tsx`, `LocationForm.tsx` |
-| Page files | PascalCase + Page.tsx | `TenantListPage.tsx` |
-| Hook files | camelCase + use prefix | `useTenants.ts`, `useCreateTenant.ts` |
-| Service files | camelCase + Service | `tenantService.ts` |
-| Type files | kebab-case | `tenant.ts`, `location.ts` |
-| Utility files | camelCase | `dateUtils.ts`, `validationUtils.ts` |
+| Type              | Convention             | Example                                    |
+|-------------------|------------------------|--------------------------------------------|
+| Feature directory | kebab-case             | `tenant-management`, `location-management` |
+| Component files   | PascalCase.tsx         | `TenantList.tsx`, `LocationForm.tsx`       |
+| Page files        | PascalCase + Page.tsx  | `TenantListPage.tsx`                       |
+| Hook files        | camelCase + use prefix | `useTenants.ts`, `useCreateTenant.ts`      |
+| Service files     | camelCase + Service    | `tenantService.ts`                         |
+| Type files        | kebab-case             | `tenant.ts`, `location.ts`                 |
+| Utility files     | camelCase              | `dateUtils.ts`, `validationUtils.ts`       |
 
 ---
 
@@ -138,6 +138,7 @@ frontend-app/
 - Avoid technical naming (use domain terms)
 
 **Example:**
+
 ```typescript
 // ❌ Bad - technical naming
 interface DataDTO { id: string; name: string; }
@@ -168,16 +169,19 @@ interface Tenant { tenantId: string; tenantName: string; }
 ### CQRS Principles
 
 **Command-Query Separation:**
+
 - Commands modify state (POST, PUT, PATCH, DELETE)
 - Queries read state (GET)
 - Different endpoints and DTOs for commands vs queries
 
 **Frontend Implementation:**
+
 - Forms submit commands
 - Lists/Details display query results
 - Separate hooks for commands and queries
 
 **Example:**
+
 ```typescript
 // Query hook
 const { location, isLoading } = useLocation(locationId);
@@ -208,18 +212,19 @@ Renders breadcrumb navigation with proper routing.
 import { PageBreadcrumbs } from '@/components/common';
 
 <PageBreadcrumbs
-  items={[
-    { label: 'Dashboard', href: '/dashboard' },
-    { label: 'Tenants', href: '/admin/tenants' },
-    { label: tenantName }, // Last item has no href
-  ]}
+items={[
+{ label: 'Dashboard', href: '/dashboard' },
+{ label: 'Tenants', href: '/admin/tenants' },
+{ label: tenantName }, // Last item has no href
+]}
 />
 \`\`\`
 
 **Props:**
+
 - `items: BreadcrumbItem[]` - Array of breadcrumb items
-  - `label: string` - Display text
-  - `href?: string` - Optional link (omit for last/current item)
+    - `label: string` - Display text
+    - `href?: string` - Optional link (omit for last/current item)
 
 **Standard Spacing:** `sx={{ mb: 3 }}`
 
@@ -236,17 +241,18 @@ import { Button } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 
 <PageHeader
-  title="Tenants"
-  description="Manage tenant organizations and configurations"
-  actions={
-    <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
-      Create Tenant
-    </Button>
-  }
+title="Tenants"
+description="Manage tenant organizations and configurations"
+actions={
+<Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
+Create Tenant
+</Button>
+}
 />
 \`\`\`
 
 **Props:**
+
 - `title: string` - Page title (h4 variant)
 - `description?: string` - Optional description (body1, text.secondary)
 - `actions?: ReactNode` - Optional action buttons (right-aligned on desktop, stacked on mobile)
@@ -267,6 +273,7 @@ import { LoadingSpinner } from '@/components/common';
 \`\`\`
 
 **Props:**
+
 - `size?: number` - Spinner size in pixels (default: 40)
 - `minHeight?: string | number` - Minimum container height (default: '400px')
 
@@ -284,6 +291,7 @@ import { SkeletonTable } from '@/components/common';
 \`\`\`
 
 **Props:**
+
 - `rows?: number` - Number of skeleton rows (default: 5)
 - `columns?: number` - Number of skeleton columns (default: 4)
 
@@ -301,6 +309,7 @@ import { SkeletonCard } from '@/components/common';
 \`\`\`
 
 **Props:**
+
 - `lines?: number` - Number of skeleton field lines (default: 4)
 
 ---
@@ -314,13 +323,14 @@ Skeleton loader for form content. Use when loading form default values.
 import { SkeletonForm } from '@/components/common';
 
 {isLoadingProduct ? (
-  <SkeletonForm fields={8} />
+<SkeletonForm fields={8} />
 ) : (
-  <ProductForm defaultValues={product} />
+<ProductForm defaultValues={product} />
 )}
 \`\`\`
 
 **Props:**
+
 - `fields?: number` - Number of skeleton form fields (default: 6)
 
 ---
@@ -335,19 +345,20 @@ import { EmptyState } from '@/components/common';
 import { Inbox as InboxIcon } from '@mui/icons-material';
 
 {locations.length === 0 && (
-  <EmptyState
-    title="No locations found"
-    description="Get started by creating your first location"
-    icon={<InboxIcon sx={{ fontSize: 64 }} />}
-    action={{
-      label: 'Create Location',
-      onClick: handleCreate,
-    }}
-  />
+<EmptyState
+title="No locations found"
+description="Get started by creating your first location"
+icon={<InboxIcon sx={{ fontSize: 64 }} />}
+action={{
+label: 'Create Location',
+onClick: handleCreate,
+}}
+/>
 )}
 \`\`\`
 
 **Props:**
+
 - `title: string` - Main message
 - `description?: string` - Optional secondary text
 - `icon?: ReactNode` - Optional icon (default: InboxIcon)
@@ -366,19 +377,20 @@ import { ActionDialog } from '@/components/common';
 const [isOpen, setIsOpen] = useState(false);
 
 <ActionDialog
-  open={isOpen}
-  title="Deactivate Tenant"
-  description="Are you sure you want to deactivate this tenant? Users will lose access immediately."
-  confirmLabel="Deactivate"
-  cancelLabel="Cancel"
-  onConfirm={handleDeactivate}
-  onCancel={() => setIsOpen(false)}
-  isLoading={isDeactivating}
-  variant="danger"
+open={isOpen}
+title="Deactivate Tenant"
+description="Are you sure you want to deactivate this tenant? Users will lose access immediately."
+confirmLabel="Deactivate"
+cancelLabel="Cancel"
+onConfirm={handleDeactivate}
+onCancel={() => setIsOpen(false)}
+isLoading={isDeactivating}
+variant="danger"
 />
 \`\`\`
 
 **Props:**
+
 - `open: boolean` - Dialog visibility
 - `title: string` - Dialog title
 - `description: string | ReactNode` - Dialog content
@@ -401,24 +413,25 @@ import { FilterBar } from '@/components/common';
 import { TextField, Select, MenuItem } from '@mui/material';
 
 <FilterBar
-  onClearFilters={handleClearFilters}
-  hasActiveFilters={!!searchQuery || status !== 'all'}
+onClearFilters={handleClearFilters}
+hasActiveFilters={!!searchQuery || status !== 'all'}
 >
-  <TextField
-    label="Search"
-    value={searchQuery}
-    onChange={handleSearchChange}
-    fullWidth
-  />
-  <Select value={status} onChange={handleStatusChange} sx={{ minWidth: 180 }}>
-    <MenuItem value="all">All Statuses</MenuItem>
-    <MenuItem value="active">Active</MenuItem>
-    <MenuItem value="inactive">Inactive</MenuItem>
-  </Select>
+<TextField
+label="Search"
+value={searchQuery}
+onChange={handleSearchChange}
+fullWidth
+/>
+<Select value={status} onChange={handleStatusChange} sx={{ minWidth: 180 }}>
+<MenuItem value="all">All Statuses</MenuItem>
+<MenuItem value="active">Active</MenuItem>
+<MenuItem value="inactive">Inactive</MenuItem>
+</Select>
 </FilterBar>
 \`\`\`
 
 **Props:**
+
 - `children: ReactNode` - Filter controls
 - `onClearFilters?: () => void` - Clear filters handler
 - `hasActiveFilters?: boolean` - Enable/disable clear button (default: false)
@@ -434,19 +447,20 @@ Displays status with color-coded chip.
 import { StatusBadge, getStatusVariant } from '@/components/common';
 
 <StatusBadge
-  label={location.status}
-  variant={getStatusVariant(location.status)}
+label={location.status}
+variant={getStatusVariant(location.status)}
 />
 \`\`\`
 
 **Props:**
+
 - `label: string` - Status text
 - `variant?: StatusVariant` - Color variant (default: 'default')
-  - `'success'` - Green (active, available, confirmed)
-  - `'warning'` - Orange (pending, reserved, in_progress)
-  - `'error'` - Red (inactive, suspended, unavailable)
-  - `'info'` - Blue (informational)
-  - `'default'` - Gray (unknown)
+    - `'success'` - Green (active, available, confirmed)
+    - `'warning'` - Orange (pending, reserved, in_progress)
+    - `'error'` - Red (inactive, suspended, unavailable)
+    - `'info'` - Blue (informational)
+    - `'default'` - Gray (unknown)
 - `size?: 'small' | 'medium'` - Chip size (default: 'small')
 
 **Helper Function:**
@@ -468,16 +482,17 @@ import { FormActions } from '@/components/common';
 <form onSubmit={handleSubmit(onSubmit)}>
   {/* Form fields */}
 
-  <FormActions
-    onCancel={handleCancel}
-    isSubmitting={isSubmitting}
-    submitLabel="Create Tenant"
-    cancelLabel="Cancel"
-  />
+<FormActions
+onCancel={handleCancel}
+isSubmitting={isSubmitting}
+submitLabel="Create Tenant"
+cancelLabel="Cancel"
+/>
 </form>
 \`\`\`
 
 **Props:**
+
 - `onCancel: () => void` - Cancel button handler
 - `onSubmit?: () => void` - Optional submit handler (default: form submit)
 - `isSubmitting: boolean` - Loading state
@@ -486,6 +501,7 @@ import { FormActions } from '@/components/common';
 - `submitDisabled?: boolean` - Additional disable condition (default: false)
 
 **Standard Layout:**
+
 - Right-aligned button group on desktop
 - Stacked vertically on mobile (xs breakpoint)
 - Buttons full-width on mobile
@@ -505,55 +521,57 @@ Table that converts to cards on mobile.
 import { ResponsiveTable, Column } from '@/components/common';
 
 const columns: Column<Location>[] = [
-  {
-    key: 'code',
-    label: 'Code',
-    render: (location) => <Typography>{location.code}</Typography>,
-  },
-  {
-    key: 'status',
-    label: 'Status',
-    render: (location) => (
-      <StatusBadge
-        label={location.status}
-        variant={getStatusVariant(location.status)}
-      />
-    ),
-  },
-  {
-    key: 'actions',
-    label: 'Actions',
-    hideOnMobile: true,
-    render: (location) => (
-      <Button size="small" onClick={() => navigate(\`/locations/\${location.id}\`)}>
-        View
-      </Button>
-    ),
-  },
+{
+key: 'code',
+label: 'Code',
+render: (location) => <Typography>{location.code}</Typography>,
+},
+{
+key: 'status',
+label: 'Status',
+render: (location) => (
+<StatusBadge
+label={location.status}
+variant={getStatusVariant(location.status)}
+/>
+),
+},
+{
+key: 'actions',
+label: 'Actions',
+hideOnMobile: true,
+render: (location) => (
+<Button size="small" onClick={() => navigate(\`/locations/\${location.id}\`)}>
+View
+</Button>
+),
+},
 ];
 
 <ResponsiveTable
-  data={locations}
-  columns={columns}
-  getRowKey={(location) => location.id}
-  onRowClick={handleRowClick}
-  emptyMessage="No locations found"
+data={locations}
+columns={columns}
+getRowKey={(location) => location.id}
+onRowClick={handleRowClick}
+emptyMessage="No locations found"
 />
 \`\`\`
 
 **Props:**
+
 - `data: T[]` - Array of items to display
 - `columns: Column<T>[]` - Column definitions
-  - `key: string` - Unique column key
-  - `label: string` - Column header text
-  - `render: (item: T) => ReactNode` - Cell renderer
-  - `hideOnMobile?: boolean` - Hide column on mobile (default: false)
+    - `key: string` - Unique column key
+    - `label: string` - Column header text
+    - `render: (item: T) => ReactNode` - Cell renderer
+    - `hideOnMobile?: boolean` - Hide column on mobile (default: false)
 - `getRowKey: (item: T) => string | number` - Row key function
 - `onRowClick?: (item: T) => void` - Optional row click handler
 - `emptyMessage?: string` - Empty state message (default: 'No items found')
 - `mobileCardRender?: (item: T) => ReactNode` - Custom mobile card renderer
 
 **Behavior:**
+
 - **Desktop (≥md):** Renders as table
 - **Mobile (<md):** Renders as stacked cards
 - Columns with `hideOnMobile: true` are hidden on mobile
@@ -570,15 +588,16 @@ Pagination controls with item count.
 import { Pagination } from '@/components/common';
 
 <Pagination
-  currentPage={page}
-  totalPages={Math.ceil(totalItems / itemsPerPage)}
-  totalItems={totalItems}
-  itemsPerPage={itemsPerPage}
-  onPageChange={setPage}
+currentPage={page}
+totalPages={Math.ceil(totalItems / itemsPerPage)}
+totalItems={totalItems}
+itemsPerPage={itemsPerPage}
+onPageChange={setPage}
 />
 \`\`\`
 
 **Props:**
+
 - `currentPage: number` - Current page (1-indexed)
 - `totalPages: number` - Total number of pages
 - `totalItems: number` - Total item count
@@ -586,6 +605,7 @@ import { Pagination } from '@/components/common';
 - `onPageChange: (page: number) => void` - Page change handler
 
 **Behavior:**
+
 - Automatically hides if `totalPages <= 1`
 - Shows "Showing X-Y of Z" text
 - First/Last buttons enabled
@@ -597,9 +617,11 @@ import { Pagination } from '@/components/common';
 
 ### BarcodeInput
 
-Universal barcode input component that supports both scanning and manual entry. **Barcode scanning is the primary input method** - manual entry is provided as a fallback when scanning fails or is unavailable.
+Universal barcode input component that supports both scanning and manual entry. **Barcode scanning is the primary input method** - manual entry is provided as a fallback when
+scanning fails or is unavailable.
 
 **Barcode-First Principle:**
+
 - **Primary:** Barcode scanning (handheld scanner or camera)
 - **Fallback:** Manual keyboard input
 - Always provide both options for maximum flexibility
@@ -609,17 +631,18 @@ Universal barcode input component that supports both scanning and manual entry. 
 import { BarcodeInput } from '@/components/common';
 
 <BarcodeInput
-  label="Product Barcode"
-  value={barcode}
-  onChange={setBarcode}
-  onScan={handleBarcodeScan}
-  placeholder="Scan or enter barcode"
-  autoFocus
-  helperText="Scan barcode first, or enter manually if scanning fails"
+label="Product Barcode"
+value={barcode}
+onChange={setBarcode}
+onScan={handleBarcodeScan}
+placeholder="Scan or enter barcode"
+autoFocus
+helperText="Scan barcode first, or enter manually if scanning fails"
 />
 \`\`\`
 
 **Props:**
+
 - `value: string` - Current barcode value
 - `onChange: (value: string) => void` - Value change handler (for manual input)
 - `onScan?: (barcode: string) => void` - Barcode scan handler (called when barcode is scanned)
@@ -628,6 +651,7 @@ import { BarcodeInput } from '@/components/common';
 - All standard `TextField` props are supported
 
 **Features:**
+
 - **Handheld Scanner Support:** Automatically captures input from USB/Bluetooth scanners (acts as keyboard)
 - **Camera Scanning:** Built-in camera button opens barcode scanner dialog
 - **Manual Entry:** Full keyboard input support as fallback
@@ -637,14 +661,14 @@ import { BarcodeInput } from '@/components/common';
 **Implementation Pattern:**
 \`\`\`typescript
 const ProductForm = () => {
-  const [barcode, setBarcode] = useState('');
-  const [barcodeError, setBarcodeError] = useState<string | null>(null);
+const [barcode, setBarcode] = useState('');
+const [barcodeError, setBarcodeError] = useState<string | null>(null);
 
-  // Handle barcode scan (primary method)
-  const handleBarcodeScan = async (scannedBarcode: string) => {
-    setBarcode(scannedBarcode);
-    setBarcodeError(null);
-    
+// Handle barcode scan (primary method)
+const handleBarcodeScan = async (scannedBarcode: string) => {
+setBarcode(scannedBarcode);
+setBarcodeError(null);
+
     // Validate barcode
     try {
       const product = await validateBarcode(scannedBarcode);
@@ -653,29 +677,31 @@ const ProductForm = () => {
     } catch (error) {
       setBarcodeError('Barcode not found or invalid');
     }
-  };
 
-  // Handle manual input (fallback)
-  const handleBarcodeChange = (value: string) => {
-    setBarcode(value);
-    setBarcodeError(null);
-  };
+};
 
-  return (
-    <BarcodeInput
-      label="Product Barcode"
-      value={barcode}
-      onChange={handleBarcodeChange}
-      onScan={handleBarcodeScan}
-      error={!!barcodeError}
-      helperText={barcodeError || 'Scan barcode first, or enter manually'}
-      autoFocus
-    />
-  );
+// Handle manual input (fallback)
+const handleBarcodeChange = (value: string) => {
+setBarcode(value);
+setBarcodeError(null);
+};
+
+return (
+<BarcodeInput
+label="Product Barcode"
+value={barcode}
+onChange={handleBarcodeChange}
+onScan={handleBarcodeScan}
+error={!!barcodeError}
+helperText={barcodeError || 'Scan barcode first, or enter manually'}
+autoFocus
+/>
+);
 };
 \`\`\`
 
 **When to Use:**
+
 - **Product Barcodes:** Product forms, consignment entry, stock count
 - **Location Barcodes:** Location assignment, stock movement, picking
 - **Search Fields:** Product search, location search, consignment search
@@ -684,6 +710,7 @@ const ProductForm = () => {
 **Standard Spacing:** `sx={{ mb: 2 }}` (when used in forms)
 
 **Accessibility:**
+
 - Auto-focus on mount for handheld scanners
 - Clear labels and helper text
 - Error messages for invalid barcodes
@@ -700,6 +727,7 @@ All pages must use layout components from `src/components/layouts/`.
 Standard layout for detail/view pages.
 
 **Features:**
+
 - Header with navigation
 - Breadcrumbs
 - Page title with actions
@@ -713,30 +741,31 @@ import { DetailPageLayout } from '@/components/layouts';
 import { getBreadcrumbs, Routes } from '@/utils/navigationUtils';
 
 export const TenantDetailPage = () => {
-  const { id } = useParams();
-  const { tenant, isLoading, error } = useTenant(id);
-  const navigate = useNavigate();
+const { id } = useParams();
+const { tenant, isLoading, error } = useTenant(id);
+const navigate = useNavigate();
 
-  return (
-    <DetailPageLayout
-      breadcrumbs={getBreadcrumbs.tenantDetail(tenant?.tenantName || '...')}
-      title={tenant?.tenantName || 'Loading...'}
-      actions={
-        <Button variant="outlined" onClick={() => navigate(Routes.admin.tenants)}>
-          Back to List
-        </Button>
-      }
-      isLoading={isLoading}
-      error={error}
-      maxWidth="lg"
-    >
-      <TenantDetail tenant={tenant} />
-    </DetailPageLayout>
-  );
+return (
+<DetailPageLayout
+breadcrumbs={getBreadcrumbs.tenantDetail(tenant?.tenantName || '...')}
+title={tenant?.tenantName || 'Loading...'}
+actions={
+<Button variant="outlined" onClick={() => navigate(Routes.admin.tenants)}>
+Back to List
+</Button>
+}
+isLoading={isLoading}
+error={error}
+maxWidth="lg"
+>
+<TenantDetail tenant={tenant} />
+</DetailPageLayout>
+);
 };
 \`\`\`
 
 **Props:**
+
 - `breadcrumbs: BreadcrumbItem[]` - Breadcrumb items
 - `title: string` - Page title
 - `actions?: ReactNode` - Optional action buttons
@@ -752,6 +781,7 @@ export const TenantDetailPage = () => {
 Standard layout for create/edit form pages.
 
 **Features:**
+
 - Header with navigation
 - Breadcrumbs
 - Page title and description
@@ -765,33 +795,34 @@ import { FormPageLayout } from '@/components/layouts';
 import { getBreadcrumbs } from '@/utils/navigationUtils';
 
 export const TenantCreatePage = () => {
-  const { createTenant, isCreating, error } = useCreateTenant();
-  const navigate = useNavigate();
+const { createTenant, isCreating, error } = useCreateTenant();
+const navigate = useNavigate();
 
-  const handleSubmit = async (data: CreateTenantRequest) => {
-    const tenant = await createTenant(data);
-    navigate(\`/admin/tenants/\${tenant.tenantId}\`);
-  };
+const handleSubmit = async (data: CreateTenantRequest) => {
+const tenant = await createTenant(data);
+navigate(\`/admin/tenants/\${tenant.tenantId}\`);
+};
 
-  return (
-    <FormPageLayout
-      breadcrumbs={getBreadcrumbs.tenantCreate()}
-      title="Create Tenant"
-      description="Create a new tenant organization with its own isolated environment"
-      error={error}
-      maxWidth="md"
-    >
-      <TenantForm
-        onSubmit={handleSubmit}
-        onCancel={() => navigate('/admin/tenants')}
-        isSubmitting={isCreating}
-      />
-    </FormPageLayout>
-  );
+return (
+<FormPageLayout
+breadcrumbs={getBreadcrumbs.tenantCreate()}
+title="Create Tenant"
+description="Create a new tenant organization with its own isolated environment"
+error={error}
+maxWidth="md"
+>
+<TenantForm
+onSubmit={handleSubmit}
+onCancel={() => navigate('/admin/tenants')}
+isSubmitting={isCreating}
+/>
+</FormPageLayout>
+);
 };
 \`\`\`
 
 **Props:**
+
 - `breadcrumbs: BreadcrumbItem[]` - Breadcrumb items
 - `title: string` - Page title
 - `description?: string` - Optional page description
@@ -806,6 +837,7 @@ export const TenantCreatePage = () => {
 Standard layout for list/index pages.
 
 **Features:**
+
 - Header with navigation
 - Breadcrumbs
 - Page title, description, and action buttons
@@ -819,35 +851,36 @@ import { ListPageLayout } from '@/components/layouts';
 import { getBreadcrumbs } from '@/utils/navigationUtils';
 
 export const TenantListPage = () => {
-  const { tenants, isLoading, error, filters, updateFilters } = useTenants();
-  const navigate = useNavigate();
+const { tenants, isLoading, error, filters, updateFilters } = useTenants();
+const navigate = useNavigate();
 
-  return (
-    <ListPageLayout
-      breadcrumbs={getBreadcrumbs.tenantList()}
-      title="Tenants"
-      description="Manage tenant organizations"
-      actions={
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/admin/tenants/create')}
-        >
-          Create Tenant
-        </Button>
-      }
-      isLoading={isLoading}
-      error={error}
-      maxWidth="lg"
-    >
-      <FilterBar {...filters} />
-      <TenantList tenants={tenants} />
-    </ListPageLayout>
-  );
+return (
+<ListPageLayout
+breadcrumbs={getBreadcrumbs.tenantList()}
+title="Tenants"
+description="Manage tenant organizations"
+actions={
+<Button
+variant="contained"
+startIcon={<AddIcon />}
+onClick={() => navigate('/admin/tenants/create')}
+>
+Create Tenant
+</Button>
+}
+isLoading={isLoading}
+error={error}
+maxWidth="lg"
+>
+<FilterBar {...filters} />
+<TenantList tenants={tenants} />
+</ListPageLayout>
+);
 };
 \`\`\`
 
 **Props:**
+
 - `breadcrumbs: BreadcrumbItem[]` - Breadcrumb items
 - `title: string` - Page title
 - `description?: string` - Optional page description
@@ -864,6 +897,7 @@ export const TenantListPage = () => {
 Standard layout for dashboard pages (Admin/User dashboards).
 
 **Features:**
+
 - Header with navigation
 - Page title and subtitle
 - Content area with Grid layout support
@@ -874,22 +908,23 @@ Standard layout for dashboard pages (Admin/User dashboards).
 import { DashboardPageLayout } from '@/components/layouts';
 
 export const UserDashboard = () => {
-  const { user } = useAuth();
+const { user } = useAuth();
 
-  return (
-    <DashboardPageLayout
-      title="Warehouse Operations Dashboard"
-      subtitle={`Welcome, ${user?.firstName || user?.username}!`}
-    >
-      <Grid container spacing={3}>
-        {/* Dashboard cards */}
-      </Grid>
-    </DashboardPageLayout>
-  );
+return (
+<DashboardPageLayout
+title="Warehouse Operations Dashboard"
+subtitle={`Welcome, ${user?.firstName || user?.username}!`}
+>
+<Grid container spacing={3}>
+{/* Dashboard cards */}
+</Grid>
+</DashboardPageLayout>
+);
 };
 \`\`\`
 
 **Props:**
+
 - `title: string` - Page title (h4 variant)
 - `subtitle?: string` - Optional subtitle (body1, text.secondary)
 - `children: ReactNode` - Dashboard content
@@ -906,17 +941,18 @@ Error boundary component with retry functionality. Wraps the entire App to catch
 import { ErrorBoundaryWithRetry } from '@/components/common';
 
 function App() {
-  return (
-    <ErrorBoundaryWithRetry>
-      <Routes>
-        {/* Routes */}
-      </Routes>
-    </ErrorBoundaryWithRetry>
-  );
+return (
+<ErrorBoundaryWithRetry>
+<Routes>
+{/* Routes */}
+</Routes>
+</ErrorBoundaryWithRetry>
+);
 }
 \`\`\`
 
 **Features:**
+
 - Catches React component errors
 - Displays user-friendly error message
 - Provides "Retry" button to reset error state
@@ -1119,6 +1155,7 @@ const ProductForm = ({ onSubmit, onCancel, isSubmitting, isUpdate }) => {
 ```
 
 **Best Practices:**
+
 - Use `useDebounce` hook to avoid excessive API calls (500ms delay recommended)
 - Show visual feedback (CircularProgress) during validation
 - Provide clear helper text for each validation state
@@ -1129,15 +1166,16 @@ const ProductForm = ({ onSubmit, onCancel, isSubmitting, isUpdate }) => {
 
 - Use Material-UI Grid system
 - Standard breakpoints:
-  - `xs={12}` - Full width on mobile
-  - `md={6}` - Two columns on desktop
-  - `md={4}` - Three columns on desktop
+    - `xs={12}` - Full width on mobile
+    - `md={6}` - Two columns on desktop
+    - `md={4}` - Three columns on desktop
 - Section spacing: `spacing={3}`
 - Paper padding: `sx={{ p: 3 }}`
 
 ### Form Field Standards
 
 **Required Fields with ARIA:**
+
 ```typescript
 <TextField
   {...register('fieldName')}
@@ -1155,6 +1193,7 @@ const ProductForm = ({ onSubmit, onCancel, isSubmitting, isUpdate }) => {
 ```
 
 **Optional Fields:**
+
 ```typescript
 <TextField
   {...register('fieldName')}
@@ -1166,6 +1205,7 @@ const ProductForm = ({ onSubmit, onCancel, isSubmitting, isUpdate }) => {
 ```
 
 **Select Fields:**
+
 ```typescript
 <TextField
   {...register('status')}
@@ -1182,6 +1222,7 @@ const ProductForm = ({ onSubmit, onCancel, isSubmitting, isUpdate }) => {
 ```
 
 **Number Fields:**
+
 ```typescript
 <TextField
   {...register('quantity', { valueAsNumber: true })}
@@ -1202,34 +1243,35 @@ import { Controller } from 'react-hook-form';
 
 // In form component
 <Controller
-  name="barcode"
-  control={control}
-  render={({ field }) => (
-    <BarcodeInput
-      {...field}
-      label="Barcode"
-      fullWidth
-      required
-      error={!!errors.barcode}
-      helperText={errors.barcode?.message || 'Scan barcode first, or enter manually if scanning fails'}
-      onScan={async (scannedBarcode) => {
-        field.onChange(scannedBarcode);
-        // Validate and auto-fill related fields
-        try {
-          const product = await validateBarcode(scannedBarcode);
-          setValue('productCode', product.code);
-          setValue('productName', product.name);
-        } catch (error) {
-          setError('barcode', { message: 'Barcode not found' });
-        }
-      }}
-      autoFocus
-    />
-  )}
+name="barcode"
+control={control}
+render={({ field }) => (
+<BarcodeInput
+{...field}
+label="Barcode"
+fullWidth
+required
+error={!!errors.barcode}
+helperText={errors.barcode?.message || 'Scan barcode first, or enter manually if scanning fails'}
+onScan={async (scannedBarcode) => {
+field.onChange(scannedBarcode);
+// Validate and auto-fill related fields
+try {
+const product = await validateBarcode(scannedBarcode);
+setValue('productCode', product.code);
+setValue('productName', product.name);
+} catch (error) {
+setError('barcode', { message: 'Barcode not found' });
+}
+}}
+autoFocus
+/>
+)}
 />
 \`\`\`
 
 **Barcode Field Guidelines:**
+
 - **Always use BarcodeInput** for any field that can be scanned (product codes, location codes, barcodes)
 - **Scan first, manual input as fallback** - Helper text should guide users to scan first
 - **Auto-focus** barcode fields for better scanner UX
@@ -1237,7 +1279,6 @@ import { Controller } from 'react-hook-form';
 - **Clear error messages** when barcode validation fails
 
 ---
-
 
 ## List Page Patterns
 
@@ -1398,12 +1439,14 @@ export const EntityListPage = () => {
 ### Filter Patterns
 
 **Standard Filters:**
+
 - **Search:** Full-width text field, debounced (500ms)
 - **Status:** Dropdown select, min-width 180px
 - **Tenant:** (Admin only) Dropdown select for multi-tenant filtering
 - **Date Range:** Two date pickers (From/To)
 
 **Clear Filters:**
+
 - Always include "Clear Filters" button
 - Disable when no filters active
 - Reset all filters to defaults
@@ -1575,6 +1618,7 @@ export const EntityDetail: React.FC<EntityDetailProps> = ({
 ### Detail Field Patterns
 
 **Standard Field Display:**
+
 ```typescript
 <Box>
   <Typography variant="caption" color="text.secondary">
@@ -1585,6 +1629,7 @@ export const EntityDetail: React.FC<EntityDetailProps> = ({
 ```
 
 **Badge Field:**
+
 ```typescript
 <Box>
   <Typography variant="caption" color="text.secondary">
@@ -1597,6 +1642,7 @@ export const EntityDetail: React.FC<EntityDetailProps> = ({
 ```
 
 **Date Field:**
+
 ```typescript
 <Box>
   <Typography variant="caption" color="text.secondary">
@@ -1607,6 +1653,7 @@ export const EntityDetail: React.FC<EntityDetailProps> = ({
 ```
 
 **List Field:**
+
 ```typescript
 <Box>
   <Typography variant="caption" color="text.secondary">
@@ -1657,6 +1704,7 @@ breadcrumbs={getBreadcrumbs.tenantCreate()}
 ### Navigation Patterns
 
 **Back to List:**
+
 ```typescript
 <Button
   variant="outlined"
@@ -1667,6 +1715,7 @@ breadcrumbs={getBreadcrumbs.tenantCreate()}
 ```
 
 **Cancel Navigation:**
+
 ```typescript
 const handleCancel = () => {
   navigate(getListPageRoute(location.pathname));
@@ -1674,6 +1723,7 @@ const handleCancel = () => {
 ```
 
 **After Creation:**
+
 ```typescript
 const handleSubmit = async (data) => {
   const entity = await createEntity(data);
@@ -1690,6 +1740,7 @@ All components must be mobile-responsive following these patterns.
 ### Breakpoint Strategy
 
 Material-UI breakpoints:
+
 - `xs`: 0-600px (Mobile)
 - `sm`: 600-960px (Tablet)
 - `md`: 960-1280px (Desktop)
@@ -1697,12 +1748,14 @@ Material-UI breakpoints:
 - `xl`: 1920px+ (Extra Large)
 
 **Primary Breakpoint:** `md` (960px)
+
 - Below `md`: Mobile layout
 - Above `md`: Desktop layout
 
 ### Stack Direction Patterns
 
 **Page Headers:**
+
 ```typescript
 <Stack
   direction={{ xs: 'column', md: 'row' }}
@@ -1716,6 +1769,7 @@ Material-UI breakpoints:
 ```
 
 **Filter Bars:**
+
 ```typescript
 <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
   <TextField fullWidth />
@@ -1724,6 +1778,7 @@ Material-UI breakpoints:
 ```
 
 **Button Groups:**
+
 ```typescript
 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
   <Button>Action 1</Button>
@@ -1734,6 +1789,7 @@ Material-UI breakpoints:
 ### Grid Responsiveness
 
 **Two-Column Layout:**
+
 ```typescript
 <Grid container spacing={3}>
   <Grid item xs={12} md={6}>Column 1</Grid>
@@ -1742,6 +1798,7 @@ Material-UI breakpoints:
 ```
 
 **Three-Column Layout:**
+
 ```typescript
 <Grid container spacing={3}>
   <Grid item xs={12} sm={6} md={4}>Column 1</Grid>
@@ -1753,6 +1810,7 @@ Material-UI breakpoints:
 ### Table Responsiveness
 
 Always use `ResponsiveTable` component:
+
 - Automatically converts to cards on mobile
 - Use `hideOnMobile` for action columns
 - Provide `mobileCardRender` for custom mobile layout
@@ -1762,12 +1820,14 @@ Always use `ResponsiveTable` component:
 Minimum touch target size: 44x44px
 
 **Buttons:**
+
 ```typescript
 <Button size="large">Mobile-friendly</Button>
 <IconButton size="large"><Icon /></IconButton>
 ```
 
 **Clickable Areas:**
+
 ```typescript
 <Card
   sx={{
@@ -2288,6 +2348,7 @@ export interface PaginationMeta {
 ### Error Display Patterns
 
 **Page-Level Errors:**
+
 ```typescript
 // Handled by layout components
 <ListPageLayout
@@ -2299,6 +2360,7 @@ export interface PaginationMeta {
 ```
 
 **Form-Level Errors:**
+
 ```typescript
 // Handled by FormPageLayout
 <FormPageLayout
@@ -2310,6 +2372,7 @@ export interface PaginationMeta {
 ```
 
 **Field-Level Errors:**
+
 ```typescript
 // Handled by react-hook-form
 <TextField
@@ -2320,6 +2383,7 @@ export interface PaginationMeta {
 ```
 
 **Action Errors and Success Messages:**
+
 ```typescript
 // Use Toast notifications (recommended)
 import { useToast } from '@/hooks/useToast';
@@ -2342,6 +2406,7 @@ const MyComponent = () => {
 ```
 
 **Toast Hook API:**
+
 ```typescript
 const { success, error, info, warning } = useToast();
 
@@ -2359,6 +2424,7 @@ warning('Some items could not be processed');
 ```
 
 **Alternative: Inline Alerts (for page-level messages):**
+
 ```typescript
 // For persistent page-level messages
 <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMessage(null)}>
@@ -2369,6 +2435,7 @@ warning('Some items could not be processed');
 ### Error Message Standards
 
 **User-Friendly Messages:**
+
 ```typescript
 // ❌ Bad - technical
 "Error: NetworkError at line 42"
@@ -2378,6 +2445,7 @@ warning('Some items could not be processed');
 ```
 
 **Specific Error Messages:**
+
 ```typescript
 const getErrorMessage = (err: any): string => {
   // Extract from API response
@@ -2482,6 +2550,7 @@ const productCodeSchema = z.string().min(1).refine(
 Use React Testing Library for component tests.
 
 **List Component Test:**
+
 ```typescript
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -2518,6 +2587,7 @@ describe('EntityList', () => {
 ```
 
 **Form Component Test:**
+
 ```typescript
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -2591,6 +2661,7 @@ All components must meet WCAG 2.1 AA standards.
 ### Keyboard Navigation
 
 **Focus Management:**
+
 ```typescript
 // Auto-focus first field in forms
 <TextField
@@ -2608,6 +2679,7 @@ All components must meet WCAG 2.1 AA standards.
 ```
 
 **Keyboard Shortcuts:**
+
 ```typescript
 // ESC to close dialogs (handled automatically by MUI Dialog)
 <Dialog
@@ -2629,6 +2701,7 @@ All components must meet WCAG 2.1 AA standards.
 
 **Focus Indicators:**
 All interactive elements have visible focus indicators configured in the theme:
+
 - Buttons: 3px solid outline with 2px offset
 - TextFields: 2px solid outline with 2px offset
 - IconButtons: 3px solid outline with 2px offset
@@ -2637,6 +2710,7 @@ All interactive elements have visible focus indicators configured in the theme:
 ### ARIA Labels
 
 **Landmarks:**
+
 ```typescript
 <nav aria-label="breadcrumb">
   <Breadcrumbs />
@@ -2648,6 +2722,7 @@ All interactive elements have visible focus indicators configured in the theme:
 ```
 
 **Form Labels:**
+
 ```typescript
 // Use label prop for automatic association
 <TextField label="Email" />
@@ -2658,6 +2733,7 @@ All interactive elements have visible focus indicators configured in the theme:
 ```
 
 **Button Labels:**
+
 ```typescript
 // Icon buttons must have aria-label
 <IconButton aria-label="Delete item">
@@ -2683,6 +2759,7 @@ All interactive elements have visible focus indicators configured in the theme:
 ```
 
 **Dialog ARIA:**
+
 ```typescript
 <Dialog
   open={isOpen}
@@ -2711,6 +2788,7 @@ All interactive elements have visible focus indicators configured in the theme:
 - UI components: Minimum 3:1 contrast ratio (WCAG AA)
 
 **Status Colors (MUI Default - WCAG AA Compliant):**
+
 ```typescript
 // MUI theme colors are WCAG AA compliant by default
 // StatusBadge uses MUI Chip with standard color props:
@@ -2728,6 +2806,7 @@ All interactive elements have visible focus indicators configured in the theme:
 
 **Custom Colors:**
 If using custom colors, verify contrast ratios using tools like:
+
 - WebAIM Contrast Checker
 - axe DevTools
 - Chrome DevTools Accessibility panel
@@ -2735,6 +2814,7 @@ If using custom colors, verify contrast ratios using tools like:
 ### Screen Reader Support
 
 **Live Regions:**
+
 ```typescript
 // Announce loading states
 <div role="status" aria-live="polite">
@@ -2754,6 +2834,7 @@ If using custom colors, verify contrast ratios using tools like:
 ```
 
 **Hidden Content:**
+
 ```typescript
 // Visually hidden but accessible to screen readers
 <Box sx={{ position: 'absolute', left: '-10000px', width: 1, height: 1 }}>
@@ -2770,6 +2851,7 @@ If using custom colors, verify contrast ratios using tools like:
 Update UI immediately, then sync with server. Rollback on error.
 
 **Pattern:**
+
 ```typescript
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/useToast';
@@ -2819,6 +2901,7 @@ export const useUpdateLocationStatus = () => {
 ### Network Error Recovery
 
 The API client automatically retries 5xx errors with exponential backoff:
+
 - Max 3 retries
 - Backoff: 1s, 2s, 4s
 - 429 errors respect Retry-After header
@@ -2831,6 +2914,7 @@ The API client automatically retries 5xx errors with exponential backoff:
 Use toast notifications for user feedback instead of inline alerts.
 
 **Setup (already in main.tsx):**
+
 ```typescript
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -2851,6 +2935,7 @@ import 'react-toastify/dist/ReactToastify.css';
 ```
 
 **Usage:**
+
 ```typescript
 import { useToast } from '@/hooks/useToast';
 
@@ -2873,6 +2958,7 @@ const MyComponent = () => {
 Display location capacity with color-coded progress bars.
 
 **Pattern:**
+
 ```typescript
 import { LinearProgress } from '@mui/material';
 
@@ -2913,6 +2999,7 @@ const LocationCapacity = ({ capacity }) => {
 Display expiring consignments on dashboard.
 
 **Pattern:**
+
 ```typescript
 import { Card, CardContent, Button, Typography } from '@mui/material';
 import { useConsignments } from '../hooks/useConsignments';
@@ -2977,12 +3064,14 @@ When implementing a new feature, follow this checklist:
 ### Implementation Phase
 
 **Service Layer:**
+
 - [ ] Create `services/{feature}Service.ts` with all CRUD operations
 - [ ] Use `apiClient` for all requests
 - [ ] Return `ApiResponse<T>` types
 - [ ] Handle pagination, filters, sorting
 
 **Hooks:**
+
 - [ ] Create `hooks/use{Features}.ts` (list hook)
 - [ ] Create `hooks/use{Feature}.ts` (single entity hook)
 - [ ] Create `hooks/useCreate{Feature}.ts` (create command hook)
@@ -2990,18 +3079,21 @@ When implementing a new feature, follow this checklist:
 - [ ] Implement abort controllers for race condition prevention
 
 **Components:**
+
 - [ ] Create `components/{Feature}List.tsx` using ResponsiveTable
 - [ ] Create `components/{Feature}Detail.tsx` with card layout
 - [ ] Create `components/{Feature}Form.tsx` with validation
 - [ ] Create `components/{Feature}Actions.tsx` for entity actions
 
 **Pages:**
+
 - [ ] Create `pages/{Feature}ListPage.tsx` using ListPageLayout
 - [ ] Create `pages/{Feature}DetailPage.tsx` using DetailPageLayout
 - [ ] Create `pages/{Feature}CreatePage.tsx` using FormPageLayout
 - [ ] Create `pages/{Feature}EditPage.tsx` using FormPageLayout
 
 **Navigation:**
+
 - [ ] Add routes to `Routes` object in `navigationUtils.ts`
 - [ ] Add breadcrumb helpers to `getBreadcrumbs`
 - [ ] Update router configuration
@@ -3170,16 +3262,21 @@ const mutation = useMutation({
 ## Document Control
 
 **Version History:**
-- v2.1 (2025-01) - Added DashboardPageLayout, Skeleton loaders (SkeletonTable, SkeletonCard, SkeletonForm), ErrorBoundaryWithRetry, Toast notifications (useToast hook), optimistic updates pattern, network retry with exponential backoff, comprehensive mobile responsiveness patterns, enhanced async validation with visual feedback, capacity visualization patterns, expiry alert patterns, FEFO assignment UI patterns, notification system patterns, stock levels monitoring patterns
+
+- v2.1 (2025-01) - Added DashboardPageLayout, Skeleton loaders (SkeletonTable, SkeletonCard, SkeletonForm), ErrorBoundaryWithRetry, Toast notifications (useToast hook), optimistic
+  updates pattern, network retry with exponential backoff, comprehensive mobile responsiveness patterns, enhanced async validation with visual feedback, capacity visualization
+  patterns, expiry alert patterns, FEFO assignment UI patterns, notification system patterns, stock levels monitoring patterns
 - v2.0 (2025-01) - Complete rewrite with shared components, responsive patterns, and standardized templates
 - v1.0 (2025-01) - Initial template creation
 
 **Review Cycle:**
+
 - Review quarterly or when significant pattern changes emerge
 - Update when new shared components are added
 - Maintain backward compatibility when possible
 
 **Governance:**
+
 - All deviations from this guide must be approved by technical lead
 - New patterns must be documented and shared
 - Regular pattern review sessions to improve standards
@@ -3190,16 +3287,16 @@ const mutation = useMutation({
 
 ### File Locations
 
-| File Type | Location | Example |
-|-----------|----------|---------|
-| Shared Components | `src/components/common/` | `PageBreadcrumbs.tsx` |
-| Layout Components | `src/components/layouts/` | `DetailPageLayout.tsx` |
-| Feature Components | `src/features/{feature}/components/` | `TenantList.tsx` |
-| Feature Pages | `src/features/{feature}/pages/` | `TenantListPage.tsx` |
-| Feature Hooks | `src/features/{feature}/hooks/` | `useTenants.ts` |
-| Feature Services | `src/features/{feature}/services/` | `tenantService.ts` |
-| Feature Types | `src/features/{feature}/types/` | `tenant.ts` |
-| Utils | `src/utils/` | `dateUtils.ts` |
+| File Type          | Location                             | Example                |
+|--------------------|--------------------------------------|------------------------|
+| Shared Components  | `src/components/common/`             | `PageBreadcrumbs.tsx`  |
+| Layout Components  | `src/components/layouts/`            | `DetailPageLayout.tsx` |
+| Feature Components | `src/features/{feature}/components/` | `TenantList.tsx`       |
+| Feature Pages      | `src/features/{feature}/pages/`      | `TenantListPage.tsx`   |
+| Feature Hooks      | `src/features/{feature}/hooks/`      | `useTenants.ts`        |
+| Feature Services   | `src/features/{feature}/services/`   | `tenantService.ts`     |
+| Feature Types      | `src/features/{feature}/types/`      | `tenant.ts`            |
+| Utils              | `src/utils/`                         | `dateUtils.ts`         |
 
 ### Import Shortcuts
 
@@ -3247,6 +3344,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 ### Common Patterns Quick Copy
 
 **List Page:**
+
 ```typescript
 <ListPageLayout breadcrumbs={} title="" actions={}>
   <FilterBar>...</FilterBar>
@@ -3256,6 +3354,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 ```
 
 **Detail Page:**
+
 ```typescript
 <DetailPageLayout breadcrumbs={} title="" actions={}>
   <Grid container spacing={3}>
@@ -3267,6 +3366,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 ```
 
 **Form Page:**
+
 ```typescript
 <FormPageLayout breadcrumbs={} title="" description="">
   <form onSubmit={handleSubmit(onSubmit)}>
@@ -3279,6 +3379,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 ```
 
 **Dashboard Page:**
+
 ```typescript
 <DashboardPageLayout title="" subtitle="">
   <Grid container spacing={3}>
@@ -3298,12 +3399,14 @@ The hierarchical tree view pattern is used for displaying and navigating through
 ### When to Use Tree Views
 
 Use tree views when:
+
 - Data has a clear parent-child hierarchy
 - Users need to navigate through multiple levels
 - The hierarchy depth is known and limited (typically 3-5 levels)
 - Each level has a manageable number of items (< 100 per level)
 
 **Examples:**
+
 - Location hierarchy (warehouse → zone → aisle → rack → bin)
 - Organizational structure
 - Category hierarchies
@@ -3316,6 +3419,7 @@ The `LocationTreeView` component displays hierarchical location data with drill-
 **Location:** `src/features/location-management/components/LocationTreeView.tsx`
 
 **Usage:**
+
 ```typescript
 import { LocationTreeView } from '../components/LocationTreeView';
 import { useLocationHierarchy } from '../hooks/useLocationHierarchy';
@@ -3348,6 +3452,7 @@ export const LocationListPage = () => {
 ```
 
 **Props:**
+
 - `data?: LocationHierarchyQueryResult` - Hierarchy data from API
 - `isLoading: boolean` - Loading state
 - `error: Error | null` - Error state
@@ -3362,6 +3467,7 @@ Individual tree item component for displaying location information.
 **Location:** `src/features/location-management/components/LocationTreeItem.tsx`
 
 **Features:**
+
 - Expandable/collapsible indicator (if has children)
 - Location name, code, and description
 - Status badge
@@ -3376,6 +3482,7 @@ The `useLocationHierarchy` hook manages hierarchy navigation state and provides 
 **Location:** `src/features/location-management/hooks/useLocationHierarchy.ts`
 
 **Usage:**
+
 ```typescript
 const {
   data,
@@ -3392,6 +3499,7 @@ const {
 ```
 
 **Features:**
+
 - Manages current hierarchy level state
 - Provides navigation functions for each level
 - Uses React Query for caching (5-minute stale time)
@@ -3446,6 +3554,7 @@ Backend APIs follow RESTful hierarchy pattern:
 - `GET /api/v1/location-management/locations/racks/{rackId}/bins` - List bins
 
 Each endpoint returns:
+
 - `parent: Location | null` - Parent location (null for root level)
 - `items: LocationHierarchyItem[]` - Child locations with metadata
 - `hierarchyLevel: string` - Current hierarchy level
@@ -3555,64 +3664,64 @@ The following components and patterns were added during Sprint 05 - Frontend Pro
 ### New Layout Components
 
 1. **DashboardPageLayout** - Standardized layout for dashboard pages (Admin/User dashboards)
-   - Location: `src/components/layouts/DashboardPageLayout.tsx`
-   - Usage: Replaces raw Container components in dashboard pages
+    - Location: `src/components/layouts/DashboardPageLayout.tsx`
+    - Usage: Replaces raw Container components in dashboard pages
 
 ### New Skeleton Loaders
 
 1. **SkeletonTable** - Skeleton loader for table/list content
-   - Location: `src/components/common/SkeletonTable.tsx`
-   - Usage: Automatically used by ListPageLayout when loading
+    - Location: `src/components/common/SkeletonTable.tsx`
+    - Usage: Automatically used by ListPageLayout when loading
 
 2. **SkeletonCard** - Skeleton loader for card/detail content
-   - Location: `src/components/common/SkeletonCard.tsx`
-   - Usage: Automatically used by DetailPageLayout when loading
+    - Location: `src/components/common/SkeletonCard.tsx`
+    - Usage: Automatically used by DetailPageLayout when loading
 
 3. **SkeletonForm** - Skeleton loader for form content
-   - Location: `src/components/common/SkeletonForm.tsx`
-   - Usage: Use when loading form default values (e.g., in edit pages)
+    - Location: `src/components/common/SkeletonForm.tsx`
+    - Usage: Use when loading form default values (e.g., in edit pages)
 
 ### New Error Handling
 
 1. **ErrorBoundaryWithRetry** - Error boundary with retry functionality
-   - Location: `src/components/common/ErrorBoundaryWithRetry.tsx`
-   - Usage: Wraps entire App to catch React errors gracefully
-   - Features: Retry button, Go Home button, error logging
+    - Location: `src/components/common/ErrorBoundaryWithRetry.tsx`
+    - Usage: Wraps entire App to catch React errors gracefully
+    - Features: Retry button, Go Home button, error logging
 
 ### New Hooks
 
 1. **useToast** - Toast notification hook
-   - Location: `src/hooks/useToast.ts`
-   - Usage: Success, error, info, warning notifications
-   - Integration: ToastContainer already configured in main.tsx
+    - Location: `src/hooks/useToast.ts`
+    - Usage: Success, error, info, warning notifications
+    - Integration: ToastContainer already configured in main.tsx
 
 ### Enhanced Patterns
 
 1. **Optimistic UI Updates** - Update UI immediately, rollback on error
-   - Pattern: Use React Query mutations with `onMutate` and `onError`
-   - Example: Location status updates, product creation
+    - Pattern: Use React Query mutations with `onMutate` and `onError`
+    - Example: Location status updates, product creation
 
 2. **Network Error Recovery** - Automatic retry with exponential backoff
-   - Implementation: Built into `apiClient.ts`
-   - Features: 5xx errors retry (max 3), 429 rate limit handling, 401 token refresh
+    - Implementation: Built into `apiClient.ts`
+    - Features: 5xx errors retry (max 3), 429 rate limit handling, 401 token refresh
 
 3. **Enhanced Async Validation** - Debounced validation with visual feedback
-   - Pattern: Use `useDebounce` hook with CircularProgress indicator
-   - Example: Product code uniqueness check
+    - Pattern: Use `useDebounce` hook with CircularProgress indicator
+    - Example: Product code uniqueness check
 
 4. **Mobile Responsiveness** - Comprehensive responsive patterns
-   - FormActions: Stacks vertically on mobile
-   - ButtonGroups: Responsive orientation
-   - FilterBar: Responsive direction
-   - All action buttons: Full-width on mobile
+    - FormActions: Stacks vertically on mobile
+    - ButtonGroups: Responsive orientation
+    - FilterBar: Responsive direction
+    - All action buttons: Full-width on mobile
 
 5. **Capacity Visualization** - Color-coded progress bars
-   - Pattern: LinearProgress with dynamic color based on utilization
-   - Thresholds: <50% success, 50-80% warning, ≥80% error
+    - Pattern: LinearProgress with dynamic color based on utilization
+    - Thresholds: <50% success, 50-80% warning, ≥80% error
 
 6. **Expiry Alerts** - Dashboard alert cards
-   - Pattern: Card component with conditional styling
-   - Integration: ExpiryAlertCard component in UserDashboard
+    - Pattern: Card component with conditional styling
+    - Integration: ExpiryAlertCard component in UserDashboard
 
 ### Updated Components
 

@@ -148,13 +148,21 @@ export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps
 
               {location.capacity.maximumQuantity > 0 && (
                 <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 1,
+                    }}
+                  >
                     <Typography variant="caption" color="text.secondary">
                       Capacity Utilization
                     </Typography>
                     <Typography variant="body2" fontWeight="medium">
                       {Math.round(
-                        (location.capacity.currentQuantity / location.capacity.maximumQuantity) * 100
+                        (location.capacity.currentQuantity / location.capacity.maximumQuantity) *
+                          100
                       )}
                       %
                     </Typography>
@@ -166,11 +174,15 @@ export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps
                       100
                     )}
                     color={
-                      (location.capacity.currentQuantity / location.capacity.maximumQuantity) * 100 >= 80
+                      (location.capacity.currentQuantity / location.capacity.maximumQuantity) *
+                        100 >=
+                      80
                         ? 'error'
-                        : (location.capacity.currentQuantity / location.capacity.maximumQuantity) * 100 >= 50
-                        ? 'warning'
-                        : 'success'
+                        : (location.capacity.currentQuantity / location.capacity.maximumQuantity) *
+                              100 >=
+                            50
+                          ? 'warning'
+                          : 'success'
                     }
                     sx={{ height: 8, borderRadius: 4 }}
                     aria-label="Location capacity utilization"
@@ -180,8 +192,13 @@ export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps
                     aria-valuemin={0}
                     aria-valuemax={100}
                   />
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                    {location.capacity.currentQuantity || 0} / {location.capacity.maximumQuantity} units
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: 0.5, display: 'block' }}
+                  >
+                    {location.capacity.currentQuantity || 0} / {location.capacity.maximumQuantity}{' '}
+                    units
                   </Typography>
                 </Box>
               )}

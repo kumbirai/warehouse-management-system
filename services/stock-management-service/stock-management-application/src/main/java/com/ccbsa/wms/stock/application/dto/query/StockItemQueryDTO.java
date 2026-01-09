@@ -32,6 +32,7 @@ public class StockItemQueryDTO {
     private Integer allocatedQuantity;
     private LocalDate expirationDate;
     private String classification;
+    private Integer daysUntilExpiry;
     private LocalDateTime createdAt;
     private LocalDateTime lastModifiedAt;
 }

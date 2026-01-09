@@ -71,7 +71,7 @@ export const authService = {
       );
 
       // Log raw response for debugging
-      console.log('[authService] Raw login response:', {
+      logger.debug('[authService] Raw login response', {
         status: response.status,
         statusText: response.statusText,
         headers: response.headers,
@@ -106,7 +106,6 @@ export const authService = {
           errorMessage: response.data.error?.message,
           fullResponse: JSON.stringify(response.data, null, 2),
         });
-        console.error('Login response contains error:', response.data.error);
         throw new Error(response.data.error?.message || 'Authentication failed');
       }
 
@@ -143,10 +142,6 @@ export const authService = {
             responseData: response.data,
             responseDataString: JSON.stringify(response.data, null, 2),
           });
-          console.error(
-            'Login response array format is invalid - Full response.data:',
-            response.data
-          );
           throw new Error(
             'Invalid response format from authentication service: invalid array format'
           );
@@ -162,10 +157,6 @@ export const authService = {
           dataType: typeof responseData,
           isArray: Array.isArray(responseData),
         });
-        console.error(
-          'Login response data is not in expected format - Full response.data:',
-          response.data
-        );
         throw new Error(
           'Invalid response format from authentication service: data is not in expected format'
         );
@@ -199,7 +190,6 @@ export const authService = {
         };
 
         logger.error('Login response missing accessToken', errorDetails);
-        console.error('Login response missing accessToken - Full details:', errorDetails);
 
         throw new Error('Invalid response format from authentication service: missing accessToken');
       }

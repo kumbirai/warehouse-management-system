@@ -102,5 +102,11 @@ public class CachedStockItemRepositoryAdapter extends CachedRepositoryDecorator<
         // For internal use - not cached (requires TenantContext)
         return baseRepository.findById(stockItemId);
     }
+
+    @Override
+    public List<StockItem> findByTenantId(TenantId tenantId) {
+        // Collections NOT cached to avoid cache bloat
+        return baseRepository.findByTenantId(tenantId);
+    }
 }
 

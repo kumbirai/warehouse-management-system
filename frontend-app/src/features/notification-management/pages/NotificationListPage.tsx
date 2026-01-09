@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FormControl, InputLabel, MenuItem, Select, Box } from '@mui/material';
+import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { useNotifications } from '../hooks/useNotifications';
 import { NotificationList } from '../components/NotificationList';
 import { ListPageLayout } from '../../../components/layouts';
@@ -53,7 +53,7 @@ export const NotificationListPage = () => {
             labelId="status-filter-label"
             value={statusFilter}
             label="Status"
-            onChange={(e) => {
+            onChange={e => {
               setStatusFilter(e.target.value as NotificationStatus | 'ALL');
               setPage(0);
             }}
@@ -74,7 +74,7 @@ export const NotificationListPage = () => {
             labelId="type-filter-label"
             value={typeFilter}
             label="Type"
-            onChange={(e) => {
+            onChange={e => {
               setTypeFilter(e.target.value as NotificationType | 'ALL');
               setPage(0);
             }}
@@ -107,7 +107,7 @@ export const NotificationListPage = () => {
             totalPages={totalPages}
             totalItems={totalElements}
             itemsPerPage={size}
-            onPageChange={(newPage) => handlePageChange(newPage - 1)}
+            onPageChange={newPage => handlePageChange(newPage - 1)}
           />
         </Box>
       )}

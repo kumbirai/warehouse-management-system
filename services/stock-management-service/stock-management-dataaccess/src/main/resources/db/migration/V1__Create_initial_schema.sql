@@ -463,3 +463,107 @@ ON COLUMN stock_level_thresholds.last_modified_at IS 'Timestamp when threshold w
 COMMENT
 ON COLUMN stock_level_thresholds.version IS 'Optimistic locking version for concurrency control';
 
+-- Create restock_requests table
+CREATE TABLE IF NOT EXISTS restock_requests
+(
+    id
+    UUID
+    PRIMARY
+    KEY,
+    tenant_id
+    VARCHAR
+(
+    255
+) NOT NULL,
+    product_id UUID NOT NULL,
+    location_id UUID,
+    current_quantity DECIMAL
+(
+    18,
+    2
+) NOT NULL,
+    minimum_quantity DECIMAL
+(
+    18,
+    2
+) NOT NULL,
+    maximum_quantity DECIMAL
+(
+    18,
+    2
+),
+    requested_quantity DECIMAL
+(
+    18,
+    2
+) NOT NULL,
+    priority VARCHAR
+(
+    50
+) NOT NULL,
+    status VARCHAR
+(
+    50
+) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    sent_to_d365_at TIMESTAMP,
+    d365_order_reference VARCHAR
+(
+    255
+),
+    version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT chk_restock_requests_priority CHECK
+(
+    priority
+    IN
+(
+    'HIGH',
+    'MEDIUM',
+    'LOW'
+)),
+    CONSTRAINT chk_restock_requests_status CHECK
+(
+    status
+    IN
+(
+    'PENDING',
+    'SENT_TO_D365',
+    'FULFILLED',
+    'CANCELLED'
+))
+    );
+
+-- Add table comment for restock_requests
+COMMENT
+ON TABLE restock_requests IS 'Validation table for restock requests. NOT used at runtime - all operations use tenant-specific schemas.';
+
+-- Add column comments for restock_requests table
+COMMENT
+ON COLUMN restock_requests.id IS 'Unique restock request identifier (UUID)';
+COMMENT
+ON COLUMN restock_requests.tenant_id IS 'Tenant identifier (LDP identifier). Validated at application layer.';
+COMMENT
+ON COLUMN restock_requests.product_id IS 'Product identifier';
+COMMENT
+ON COLUMN restock_requests.location_id IS 'Location identifier (optional - null for product-level restock)';
+COMMENT
+ON COLUMN restock_requests.current_quantity IS 'Current stock quantity when request was generated';
+COMMENT
+ON COLUMN restock_requests.minimum_quantity IS 'Minimum threshold quantity';
+COMMENT
+ON COLUMN restock_requests.maximum_quantity IS 'Maximum threshold quantity (optional)';
+COMMENT
+ON COLUMN restock_requests.requested_quantity IS 'Requested restock quantity';
+COMMENT
+ON COLUMN restock_requests.priority IS 'Restock priority: HIGH, MEDIUM, LOW';
+COMMENT
+ON COLUMN restock_requests.status IS 'Request status: PENDING, SENT_TO_D365, FULFILLED, CANCELLED';
+COMMENT
+ON COLUMN restock_requests.created_at IS 'Timestamp when restock request was created';
+COMMENT
+ON COLUMN restock_requests.sent_to_d365_at IS 'Timestamp when request was sent to Microsoft Dynamics 365';
+COMMENT
+ON COLUMN restock_requests.d365_order_reference IS 'D365 order reference (if sent to D365)';
+COMMENT
+ON COLUMN restock_requests.version IS 'Optimistic locking version for concurrency control';
+

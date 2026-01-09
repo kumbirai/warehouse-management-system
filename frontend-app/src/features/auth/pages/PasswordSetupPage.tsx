@@ -3,6 +3,7 @@ import {useNavigate, useSearchParams} from 'react-router-dom';
 import {Alert, Box, Button, Container, IconButton, InputAdornment, Link, Paper, TextField, Typography,} from '@mui/material';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
 import {setupPassword, validatePasswordStrength} from '../services/passwordSetupService';
+import { logger } from '../../../utils/logger';
 
 /**
  * Password setup page.
@@ -56,7 +57,10 @@ export const PasswordSetupPage = () => {
       await setupPassword(token, password, confirmPassword, key || undefined);
       setIsSuccess(true);
     } catch (err: unknown) {
-      console.error('Password setup error:', err);
+      logger.error(
+        'Password setup error',
+        err instanceof Error ? err : new Error(String(err))
+      );
       const errorMessage =
         err instanceof Error
           ? err.message

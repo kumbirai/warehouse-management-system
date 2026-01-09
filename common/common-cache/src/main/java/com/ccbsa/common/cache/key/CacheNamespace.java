@@ -27,7 +27,7 @@ public enum CacheNamespace {
 
     // Stock Management Service
     STOCK_CONSIGNMENTS("stock-consignments"), STOCK_ITEMS("stock-items"), STOCK_LEVELS("stock-levels"), STOCK_ALLOCATIONS("stock-allocations"),
-    STOCK_ADJUSTMENTS("stock-adjustments"), STOCK_LEVEL_THRESHOLDS("stock-level-thresholds"),
+    STOCK_ADJUSTMENTS("stock-adjustments"), STOCK_LEVEL_THRESHOLDS("stock-level-thresholds"), RESTOCK_REQUESTS("restock-requests"),
 
     // Location Management Service
     LOCATIONS("locations"), ZONES("zones"), STOCK_MOVEMENTS("stock-movements"),

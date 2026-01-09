@@ -119,7 +119,7 @@ export const TenantListPage = () => {
             totalPages={pagination.totalPages}
             totalItems={pagination.totalElements || 0}
             itemsPerPage={pagination.size || 10}
-            onPageChange={(page) => updatePage(page)}
+            onPageChange={page => updatePage(page)}
           />
         </Box>
       )}

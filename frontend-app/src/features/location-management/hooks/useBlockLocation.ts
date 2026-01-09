@@ -40,4 +40,3 @@ export const useBlockLocation = (): UseBlockLocationResult => {
 
   return { blockLocation, isLoading, error };
 };
-

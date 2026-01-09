@@ -42,16 +42,10 @@ public class ReturnsServiceTest extends BaseIntegrationTest {
 
             // Create product for tests
             CreateProductRequest productRequest = ProductTestDataBuilder.buildCreateProductRequest();
-            EntityExchangeResult<ApiResponse<CreateProductResponse>> productExchangeResult = authenticatedPost(
-                    "/api/v1/products",
-                    tenantAdminAuth.getAccessToken(),
-                    testTenantId,
-                    productRequest
-            ).exchange()
-                    .expectStatus().isCreated()
-                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                    })
-                    .returnResult();
+            EntityExchangeResult<ApiResponse<CreateProductResponse>> productExchangeResult =
+                    authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, productRequest).exchange().expectStatus().isCreated()
+                            .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                            }).returnResult();
 
             ApiResponse<CreateProductResponse> productApiResponse = productExchangeResult.getResponseBody();
             assertThat(productApiResponse).isNotNull();
@@ -71,19 +65,12 @@ public class ReturnsServiceTest extends BaseIntegrationTest {
         CreateReturnOrderRequest request = ReturnsTestDataBuilder.buildCreateReturnOrderRequest(testProductId);
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/returns/orders",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/returns/orders", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<CreateReturnOrderResponse>> exchangeResult = response
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateReturnOrderResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateReturnOrderResponse>> exchangeResult =
+                response.expectStatus().isCreated().expectBody(new ParameterizedTypeReference<ApiResponse<CreateReturnOrderResponse>>() {
+                }).returnResult();
 
         ApiResponse<CreateReturnOrderResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
@@ -99,11 +86,7 @@ public class ReturnsServiceTest extends BaseIntegrationTest {
     @Order(2)
     public void testListReturnOrders_Success() {
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/returns/orders?page=0&size=10",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/returns/orders?page=0&size=10", tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isOk();

@@ -227,6 +227,7 @@ public class ProductBarcodeCache {
 **Core Principle:** Barcode scanning is the **primary input method**. Manual keyboard input is provided as a **fallback** when scanning fails or is unavailable.
 
 **Implementation Requirements:**
+
 - Use `BarcodeInput` component (not `TextField`) for all barcode fields
 - Auto-focus barcode fields for handheld scanner compatibility
 - Provide clear helper text: "Scan barcode first, or enter manually if scanning fails"
@@ -350,6 +351,7 @@ export const ProductBarcodeInput: React.FC<{
 ```
 
 **Key Features:**
+
 - **Barcode scanning first:** Primary input method via handheld scanner or camera
 - **Manual input fallback:** Full keyboard support when scanning fails
 - **Auto-validation:** Validates barcodes immediately after scanning or manual entry

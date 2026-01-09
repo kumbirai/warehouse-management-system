@@ -1,11 +1,7 @@
-import {
-  List,
-  Paper,
-  Typography,
-} from '@mui/material';
+import { List, Paper, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { LocationTreeItem } from './LocationTreeItem';
-import { LocationHierarchyQueryResult, LocationHierarchyLevel } from '../types/location';
+import { LocationHierarchyLevel, LocationHierarchyQueryResult } from '../types/location';
 import { EmptyState, SkeletonTable } from '../../../components/common';
 
 interface LocationTreeViewProps {
@@ -87,7 +83,7 @@ export const LocationTreeView = ({
   return (
     <Paper>
       <List disablePadding>
-        {data.items.map((item) => (
+        {data.items.map(item => (
           <LocationTreeItem
             key={item.location.locationId}
             item={item}

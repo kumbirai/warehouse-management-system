@@ -90,9 +90,15 @@ export const StockMovementList = ({ movements, isLoading, error }: StockMovement
               <TableCell>
                 <Chip
                   label={movement.status}
-                  color={getStatusVariant(movement.status) === 'success' ? 'success' : 
-                         getStatusVariant(movement.status) === 'error' ? 'error' : 
-                         getStatusVariant(movement.status) === 'warning' ? 'warning' : 'default'}
+                  color={
+                    getStatusVariant(movement.status) === 'success'
+                      ? 'success'
+                      : getStatusVariant(movement.status) === 'error'
+                        ? 'error'
+                        : getStatusVariant(movement.status) === 'warning'
+                          ? 'warning'
+                          : 'default'
+                  }
                   size="small"
                 />
               </TableCell>
@@ -104,4 +110,3 @@ export const StockMovementList = ({ movements, isLoading, error }: StockMovement
     </TableContainer>
   );
 };
-

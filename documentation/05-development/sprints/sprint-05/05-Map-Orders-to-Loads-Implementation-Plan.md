@@ -736,13 +736,13 @@ class OrderViewRepositoryIntegrationTest {
 
 ## Acceptance Criteria Validation
 
-| Acceptance Criteria | Implementation | Status |
-|---------------------|----------------|--------|
-| AC1: Multiple orders per load | Load.orders List | ✅ Planned |
-| AC2: Multiple orders per customer per load | CustomerInfo grouping | ✅ Planned |
-| AC3: Maintain order-to-load relationships | Load-Order association | ✅ Planned |
-| AC4: Track order status within load | Order.status field | ✅ Planned |
-| AC5: Query orders by load | OrderViewRepository methods | ✅ Planned |
+| Acceptance Criteria                        | Implementation              | Status    |
+|--------------------------------------------|-----------------------------|-----------|
+| AC1: Multiple orders per load              | Load.orders List            | ✅ Planned |
+| AC2: Multiple orders per customer per load | CustomerInfo grouping       | ✅ Planned |
+| AC3: Maintain order-to-load relationships  | Load-Order association      | ✅ Planned |
+| AC4: Track order status within load        | Order.status field          | ✅ Planned |
+| AC5: Query orders by load                  | OrderViewRepository methods | ✅ Planned |
 
 ---
 

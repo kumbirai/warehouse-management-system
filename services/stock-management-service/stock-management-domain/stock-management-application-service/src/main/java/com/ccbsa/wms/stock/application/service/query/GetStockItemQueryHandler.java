@@ -1,5 +1,7 @@
 package com.ccbsa.wms.stock.application.service.query;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -63,7 +65,16 @@ public class GetStockItemQueryHandler {
                 allocationViews.stream().filter(allocation -> allocation.getStatus() == AllocationStatus.ALLOCATED).mapToInt(allocation -> allocation.getQuantity().getValue())
                         .sum();
 
-        // 4. Map view to query result with enriched information
+        // 4. Calculate days until expiry if expiration date is available
+        Integer daysUntilExpiry = null;
+        if (stockItemView.getExpirationDate() != null && stockItemView.getExpirationDate().getValue() != null) {
+            LocalDate today = LocalDate.now();
+            LocalDate expiryDate = stockItemView.getExpirationDate().getValue();
+            long days = ChronoUnit.DAYS.between(today, expiryDate);
+            daysUntilExpiry = (int) days;
+        }
+
+        // 5. Map view to query result with enriched information
         return GetStockItemQueryResult.builder().stockItemId(stockItemView.getStockItemId()).productId(stockItemView.getProductId())
                 .productCode(productInfo.map(ProductServicePort.ProductInfo::getProductCode).orElse(null))
                 .productDescription(productInfo.map(ProductServicePort.ProductInfo::getDescription).orElse(null)).locationId(stockItemView.getLocationId())
@@ -71,7 +82,8 @@ public class GetStockItemQueryHandler {
                 .locationName(locationInfo.map(LocationServicePort.LocationInfo::getDisplayName).orElse(null))
                 .locationHierarchy(locationInfo.map(LocationServicePort.LocationInfo::getHierarchy).orElse(null)).quantity(stockItemView.getQuantity())
                 .allocatedQuantity(Quantity.of(allocatedQuantity)).expirationDate(stockItemView.getExpirationDate()).classification(stockItemView.getClassification())
-                .consignmentId(stockItemView.getConsignmentId()).createdAt(stockItemView.getCreatedAt()).lastModifiedAt(stockItemView.getLastModifiedAt()).build();
+                .consignmentId(stockItemView.getConsignmentId()).createdAt(stockItemView.getCreatedAt()).lastModifiedAt(stockItemView.getLastModifiedAt())
+                .daysUntilExpiry(daysUntilExpiry).build();
     }
 }
 

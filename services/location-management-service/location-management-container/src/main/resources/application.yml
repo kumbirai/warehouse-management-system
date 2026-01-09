@@ -145,6 +145,20 @@ eureka:
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
 
+# Product Service Configuration
+# Note: Uses Eureka service discovery via @LoadBalanced RestTemplate
+# Service name is resolved through Eureka registry (no port needed)
+product:
+  service:
+    url: ${PRODUCT_SERVICE_URL:http://product-service}
+
+# Stock Management Service Configuration
+# Note: Uses Eureka service discovery via @LoadBalanced RestTemplate
+# Service name is resolved through Eureka registry (no port needed)
+stock-management:
+  service:
+    url: ${STOCK_MANAGEMENT_SERVICE_URL:http://stock-management-service}
+
 # Management endpoints
 management:
   endpoints:

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { stockMovementService, StockMovement } from '../services/stockMovementService';
+import { StockMovement, stockMovementService } from '../services/stockMovementService';
 import { logger } from '../../../utils/logger';
 
 export interface UseStockMovementResult {
@@ -51,4 +51,3 @@ export const useStockMovement = (movementId: string, tenantId: string): UseStock
 
   return { movement, isLoading, error, refetch: fetchMovement };
 };
-

@@ -66,11 +66,11 @@
 
 1. User views stock items list
 2. System displays classification badge for each item:
-   - **EXPIRED** - Red badge with warning icon
-   - **CRITICAL** - Orange badge with alert icon (≤7 days)
-   - **NEAR_EXPIRY** - Yellow badge with warning icon (≤30 days)
-   - **NORMAL** - Green badge (default)
-   - **EXTENDED_SHELF_LIFE** - Blue badge
+    - **EXPIRED** - Red badge with warning icon
+    - **CRITICAL** - Orange badge with alert icon (≤7 days)
+    - **NEAR_EXPIRY** - Yellow badge with warning icon (≤30 days)
+    - **NORMAL** - Green badge (default)
+    - **EXTENDED_SHELF_LIFE** - Blue badge
 3. User can filter by classification
 4. User can sort by expiration date
 5. User can view classification details in stock item detail view

@@ -6,6 +6,12 @@
 CREATE INDEX IF NOT EXISTS idx_picking_lists_tenant_id ON picking_lists(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_picking_lists_status ON picking_lists(status);
 CREATE INDEX IF NOT EXISTS idx_picking_lists_received_at ON picking_lists(received_at DESC);
+CREATE INDEX IF NOT EXISTS idx_picking_lists_reference ON picking_lists(picking_list_reference);
+CREATE INDEX IF NOT EXISTS idx_picking_lists_completed_at ON picking_lists(completed_at);
+CREATE INDEX IF NOT EXISTS idx_picking_lists_completed_by_user_id ON picking_lists(completed_by_user_id);
+
+-- Unique constraint for picking_lists: tenant_id and picking_list_reference combination
+CREATE UNIQUE INDEX IF NOT EXISTS uk_picking_lists_tenant_reference ON picking_lists(tenant_id, picking_list_reference);
 
 -- Indexes for loads table
 CREATE INDEX IF NOT EXISTS idx_loads_tenant_id ON loads(tenant_id);
@@ -40,3 +46,6 @@ CREATE INDEX IF NOT EXISTS idx_picking_tasks_product_code ON picking_tasks(produ
 CREATE INDEX IF NOT EXISTS idx_picking_tasks_status ON picking_tasks(status);
 CREATE INDEX IF NOT EXISTS idx_picking_tasks_sequence ON picking_tasks(sequence);
 CREATE INDEX IF NOT EXISTS idx_picking_tasks_load_sequence ON picking_tasks(load_id, sequence);
+CREATE INDEX IF NOT EXISTS idx_picking_tasks_picked_at ON picking_tasks(picked_at);
+CREATE INDEX IF NOT EXISTS idx_picking_tasks_picked_by_user_id ON picking_tasks(picked_by_user_id);
+CREATE INDEX IF NOT EXISTS idx_picking_tasks_status_picked_at ON picking_tasks(status, picked_at);

@@ -73,9 +73,7 @@ public class TestData {
     }
 
     public static List<String> secondaryBarcodes(int count) {
-        return IntStream.range(0, count)
-                .mapToObj(i -> BarcodeGenerator.generateEAN13())
-                .toList();
+        return IntStream.range(0, count).mapToObj(i -> BarcodeGenerator.generateEAN13()).toList();
     }
 
     public static String productCategory() {

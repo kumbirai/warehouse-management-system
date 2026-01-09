@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
 import {Alert, Box, Button, CircularProgress, Container, Paper, Typography} from '@mui/material';
 import {verifyEmail} from '../services/verificationService';
+import { logger } from '../../../utils/logger';
 
 /**
  * Email verification page.
@@ -53,7 +54,10 @@ export const EmailVerificationPage = () => {
         setStatus('success');
         setMessage('Your email has been verified successfully! You can now log in.');
       } catch (error: unknown) {
-        console.error('Email verification error:', error);
+        logger.error(
+          'Email verification error',
+          error instanceof Error ? error : new Error(String(error))
+        );
         setStatus('error');
         const errorMessage =
           error instanceof Error

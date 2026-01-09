@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.picking.dataaccess.entity.LoadEntity;
 import com.ccbsa.wms.picking.dataaccess.entity.PickingListEntity;
 import com.ccbsa.wms.picking.domain.core.entity.Load;
@@ -36,6 +37,8 @@ public class PickingListEntityMapper {
         entity.setStatus(pickingList.getStatus());
         entity.setReceivedAt(pickingList.getReceivedAt());
         entity.setProcessedAt(pickingList.getProcessedAt());
+        entity.setCompletedAt(pickingList.getCompletedAt());
+        entity.setCompletedByUserId(pickingList.getCompletedByUserId() != null ? pickingList.getCompletedByUserId().getValue() : null);
         entity.setNotes(pickingList.getNotes() != null ? pickingList.getNotes().getValue() : null);
         entity.setPickingListReference(pickingList.getPickingListReference() != null ? pickingList.getPickingListReference().getValue() : null);
 
@@ -72,7 +75,8 @@ public class PickingListEntityMapper {
 
         // Build domain entity using builder
         PickingList.Builder builder = PickingList.builder().id(PickingListId.of(entity.getId())).tenantId(TenantId.of(entity.getTenantId())).loads(loads).status(entity.getStatus())
-                .receivedAt(entity.getReceivedAt()).processedAt(entity.getProcessedAt()).notes(entity.getNotes())
+                .receivedAt(entity.getReceivedAt()).processedAt(entity.getProcessedAt()).completedAt(entity.getCompletedAt())
+                .completedByUserId(entity.getCompletedByUserId() != null ? UserId.of(entity.getCompletedByUserId()) : null).notes(entity.getNotes())
                 .version(entity.getVersion() != null ? entity.getVersion().intValue() : 0);
 
         if (entity.getPickingListReference() != null) {

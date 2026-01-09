@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Box, Button, Card, CardContent, Chip, Typography } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useNotification } from '../hooks/useNotification';
@@ -22,7 +22,7 @@ const getStatusColor = (status: string): 'default' | 'primary' | 'success' | 'er
 };
 
 const getTypeLabel = (type: string): string => {
-  return type.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+  return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };
 
 const formatDateTime = (dateString?: string): string => {
@@ -113,7 +113,14 @@ export const NotificationDetailPage = () => {
     >
       <Card>
         <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              mb: 2,
+            }}
+          >
             <Typography variant="h5" component="h2" sx={{ fontWeight: isUnread ? 600 : 400 }}>
               {notification.title}
             </Typography>

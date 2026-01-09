@@ -15,52 +15,26 @@ public class StockMovementTestDataBuilder {
     /**
      * Builds a request to create a stock movement.
      */
-    public static CreateStockMovementRequest buildCreateStockMovementRequest(
-            String stockItemId,
-            UUID productId,
-            UUID sourceLocationId,
-            UUID destinationLocationId,
-            Integer quantity) {
-        return CreateStockMovementRequest.builder()
-                .stockItemId(stockItemId)
-                .productId(productId)
-                .sourceLocationId(sourceLocationId)
-                .destinationLocationId(destinationLocationId)
-                .quantity(quantity)
-                .movementType("INTER_STORAGE")
-                .reason("RESTOCKING")
-                .build();
+    public static CreateStockMovementRequest buildCreateStockMovementRequest(String stockItemId, UUID productId, UUID sourceLocationId, UUID destinationLocationId,
+                                                                             Integer quantity) {
+        return CreateStockMovementRequest.builder().stockItemId(stockItemId).productId(productId).sourceLocationId(sourceLocationId).destinationLocationId(destinationLocationId)
+                .quantity(quantity).movementType("INTER_STORAGE").reason("RESTOCKING").build();
     }
 
     /**
      * Builds a request to create a stock movement with specific type and reason.
      */
-    public static CreateStockMovementRequest buildCreateStockMovementRequestWithType(
-            String stockItemId,
-            UUID productId,
-            UUID sourceLocationId,
-            UUID destinationLocationId,
-            Integer quantity,
-            String movementType,
-            String reason) {
-        return CreateStockMovementRequest.builder()
-                .stockItemId(stockItemId)
-                .productId(productId)
-                .sourceLocationId(sourceLocationId)
-                .destinationLocationId(destinationLocationId)
-                .quantity(quantity)
-                .movementType(movementType)
-                .reason(reason)
-                .build();
+    public static CreateStockMovementRequest buildCreateStockMovementRequestWithType(String stockItemId, UUID productId, UUID sourceLocationId, UUID destinationLocationId,
+                                                                                     Integer quantity, String movementType, String reason) {
+        return CreateStockMovementRequest.builder().stockItemId(stockItemId).productId(productId).sourceLocationId(sourceLocationId).destinationLocationId(destinationLocationId)
+                .quantity(quantity).movementType(movementType).reason(reason).build();
     }
 
     /**
      * Builds a request to cancel a stock movement.
      */
     public static CancelStockMovementRequest buildCancelStockMovementRequest(String reason) {
-        return CancelStockMovementRequest.builder()
-                .cancellationReason(reason)
-                .build();
+        return CancelStockMovementRequest.builder().cancellationReason(reason).build();
     }
 }
 

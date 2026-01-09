@@ -16,8 +16,11 @@ export const FEFOAssignmentPage = () => {
   const { success, error: showError } = useToast();
 
   // Fetch all unassigned stock items (no classification filter to get all)
-  const { data: stockItemsResponse, isLoading: isLoadingStockItems, error: stockItemsError } =
-    useStockItemsByClassification(null);
+  const {
+    data: stockItemsResponse,
+    isLoading: isLoadingStockItems,
+    error: stockItemsError,
+  } = useStockItemsByClassification(null);
 
   const stockItems: StockItem[] = stockItemsResponse?.data?.stockItems || [];
 
@@ -29,9 +32,7 @@ export const FEFOAssignmentPage = () => {
       );
     } catch (error) {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Failed to assign locations. Please try again.';
+        error instanceof Error ? error.message : 'Failed to assign locations. Please try again.';
       showError(errorMessage);
       throw error;
     }

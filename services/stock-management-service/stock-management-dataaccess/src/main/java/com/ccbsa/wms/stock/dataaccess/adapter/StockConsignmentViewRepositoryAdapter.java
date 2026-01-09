@@ -17,13 +17,13 @@ import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.stock.application.service.port.data.StockConsignmentViewRepository;
 import com.ccbsa.wms.stock.application.service.port.data.dto.StockConsignmentView;
 import com.ccbsa.wms.stock.dataaccess.entity.StockConsignmentViewEntity;
 import com.ccbsa.wms.stock.dataaccess.jpa.StockConsignmentViewJpaRepository;
 import com.ccbsa.wms.stock.dataaccess.mapper.StockConsignmentViewEntityMapper;
-import com.ccbsa.wms.stock.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;

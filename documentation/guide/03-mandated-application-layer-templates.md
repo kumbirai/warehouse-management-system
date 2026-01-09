@@ -17,11 +17,13 @@ Templates for the **Application Layer** module (`{service}-application`). Provid
 **MANDATORY**: Use Lombok for all DTOs and recommended for controllers in this layer.
 
 **Controllers (Command/Query)**:
+
 - Use `@Slf4j` for logging instead of manual logger declaration
 - Use `@RequiredArgsConstructor` for dependency injection (fields marked `final`)
 - Use `@RestController`, `@RequestMapping`, `@Tag` for REST API configuration
 
 **DTOs (Command/Query/Result)**:
+
 - Use `@Getter` / `@Setter` for field accessors
 - Use `@Builder` for complex object construction (optional, simpler than application-service DTOs)
 - Use `@NoArgsConstructor` for Jackson deserialization (required for request DTOs)
@@ -29,10 +31,12 @@ Templates for the **Application Layer** module (`{service}-application`). Provid
 - Use Jakarta Validation annotations (`@NotNull`, `@NotBlank`, etc.)
 
 **Mappers**:
+
 - Use `@Component` for Spring bean registration
 - Use `@RequiredArgsConstructor` if mapper has dependencies
 
 **Example:**
+
 ```java
 // DTO with Lombok
 @Getter
@@ -416,7 +420,7 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
 **Document Control**
 
 - **Version History:**
-  - v1.1 (2025-01) - Added comprehensive Lombok usage guidelines for DTOs, controllers, and mappers
-  - v1.0 (2025-01) - Initial template creation
+    - v1.1 (2025-01) - Added comprehensive Lombok usage guidelines for DTOs, controllers, and mappers
+    - v1.0 (2025-01) - Initial template creation
 - **Review Cycle:** Review when application layer patterns change
 

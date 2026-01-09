@@ -1,5 +1,6 @@
 package com.ccbsa.wms.picking.dataaccess.entity;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.ccbsa.wms.picking.domain.core.valueobject.PickingTaskStatus;
@@ -50,4 +51,19 @@ public class PickingTaskEntity {
 
     @Column(name = "sequence", nullable = false)
     private int sequence;
+
+    @Column(name = "picked_quantity")
+    private Integer pickedQuantity;
+
+    @Column(name = "picked_by_user_id", length = 255)
+    private String pickedByUserId;
+
+    @Column(name = "picked_at")
+    private LocalDateTime pickedAt;
+
+    @Column(name = "is_partial_picking")
+    private Boolean isPartialPicking;
+
+    @Column(name = "partial_reason", length = 500)
+    private String partialReason;
 }

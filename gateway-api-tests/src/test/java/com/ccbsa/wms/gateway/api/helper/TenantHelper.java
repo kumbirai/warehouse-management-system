@@ -46,31 +46,18 @@ public class TenantHelper {
     public String createTenant(AuthenticationResult auth) {
         CreateTenantRequest request = TenantTestDataBuilder.buildCreateTenantRequest();
 
-        EntityExchangeResult<ApiResponse<CreateTenantResponse>> exchangeResult = webTestClient.post()
-                .uri("/api/v1/tenants")
-                .headers(headers -> {
+        EntityExchangeResult<ApiResponse<CreateTenantResponse>> exchangeResult = webTestClient.post().uri("/api/v1/tenants").headers(headers -> {
                     headers.setBearerAuth(auth.getAccessToken());
-                })
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange()
-                .expectStatus().isCreated()
+                }).contentType(MediaType.APPLICATION_JSON).bodyValue(request).exchange().expectStatus().isCreated()
                 .expectBody(new ParameterizedTypeReference<ApiResponse<CreateTenantResponse>>() {
-                })
-                .returnResult();
+                }).returnResult();
 
         ApiResponse<CreateTenantResponse> apiResponse = exchangeResult.getResponseBody();
-        assertThat(apiResponse)
-                .as("API response should not be null")
-                .isNotNull();
-        assertThat(apiResponse.isSuccess())
-                .as("API response should be successful")
-                .isTrue();
+        assertThat(apiResponse).as("API response should not be null").isNotNull();
+        assertThat(apiResponse.isSuccess()).as("API response should be successful").isTrue();
 
         CreateTenantResponse response = apiResponse.getData();
-        assertThat(response)
-                .as("Create tenant response data should not be null")
-                .isNotNull();
+        assertThat(response).as("Create tenant response data should not be null").isNotNull();
 
         return response.getTenantId();
     }
@@ -82,13 +69,9 @@ public class TenantHelper {
      * @param tenantId the tenant ID to activate
      */
     public void activateTenant(AuthenticationResult auth, String tenantId) {
-        webTestClient.put()
-                .uri("/api/v1/tenants/" + tenantId + "/activate")
-                .headers(headers -> {
-                    headers.setBearerAuth(auth.getAccessToken());
-                })
-                .exchange()
-                .expectStatus().isNoContent();
+        webTestClient.put().uri("/api/v1/tenants/" + tenantId + "/activate").headers(headers -> {
+            headers.setBearerAuth(auth.getAccessToken());
+        }).exchange().expectStatus().isNoContent();
     }
 }
 

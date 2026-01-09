@@ -45,7 +45,11 @@ import { PickingListListPage } from './features/picking/pages/PickingListListPag
 import { PickingListCreatePage } from './features/picking/pages/PickingListCreatePage';
 import { PickingListDetailPage } from './features/picking/pages/PickingListDetailPage';
 import { PickingListCsvUploadPage } from './features/picking/pages/PickingListCsvUploadPage';
+import { PickingListCompletionPage } from './features/picking/pages/PickingListCompletionPage';
+import { PickingTaskExecutionPage } from './features/picking/pages/PickingTaskExecutionPage';
 import { LoadDetailPage } from './features/picking/pages/LoadDetailPage';
+import { ExpiringStockDashboard } from './features/stock-management/pages/ExpiringStockDashboard';
+import { RestockRequestsDashboard } from './features/stock-management/pages/RestockRequestsDashboard';
 import {
   LOCATION_MANAGER,
   OPERATOR,
@@ -580,6 +584,7 @@ function App() {
               OPERATOR,
               STOCK_CLERK,
               VIEWER,
+              USER,
             ]}
           >
             <PickingListListPage />
@@ -632,6 +637,7 @@ function App() {
               OPERATOR,
               STOCK_CLERK,
               VIEWER,
+              USER,
             ]}
           >
             <PickingListDetailPage />
@@ -650,9 +656,80 @@ function App() {
               OPERATOR,
               STOCK_CLERK,
               VIEWER,
+              USER,
             ]}
           >
             <LoadDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/picking/picking-lists/:pickingListId/complete"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+            ]}
+          >
+            <PickingListCompletionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/picking/picking-tasks/:taskId/execute"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+            ]}
+          >
+            <PickingTaskExecutionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/expiring"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+              VIEWER,
+            ]}
+          >
+            <ExpiringStockDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock-management/restock-requests"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+              VIEWER,
+            ]}
+          >
+            <RestockRequestsDashboard />
           </ProtectedRoute>
         }
       />

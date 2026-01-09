@@ -29,7 +29,13 @@ public class ListPickingTasksQueryHandler {
 
         int totalPages = (int) Math.ceil((double) totalElements / query.getSize());
 
-        return ListPickingTasksQueryResult.builder().pickingTasks(pickingTasks).totalElements((int) totalElements).page(query.getPage()).size(query.getSize())
-                .totalPages(totalPages).build();
+        // Create defensive copy of picking tasks list for builder
+        return ListPickingTasksQueryResult.builder()
+                .pickingTasks(new java.util.ArrayList<>(pickingTasks))
+                .totalElements((int) totalElements)
+                .page(query.getPage())
+                .size(query.getSize())
+                .totalPages(totalPages)
+                .build();
     }
 }

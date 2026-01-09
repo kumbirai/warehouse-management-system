@@ -1,6 +1,7 @@
 package com.ccbsa.wms.gateway.api;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Assumptions;
@@ -11,8 +12,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
-
-import java.util.List;
 
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
@@ -71,16 +70,11 @@ public abstract class BaseIntegrationTest {
         // Load properties from environment or use defaults
         // Default to HTTP since SSL is disabled by default for local development
         // Set GATEWAY_SSL_ENABLED=true and use https://localhost:8080 for SSL-enabled gateway
-        this.gatewayBaseUrl = System.getProperty("gateway.base.url",
-                System.getenv().getOrDefault("GATEWAY_BASE_URL", "http://localhost:8080"));
-        this.systemAdminUsername = System.getProperty("test.system.admin.username",
-                System.getenv().getOrDefault("TEST_SYSTEM_ADMIN_USERNAME", "sysadmin"));
-        this.systemAdminPassword = System.getProperty("test.system.admin.password",
-                System.getenv().getOrDefault("TEST_SYSTEM_ADMIN_PASSWORD", "Password123@"));
-        this.tenantAdminUsername = System.getProperty("test.tenant.admin.username",
-                System.getenv().getOrDefault("TEST_TENANT_ADMIN_USERNAME", "tenantuser@cm-sol.co.za"));
-        this.tenantAdminPassword = System.getProperty("test.tenant.admin.password",
-                System.getenv().getOrDefault("TEST_TENANT_ADMIN_PASSWORD", "Password123@"));
+        this.gatewayBaseUrl = System.getProperty("gateway.base.url", System.getenv().getOrDefault("GATEWAY_BASE_URL", "http://localhost:8080"));
+        this.systemAdminUsername = System.getProperty("test.system.admin.username", System.getenv().getOrDefault("TEST_SYSTEM_ADMIN_USERNAME", "sysadmin"));
+        this.systemAdminPassword = System.getProperty("test.system.admin.password", System.getenv().getOrDefault("TEST_SYSTEM_ADMIN_PASSWORD", "Password123@"));
+        this.tenantAdminUsername = System.getProperty("test.tenant.admin.username", System.getenv().getOrDefault("TEST_TENANT_ADMIN_USERNAME", "tenantuser@cm-sol.co.za"));
+        this.tenantAdminPassword = System.getProperty("test.tenant.admin.password", System.getenv().getOrDefault("TEST_TENANT_ADMIN_PASSWORD", "Password123@"));
 
         this.webTestClient = WebTestClientConfig.createWebTestClient(gatewayBaseUrl);
         this.objectMapper = new ObjectMapper();
@@ -100,14 +94,7 @@ public abstract class BaseIntegrationTest {
         try {
             // Try to connect to gateway health endpoint with a timeout
             // Use returnResult to get the actual response and check status
-            int statusCode = webTestClient.get()
-                    .uri("/actuator/health")
-                    .exchange()
-                    .expectStatus()
-                    .is2xxSuccessful()
-                    .returnResult(Void.class)
-                    .getStatus()
-                    .value();
+            int statusCode = webTestClient.get().uri("/actuator/health").exchange().expectStatus().is2xxSuccessful().returnResult(Void.class).getStatus().value();
             gatewayAvailable = (statusCode >= 200 && statusCode < 300);
         } catch (org.opentest4j.TestAbortedException e) {
             // Re-throw assumption failures
@@ -120,10 +107,8 @@ public abstract class BaseIntegrationTest {
         }
 
         // Skip all tests if gateway is not available
-        Assumptions.assumeTrue(gatewayAvailable,
-                "Gateway service is not available at " + gatewayBaseUrl +
-                        ". Please start the services before running integration tests. " +
-                        "You can skip integration tests with: mvn verify -DskipITs=true");
+        Assumptions.assumeTrue(gatewayAvailable, "Gateway service is not available at " + gatewayBaseUrl + ". Please start the services before running integration tests. "
+                + "You can skip integration tests with: mvn verify -DskipITs=true");
     }
 
     // ==================== AUTHENTICATION HELPERS ====================
@@ -149,23 +134,17 @@ public abstract class BaseIntegrationTest {
      */
     protected AuthenticationResult loginAsTenantAdmin() {
         // Check if tenant admin credentials are configured
-        if (tenantAdminUsername == null || tenantAdminUsername.isEmpty() ||
-                tenantAdminPassword == null || tenantAdminPassword.isEmpty() ||
-                "tenantadmin".equals(tenantAdminUsername)) {
-            Assumptions.assumeTrue(false,
-                    "Tenant admin credentials not configured. " +
-                            "Set TEST_TENANT_ADMIN_USERNAME and TEST_TENANT_ADMIN_PASSWORD environment variables " +
-                            "to enable tenant admin tests.");
+        if (tenantAdminUsername == null || tenantAdminUsername.isEmpty() || tenantAdminPassword == null || tenantAdminPassword.isEmpty() || "tenantadmin".equals(
+                tenantAdminUsername)) {
+            Assumptions.assumeTrue(false, "Tenant admin credentials not configured. " + "Set TEST_TENANT_ADMIN_USERNAME and TEST_TENANT_ADMIN_PASSWORD environment variables "
+                    + "to enable tenant admin tests.");
         }
 
         try {
             return authHelper.login(tenantAdminUsername, tenantAdminPassword);
         } catch (AssertionError e) {
             // If login fails, skip the test with a helpful message
-            Assumptions.assumeTrue(false,
-                    "Tenant admin login failed. " +
-                            "Please ensure tenant admin user exists and credentials are correct. " +
-                            "Error: " + e.getMessage());
+            Assumptions.assumeTrue(false, "Tenant admin login failed. " + "Please ensure tenant admin user exists and credentials are correct. " + "Error: " + e.getMessage());
             return null; // Never reached, but needed for compilation
         }
     }
@@ -210,26 +189,7 @@ public abstract class BaseIntegrationTest {
      * @return WebTestClient.RequestHeadersSpec for further configuration
      */
     protected WebTestClient.RequestHeadersSpec<?> authenticatedGet(String uri, String accessToken) {
-        return webTestClient.get()
-                .uri(uri)
-                .headers(headers -> RequestHeaderHelper.addAuthHeaders(headers, accessToken));
-    }
-
-    /**
-     * Create authenticated GET request with Bearer token and tenant context.
-     *
-     * @param uri         the request URI
-     * @param accessToken the JWT access token
-     * @param tenantId    the tenant ID for X-Tenant-Id header
-     * @return WebTestClient.RequestHeadersSpec for further configuration
-     */
-    protected WebTestClient.RequestHeadersSpec<?> authenticatedGet(String uri, String accessToken, String tenantId) {
-        return webTestClient.get()
-                .uri(uri)
-                .headers(headers -> {
-                    RequestHeaderHelper.addAuthHeaders(headers, accessToken);
-                    RequestHeaderHelper.addTenantHeader(headers, tenantId);
-                });
+        return webTestClient.get().uri(uri).headers(headers -> RequestHeaderHelper.addAuthHeaders(headers, accessToken));
     }
 
     /**
@@ -241,30 +201,7 @@ public abstract class BaseIntegrationTest {
      * @return WebTestClient.RequestHeadersSpec for further configuration
      */
     protected WebTestClient.RequestHeadersSpec<?> authenticatedPost(String uri, String accessToken, Object requestBody) {
-        return webTestClient.post()
-                .uri(uri)
-                .contentType(MediaType.APPLICATION_JSON)
-                .headers(headers -> RequestHeaderHelper.addAuthHeaders(headers, accessToken))
-                .bodyValue(requestBody);
-    }
-
-    /**
-     * Create authenticated POST request with Bearer token and tenant context.
-     *
-     * @param uri         the request URI
-     * @param accessToken the JWT access token
-     * @param tenantId    the tenant ID for X-Tenant-Id header
-     * @param requestBody the request body
-     * @return WebTestClient.RequestHeadersSpec for further configuration
-     */
-    protected WebTestClient.RequestHeadersSpec<?> authenticatedPost(String uri, String accessToken, String tenantId, Object requestBody) {
-        return webTestClient.post()
-                .uri(uri)
-                .contentType(MediaType.APPLICATION_JSON)
-                .headers(headers -> {
-                    RequestHeaderHelper.addAuthHeaders(headers, accessToken);
-                    RequestHeaderHelper.addTenantHeader(headers, tenantId);
-                })
+        return webTestClient.post().uri(uri).contentType(MediaType.APPLICATION_JSON).headers(headers -> RequestHeaderHelper.addAuthHeaders(headers, accessToken))
                 .bodyValue(requestBody);
     }
 
@@ -277,10 +214,8 @@ public abstract class BaseIntegrationTest {
      * @return WebTestClient.RequestHeadersSpec for further configuration
      */
     protected WebTestClient.RequestHeadersSpec<?> authenticatedPut(String uri, String accessToken, Object requestBody) {
-        WebTestClient.RequestBodySpec spec = webTestClient.put()
-                .uri(uri)
-                .contentType(MediaType.APPLICATION_JSON)
-                .headers(headers -> RequestHeaderHelper.addAuthHeaders(headers, accessToken));
+        WebTestClient.RequestBodySpec spec =
+                webTestClient.put().uri(uri).contentType(MediaType.APPLICATION_JSON).headers(headers -> RequestHeaderHelper.addAuthHeaders(headers, accessToken));
 
         if (requestBody != null) {
             return spec.bodyValue(requestBody);
@@ -298,13 +233,10 @@ public abstract class BaseIntegrationTest {
      * @return WebTestClient.RequestHeadersSpec for further configuration
      */
     protected WebTestClient.RequestHeadersSpec<?> authenticatedPut(String uri, String accessToken, String tenantId, Object requestBody) {
-        WebTestClient.RequestBodySpec spec = webTestClient.put()
-                .uri(uri)
-                .contentType(MediaType.APPLICATION_JSON)
-                .headers(headers -> {
-                    RequestHeaderHelper.addAuthHeaders(headers, accessToken);
-                    RequestHeaderHelper.addTenantHeader(headers, tenantId);
-                });
+        WebTestClient.RequestBodySpec spec = webTestClient.put().uri(uri).contentType(MediaType.APPLICATION_JSON).headers(headers -> {
+            RequestHeaderHelper.addAuthHeaders(headers, accessToken);
+            RequestHeaderHelper.addTenantHeader(headers, tenantId);
+        });
 
         if (requestBody != null) {
             return spec.bodyValue(requestBody);
@@ -320,12 +252,8 @@ public abstract class BaseIntegrationTest {
      * @return WebTestClient.RequestHeadersSpec for further configuration
      */
     protected WebTestClient.RequestHeadersSpec<?> authenticatedDelete(String uri, String accessToken) {
-        return webTestClient.delete()
-                .uri(uri)
-                .headers(headers -> RequestHeaderHelper.addAuthHeaders(headers, accessToken));
+        return webTestClient.delete().uri(uri).headers(headers -> RequestHeaderHelper.addAuthHeaders(headers, accessToken));
     }
-
-    // ==================== API RESPONSE HELPERS ====================
 
     /**
      * Extract data from ApiResponse wrapper.
@@ -336,17 +264,13 @@ public abstract class BaseIntegrationTest {
      * @param apiResponseType the ParameterizedTypeReference for ApiResponse&lt;T&gt;
      * @return the unwrapped data from ApiResponse
      */
-    protected <T> T extractApiResponseData(
-            WebTestClient.ResponseSpec response,
-            ParameterizedTypeReference<ApiResponse<T>> apiResponseType) {
+    protected <T> T extractApiResponseData(WebTestClient.ResponseSpec response, ParameterizedTypeReference<ApiResponse<T>> apiResponseType) {
 
         EntityExchangeResult<ApiResponse<T>> exchangeResult = extractApiResponse(response, apiResponseType);
         ApiResponse<T> apiResponse = exchangeResult.getResponseBody();
 
         T data = apiResponse.getData();
-        assertThat(data)
-                .as("API response data should not be null")
-                .isNotNull();
+        assertThat(data).as("API response data should not be null").isNotNull();
 
         return data;
     }
@@ -361,32 +285,21 @@ public abstract class BaseIntegrationTest {
      * @return EntityExchangeResult containing both ApiResponse and headers
      * @throws AssertionError if the response is null or deserialization fails
      */
-    protected <T> EntityExchangeResult<ApiResponse<T>> extractApiResponse(
-            WebTestClient.ResponseSpec response,
-            ParameterizedTypeReference<ApiResponse<T>> apiResponseType) {
+    protected <T> EntityExchangeResult<ApiResponse<T>> extractApiResponse(WebTestClient.ResponseSpec response, ParameterizedTypeReference<ApiResponse<T>> apiResponseType) {
 
-        EntityExchangeResult<ApiResponse<T>> exchangeResult = response
-                .expectBody(apiResponseType)
-                .returnResult();
+        EntityExchangeResult<ApiResponse<T>> exchangeResult = response.expectBody(apiResponseType).returnResult();
 
         ApiResponse<T> apiResponse = exchangeResult.getResponseBody();
-        assertThat(apiResponse)
-                .as("API response should not be null. Status: %d, Response: %s",
-                        exchangeResult.getStatus().value(),
-                        exchangeResult.getResponseBodyContent() != null
-                                ? new String(exchangeResult.getResponseBodyContent())
-                                : "null")
-                .isNotNull();
+        assertThat(apiResponse).as("API response should not be null. Status: %d, Response: %s", exchangeResult.getStatus().value(),
+                exchangeResult.getResponseBodyContent() != null ? new String(exchangeResult.getResponseBodyContent()) : "null").isNotNull();
 
-        assertThat(apiResponse.isSuccess())
-                .as("API response should be successful. Error: %s",
-                        apiResponse.getError() != null ? apiResponse.getError().getMessage() : "none")
+        assertThat(apiResponse.isSuccess()).as("API response should be successful. Error: %s", apiResponse.getError() != null ? apiResponse.getError().getMessage() : "none")
                 .isTrue();
 
         return exchangeResult;
     }
 
-    // ==================== COOKIE HELPERS ====================
+    // ==================== API RESPONSE HELPERS ====================
 
     /**
      * Extract refresh token cookie from response headers.
@@ -408,13 +321,11 @@ public abstract class BaseIntegrationTest {
         assertThat(cookie.getName()).isEqualTo("refreshToken");
         assertThat(cookie.getValue()).isNotBlank();
         assertThat(cookie.isHttpOnly()).isTrue();
-        assertThat(cookie.getSameSite())
-                .as("SameSite should be Strict (case-insensitive)")
-                .isEqualToIgnoringCase("Strict");
+        assertThat(cookie.getSameSite()).as("SameSite should be Strict (case-insensitive)").isEqualToIgnoringCase("Strict");
         assertThat(cookie.getMaxAge().getSeconds()).isGreaterThan(0);
     }
 
-    // ==================== COMMON ASSERTIONS ====================
+    // ==================== COOKIE HELPERS ====================
 
     /**
      * Assert successful response (2xx status code).
@@ -433,6 +344,8 @@ public abstract class BaseIntegrationTest {
     protected void assertUnauthorized(WebTestClient.ResponseSpec spec) {
         spec.expectStatus().isUnauthorized();
     }
+
+    // ==================== COMMON ASSERTIONS ====================
 
     /**
      * Assert forbidden response (403 status code).
@@ -461,8 +374,6 @@ public abstract class BaseIntegrationTest {
         spec.expectStatus().isNotFound();
     }
 
-    // ==================== FAKER HELPERS ====================
-
     /**
      * Generate random email address.
      *
@@ -480,6 +391,8 @@ public abstract class BaseIntegrationTest {
     protected String randomUsername() {
         return faker.name().username();
     }
+
+    // ==================== FAKER HELPERS ====================
 
     /**
      * Generate random first name.
@@ -517,8 +430,6 @@ public abstract class BaseIntegrationTest {
         return UUID.randomUUID().toString();
     }
 
-    // ==================== CORRELATION ID HELPERS ====================
-
     /**
      * Generate correlation ID for request tracing.
      *
@@ -539,12 +450,123 @@ public abstract class BaseIntegrationTest {
         assertThat(correlationId).isEqualTo(expectedCorrelationId);
     }
 
+    // ==================== CORRELATION ID HELPERS ====================
+
+    /**
+     * Create a product via the API and return the response.
+     *
+     * @param accessToken the JWT access token
+     * @param tenantId    the tenant ID
+     * @return CreateProductResponse containing the created product details
+     */
+    protected CreateProductResponse createProduct(String accessToken, String tenantId) {
+        CreateProductRequest productRequest = ProductTestDataBuilder.buildCreateProductRequest();
+
+        EntityExchangeResult<ApiResponse<CreateProductResponse>> productResult =
+                authenticatedPost("/api/v1/products", accessToken, tenantId, productRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                        }).returnResult();
+
+        ApiResponse<CreateProductResponse> productApiResponse = productResult.getResponseBody();
+        assertThat(productApiResponse).isNotNull();
+        assertThat(productApiResponse.isSuccess()).isTrue();
+        CreateProductResponse product = productApiResponse.getData();
+        assertThat(product).isNotNull();
+        return product;
+    }
+
+    /**
+     * Create authenticated POST request with Bearer token and tenant context.
+     *
+     * @param uri         the request URI
+     * @param accessToken the JWT access token
+     * @param tenantId    the tenant ID for X-Tenant-Id header
+     * @param requestBody the request body
+     * @return WebTestClient.RequestHeadersSpec for further configuration
+     */
+    protected WebTestClient.RequestHeadersSpec<?> authenticatedPost(String uri, String accessToken, String tenantId, Object requestBody) {
+        return webTestClient.post().uri(uri).contentType(MediaType.APPLICATION_JSON).headers(headers -> {
+            RequestHeaderHelper.addAuthHeaders(headers, accessToken);
+            RequestHeaderHelper.addTenantHeader(headers, tenantId);
+        }).bodyValue(requestBody);
+    }
+
+    /**
+     * Helper method to make an authenticated POST request without a body.
+     *
+     * @param uri         the request URI
+     * @param accessToken the JWT access token
+     * @param tenantId    the tenant ID for X-Tenant-Id header
+     * @return WebTestClient.RequestHeadersSpec for further configuration
+     */
+    protected WebTestClient.RequestHeadersSpec<?> authenticatedPostWithoutBody(String uri, String accessToken, String tenantId) {
+        return webTestClient.post().uri(uri).headers(headers -> {
+            RequestHeaderHelper.addAuthHeaders(headers, accessToken);
+            RequestHeaderHelper.addTenantHeader(headers, tenantId);
+        });
+    }
+
     // ==================== STOCK ITEM WAITING HELPERS ====================
+
+    /**
+     * Create a location (warehouse) via the API and return the response.
+     *
+     * @param accessToken the JWT access token
+     * @param tenantId    the tenant ID
+     * @return CreateLocationResponse containing the created location details
+     */
+    protected CreateLocationResponse createLocation(String accessToken, String tenantId) {
+        CreateLocationRequest locationRequest = LocationTestDataBuilder.buildWarehouseRequest();
+
+        EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationResult =
+                authenticatedPost("/api/v1/location-management/locations", accessToken, tenantId, locationRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                        }).returnResult();
+
+        ApiResponse<CreateLocationResponse> locationApiResponse = locationResult.getResponseBody();
+        assertThat(locationApiResponse).isNotNull();
+        assertThat(locationApiResponse.isSuccess()).isTrue();
+        CreateLocationResponse location = locationApiResponse.getData();
+        assertThat(location).isNotNull();
+        return location;
+    }
+
+    // ==================== TEST DATA SETUP HELPERS ====================
+
+    /**
+     * Create a consignment and wait for stock items to be created.
+     * This is a common pattern in tests that need stock items available.
+     *
+     * @param warehouseId    the warehouse ID where consignment is received
+     * @param productCode    the product code for the consignment line item
+     * @param quantity       the quantity to receive
+     * @param expirationDate optional expiration date (null if not needed)
+     * @param productId      the product ID to wait for stock items
+     * @param accessToken    the JWT access token
+     * @param tenantId       the tenant ID
+     * @param maxWaitSeconds maximum seconds to wait for stock items (default: 10)
+     */
+    protected void createConsignmentAndWaitForStock(String warehouseId, String productCode, int quantity, LocalDate expirationDate, String productId, String accessToken,
+                                                    String tenantId, int maxWaitSeconds) {
+
+        CreateConsignmentRequest consignmentRequest;
+        if (expirationDate != null) {
+            consignmentRequest = ConsignmentTestDataBuilder.buildCreateConsignmentRequestV2WithExpiration(warehouseId, productCode, expirationDate);
+        } else {
+            consignmentRequest = ConsignmentTestDataBuilder.buildCreateConsignmentRequestV2(warehouseId, productCode, quantity, null);
+        }
+
+        authenticatedPost("/api/v1/stock-management/consignments", accessToken, tenantId, consignmentRequest).exchange().expectStatus().isCreated();
+
+        // Wait for stock items to be created (async via Kafka events)
+        boolean stockItemsCreated = waitForStockItems(productId, accessToken, tenantId, maxWaitSeconds, 500);
+        assertThat(stockItemsCreated).as("Stock items should be created from consignment within " + maxWaitSeconds + " seconds").isTrue();
+    }
 
     /**
      * Wait for stock items to be created for a product after consignment creation.
      * Polls the stock-levels endpoint until stock items are available or timeout is reached.
-     * 
+     *
      * <p>This is necessary because stock items are created asynchronously via Kafka events
      * after a consignment is created. Tests should use this method instead of Thread.sleep
      * to ensure stock items are available before attempting allocations.</p>
@@ -556,44 +578,34 @@ public abstract class BaseIntegrationTest {
      * @param pollIntervalMs polling interval in milliseconds
      * @return true if stock items were found, false if timeout was reached
      */
-    protected boolean waitForStockItems(String productId, String accessToken, String tenantId, 
-                                       int maxWaitSeconds, long pollIntervalMs) {
+    protected boolean waitForStockItems(String productId, String accessToken, String tenantId, int maxWaitSeconds, long pollIntervalMs) {
         long endTime = System.currentTimeMillis() + (maxWaitSeconds * 1000L);
         int attemptCount = 0;
-        
+
         while (System.currentTimeMillis() < endTime) {
             attemptCount++;
             try {
-                EntityExchangeResult<ApiResponse<List<StockLevelResponse>>> result = authenticatedGet(
-                        "/api/v1/stock-management/stock-levels?productId=" + productId,
-                        accessToken,
-                        tenantId
-                ).exchange()
-                        .expectStatus().isOk()
-                        .expectBody(new ParameterizedTypeReference<ApiResponse<List<StockLevelResponse>>>() {
-                        })
-                        .returnResult();
-                
+                EntityExchangeResult<ApiResponse<List<StockLevelResponse>>> result =
+                        authenticatedGet("/api/v1/stock-management/stock-levels?productId=" + productId, accessToken, tenantId).exchange().expectStatus().isOk()
+                                .expectBody(new ParameterizedTypeReference<ApiResponse<List<StockLevelResponse>>>() {
+                                }).returnResult();
+
                 ApiResponse<List<StockLevelResponse>> apiResponse = result.getResponseBody();
                 if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null) {
                     List<StockLevelResponse> stockLevels = apiResponse.getData();
                     // Check if we have stock items with quantity > 0
-                    boolean hasStock = stockLevels.stream()
-                            .anyMatch(level -> level.getTotalQuantity() != null && level.getTotalQuantity() > 0);
+                    boolean hasStock = stockLevels.stream().anyMatch(level -> level.getTotalQuantity() != null && level.getTotalQuantity() > 0);
                     if (hasStock) {
-                        int totalQuantity = stockLevels.stream()
-                                .filter(level -> level.getTotalQuantity() != null)
-                                .mapToInt(StockLevelResponse::getTotalQuantity)
-                                .sum();
+                        int totalQuantity = stockLevels.stream().filter(level -> level.getTotalQuantity() != null).mapToInt(StockLevelResponse::getTotalQuantity).sum();
                         System.out.println("Stock items found after " + attemptCount + " attempts. Total quantity: " + totalQuantity);
                         return true;
                     }
                 }
-                
+
                 if (attemptCount % 4 == 0) { // Log every 2 seconds (4 attempts * 500ms)
                     System.out.println("Waiting for stock items... attempt " + attemptCount);
                 }
-                
+
                 Thread.sleep(pollIntervalMs);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -609,116 +621,152 @@ public abstract class BaseIntegrationTest {
                 }
             }
         }
-        
+
         System.err.println("Timeout waiting for stock items after " + attemptCount + " attempts (" + maxWaitSeconds + " seconds)");
         return false;
     }
 
-    // ==================== TEST DATA SETUP HELPERS ====================
-
     /**
-     * Create a product via the API and return the response.
-     * 
-     * @param accessToken the JWT access token
-     * @param tenantId the tenant ID
-     * @return CreateProductResponse containing the created product details
+     * Waits for stock items to be assigned to locations via FEFO.
+     * <p>This is necessary because FEFO location assignment happens asynchronously via Kafka events
+     * after stock items are created. Tests should use this method to ensure stock items have been
+     * assigned to locations before attempting operations that require location assignments.</p>
+     *
+     * @param productId      the product ID to check stock for (as String)
+     * @param accessToken    the JWT access token for authentication
+     * @param tenantId       the tenant ID for X-Tenant-Id header
+     * @param maxWaitSeconds maximum number of seconds to wait
+     * @param pollIntervalMs polling interval in milliseconds
+     * @param minQuantity    minimum quantity required at a location (default 1)
+     * @return true if stock items with locations were found, false if timeout was reached
      */
-    protected CreateProductResponse createProduct(String accessToken, String tenantId) {
-        CreateProductRequest productRequest = 
-                ProductTestDataBuilder.buildCreateProductRequest();
-        
-        EntityExchangeResult<ApiResponse<CreateProductResponse>> productResult = authenticatedPost(
-                "/api/v1/products",
-                accessToken,
-                tenantId,
-                productRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                })
-                .returnResult();
+    protected boolean waitForStockItemsAssignedToLocations(String productId, String accessToken, String tenantId, int maxWaitSeconds, long pollIntervalMs, int minQuantity) {
+        long endTime = System.currentTimeMillis() + (maxWaitSeconds * 1000L);
+        int attemptCount = 0;
 
-        ApiResponse<CreateProductResponse> productApiResponse = productResult.getResponseBody();
-        assertThat(productApiResponse).isNotNull();
-        assertThat(productApiResponse.isSuccess()).isTrue();
-        CreateProductResponse product = productApiResponse.getData();
-        assertThat(product).isNotNull();
-        return product;
-    }
+        while (System.currentTimeMillis() < endTime) {
+            attemptCount++;
+            try {
+                EntityExchangeResult<ApiResponse<List<StockLevelResponse>>> result =
+                        authenticatedGet("/api/v1/stock-management/stock-levels?productId=" + productId, accessToken, tenantId).exchange().expectStatus().isOk()
+                                .expectBody(new ParameterizedTypeReference<ApiResponse<List<StockLevelResponse>>>() {
+                                }).returnResult();
 
-    /**
-     * Create a location (warehouse) via the API and return the response.
-     * 
-     * @param accessToken the JWT access token
-     * @param tenantId the tenant ID
-     * @return CreateLocationResponse containing the created location details
-     */
-    protected CreateLocationResponse createLocation(String accessToken, String tenantId) {
-        CreateLocationRequest locationRequest = 
-                LocationTestDataBuilder.buildWarehouseRequest();
-        
-        EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationResult = authenticatedPost(
-                "/api/v1/location-management/locations",
-                accessToken,
-                tenantId,
-                locationRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                })
-                .returnResult();
+                ApiResponse<List<StockLevelResponse>> apiResponse = result.getResponseBody();
+                if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null) {
+                    List<StockLevelResponse> stockLevels = apiResponse.getData();
+                    // Check if we have stock items assigned to locations with available quantity >= minQuantity
+                    boolean hasAssignedStock = stockLevels.stream()
+                            .anyMatch(level -> level.getLocationId() != null
+                                    && level.getAvailableQuantity() != null
+                                    && level.getAvailableQuantity() >= minQuantity);
+                    if (hasAssignedStock) {
+                        int totalAssignedQuantity = stockLevels.stream()
+                                .filter(level -> level.getLocationId() != null && level.getAvailableQuantity() != null)
+                                .mapToInt(StockLevelResponse::getAvailableQuantity)
+                                .sum();
+                        System.out.println("Stock items assigned to locations found after " + attemptCount + " attempts. Total assigned available quantity: " + totalAssignedQuantity);
+                        return true;
+                    }
+                }
 
-        ApiResponse<CreateLocationResponse> locationApiResponse = locationResult.getResponseBody();
-        assertThat(locationApiResponse).isNotNull();
-        assertThat(locationApiResponse.isSuccess()).isTrue();
-        CreateLocationResponse location = locationApiResponse.getData();
-        assertThat(location).isNotNull();
-        return location;
-    }
+                if (attemptCount % 4 == 0) { // Log every 2 seconds (4 attempts * 500ms)
+                    System.out.println("Waiting for stock items to be assigned to locations... attempt " + attemptCount);
+                }
 
-    /**
-     * Create a consignment and wait for stock items to be created.
-     * This is a common pattern in tests that need stock items available.
-     * 
-     * @param warehouseId the warehouse ID where consignment is received
-     * @param productCode the product code for the consignment line item
-     * @param quantity the quantity to receive
-     * @param expirationDate optional expiration date (null if not needed)
-     * @param productId the product ID to wait for stock items
-     * @param accessToken the JWT access token
-     * @param tenantId the tenant ID
-     * @param maxWaitSeconds maximum seconds to wait for stock items (default: 10)
-     */
-    protected void createConsignmentAndWaitForStock(
-            String warehouseId, 
-            String productCode, 
-            int quantity, 
-            LocalDate expirationDate,
-            String productId,
-            String accessToken, 
-            String tenantId,
-            int maxWaitSeconds) {
-        
-        CreateConsignmentRequest consignmentRequest;
-        if (expirationDate != null) {
-            consignmentRequest = ConsignmentTestDataBuilder
-                    .buildCreateConsignmentRequestV2WithExpiration(warehouseId, productCode, expirationDate);
-        } else {
-            consignmentRequest = ConsignmentTestDataBuilder
-                    .buildCreateConsignmentRequestV2(warehouseId, productCode, quantity, null);
+                Thread.sleep(pollIntervalMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            } catch (Exception e) {
+                // Continue polling on error
+                System.err.println("Error polling for assigned stock items (attempt " + attemptCount + "): " + e.getMessage());
+                try {
+                    Thread.sleep(pollIntervalMs);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return false;
+                }
+            }
         }
-        
-        authenticatedPost(
-                "/api/v1/stock-management/consignments",
-                accessToken,
-                tenantId,
-                consignmentRequest
-        ).exchange()
-                .expectStatus().isCreated();
 
-        // Wait for stock items to be created (async via Kafka events)
-        boolean stockItemsCreated = waitForStockItems(productId, accessToken, tenantId, maxWaitSeconds, 500);
-        assertThat(stockItemsCreated).as("Stock items should be created from consignment within " + maxWaitSeconds + " seconds").isTrue();
+        System.err.println("Timeout waiting for stock items to be assigned to locations after " + attemptCount + " attempts (" + maxWaitSeconds + " seconds)");
+        return false;
+    }
+
+    /**
+     * Create authenticated GET request with Bearer token and tenant context.
+     *
+     * @param uri         the request URI
+     * @param accessToken the JWT access token
+     * @param tenantId    the tenant ID for X-Tenant-Id header
+     * @return WebTestClient.RequestHeadersSpec for further configuration
+     */
+    protected WebTestClient.RequestHeadersSpec<?> authenticatedGet(String uri, String accessToken, String tenantId) {
+        return webTestClient.get().uri(uri).headers(headers -> {
+            RequestHeaderHelper.addAuthHeaders(headers, accessToken);
+            RequestHeaderHelper.addTenantHeader(headers, tenantId);
+        });
+    }
+
+    /**
+     * Wait for picking list to reach a specific status.
+     * Polls the picking list endpoint until the desired status is reached or timeout occurs.
+     *
+     * <p>This is necessary because picking list status transitions happen asynchronously via Kafka events.
+     * Tests should use this method to ensure picking lists are in the expected status before proceeding.</p>
+     *
+     * @param pickingListId   the picking list ID to check (as String)
+     * @param expectedStatus  the expected status (e.g., "PLANNED", "COMPLETED")
+     * @param accessToken     the JWT access token for authentication
+     * @param tenantId        the tenant ID for X-Tenant-Id header
+     * @param maxWaitSeconds  maximum number of seconds to wait
+     * @param pollIntervalMs  polling interval in milliseconds
+     * @return true if the picking list reached the expected status, false if timeout was reached
+     */
+    protected boolean waitForPickingListStatus(String pickingListId, String expectedStatus, String accessToken, String tenantId, int maxWaitSeconds, int pollIntervalMs) {
+        long endTime = System.currentTimeMillis() + (maxWaitSeconds * 1000L);
+        int attemptCount = 0;
+
+        while (System.currentTimeMillis() < endTime) {
+            attemptCount++;
+            try {
+                EntityExchangeResult<ApiResponse<com.ccbsa.wms.gateway.api.dto.PickingListQueryResult>> result =
+                        authenticatedGet("/api/v1/picking/picking-lists/" + pickingListId, accessToken, tenantId).exchange().expectStatus().isOk()
+                                .expectBody(new ParameterizedTypeReference<ApiResponse<com.ccbsa.wms.gateway.api.dto.PickingListQueryResult>>() {
+                                }).returnResult();
+
+                ApiResponse<com.ccbsa.wms.gateway.api.dto.PickingListQueryResult> apiResponse = result.getResponseBody();
+                if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null) {
+                    com.ccbsa.wms.gateway.api.dto.PickingListQueryResult pickingList = apiResponse.getData();
+                    if (expectedStatus.equals(pickingList.getStatus())) {
+                        System.out.println("Picking list reached " + expectedStatus + " status after " + attemptCount + " attempts");
+                        return true;
+                    }
+                }
+
+                if (attemptCount % 4 == 0) { // Log every 2 seconds (4 attempts * 500ms)
+                    System.out.println("Waiting for picking list status " + expectedStatus + "... attempt " + attemptCount);
+                }
+
+                Thread.sleep(pollIntervalMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            } catch (Exception e) {
+                // Continue polling on error
+                System.err.println("Error polling for picking list status (attempt " + attemptCount + "): " + e.getMessage());
+                try {
+                    Thread.sleep(pollIntervalMs);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return false;
+                }
+            }
+        }
+
+        System.err.println("Timeout waiting for picking list status " + expectedStatus + " after " + attemptCount + " attempts (" + maxWaitSeconds + " seconds)");
+        return false;
     }
 }
 

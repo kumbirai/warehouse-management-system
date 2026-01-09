@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.Quantity;
+import com.ccbsa.common.domain.valueobject.RestockPriority;
 import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
@@ -18,8 +19,10 @@ import com.ccbsa.wms.stock.application.dto.command.AdjustStockResultDTO;
 import com.ccbsa.wms.stock.application.dto.command.AllocateStockCommandDTO;
 import com.ccbsa.wms.stock.application.dto.command.AllocateStockResultDTO;
 import com.ccbsa.wms.stock.application.dto.command.ReleaseStockAllocationResultDTO;
+import com.ccbsa.wms.stock.application.dto.query.ListRestockRequestsQueryResultDTO;
 import com.ccbsa.wms.stock.application.dto.query.ListStockAdjustmentsQueryResultDTO;
 import com.ccbsa.wms.stock.application.dto.query.ListStockAllocationsQueryResultDTO;
+import com.ccbsa.wms.stock.application.dto.query.RestockRequestQueryDTO;
 import com.ccbsa.wms.stock.application.dto.query.StockAdjustmentQueryDTO;
 import com.ccbsa.wms.stock.application.dto.query.StockAllocationQueryDTO;
 import com.ccbsa.wms.stock.application.dto.query.StockLevelQueryDTO;
@@ -35,11 +38,15 @@ import com.ccbsa.wms.stock.application.service.query.dto.GetStockAllocationQuery
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockAllocationQueryResult;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockLevelsQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockLevelsQueryResult;
+import com.ccbsa.wms.stock.application.service.query.dto.ListRestockRequestsQuery;
+import com.ccbsa.wms.stock.application.service.query.dto.ListRestockRequestsQueryResult;
 import com.ccbsa.wms.stock.application.service.query.dto.ListStockAdjustmentsQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.ListStockAdjustmentsQueryResult;
 import com.ccbsa.wms.stock.application.service.query.dto.ListStockAllocationsQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.ListStockAllocationsQueryResult;
+import com.ccbsa.wms.stock.application.service.query.dto.RestockRequestQueryResult;
 import com.ccbsa.wms.stock.domain.core.valueobject.AllocationStatus;
+import com.ccbsa.wms.stock.domain.core.valueobject.RestockRequestStatus;
 import com.ccbsa.wms.stock.domain.core.valueobject.StockAdjustmentId;
 import com.ccbsa.wms.stock.domain.core.valueobject.StockAllocationId;
 
@@ -421,6 +428,63 @@ public class StockManagementDTOMapper {
         return StockLevelQueryDTO.builder().stockLevelId(stockLevelId).productId(stockLevel.getProductId()).locationId(stockLevel.getLocationId())
                 .totalQuantity(stockLevel.getTotalQuantity()).allocatedQuantity(stockLevel.getAllocatedQuantity()).availableQuantity(stockLevel.getAvailableQuantity())
                 .minimumQuantity(stockLevel.getMinimumQuantity()).maximumQuantity(stockLevel.getMaximumQuantity()).build();
+    }
+
+    // Query mapping methods for RestockRequest
+
+    /**
+     * Converts parameters to ListRestockRequestsQuery.
+     *
+     * @param tenantId  Tenant identifier string
+     * @param status    Optional status string
+     * @param priority  Optional priority string
+     * @param productId Optional product ID string
+     * @param page      Page number
+     * @param size      Page size
+     * @return ListRestockRequestsQuery
+     */
+    public ListRestockRequestsQuery toListRestockRequestsQuery(String tenantId, String status, String priority, String productId, Integer page, Integer size) {
+        var builder = ListRestockRequestsQuery.builder().tenantId(TenantId.of(tenantId)).page(page).size(size);
+
+        if (status != null && !status.isEmpty()) {
+            builder.status(RestockRequestStatus.valueOf(status));
+        }
+        if (priority != null && !priority.isEmpty()) {
+            builder.priority(RestockPriority.valueOf(priority));
+        }
+        if (productId != null && !productId.isEmpty()) {
+            builder.productId(productId);
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * Converts ListRestockRequestsQueryResult to ListRestockRequestsQueryResultDTO.
+     *
+     * @param result Query result
+     * @return ListRestockRequestsQueryResultDTO
+     */
+    public ListRestockRequestsQueryResultDTO toListRestockRequestsQueryResultDTO(ListRestockRequestsQueryResult result) {
+        ListRestockRequestsQueryResultDTO dto = new ListRestockRequestsQueryResultDTO();
+        List<RestockRequestQueryDTO> requestDTOs = result.getRequests().stream().map(this::toRestockRequestQueryDTO).collect(Collectors.toList());
+        dto.setRequests(requestDTOs);
+        dto.setTotalCount(result.getTotalCount());
+        return dto;
+    }
+
+    /**
+     * Converts RestockRequestQueryResult to RestockRequestQueryDTO.
+     *
+     * @param result Query result
+     * @return RestockRequestQueryDTO
+     */
+    private RestockRequestQueryDTO toRestockRequestQueryDTO(RestockRequestQueryResult result) {
+        return RestockRequestQueryDTO.builder().restockRequestId(result.getRestockRequestId().getValueAsString()).productId(result.getProductId().getValueAsString())
+                .locationId(result.getLocationId() != null ? result.getLocationId().getValueAsString() : null).currentQuantity(result.getCurrentQuantity())
+                .minimumQuantity(result.getMinimumQuantity()).maximumQuantity(result.getMaximumQuantity()).requestedQuantity(result.getRequestedQuantity())
+                .priority(result.getPriority().name()).status(result.getStatus().name()).createdAt(result.getCreatedAt()).sentToD365At(result.getSentToD365At())
+                .d365OrderReference(result.getD365OrderReference()).build();
     }
 }
 

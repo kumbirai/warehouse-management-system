@@ -8,6 +8,8 @@ import java.util.Objects;
 
 import com.ccbsa.common.domain.TenantAwareAggregateRoot;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.common.domain.valueobject.UserId;
+import com.ccbsa.wms.picking.domain.core.event.PickingCompletedEvent;
 import com.ccbsa.wms.picking.domain.core.event.PickingListReceivedEvent;
 import com.ccbsa.wms.picking.domain.core.valueobject.Notes;
 import com.ccbsa.wms.picking.domain.core.valueobject.PickingListId;
@@ -29,6 +31,8 @@ public class PickingList extends TenantAwareAggregateRoot<PickingListId> {
     private PickingListStatus status;
     private ZonedDateTime receivedAt;
     private ZonedDateTime processedAt;
+    private ZonedDateTime completedAt;
+    private UserId completedByUserId;
     private Notes notes;
     private PickingListReference pickingListReference;
 
@@ -130,6 +134,32 @@ public class PickingList extends TenantAwareAggregateRoot<PickingListId> {
     }
 
     /**
+     * Business logic method: Completes the picking list.
+     * <p>
+     * Business Rules:
+     * - Can only complete PLANNED picking lists
+     * - All picking tasks must be completed or partially completed (validated at application service layer)
+     * - Sets status to COMPLETED
+     * - Publishes PickingCompletedEvent
+     *
+     * @param completedByUserId User ID who completed the picking list
+     * @throws IllegalStateException if picking list is not in PLANNED status
+     */
+    public void complete(UserId completedByUserId) {
+        if (this.status != PickingListStatus.PLANNED) {
+            throw new IllegalStateException(String.format("Cannot complete picking list in status: %s. Only PLANNED picking lists can be completed.", this.status));
+        }
+
+        this.status = PickingListStatus.COMPLETED;
+        this.completedAt = ZonedDateTime.now();
+        this.completedByUserId = completedByUserId;
+
+        // Publish domain event
+        List<String> loadIds = loads.stream().map(load -> load.getId().getValueAsString()).toList();
+        addDomainEvent(new PickingCompletedEvent(this.getId().getValueAsString(), this.getTenantId(), loadIds, completedByUserId.getValue()));
+    }
+
+    /**
      * Query method: Gets the number of loads in the picking list.
      *
      * @return Load count
@@ -171,6 +201,14 @@ public class PickingList extends TenantAwareAggregateRoot<PickingListId> {
 
     public PickingListReference getPickingListReference() {
         return pickingListReference;
+    }
+
+    public ZonedDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public UserId getCompletedByUserId() {
+        return completedByUserId;
     }
 
     @Override
@@ -256,6 +294,16 @@ public class PickingList extends TenantAwareAggregateRoot<PickingListId> {
 
         public Builder pickingListReference(PickingListReference pickingListReference) {
             pickingList.pickingListReference = pickingListReference;
+            return this;
+        }
+
+        public Builder completedAt(ZonedDateTime completedAt) {
+            pickingList.completedAt = completedAt;
+            return this;
+        }
+
+        public Builder completedByUserId(UserId completedByUserId) {
+            pickingList.completedByUserId = completedByUserId;
             return this;
         }
 

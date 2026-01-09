@@ -8,19 +8,11 @@ import com.ccbsa.wms.gateway.api.dto.CreateTenantRequest;
 public class TenantTestDataBuilder {
 
     public static CreateTenantRequest buildCreateTenantRequest() {
-        return CreateTenantRequest.builder()
-                .tenantId(TestData.tenantId())
-                .name(TestData.tenantName())
-                .emailAddress(TestData.tenantEmail())
-                .build();
+        return CreateTenantRequest.builder().tenantId(TestData.tenantId()).name(TestData.tenantName()).emailAddress(TestData.tenantEmail()).build();
     }
 
     public static CreateTenantRequest buildCreateTenantRequestWithName(String name) {
-        return CreateTenantRequest.builder()
-                .tenantId(TestData.tenantId())
-                .name(name)
-                .emailAddress(TestData.tenantEmail())
-                .build();
+        return CreateTenantRequest.builder().tenantId(TestData.tenantId()).name(name).emailAddress(TestData.tenantEmail()).build();
     }
 }
 

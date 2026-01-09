@@ -194,8 +194,8 @@ public class CreateLocationCommandHandler {
                     String.format("Parent location type is required for hierarchy validation. Parent location ID: %s", parentLocationId.getValueAsString()));
         }
 
-        String normalizedChildType = childType.trim().toUpperCase();
-        String normalizedParentType = parentType.trim().toUpperCase();
+        String normalizedChildType = childType.trim().toUpperCase(java.util.Locale.ROOT);
+        String normalizedParentType = parentType.trim().toUpperCase(java.util.Locale.ROOT);
 
         // Validate hierarchy rules
         switch (normalizedChildType) {

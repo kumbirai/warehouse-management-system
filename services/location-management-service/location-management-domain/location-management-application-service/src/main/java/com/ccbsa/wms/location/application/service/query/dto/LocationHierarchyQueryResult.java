@@ -27,7 +27,7 @@ public final class LocationHierarchyQueryResult {
         if (hierarchyLevel == null || hierarchyLevel.trim().isEmpty()) {
             throw new IllegalArgumentException("HierarchyLevel is required");
         }
-        this.hierarchyLevel = hierarchyLevel.trim().toUpperCase();
+        this.hierarchyLevel = hierarchyLevel.trim().toUpperCase(java.util.Locale.ROOT);
     }
 
     /**

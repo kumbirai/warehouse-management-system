@@ -28,21 +28,16 @@ public class StockItemTestDataBuilder {
     /**
      * Builds a FEFO assignment request with a single stock item.
      */
-    public static AssignLocationsFEFORequest buildFEFOAssignmentRequest(
-            String stockItemId,
-            BigDecimal quantity,
-            LocalDate expirationDate,
-            String classification) {
+    public static AssignLocationsFEFORequest buildFEFOAssignmentRequest(String stockItemId, BigDecimal quantity, LocalDate expirationDate, String classification) {
         AssignLocationsFEFORequest request = new AssignLocationsFEFORequest();
         List<AssignLocationsFEFORequest.StockItemAssignmentRequest> stockItems = new ArrayList<>();
-        
-        AssignLocationsFEFORequest.StockItemAssignmentRequest item = 
-                new AssignLocationsFEFORequest.StockItemAssignmentRequest();
+
+        AssignLocationsFEFORequest.StockItemAssignmentRequest item = new AssignLocationsFEFORequest.StockItemAssignmentRequest();
         item.setStockItemId(stockItemId);
         item.setQuantity(quantity);
         item.setExpirationDate(expirationDate);
         item.setClassification(classification);
-        
+
         stockItems.add(item);
         request.setStockItems(stockItems);
         return request;
@@ -51,21 +46,19 @@ public class StockItemTestDataBuilder {
     /**
      * Builds a FEFO assignment request with multiple stock items.
      */
-    public static AssignLocationsFEFORequest buildFEFOAssignmentRequestWithMultipleItems(
-            List<StockItemAssignmentRequestData> items) {
+    public static AssignLocationsFEFORequest buildFEFOAssignmentRequestWithMultipleItems(List<StockItemAssignmentRequestData> items) {
         AssignLocationsFEFORequest request = new AssignLocationsFEFORequest();
         List<AssignLocationsFEFORequest.StockItemAssignmentRequest> stockItems = new ArrayList<>();
-        
+
         for (StockItemAssignmentRequestData itemData : items) {
-            AssignLocationsFEFORequest.StockItemAssignmentRequest item = 
-                    new AssignLocationsFEFORequest.StockItemAssignmentRequest();
+            AssignLocationsFEFORequest.StockItemAssignmentRequest item = new AssignLocationsFEFORequest.StockItemAssignmentRequest();
             item.setStockItemId(itemData.stockItemId);
             item.setQuantity(itemData.quantity);
             item.setExpirationDate(itemData.expirationDate);
             item.setClassification(itemData.classification);
             stockItems.add(item);
         }
-        
+
         request.setStockItems(stockItems);
         return request;
     }
@@ -79,8 +72,7 @@ public class StockItemTestDataBuilder {
         public LocalDate expirationDate;
         public String classification;
 
-        public StockItemAssignmentRequestData(String stockItemId, BigDecimal quantity, 
-                                             LocalDate expirationDate, String classification) {
+        public StockItemAssignmentRequestData(String stockItemId, BigDecimal quantity, LocalDate expirationDate, String classification) {
             this.stockItemId = stockItemId;
             this.quantity = quantity;
             this.expirationDate = expirationDate;

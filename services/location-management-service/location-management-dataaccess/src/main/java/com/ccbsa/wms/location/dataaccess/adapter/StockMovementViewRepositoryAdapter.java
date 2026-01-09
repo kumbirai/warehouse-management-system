@@ -12,13 +12,13 @@ import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.location.application.service.port.data.StockMovementViewRepository;
 import com.ccbsa.wms.location.application.service.port.data.dto.StockMovementView;
 import com.ccbsa.wms.location.dataaccess.entity.StockMovementViewEntity;
 import com.ccbsa.wms.location.dataaccess.jpa.StockMovementViewJpaRepository;
 import com.ccbsa.wms.location.dataaccess.mapper.StockMovementViewEntityMapper;
-import com.ccbsa.wms.location.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.location.domain.core.valueobject.MovementStatus;
 import com.ccbsa.wms.location.domain.core.valueobject.StockMovementId;

@@ -65,19 +65,12 @@ public class ProductManagementTest extends BaseIntegrationTest {
         CreateProductRequest request = ProductTestDataBuilder.buildCreateProductRequest();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<CreateProductResponse>> exchangeResult = response
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateProductResponse>> exchangeResult =
+                response.expectStatus().isCreated().expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                }).returnResult();
 
         ApiResponse<CreateProductResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
@@ -97,19 +90,12 @@ public class ProductManagementTest extends BaseIntegrationTest {
         CreateProductRequest request = ProductTestDataBuilder.buildCreateProductRequestWithSecondaryBarcodes(3);
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<CreateProductResponse>> exchangeResult = response
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateProductResponse>> exchangeResult =
+                response.expectStatus().isCreated().expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                }).returnResult();
 
         ApiResponse<CreateProductResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
@@ -129,17 +115,10 @@ public class ProductManagementTest extends BaseIntegrationTest {
         CreateProductRequest request2 = ProductTestDataBuilder.buildCreateProductRequestWithBarcode(barcode);
 
         // Create first product
-        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request1)
-                .exchange()
-                .expectStatus().isCreated();
+        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request1).exchange().expectStatus().isCreated();
 
         // Act - Try to create duplicate
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request2
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request2).exchange();
 
         // Assert - Service correctly returns 409 CONFLICT for duplicate barcode
         response.expectStatus().isEqualTo(409);
@@ -149,20 +128,12 @@ public class ProductManagementTest extends BaseIntegrationTest {
     @Order(4)
     public void testCreateProduct_InvalidData() {
         // Arrange
-        CreateProductRequest request = CreateProductRequest.builder()
-                .productCode("") // Empty product code
-                .description("Test Product Description")
-                .primaryBarcode("INVALID") // Invalid barcode
-                .unitOfMeasure("EA")
-                .build();
+        CreateProductRequest request = CreateProductRequest.builder().productCode("") // Empty product code
+                .description("Test Product Description").primaryBarcode("INVALID") // Invalid barcode
+                .unitOfMeasure("EA").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
         response.expectStatus().isBadRequest();
@@ -174,11 +145,7 @@ public class ProductManagementTest extends BaseIntegrationTest {
     @Order(10)
     public void testListProducts_Success() {
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/products?page=0&size=10",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/products?page=0&size=10", tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isOk();
@@ -189,16 +156,10 @@ public class ProductManagementTest extends BaseIntegrationTest {
     public void testGetProductById_Success() {
         // Arrange - Create product first
         CreateProductRequest request = ProductTestDataBuilder.buildCreateProductRequest();
-        EntityExchangeResult<ApiResponse<CreateProductResponse>> createExchangeResult = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateProductResponse>> createExchangeResult =
+                authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                        }).returnResult();
 
         ApiResponse<CreateProductResponse> createApiResponse = createExchangeResult.getResponseBody();
         assertThat(createApiResponse).isNotNull();
@@ -208,18 +169,12 @@ public class ProductManagementTest extends BaseIntegrationTest {
         assertThat(createdProduct).isNotNull();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/products/" + createdProduct.getProductId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/products/" + createdProduct.getProductId(), tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<ProductResponse>> getExchangeResult = response
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<ProductResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<ProductResponse>> getExchangeResult =
+                response.expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<ProductResponse>>() {
+                }).returnResult();
 
         ApiResponse<ProductResponse> getApiResponse = getExchangeResult.getResponseBody();
         assertThat(getApiResponse).isNotNull();
@@ -236,16 +191,10 @@ public class ProductManagementTest extends BaseIntegrationTest {
         // Arrange - Create product first
         String barcode = BarcodeGenerator.generateEAN13();
         CreateProductRequest request = ProductTestDataBuilder.buildCreateProductRequestWithBarcode(barcode);
-        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request)
-                .exchange()
-                .expectStatus().isCreated();
+        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange().expectStatus().isCreated();
 
         // Act - Use validate-barcode endpoint with query parameter
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/products/validate-barcode?barcode=" + barcode,
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/products/validate-barcode?barcode=" + barcode, tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isOk();
@@ -256,33 +205,22 @@ public class ProductManagementTest extends BaseIntegrationTest {
     public void testGetProductByCode_Success() {
         // Arrange - Create product first
         CreateProductRequest request = ProductTestDataBuilder.buildCreateProductRequest();
-        EntityExchangeResult<ApiResponse<CreateProductResponse>> createExchangeResult = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateProductResponse>> createExchangeResult =
+                authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                        }).returnResult();
 
         CreateProductResponse createdProduct = createExchangeResult.getResponseBody().getData();
         assertThat(createdProduct).isNotNull();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/products/by-code/" + createdProduct.getProductCode(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedGet("/api/v1/products/by-code/" + createdProduct.getProductCode(), tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<ProductResponse>> getExchangeResult = response
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<ProductResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<ProductResponse>> getExchangeResult =
+                response.expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<ProductResponse>>() {
+                }).returnResult();
 
         ApiResponse<ProductResponse> getApiResponse = getExchangeResult.getResponseBody();
         assertThat(getApiResponse).isNotNull();
@@ -297,11 +235,7 @@ public class ProductManagementTest extends BaseIntegrationTest {
     @Order(14)
     public void testGetProduct_NotFound() {
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/products/" + UUID.randomUUID(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/products/" + UUID.randomUUID(), tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isNotFound();
@@ -313,17 +247,11 @@ public class ProductManagementTest extends BaseIntegrationTest {
         // Arrange - Create multiple products
         for (int i = 0; i < 15; i++) {
             CreateProductRequest request = ProductTestDataBuilder.buildCreateProductRequest();
-            authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request)
-                    .exchange()
-                    .expectStatus().isCreated();
+            authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange().expectStatus().isCreated();
         }
 
         // Act - Request first page
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/products?page=0&size=10",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/products?page=0&size=10", tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isOk();
@@ -336,19 +264,11 @@ public class ProductManagementTest extends BaseIntegrationTest {
         // Arrange - Create products with specific names
         CreateProductRequest request1 = ProductTestDataBuilder.buildCreateProductRequest();
         CreateProductRequest request2 = ProductTestDataBuilder.buildCreateProductRequest();
-        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request1)
-                .exchange()
-                .expectStatus().isCreated();
-        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request2)
-                .exchange()
-                .expectStatus().isCreated();
+        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request1).exchange().expectStatus().isCreated();
+        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request2).exchange().expectStatus().isCreated();
 
         // Act - Search with search parameter
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/products?search=" + request1.getProductCode(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/products?search=" + request1.getProductCode(), tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isOk();
@@ -359,16 +279,10 @@ public class ProductManagementTest extends BaseIntegrationTest {
     public void testListProducts_WithCategoryFilter() {
         // Arrange - Create products with category
         CreateProductRequest request = ProductTestDataBuilder.buildCreateProductRequest();
-        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request)
-                .exchange()
-                .expectStatus().isCreated();
+        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange().expectStatus().isCreated();
 
         // Act - Filter by category
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/products?category=" + request.getCategory(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/products?category=" + request.getCategory(), tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isOk();
@@ -381,38 +295,35 @@ public class ProductManagementTest extends BaseIntegrationTest {
     public void testUpdateProduct_Success() {
         // Arrange - Create product first
         CreateProductRequest createRequest = ProductTestDataBuilder.buildCreateProductRequest();
-        EntityExchangeResult<ApiResponse<CreateProductResponse>> createExchangeResult = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateProductResponse>> createExchangeResult =
+                authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                        }).returnResult();
 
         CreateProductResponse createdProduct = createExchangeResult.getResponseBody().getData();
         assertThat(createdProduct).isNotNull();
 
         // Prepare update request
-        UpdateProductRequest updateRequest = UpdateProductRequest.builder()
-                .description("Updated Description")
-                .primaryBarcode(createdProduct.getPrimaryBarcode())
-                .unitOfMeasure("EA")
-                .category("BEVERAGES")
-                .build();
+        UpdateProductRequest updateRequest =
+                UpdateProductRequest.builder().description("Updated Description").primaryBarcode(createdProduct.getPrimaryBarcode()).unitOfMeasure("EA").category("BEVERAGES")
+                        .build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/products/" + createdProduct.getProductId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPut("/api/v1/products/" + createdProduct.getProductId(), tenantAdminAuth.getAccessToken(), testTenantId, updateRequest).exchange();
 
         // Assert
         response.expectStatus().isOk();
+    }
+
+    /**
+     * Create authenticated PUT request with Bearer token and tenant context.
+     */
+    protected WebTestClient.RequestHeadersSpec<?> authenticatedPut(String uri, String accessToken, String tenantId, Object requestBody) {
+        return webTestClient.put().uri(uri).contentType(MediaType.APPLICATION_JSON).headers(headers -> {
+            com.ccbsa.wms.gateway.api.util.RequestHeaderHelper.addAuthHeaders(headers, accessToken);
+            com.ccbsa.wms.gateway.api.util.RequestHeaderHelper.addTenantHeader(headers, tenantId);
+        }).bodyValue(requestBody);
     }
 
     @Test
@@ -420,38 +331,21 @@ public class ProductManagementTest extends BaseIntegrationTest {
     public void testUpdateProduct_AddSecondaryBarcodes() {
         // Arrange - Create product without secondary barcodes
         CreateProductRequest createRequest = ProductTestDataBuilder.buildCreateProductRequest();
-        EntityExchangeResult<ApiResponse<CreateProductResponse>> createExchangeResult = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateProductResponse>> createExchangeResult =
+                authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                        }).returnResult();
 
         CreateProductResponse createdProduct = createExchangeResult.getResponseBody().getData();
         assertThat(createdProduct).isNotNull();
 
         // Prepare update request with secondary barcodes
-        UpdateProductRequest updateRequest = UpdateProductRequest.builder()
-                .description(createRequest.getDescription())
-                .primaryBarcode(createdProduct.getPrimaryBarcode())
-                .unitOfMeasure(createRequest.getUnitOfMeasure())
-                .secondaryBarcodes(List.of(
-                        BarcodeGenerator.generateEAN13(),
-                        BarcodeGenerator.generateEAN13()
-                ))
-                .build();
+        UpdateProductRequest updateRequest = UpdateProductRequest.builder().description(createRequest.getDescription()).primaryBarcode(createdProduct.getPrimaryBarcode())
+                .unitOfMeasure(createRequest.getUnitOfMeasure()).secondaryBarcodes(List.of(BarcodeGenerator.generateEAN13(), BarcodeGenerator.generateEAN13())).build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/products/" + createdProduct.getProductId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPut("/api/v1/products/" + createdProduct.getProductId(), tenantAdminAuth.getAccessToken(), testTenantId, updateRequest).exchange();
 
         // Assert
         response.expectStatus().isOk();
@@ -462,35 +356,22 @@ public class ProductManagementTest extends BaseIntegrationTest {
     public void testUpdateProduct_ChangePrimaryBarcode() {
         // Arrange - Create product
         CreateProductRequest createRequest = ProductTestDataBuilder.buildCreateProductRequest();
-        EntityExchangeResult<ApiResponse<CreateProductResponse>> createExchangeResult = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateProductResponse>> createExchangeResult =
+                authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                        }).returnResult();
 
         CreateProductResponse createdProduct = createExchangeResult.getResponseBody().getData();
         assertThat(createdProduct).isNotNull();
 
         // Prepare update request with new primary barcode
         String newBarcode = BarcodeGenerator.generateEAN13();
-        UpdateProductRequest updateRequest = UpdateProductRequest.builder()
-                .description(createRequest.getDescription())
-                .primaryBarcode(newBarcode)
-                .unitOfMeasure(createRequest.getUnitOfMeasure())
-                .build();
+        UpdateProductRequest updateRequest =
+                UpdateProductRequest.builder().description(createRequest.getDescription()).primaryBarcode(newBarcode).unitOfMeasure(createRequest.getUnitOfMeasure()).build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/products/" + createdProduct.getProductId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPut("/api/v1/products/" + createdProduct.getProductId(), tenantAdminAuth.getAccessToken(), testTenantId, updateRequest).exchange();
 
         // Assert
         response.expectStatus().isOk();
@@ -507,37 +388,22 @@ public class ProductManagementTest extends BaseIntegrationTest {
         CreateProductRequest request2 = ProductTestDataBuilder.buildCreateProductRequestWithBarcode(barcode2);
 
         // Create first product (we only need it to exist, don't need the response)
-        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request1)
-                .exchange()
-                .expectStatus().isCreated();
+        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request1).exchange().expectStatus().isCreated();
 
-        EntityExchangeResult<ApiResponse<CreateProductResponse>> create2 = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request2
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateProductResponse>> create2 =
+                authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request2).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                        }).returnResult();
 
         CreateProductResponse product2 = create2.getResponseBody().getData();
 
         // Try to update product2 with product1's barcode (duplicate)
-        UpdateProductRequest updateRequest = UpdateProductRequest.builder()
-                .description(request2.getDescription())
-                .primaryBarcode(barcode1) // Duplicate barcode from product1
-                .unitOfMeasure(request2.getUnitOfMeasure())
-                .build();
+        UpdateProductRequest updateRequest = UpdateProductRequest.builder().description(request2.getDescription()).primaryBarcode(barcode1) // Duplicate barcode from product1
+                .unitOfMeasure(request2.getUnitOfMeasure()).build();
 
         // Act - This should fail
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/products/" + product2.getProductId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPut("/api/v1/products/" + product2.getProductId(), tenantAdminAuth.getAccessToken(), testTenantId, updateRequest).exchange();
 
         // Assert - Should fail with 409 CONFLICT for duplicate barcode
         response.expectStatus().isEqualTo(409);
@@ -547,62 +413,42 @@ public class ProductManagementTest extends BaseIntegrationTest {
     @Order(24)
     public void testUpdateProduct_NotFound() {
         // Arrange
-        UpdateProductRequest updateRequest = UpdateProductRequest.builder()
-                .description("Updated Description")
-                .primaryBarcode(BarcodeGenerator.generateEAN13())
-                .unitOfMeasure("EA")
-                .build();
+        UpdateProductRequest updateRequest =
+                UpdateProductRequest.builder().description("Updated Description").primaryBarcode(BarcodeGenerator.generateEAN13()).unitOfMeasure("EA").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/products/" + UUID.randomUUID(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPut("/api/v1/products/" + UUID.randomUUID(), tenantAdminAuth.getAccessToken(), testTenantId, updateRequest).exchange();
 
         // Assert
         response.expectStatus().isNotFound();
     }
+
+    // ==================== CSV UPLOAD TESTS ====================
 
     @Test
     @Order(25)
     public void testUpdateProduct_InvalidData() {
         // Arrange - Create product first
         CreateProductRequest createRequest = ProductTestDataBuilder.buildCreateProductRequest();
-        EntityExchangeResult<ApiResponse<CreateProductResponse>> createExchangeResult = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                createRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CreateProductResponse>> createExchangeResult =
+                authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, createRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                        }).returnResult();
 
         CreateProductResponse createdProduct = createExchangeResult.getResponseBody().getData();
 
         // Prepare invalid update request
-        UpdateProductRequest updateRequest = UpdateProductRequest.builder()
-                .description("") // Empty description
+        UpdateProductRequest updateRequest = UpdateProductRequest.builder().description("") // Empty description
                 .primaryBarcode("INVALID") // Invalid barcode
-                .unitOfMeasure("EA")
-                .build();
+                .unitOfMeasure("EA").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/products/" + createdProduct.getProductId(),
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                updateRequest
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedPut("/api/v1/products/" + createdProduct.getProductId(), tenantAdminAuth.getAccessToken(), testTenantId, updateRequest).exchange();
 
         // Assert
         response.expectStatus().isBadRequest();
     }
-
-    // ==================== CSV UPLOAD TESTS ====================
 
     @Test
     @Order(30)
@@ -615,22 +461,15 @@ public class ProductManagementTest extends BaseIntegrationTest {
         body.add("file", new FileSystemResource(csvFile));
 
         // Act
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri("/api/v1/products/upload-csv")
-                .headers(headers -> {
-                    RequestHeaderHelper.addAuthHeaders(headers, tenantAdminAuth.getAccessToken());
-                    RequestHeaderHelper.addTenantHeader(headers, testTenantId);
-                })
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(BodyInserters.fromMultipartData(body))
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.post().uri("/api/v1/products/upload-csv").headers(headers -> {
+            RequestHeaderHelper.addAuthHeaders(headers, tenantAdminAuth.getAccessToken());
+            RequestHeaderHelper.addTenantHeader(headers, testTenantId);
+        }).contentType(MediaType.MULTIPART_FORM_DATA).body(BodyInserters.fromMultipartData(body)).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<CsvUploadResponse>> exchangeResult = response
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CsvUploadResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CsvUploadResponse>> exchangeResult =
+                response.expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<CsvUploadResponse>>() {
+                }).returnResult();
 
         ApiResponse<CsvUploadResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
@@ -640,8 +479,9 @@ public class ProductManagementTest extends BaseIntegrationTest {
         assertThat(uploadResponse).isNotNull();
         assertThat(uploadResponse.getTotalRows()).isGreaterThan(0);
         // Success count = created + updated
-        int successCount = (uploadResponse.getCreatedCount() != null ? uploadResponse.getCreatedCount() : 0) +
-                          (uploadResponse.getUpdatedCount() != null ? uploadResponse.getUpdatedCount() : 0);
+        int successCount =
+                (uploadResponse.getCreatedCount() != null ? uploadResponse.getCreatedCount() : 0) + (uploadResponse.getUpdatedCount() != null ? uploadResponse.getUpdatedCount()
+                        : 0);
         assertThat(successCount).isGreaterThan(0);
 
         // Cleanup
@@ -667,27 +507,20 @@ public class ProductManagementTest extends BaseIntegrationTest {
         body.add("file", new FileSystemResource(csvFile));
 
         // Act
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri("/api/v1/products/upload-csv")
-                .headers(headers -> {
-                    RequestHeaderHelper.addAuthHeaders(headers, tenantAdminAuth.getAccessToken());
-                    RequestHeaderHelper.addTenantHeader(headers, testTenantId);
-                })
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(BodyInserters.fromMultipartData(body))
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.post().uri("/api/v1/products/upload-csv").headers(headers -> {
+            RequestHeaderHelper.addAuthHeaders(headers, tenantAdminAuth.getAccessToken());
+            RequestHeaderHelper.addTenantHeader(headers, testTenantId);
+        }).contentType(MediaType.MULTIPART_FORM_DATA).body(BodyInserters.fromMultipartData(body)).exchange();
 
         // Assert
-        EntityExchangeResult<ApiResponse<CsvUploadResponse>> exchangeResult = response
-                .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CsvUploadResponse>>() {
-                })
-                .returnResult();
+        EntityExchangeResult<ApiResponse<CsvUploadResponse>> exchangeResult =
+                response.expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<CsvUploadResponse>>() {
+                }).returnResult();
 
         ApiResponse<CsvUploadResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        
+
         CsvUploadResponse uploadResponse = apiResponse.getData();
         assertThat(uploadResponse).isNotNull();
         // Should have errors for duplicate barcode
@@ -698,6 +531,8 @@ public class ProductManagementTest extends BaseIntegrationTest {
         Files.deleteIfExists(csvFile.toPath());
         Files.deleteIfExists(tempDir);
     }
+
+    // ==================== BARCODE VALIDATION TESTS ====================
 
     @Test
     @Order(32)
@@ -718,15 +553,10 @@ public class ProductManagementTest extends BaseIntegrationTest {
         body.add("file", new FileSystemResource(csvFile));
 
         // Act
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri("/api/v1/products/upload-csv")
-                .headers(headers -> {
-                    RequestHeaderHelper.addAuthHeaders(headers, tenantAdminAuth.getAccessToken());
-                    RequestHeaderHelper.addTenantHeader(headers, testTenantId);
-                })
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(BodyInserters.fromMultipartData(body))
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.post().uri("/api/v1/products/upload-csv").headers(headers -> {
+            RequestHeaderHelper.addAuthHeaders(headers, tenantAdminAuth.getAccessToken());
+            RequestHeaderHelper.addTenantHeader(headers, testTenantId);
+        }).contentType(MediaType.MULTIPART_FORM_DATA).body(BodyInserters.fromMultipartData(body)).exchange();
 
         // Assert - Parser throws exception for invalid rows, causing 400 BAD_REQUEST
         response.expectStatus().isBadRequest();
@@ -736,24 +566,16 @@ public class ProductManagementTest extends BaseIntegrationTest {
         Files.deleteIfExists(tempDir);
     }
 
-    // ==================== BARCODE VALIDATION TESTS ====================
-
     @Test
     @Order(40)
     public void testValidateBarcode_ValidEAN13() {
         // Arrange - Create product with EAN-13 barcode
         String barcode = BarcodeGenerator.generateEAN13();
         CreateProductRequest request = ProductTestDataBuilder.buildCreateProductRequestWithBarcode(barcode);
-        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request)
-                .exchange()
-                .expectStatus().isCreated();
+        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange().expectStatus().isCreated();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/products/validate-barcode?barcode=" + barcode,
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/products/validate-barcode?barcode=" + barcode, tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isOk();
@@ -763,11 +585,8 @@ public class ProductManagementTest extends BaseIntegrationTest {
     @Order(41)
     public void testValidateBarcode_NonExistent() {
         // Act
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/products/validate-barcode?barcode=9999999999999",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response =
+                authenticatedGet("/api/v1/products/validate-barcode?barcode=9999999999999", tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert - Should return 404 or indicate barcode not found
         // Note: Service may return 404 or 200 with empty result
@@ -775,53 +594,38 @@ public class ProductManagementTest extends BaseIntegrationTest {
         assertThat(status).isIn(200, 404);
     }
 
+    // ==================== TENANT ISOLATION TESTS ====================
+
     @Test
     @Order(42)
     public void testCreateProduct_InvalidBarcodeFormat() {
         // Arrange
-        CreateProductRequest request = CreateProductRequest.builder()
-                .productCode("SKU-INVALID-BARCODE")
-                .description("Test Product")
-                .primaryBarcode("12345") // Too short
-                .unitOfMeasure("EA")
-                .build();
+        CreateProductRequest request = CreateProductRequest.builder().productCode("SKU-INVALID-BARCODE").description("Test Product").primaryBarcode("12345") // Too short
+                .unitOfMeasure("EA").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
         response.expectStatus().isBadRequest();
     }
 
-    // ==================== TENANT ISOLATION TESTS ====================
+    // ==================== AUTHORIZATION TESTS ====================
 
     @Test
     @Order(50)
     public void testTenantIsolation_ListProducts() {
         // Arrange - Create products in current tenant
         CreateProductRequest request = ProductTestDataBuilder.buildCreateProductRequest();
-        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request)
-                .exchange()
-                .expectStatus().isCreated();
+        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange().expectStatus().isCreated();
 
         // Act - List products should only return products from current tenant
-        WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId).exchange();
 
         // Assert
         response.expectStatus().isOk();
         // Note: Full tenant isolation verification would require creating products in different tenants
     }
-
-    // ==================== AUTHORIZATION TESTS ====================
 
     @Test
     @Order(60)
@@ -830,23 +634,7 @@ public class ProductManagementTest extends BaseIntegrationTest {
         CreateProductRequest request = ProductTestDataBuilder.buildCreateProductRequest();
 
         // Act
-        WebTestClient.ResponseSpec response = webTestClient.post()
-                .uri("/api/v1/products")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .exchange();
-
-        // Assert
-        response.expectStatus().isUnauthorized();
-    }
-
-    @Test
-    @Order(61)
-    public void testListProducts_WithoutAuthentication() {
-        // Act
-        WebTestClient.ResponseSpec response = webTestClient.get()
-                .uri("/api/v1/products")
-                .exchange();
+        WebTestClient.ResponseSpec response = webTestClient.post().uri("/api/v1/products").contentType(MediaType.APPLICATION_JSON).bodyValue(request).exchange();
 
         // Assert
         response.expectStatus().isUnauthorized();
@@ -855,24 +643,24 @@ public class ProductManagementTest extends BaseIntegrationTest {
     // ==================== EDGE CASE TESTS ====================
 
     @Test
+    @Order(61)
+    public void testListProducts_WithoutAuthentication() {
+        // Act
+        WebTestClient.ResponseSpec response = webTestClient.get().uri("/api/v1/products").exchange();
+
+        // Assert
+        response.expectStatus().isUnauthorized();
+    }
+
+    @Test
     @Order(70)
     public void testCreateProduct_WithSpecialCharacters() {
         // Arrange
-        CreateProductRequest request = CreateProductRequest.builder()
-                .productCode(TestData.productSKU()) // Use unique product code
-                .description("Coca-Cola® 500ml - Special Characters Test")
-                .primaryBarcode(BarcodeGenerator.generateEAN13())
-                .unitOfMeasure("EA")
-                .category("BEVERAGES")
-                .build();
+        CreateProductRequest request = CreateProductRequest.builder().productCode(TestData.productSKU()) // Use unique product code
+                .description("Coca-Cola® 500ml - Special Characters Test").primaryBarcode(BarcodeGenerator.generateEAN13()).unitOfMeasure("EA").category("BEVERAGES").build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
         response.expectStatus().isCreated();
@@ -883,20 +671,12 @@ public class ProductManagementTest extends BaseIntegrationTest {
     public void testCreateProduct_WithVeryLongDescription() {
         // Arrange
         String longDescription = "A".repeat(501); // Exceeds 500 character limit
-        CreateProductRequest request = CreateProductRequest.builder()
-                .productCode("SKU-LONG-DESC")
-                .description(longDescription)
-                .primaryBarcode(BarcodeGenerator.generateEAN13())
-                .unitOfMeasure("EA")
-                .build();
+        CreateProductRequest request =
+                CreateProductRequest.builder().productCode("SKU-LONG-DESC").description(longDescription).primaryBarcode(BarcodeGenerator.generateEAN13()).unitOfMeasure("EA")
+                        .build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert - Should fail validation
         response.expectStatus().isBadRequest();
@@ -906,78 +686,39 @@ public class ProductManagementTest extends BaseIntegrationTest {
     @Order(72)
     public void testCreateProduct_WithEmptySecondaryBarcodes() {
         // Arrange
-        CreateProductRequest request = CreateProductRequest.builder()
-                .productCode(TestData.productSKU()) // Use unique product code
-                .description("Product with empty secondary barcodes")
-                .primaryBarcode(BarcodeGenerator.generateEAN13())
-                .unitOfMeasure("EA")
-                .secondaryBarcodes(List.of())
-                .build();
+        CreateProductRequest request = CreateProductRequest.builder().productCode(TestData.productSKU()) // Use unique product code
+                .description("Product with empty secondary barcodes").primaryBarcode(BarcodeGenerator.generateEAN13()).unitOfMeasure("EA").secondaryBarcodes(List.of()).build();
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 
         // Assert
         response.expectStatus().isCreated();
     }
+
+    // ==================== HELPER METHODS ====================
 
     @Test
     @Order(73)
     public void testCreateProduct_DuplicateSecondaryBarcode() {
         // Arrange
         String secondaryBarcode = BarcodeGenerator.generateEAN13();
-        CreateProductRequest request1 = CreateProductRequest.builder()
-                .productCode(TestData.productSKU()) // Use unique product code
-                .description("Product 1")
-                .primaryBarcode(BarcodeGenerator.generateEAN13())
-                .unitOfMeasure("EA")
-                .secondaryBarcodes(List.of(secondaryBarcode))
-                .build();
+        CreateProductRequest request1 = CreateProductRequest.builder().productCode(TestData.productSKU()) // Use unique product code
+                .description("Product 1").primaryBarcode(BarcodeGenerator.generateEAN13()).unitOfMeasure("EA").secondaryBarcodes(List.of(secondaryBarcode)).build();
 
-        CreateProductRequest request2 = CreateProductRequest.builder()
-                .productCode(TestData.productSKU()) // Use unique product code
-                .description("Product 2")
-                .primaryBarcode(secondaryBarcode) // Using secondary barcode as primary
-                .unitOfMeasure("EA")
-                .build();
+        CreateProductRequest request2 = CreateProductRequest.builder().productCode(TestData.productSKU()) // Use unique product code
+                .description("Product 2").primaryBarcode(secondaryBarcode) // Using secondary barcode as primary
+                .unitOfMeasure("EA").build();
 
         // Create first product
-        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request1)
-                .exchange()
-                .expectStatus().isCreated();
+        authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request1).exchange().expectStatus().isCreated();
 
         // Act - Try to create second product with duplicate barcode
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/products",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                request2
-        ).exchange();
+        WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, request2).exchange();
 
         // Assert - Should fail with duplicate barcode error
         int status = response.returnResult(Void.class).getStatus().value();
         assertThat(status).isGreaterThanOrEqualTo(400);
-    }
-
-    // ==================== HELPER METHODS ====================
-
-    /**
-     * Create authenticated PUT request with Bearer token and tenant context.
-     */
-    protected WebTestClient.RequestHeadersSpec<?> authenticatedPut(String uri, String accessToken, String tenantId, Object requestBody) {
-        return webTestClient.put()
-                .uri(uri)
-                .contentType(MediaType.APPLICATION_JSON)
-                .headers(headers -> {
-                    com.ccbsa.wms.gateway.api.util.RequestHeaderHelper.addAuthHeaders(headers, accessToken);
-                    com.ccbsa.wms.gateway.api.util.RequestHeaderHelper.addTenantHeader(headers, tenantId);
-                })
-                .bodyValue(requestBody);
     }
 }
 

@@ -14,13 +14,13 @@ import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.dataaccess.TenantSchemaResolver;
+import com.ccbsa.wms.common.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.application.service.port.repository.StockAdjustmentRepository;
 import com.ccbsa.wms.stock.dataaccess.entity.StockAdjustmentEntity;
 import com.ccbsa.wms.stock.dataaccess.jpa.StockAdjustmentJpaRepository;
 import com.ccbsa.wms.stock.dataaccess.mapper.StockAdjustmentEntityMapper;
-import com.ccbsa.wms.stock.dataaccess.schema.TenantSchemaProvisioner;
 import com.ccbsa.wms.stock.domain.core.entity.StockAdjustment;
 import com.ccbsa.wms.stock.domain.core.valueobject.StockAdjustmentId;
 

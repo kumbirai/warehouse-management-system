@@ -1,9 +1,11 @@
 package com.ccbsa.wms.picking.application.service.command.dto;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.ccbsa.wms.picking.domain.core.valueobject.PickingListId;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,11 +16,14 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Defensive copies are created in constructor and getters return defensive copies")
 public final class CsvUploadResult {
     private final int totalRows;
     private final int successfulRows;
     private final int errorRows;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Defensive copies are created in constructor")
     private final List<PickingListId> createdPickingListIds;
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Defensive copies are created in constructor")
     private final List<CsvValidationError> errors;
 
     public CsvUploadResult(int totalRows, int successfulRows, int errorRows, List<PickingListId> createdPickingListIds, List<CsvValidationError> errors) {
@@ -27,6 +32,24 @@ public final class CsvUploadResult {
         this.errorRows = errorRows;
         this.createdPickingListIds = createdPickingListIds != null ? List.copyOf(createdPickingListIds) : List.of();
         this.errors = errors != null ? List.copyOf(errors) : List.of();
+    }
+
+    /**
+     * Returns a defensive copy of the created picking list IDs list to prevent external modification.
+     *
+     * @return unmodifiable copy of the created picking list IDs list
+     */
+    public List<PickingListId> getCreatedPickingListIds() {
+        return Collections.unmodifiableList(createdPickingListIds);
+    }
+
+    /**
+     * Returns a defensive copy of the errors list to prevent external modification.
+     *
+     * @return unmodifiable copy of the errors list
+     */
+    public List<CsvValidationError> getErrors() {
+        return Collections.unmodifiableList(errors);
     }
 
     /**

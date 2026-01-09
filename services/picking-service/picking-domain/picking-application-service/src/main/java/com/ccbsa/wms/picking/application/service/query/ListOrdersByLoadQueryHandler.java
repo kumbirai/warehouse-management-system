@@ -35,17 +35,27 @@ public class ListOrdersByLoadQueryHandler {
 
         List<ListOrdersByLoadQueryResult.OrderQueryResult> orderResults = orders.stream().map(order -> toOrderQueryResult(order, query.getTenantId())).collect(Collectors.toList());
 
-        return ListOrdersByLoadQueryResult.builder().loadId(query.getLoadId().getValueAsString()).orders(orderResults).build();
+        // Create defensive copy of orders list for builder
+        return ListOrdersByLoadQueryResult.builder()
+                .loadId(query.getLoadId().getValueAsString())
+                .orders(new java.util.ArrayList<>(orderResults))
+                .build();
     }
 
     private ListOrdersByLoadQueryResult.OrderQueryResult toOrderQueryResult(Order order, TenantId tenantId) {
         List<ListOrdersByLoadQueryResult.OrderLineItemQueryResult> lineItemResults =
                 order.getLineItems().stream().map(lineItem -> toLineItemQueryResult(lineItem, tenantId)).collect(Collectors.toList());
 
-        return ListOrdersByLoadQueryResult.OrderQueryResult.builder().orderId(order.getId().getValueAsString()).orderNumber(order.getOrderNumber().getValue())
-                .customerCode(order.getCustomerInfo().getCustomerCode()).customerName(order.getCustomerInfo().getCustomerName())
-                .priority(order.getPriority() != null ? order.getPriority().name() : null).status(order.getStatus() != null ? order.getStatus().name() : null)
-                .lineItems(lineItemResults).build();
+        // Create defensive copy of line items list for builder
+        return ListOrdersByLoadQueryResult.OrderQueryResult.builder()
+                .orderId(order.getId().getValueAsString())
+                .orderNumber(order.getOrderNumber().getValue())
+                .customerCode(order.getCustomerInfo().getCustomerCode())
+                .customerName(order.getCustomerInfo().getCustomerName())
+                .priority(order.getPriority() != null ? order.getPriority().name() : null)
+                .status(order.getStatus() != null ? order.getStatus().name() : null)
+                .lineItems(new java.util.ArrayList<>(lineItemResults))
+                .build();
     }
 
     private ListOrdersByLoadQueryResult.OrderLineItemQueryResult toLineItemQueryResult(OrderLineItem lineItem, TenantId tenantId) {
