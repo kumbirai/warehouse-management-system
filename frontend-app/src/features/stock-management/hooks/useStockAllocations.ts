@@ -18,4 +18,3 @@ export const useStockAllocations = (filters: StockAllocationFilters = {}) => {
     enabled: !!user?.tenantId,
   });
 };
-

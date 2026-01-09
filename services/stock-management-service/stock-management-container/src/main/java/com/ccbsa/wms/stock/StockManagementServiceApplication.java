@@ -3,7 +3,10 @@ package com.ccbsa.wms.stock;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+
+import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
 
 /**
  * Stock Management Service Application
@@ -15,6 +18,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication(scanBasePackages = {"com.ccbsa.wms.stock", "com.ccbsa.wms.common.security", "com.ccbsa.common.cache"})
 @EnableJpaRepositories(basePackages = "com.ccbsa.wms.stock.dataaccess.jpa")
 @EntityScan(basePackages = "com.ccbsa.wms.stock.dataaccess.entity")
+@Import(MultiTenantDataAccessConfig.class)
 public class StockManagementServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(StockManagementServiceApplication.class, args);

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,6 +63,19 @@ public class AssignLocationsFEFOCommandHandler {
                     command.getStockItems().size());
             // Return empty assignments - stock items remain unassigned
             return AssignLocationsFEResult.builder().assignments(Collections.emptyMap()).build();
+        }
+
+        // 2a. Validate all locations are BIN type (stock allocation must be at lowest hierarchy level)
+        List<Location> nonBinLocations = availableLocations.stream().filter(location -> {
+            if (location.getType() == null || location.getType().getValue() == null) {
+                return true; // Locations without type are considered non-BIN
+            }
+            return !"BIN".equalsIgnoreCase(location.getType().getValue().trim());
+        }).collect(Collectors.toList());
+
+        if (!nonBinLocations.isEmpty()) {
+            String nonBinLocationIds = nonBinLocations.stream().map(loc -> loc.getId().getValueAsString()).collect(Collectors.joining(", "));
+            throw new IllegalArgumentException(String.format("Stock allocation must be at BIN level (lowest hierarchy level). Found non-BIN locations: %s", nonBinLocationIds));
         }
 
         // 3. Assign locations using FEFO algorithm

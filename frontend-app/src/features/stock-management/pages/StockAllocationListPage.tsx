@@ -8,7 +8,7 @@ import { EmptyState, FilterBar, Pagination } from '../../../components/common';
 import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 import { StockAllocationList } from '../components/StockAllocationList';
 import { useStockAllocations } from '../hooks/useStockAllocations';
-import { StockAllocationFilters, AllocationStatus } from '../types/stockManagement';
+import { AllocationStatus, StockAllocationFilters } from '../types/stockManagement';
 
 export const StockAllocationListPage = () => {
   const navigate = useNavigate();
@@ -103,4 +103,3 @@ export const StockAllocationListPage = () => {
     </ListPageLayout>
   );
 };
-

@@ -14,8 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.domain.valueobject.TenantId;
@@ -23,7 +21,6 @@ import com.ccbsa.wms.user.application.service.exception.TenantNotFoundException;
 import com.ccbsa.wms.user.application.service.exception.TenantServiceException;
 import com.ccbsa.wms.user.application.service.port.service.TenantServicePort;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -42,7 +39,7 @@ public class TenantServiceAdapter implements TenantServicePort {
     private final RestTemplate restTemplate;
     private final String tenantServiceUrl;
 
-    public TenantServiceAdapter(RestTemplate restTemplate, @Value("${tenant.service.url:http://tenant-service:8080}") String tenantServiceUrl) {
+    public TenantServiceAdapter(RestTemplate restTemplate, @Value("${tenant.service.url:http://tenant-service}") String tenantServiceUrl) {
         this.restTemplate = restTemplate;
         this.tenantServiceUrl = tenantServiceUrl;
     }
@@ -73,26 +70,12 @@ public class TenantServiceAdapter implements TenantServicePort {
             String url = String.format("%s/api/v1/tenants/%s/status", tenantServiceUrl, tenantId.getValue());
             log.debug("Calling tenant service: {}", url);
 
-            // Forward headers from current request for service-to-service authentication
+            // Service-to-service authentication is handled automatically by ServiceAccountAuthenticationInterceptor
+            // The interceptor will:
+            // 1. Forward Authorization header from HTTP request context (if available)
+            // 2. Use service account token for event-driven calls (no HTTP context)
             HttpHeaders headers = new HttpHeaders();
-            String authorizationHeader = getAuthorizationHeader();
-            if (authorizationHeader != null) {
-                headers.set("Authorization", authorizationHeader);
-                log.debug("Forwarding Authorization header to tenant service");
-            } else {
-                log.warn("No Authorization header found in current request - tenant service call may fail");
-            }
-
-            // Forward X-Tenant-Id header (required by tenant service)
-            String tenantIdHeader = getTenantIdHeader();
-            if (tenantIdHeader != null) {
-                headers.set("X-Tenant-Id", tenantIdHeader);
-                log.debug("Forwarding X-Tenant-Id header to tenant service: {}", tenantIdHeader);
-            } else {
-                // Set the tenantId from the method parameter as fallback
-                headers.set("X-Tenant-Id", tenantId.getValue());
-                log.debug("Setting X-Tenant-Id header from method parameter: {}", tenantId.getValue());
-            }
+            headers.set("X-Tenant-Id", tenantId.getValue());
 
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
@@ -124,44 +107,6 @@ public class TenantServiceAdapter implements TenantServicePort {
         }
     }
 
-    /**
-     * Extracts the Authorization header from the current HTTP request. This allows service-to-service calls to forward the JWT token.
-     *
-     * @return Authorization header value or null if not available
-     */
-    private String getAuthorizationHeader() {
-        try {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                // ServletRequestAttributes.getRequest() is guaranteed to return non-null
-                return request.getHeader("Authorization");
-            }
-        } catch (Exception e) {
-            log.debug("Could not extract Authorization header from request context: {}", e.getMessage());
-        }
-        return null;
-    }
-
-    /**
-     * Extracts the X-Tenant-Id header from the current HTTP request. This allows service-to-service calls to forward the tenant context.
-     *
-     * @return X-Tenant-Id header value or null if not available
-     */
-    private String getTenantIdHeader() {
-        try {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                // ServletRequestAttributes.getRequest() is guaranteed to return non-null
-                return request.getHeader("X-Tenant-Id");
-            }
-        } catch (Exception e) {
-            log.debug("Could not extract X-Tenant-Id header from request context: {}", e.getMessage());
-        }
-        return null;
-    }
-
     @Override
     public Optional<TenantInfo> getTenantInfo(TenantId tenantId) {
         log.debug("Getting tenant info: tenantId={}", tenantId.getValue());
@@ -170,26 +115,9 @@ public class TenantServiceAdapter implements TenantServicePort {
             String url = String.format("%s/api/v1/tenants/%s", tenantServiceUrl, tenantId.getValue());
             log.debug("Calling tenant service: {}", url);
 
-            // Forward headers from current request for service-to-service authentication
+            // Service-to-service authentication is handled automatically by ServiceAccountAuthenticationInterceptor
             HttpHeaders headers = new HttpHeaders();
-            String authorizationHeader = getAuthorizationHeader();
-            if (authorizationHeader != null) {
-                headers.set("Authorization", authorizationHeader);
-                log.debug("Forwarding Authorization header to tenant service");
-            } else {
-                log.warn("No Authorization header found in current request - tenant service call may fail");
-            }
-
-            // Forward X-Tenant-Id header (required by tenant service)
-            String tenantIdHeader = getTenantIdHeader();
-            if (tenantIdHeader != null) {
-                headers.set("X-Tenant-Id", tenantIdHeader);
-                log.debug("Forwarding X-Tenant-Id header to tenant service: {}", tenantIdHeader);
-            } else {
-                // Set the tenantId from the method parameter as fallback
-                headers.set("X-Tenant-Id", tenantId.getValue());
-                log.debug("Setting X-Tenant-Id header from method parameter: {}", tenantId.getValue());
-            }
+            headers.set("X-Tenant-Id", tenantId.getValue());
 
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 

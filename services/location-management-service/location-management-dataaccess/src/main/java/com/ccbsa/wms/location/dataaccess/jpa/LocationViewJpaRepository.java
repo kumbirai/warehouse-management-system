@@ -80,5 +80,33 @@ public interface LocationViewJpaRepository extends JpaRepository<LocationViewEnt
      * @return List of LocationViewEntity
      */
     List<LocationViewEntity> findByTenantIdAndStatusIn(String tenantId, List<LocationStatus> statuses);
+
+    /**
+     * Finds location views by tenant ID and type.
+     *
+     * @param tenantId Tenant ID
+     * @param type     Location type (WAREHOUSE, ZONE, AISLE, RACK, BIN)
+     * @return List of LocationViewEntity
+     */
+    List<LocationViewEntity> findByTenantIdAndType(String tenantId, String type);
+
+    /**
+     * Finds location views by tenant ID and parent location ID.
+     *
+     * @param tenantId         Tenant ID
+     * @param parentLocationId Parent location ID
+     * @return List of LocationViewEntity
+     */
+    List<LocationViewEntity> findByTenantIdAndParentLocationId(String tenantId, UUID parentLocationId);
+
+    /**
+     * Finds location views by tenant ID, type, and parent location ID.
+     *
+     * @param tenantId         Tenant ID
+     * @param type             Location type (WAREHOUSE, ZONE, AISLE, RACK, BIN)
+     * @param parentLocationId Parent location ID
+     * @return List of LocationViewEntity
+     */
+    List<LocationViewEntity> findByTenantIdAndTypeAndParentLocationId(String tenantId, String type, UUID parentLocationId);
 }
 

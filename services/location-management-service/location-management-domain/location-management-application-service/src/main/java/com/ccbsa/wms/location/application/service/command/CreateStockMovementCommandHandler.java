@@ -20,6 +20,7 @@ import com.ccbsa.wms.location.application.service.port.messaging.LocationEventPu
 import com.ccbsa.wms.location.application.service.port.repository.LocationRepository;
 import com.ccbsa.wms.location.application.service.port.repository.StockMovementRepository;
 import com.ccbsa.wms.location.application.service.port.service.StockManagementServicePort;
+import com.ccbsa.wms.location.application.service.query.LocationTypeConstants;
 import com.ccbsa.wms.location.domain.core.entity.Location;
 import com.ccbsa.wms.location.domain.core.entity.StockMovement;
 import com.ccbsa.wms.location.domain.core.exception.LocationNotFoundException;
@@ -56,13 +57,27 @@ public class CreateStockMovementCommandHandler {
         // 1. Validate command
         validateCommand(command);
 
-        // 2. Validate source location exists and is accessible
-        locationRepository.findByIdAndTenantId(command.getSourceLocationId(), command.getTenantId())
+        // 2. Validate source location exists and is BIN type
+        Location sourceLocation = locationRepository.findByIdAndTenantId(command.getSourceLocationId(), command.getTenantId())
                 .orElseThrow(() -> new LocationNotFoundException("Source location not found: " + command.getSourceLocationId().getValueAsString()));
 
-        // 3. Validate destination location exists and has capacity
+        // Validate source location is BIN type (stock movements must be at BIN level)
+        if (sourceLocation.getType() == null || sourceLocation.getType().getValue() == null || !LocationTypeConstants.BIN.equalsIgnoreCase(
+                sourceLocation.getType().getValue().trim())) {
+            throw new IllegalArgumentException(String.format("Source location must be BIN type (lowest hierarchy level). Found location type: %s",
+                    sourceLocation.getType() != null && sourceLocation.getType().getValue() != null ? sourceLocation.getType().getValue() : "null"));
+        }
+
+        // 3. Validate destination location exists, is BIN type, and has capacity
         Location destinationLocation = locationRepository.findByIdAndTenantId(command.getDestinationLocationId(), command.getTenantId())
                 .orElseThrow(() -> new LocationNotFoundException("Destination location not found: " + command.getDestinationLocationId().getValueAsString()));
+
+        // Validate destination location is BIN type (stock movements must be at BIN level)
+        if (destinationLocation.getType() == null || destinationLocation.getType().getValue() == null || !LocationTypeConstants.BIN.equalsIgnoreCase(
+                destinationLocation.getType().getValue().trim())) {
+            throw new IllegalArgumentException(String.format("Destination location must be BIN type (lowest hierarchy level). Found location type: %s",
+                    destinationLocation.getType() != null && destinationLocation.getType().getValue() != null ? destinationLocation.getType().getValue() : "null"));
+        }
 
         BigDecimalQuantity quantity = BigDecimalQuantity.of(convertQuantityToBigDecimal(command.getQuantity()));
         if (!destinationLocation.canAccommodate(quantity)) {
@@ -95,6 +110,21 @@ public class CreateStockMovementCommandHandler {
                 stockItemId = stockItemQueryByProduct.getStockItemId();
             } else {
                 stockItemId = stockItemQuery.getStockItemId();
+
+                // Validate total available quantity at location if provided
+                // This ensures we check total available across all stock items, not just one
+                if (stockItemQuery.getTotalAvailableQuantity() != null) {
+                    int totalAvailable = stockItemQuery.getTotalAvailableQuantity();
+                    int requiredQuantity = command.getQuantity().getValue();
+
+                    if (totalAvailable < requiredQuantity) {
+                        throw new IllegalArgumentException(String.format("Insufficient available stock at source location. Required: %d, Available: %d. "
+                                + "Please ensure sufficient stock is available at the source location before moving.", requiredQuantity, totalAvailable));
+                    }
+
+                    log.debug("Validated total available quantity at location: {} (required: {}, available: {})", command.getSourceLocationId().getValueAsString(),
+                            requiredQuantity, totalAvailable);
+                }
             }
         }
 

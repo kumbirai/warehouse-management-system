@@ -54,8 +54,7 @@ public class AdjustmentReasonDeserializer extends JsonDeserializer<AdjustmentRea
             // Use Jackson's proper exception for better error handling
             throw ctxt.weirdStringException(value, AdjustmentReason.class, String.format(
                     "Cannot deserialize value of type `%s` from String \"%s\": not one of the values accepted for Enum class: [OTHER, STOCK_COUNT, CORRECTION, EXPIRATION, "
-                            + "DAMAGE, THEFT]",
-                    AdjustmentReason.class.getSimpleName(), value));
+                            + "DAMAGE, THEFT]", AdjustmentReason.class.getSimpleName(), value));
         }
     }
 

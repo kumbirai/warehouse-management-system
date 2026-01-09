@@ -95,3 +95,17 @@ export interface StockItemAssignmentRequest {
 export interface AssignLocationsFEFORequest {
   stockItems: StockItemAssignmentRequest[];
 }
+
+export interface LocationHierarchyItem {
+  location: Location;
+  childCount: number;
+  statusSummary: Record<string, number>;
+}
+
+export interface LocationHierarchyQueryResult {
+  parent: Location | null;
+  items: LocationHierarchyItem[];
+  hierarchyLevel: 'WAREHOUSE' | 'ZONE' | 'AISLE' | 'RACK' | 'BIN';
+}
+
+export type LocationHierarchyLevel = 'warehouse' | 'zone' | 'aisle' | 'rack' | 'bin';

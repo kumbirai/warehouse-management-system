@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.application.api.ApiResponseBuilder;
+import com.ccbsa.common.domain.valueobject.Quantity;
+import com.ccbsa.common.domain.valueobject.StockItemId;
+import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.application.dto.command.AssignLocationToStockCommandDTO;
 import com.ccbsa.wms.stock.application.service.command.AssignLocationToStockCommandHandler;
 import com.ccbsa.wms.stock.application.service.command.dto.AssignLocationToStockCommand;
@@ -45,10 +49,8 @@ public class StockItemCommandController {
     public ResponseEntity<ApiResponse<Void>> assignLocationToStock(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable("stockItemId") String stockItemId,
                                                                    @Valid @RequestBody AssignLocationToStockCommandDTO commandDTO) {
         // Map DTO to command
-        AssignLocationToStockCommand command = AssignLocationToStockCommand.builder().tenantId(com.ccbsa.common.domain.valueobject.TenantId.of(tenantId))
-                .stockItemId(com.ccbsa.common.domain.valueobject.StockItemId.of(stockItemId))
-                .locationId(com.ccbsa.wms.location.domain.core.valueobject.LocationId.of(commandDTO.getLocationId()))
-                .quantity(com.ccbsa.common.domain.valueobject.Quantity.of(commandDTO.getQuantity())).build();
+        AssignLocationToStockCommand command = AssignLocationToStockCommand.builder().tenantId(TenantId.of(tenantId)).stockItemId(StockItemId.of(stockItemId))
+                .locationId(LocationId.of(commandDTO.getLocationId())).quantity(Quantity.of(commandDTO.getQuantity())).build();
 
         // Execute command
         assignLocationCommandHandler.handle(command);

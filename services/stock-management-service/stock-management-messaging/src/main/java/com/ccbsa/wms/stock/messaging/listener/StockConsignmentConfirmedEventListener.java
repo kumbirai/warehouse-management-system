@@ -1,6 +1,5 @@
 package com.ccbsa.wms.stock.messaging.listener;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ccbsa.common.application.context.CorrelationContext;
 import com.ccbsa.common.domain.valueobject.ExpirationDate;
 import com.ccbsa.common.domain.valueobject.ProductId;
-import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
@@ -223,7 +221,7 @@ public class StockConsignmentConfirmedEventListener {
                 createStockItemFromLineItem(consignment, lineItem, tenantId);
                 createdCount++;
                 log.info("Created stock item for consignment: consignmentId={}, productCode={}, quantity={}", consignmentId.getValueAsString(),
-                        lineItem.getProductCode().getValue(), lineItem.getQuantity());
+                        lineItem.getProductCode().getValue(), lineItem.getQuantity().getValue());
             } catch (Exception e) {
                 errorCount++;
                 log.error("Failed to create stock item for consignment: consignmentId={}, productCode={}, error={}", consignmentId.getValueAsString(),
@@ -267,13 +265,12 @@ public class StockConsignmentConfirmedEventListener {
         ProductId productId = ProductId.of(productInfo.getProductId());
 
         // Create stock item command
-        var commandBuilder =
-                CreateStockItemCommand.builder().tenantId(tenantId).productId(productId).quantity(Quantity.of(lineItem.getQuantity())).consignmentId(consignment.getId());
+        var commandBuilder = CreateStockItemCommand.builder().tenantId(tenantId).productId(productId).quantity(lineItem.getQuantity()).consignmentId(consignment.getId());
 
         // Set expiration date if present
         if (lineItem.hasExpirationDate()) {
-            LocalDate expirationDate = lineItem.getExpirationDate();
-            commandBuilder.expirationDate(ExpirationDate.of(expirationDate));
+            ExpirationDate expirationDate = lineItem.getExpirationDate();
+            commandBuilder.expirationDate(expirationDate);
         }
 
         CreateStockItemCommand command = commandBuilder.build();

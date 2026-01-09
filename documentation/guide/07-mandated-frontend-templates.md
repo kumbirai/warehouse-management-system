@@ -3291,6 +3291,263 @@ import { useDebounce } from '@/hooks/useDebounce';
 
 ---
 
+## Hierarchical Tree View Pattern
+
+The hierarchical tree view pattern is used for displaying and navigating through hierarchical data structures, such as warehouse locations (warehouse → zone → aisle → rack → bin).
+
+### When to Use Tree Views
+
+Use tree views when:
+- Data has a clear parent-child hierarchy
+- Users need to navigate through multiple levels
+- The hierarchy depth is known and limited (typically 3-5 levels)
+- Each level has a manageable number of items (< 100 per level)
+
+**Examples:**
+- Location hierarchy (warehouse → zone → aisle → rack → bin)
+- Organizational structure
+- Category hierarchies
+- File system navigation
+
+### LocationTreeView Component
+
+The `LocationTreeView` component displays hierarchical location data with drill-down navigation.
+
+**Location:** `src/features/location-management/components/LocationTreeView.tsx`
+
+**Usage:**
+```typescript
+import { LocationTreeView } from '../components/LocationTreeView';
+import { useLocationHierarchy } from '../hooks/useLocationHierarchy';
+
+export const LocationListPage = () => {
+  const { data, isLoading, error, navigationState, navigateToZone, navigateToAisle, navigateToRack, navigateToBin } = useLocationHierarchy();
+
+  return (
+    <ListPageLayout>
+      <LocationTreeView
+        data={data}
+        isLoading={isLoading}
+        error={error}
+        level={navigationState.level}
+        onExpand={(locationId) => {
+          switch (navigationState.level) {
+            case 'warehouse':
+              navigateToZone(locationId);
+              break;
+            case 'zone':
+              navigateToAisle(locationId);
+              break;
+            // ... other levels
+          }
+        }}
+      />
+    </ListPageLayout>
+  );
+};
+```
+
+**Props:**
+- `data?: LocationHierarchyQueryResult` - Hierarchy data from API
+- `isLoading: boolean` - Loading state
+- `error: Error | null` - Error state
+- `level: LocationHierarchyLevel` - Current hierarchy level
+- `onExpand?: (locationId: string) => void` - Handler for expanding/navigating to children
+- `onItemClick?: (locationId: string) => void` - Handler for clicking item (default: navigates to detail page)
+
+### LocationTreeItem Component
+
+Individual tree item component for displaying location information.
+
+**Location:** `src/features/location-management/components/LocationTreeItem.tsx`
+
+**Features:**
+- Expandable/collapsible indicator (if has children)
+- Location name, code, and description
+- Status badge
+- Child count badge
+- Click to navigate to detail page
+- Visual hierarchy with indentation
+
+### Hierarchy Navigation Hook
+
+The `useLocationHierarchy` hook manages hierarchy navigation state and provides navigation functions.
+
+**Location:** `src/features/location-management/hooks/useLocationHierarchy.ts`
+
+**Usage:**
+```typescript
+const {
+  data,
+  isLoading,
+  error,
+  navigationState,
+  navigateToWarehouse,
+  navigateToZone,
+  navigateToAisle,
+  navigateToRack,
+  navigateToBin,
+  navigateUp,
+} = useLocationHierarchy();
+```
+
+**Features:**
+- Manages current hierarchy level state
+- Provides navigation functions for each level
+- Uses React Query for caching (5-minute stale time)
+- Handles loading and error states
+
+### Breadcrumb Patterns for Hierarchies
+
+Breadcrumbs should reflect the current hierarchy path:
+
+```typescript
+const getBreadcrumbItems = () => {
+  const items = [
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Locations', href: Routes.locations },
+  ];
+
+  // Add parent location to breadcrumb if not at root level
+  if (navigationState.level !== 'warehouse' && data?.parent) {
+    const parentName = data.parent.name || data.parent.code || data.parent.barcode;
+    items.push({ label: parentName });
+  }
+
+  return items;
+};
+```
+
+### Mobile Responsiveness for Tree Views
+
+Tree views should be mobile-responsive:
+
+- **Desktop:** Full tree view with expand/collapse
+- **Mobile:** Stack items vertically, full-width touch targets (minimum 44px height)
+- Use `Stack` with `spacing={2}` for mobile layout
+- Hide child count badges on mobile if space is limited
+- Use `useMediaQuery` to adjust layout:
+
+```typescript
+const theme = useTheme();
+const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+// Adjust layout based on screen size
+```
+
+### Hierarchy API Integration
+
+Backend APIs follow RESTful hierarchy pattern:
+
+- `GET /api/v1/location-management/locations/warehouses` - List warehouses
+- `GET /api/v1/location-management/locations/warehouses/{warehouseId}/zones` - List zones
+- `GET /api/v1/location-management/locations/zones/{zoneId}/aisles` - List aisles
+- `GET /api/v1/location-management/locations/aisles/{aisleId}/racks` - List racks
+- `GET /api/v1/location-management/locations/racks/{rackId}/bins` - List bins
+
+Each endpoint returns:
+- `parent: Location | null` - Parent location (null for root level)
+- `items: LocationHierarchyItem[]` - Child locations with metadata
+- `hierarchyLevel: string` - Current hierarchy level
+
+### Best Practices
+
+1. **Caching:** Use React Query with appropriate stale times (5 minutes for hierarchy data)
+2. **Loading States:** Use SkeletonTable during initial load
+3. **Error Handling:** Display user-friendly error messages
+4. **Empty States:** Show EmptyState component when no items found
+5. **Navigation:** Provide "Back" button when not at root level
+6. **Accessibility:** Use proper ARIA labels for expand/collapse actions
+7. **Performance:** Lazy load children only when parent is expanded/clicked
+
+### Example: Complete Hierarchy Page
+
+```typescript
+export const LocationListPage = () => {
+  const navigate = useNavigate();
+  const {
+    data,
+    isLoading,
+    error,
+    navigationState,
+    navigateToZone,
+    navigateToAisle,
+    navigateToRack,
+    navigateToBin,
+    navigateUp,
+  } = useLocationHierarchy();
+
+  const getBreadcrumbItems = () => {
+    const items = [
+      { label: 'Dashboard', href: '/dashboard' },
+      { label: 'Locations', href: Routes.locations },
+    ];
+    if (navigationState.level !== 'warehouse' && data?.parent) {
+      const parentName = data.parent.name || data.parent.code || data.parent.barcode;
+      items.push({ label: parentName });
+    }
+    return items;
+  };
+
+  const getPageTitle = () => {
+    switch (navigationState.level) {
+      case 'warehouse': return 'Warehouses';
+      case 'zone': return 'Zones';
+      case 'aisle': return 'Aisles';
+      case 'rack': return 'Racks';
+      case 'bin': return 'Bins';
+      default: return 'Locations';
+    }
+  };
+
+  return (
+    <ListPageLayout
+      breadcrumbs={getBreadcrumbItems()}
+      title={getPageTitle()}
+      actions={
+        <Stack direction="row" spacing={1}>
+          {navigationState.level !== 'warehouse' && (
+            <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={navigateUp}>
+              Back
+            </Button>
+          )}
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(Routes.locationCreate)}>
+            Create Location
+          </Button>
+        </Stack>
+      }
+      isLoading={isLoading}
+      error={error?.message || null}
+    >
+      <LocationTreeView
+        data={data}
+        isLoading={isLoading}
+        error={error}
+        level={navigationState.level}
+        onExpand={(locationId) => {
+          switch (navigationState.level) {
+            case 'warehouse':
+              navigateToZone(locationId);
+              break;
+            case 'zone':
+              navigateToAisle(locationId);
+              break;
+            case 'aisle':
+              navigateToRack(locationId);
+              break;
+            case 'rack':
+              navigateToBin(locationId);
+              break;
+          }
+        }}
+      />
+    </ListPageLayout>
+  );
+};
+```
+
+---
+
 ## New Components and Patterns (Sprint 05)
 
 The following components and patterns were added during Sprint 05 - Frontend Production Hardening:

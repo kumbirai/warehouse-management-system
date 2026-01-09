@@ -9,6 +9,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.ccbsa.common.domain.DomainEvent;
+import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationCommand;
 import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationResult;
 import com.ccbsa.wms.location.application.service.port.messaging.LocationEventPublisher;
@@ -110,7 +111,7 @@ public class UpdateLocationCommandHandler {
      * @param locationId Current location ID (to exclude from uniqueness check)
      * @throws BarcodeAlreadyExistsException if barcode already exists for another location
      */
-    private void validateBarcodeUniqueness(LocationBarcode barcode, com.ccbsa.common.domain.valueobject.TenantId tenantId, LocationId locationId) {
+    private void validateBarcodeUniqueness(LocationBarcode barcode, TenantId tenantId, LocationId locationId) {
         // Check if barcode exists for another location
         repository.findByBarcodeAndTenantId(barcode, tenantId).ifPresent(existingLocation -> {
             if (!existingLocation.getId().equals(locationId)) {

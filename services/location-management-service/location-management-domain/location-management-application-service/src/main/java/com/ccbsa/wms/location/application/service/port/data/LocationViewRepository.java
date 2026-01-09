@@ -63,5 +63,58 @@ public interface LocationViewRepository {
      * @return List of LocationView
      */
     List<LocationView> findAvailableLocations(TenantId tenantId);
+
+    /**
+     * Finds all warehouses (locations with type WAREHOUSE) for a tenant.
+     *
+     * @param tenantId Tenant ID
+     * @return List of LocationView
+     */
+    List<LocationView> findWarehousesByTenantId(TenantId tenantId);
+
+    /**
+     * Finds all zones (locations with type ZONE) under a warehouse.
+     *
+     * @param tenantId    Tenant ID
+     * @param warehouseId Warehouse location ID
+     * @return List of LocationView
+     */
+    List<LocationView> findZonesByWarehouseId(TenantId tenantId, LocationId warehouseId);
+
+    /**
+     * Finds all aisles (locations with type AISLE) under a zone.
+     *
+     * @param tenantId Tenant ID
+     * @param zoneId   Zone location ID
+     * @return List of LocationView
+     */
+    List<LocationView> findAislesByZoneId(TenantId tenantId, LocationId zoneId);
+
+    /**
+     * Finds all racks (locations with type RACK) under an aisle.
+     *
+     * @param tenantId Tenant ID
+     * @param aisleId  Aisle location ID
+     * @return List of LocationView
+     */
+    List<LocationView> findRacksByAisleId(TenantId tenantId, LocationId aisleId);
+
+    /**
+     * Finds all bins (locations with type BIN) under a rack.
+     *
+     * @param tenantId Tenant ID
+     * @param rackId   Rack location ID
+     * @return List of LocationView
+     */
+    List<LocationView> findBinsByRackId(TenantId tenantId, LocationId rackId);
+
+    /**
+     * Finds all locations of a specific type for a tenant.
+     *
+     * @param tenantId Tenant ID
+     * @param type     Location type (WAREHOUSE, ZONE, AISLE, RACK, BIN)
+     * @return List of LocationView
+     */
+    List<LocationView> findByTenantIdAndType(TenantId tenantId, String type);
 }
 

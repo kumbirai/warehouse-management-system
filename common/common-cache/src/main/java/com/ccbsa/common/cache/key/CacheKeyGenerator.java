@@ -34,13 +34,32 @@ public final class CacheKeyGenerator {
      * Generates cache key for entity lookup. Format: tenant:{tenantId}:{namespace}:{entityId}
      */
     public static String forEntity(TenantId tenantId, String namespace, UUID entityId) {
-        return String.join(KEY_SEPARATOR, TENANT_PREFIX, tenantId.getValue(), namespace, entityId.toString());
+        if (tenantId == null) {
+            throw new IllegalArgumentException("TenantId cannot be null");
+        }
+        String tenantIdValue = tenantId.getValue();
+        if (tenantIdValue == null || tenantIdValue.trim().isEmpty()) {
+            throw new IllegalArgumentException("TenantId value cannot be null or empty");
+        }
+        if (namespace == null || namespace.trim().isEmpty()) {
+            throw new IllegalArgumentException("Namespace cannot be null or empty");
+        }
+        if (entityId == null) {
+            throw new IllegalArgumentException("EntityId cannot be null");
+        }
+        return String.join(KEY_SEPARATOR, TENANT_PREFIX, tenantIdValue, namespace, entityId.toString());
     }
 
     /**
      * Generates cache key for entity lookup using current tenant context.
      */
     public static String forEntity(String namespace, UUID entityId) {
+        if (namespace == null || namespace.trim().isEmpty()) {
+            throw new IllegalArgumentException("Namespace cannot be null or empty");
+        }
+        if (entityId == null) {
+            throw new IllegalArgumentException("EntityId cannot be null");
+        }
         String tenantId = TenantContext.getTenantId() != null ? TenantContext.getTenantId().getValue() : "unknown";
         return String.join(KEY_SEPARATOR, TENANT_PREFIX, tenantId, namespace, entityId.toString());
     }

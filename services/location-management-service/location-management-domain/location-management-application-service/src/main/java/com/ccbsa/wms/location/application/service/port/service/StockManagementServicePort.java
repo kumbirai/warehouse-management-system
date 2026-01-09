@@ -54,19 +54,25 @@ public interface StockManagementServicePort {
         private final boolean found;
         private final String stockItemId;
         private final String errorMessage;
+        private final Integer totalAvailableQuantity; // Total available quantity at location (for validation)
 
-        private StockItemQueryResult(boolean found, String stockItemId, String errorMessage) {
+        private StockItemQueryResult(boolean found, String stockItemId, String errorMessage, Integer totalAvailableQuantity) {
             this.found = found;
             this.stockItemId = stockItemId;
             this.errorMessage = errorMessage;
+            this.totalAvailableQuantity = totalAvailableQuantity;
         }
 
         public static StockItemQueryResult found(String stockItemId) {
-            return new StockItemQueryResult(true, stockItemId, null);
+            return new StockItemQueryResult(true, stockItemId, null, null);
+        }
+
+        public static StockItemQueryResult found(String stockItemId, Integer totalAvailableQuantity) {
+            return new StockItemQueryResult(true, stockItemId, null, totalAvailableQuantity);
         }
 
         public static StockItemQueryResult notFound(String errorMessage) {
-            return new StockItemQueryResult(false, null, errorMessage);
+            return new StockItemQueryResult(false, null, errorMessage, null);
         }
 
         public boolean isFound() {
@@ -79,6 +85,10 @@ public interface StockManagementServicePort {
 
         public String getErrorMessage() {
             return errorMessage;
+        }
+
+        public Integer getTotalAvailableQuantity() {
+            return totalAvailableQuantity;
         }
     }
 

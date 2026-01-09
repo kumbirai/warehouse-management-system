@@ -62,12 +62,11 @@ public class GetStockItemsByProductAndLocationQueryHandler {
         final LocationServicePort.LocationInfo locationInfoValue = locationInfo.orElse(null);
 
         return stockItemViews.stream().map(stockItemView -> GetStockItemQueryResult.builder().stockItemId(stockItemView.getStockItemId()).productId(stockItemView.getProductId())
-                        .productCode(productInfoValue != null ? productInfoValue.getProductCode() : null)
-                        .productDescription(productInfoValue != null ? productInfoValue.getDescription() : null).locationId(stockItemView.getLocationId())
-                        .locationCode(locationInfoValue != null ? locationInfoValue.code() : null).locationName(locationInfoValue != null ? locationInfoValue.getDisplayName() :
-                                null)
-                        .quantity(stockItemView.getQuantity()).expirationDate(stockItemView.getExpirationDate()).classification(stockItemView.getClassification())
-                        .consignmentId(stockItemView.getConsignmentId()).createdAt(stockItemView.getCreatedAt()).lastModifiedAt(stockItemView.getLastModifiedAt()).build())
-                .collect(Collectors.toList());
+                .productCode(productInfoValue != null ? productInfoValue.getProductCode() : null)
+                .productDescription(productInfoValue != null ? productInfoValue.getDescription() : null).locationId(stockItemView.getLocationId())
+                .locationCode(locationInfoValue != null ? locationInfoValue.code() : null).locationName(locationInfoValue != null ? locationInfoValue.getDisplayName() : null)
+                .locationHierarchy(locationInfoValue != null ? locationInfoValue.getHierarchy() : null).quantity(stockItemView.getQuantity())
+                .expirationDate(stockItemView.getExpirationDate()).classification(stockItemView.getClassification()).consignmentId(stockItemView.getConsignmentId())
+                .createdAt(stockItemView.getCreatedAt()).lastModifiedAt(stockItemView.getLastModifiedAt()).build()).collect(Collectors.toList());
     }
 }

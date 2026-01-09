@@ -103,17 +103,17 @@ public class StockItem extends TenantAwareAggregateRoot<StockItemId> {
         if (daysUntilExpiry < 0) {
             newClassification = StockClassification.EXPIRED;
             if (this.classification != StockClassification.EXPIRED) {
-                addDomainEvent(new StockExpiredEvent(this.getId(), this.productId, expiryDate));
+                addDomainEvent(new StockExpiredEvent(this.getId(), this.productId, expirationDate));
             }
         } else if (daysUntilExpiry <= 7) {
             newClassification = StockClassification.CRITICAL;
             if (this.classification != StockClassification.CRITICAL) {
-                addDomainEvent(new StockExpiringAlertEvent(this.getId(), this.productId, expiryDate, 7));
+                addDomainEvent(new StockExpiringAlertEvent(this.getId(), this.productId, expirationDate, 7));
             }
         } else if (daysUntilExpiry <= 30) {
             newClassification = StockClassification.NEAR_EXPIRY;
             if (this.classification != StockClassification.NEAR_EXPIRY) {
-                addDomainEvent(new StockExpiringAlertEvent(this.getId(), this.productId, expiryDate, 30));
+                addDomainEvent(new StockExpiringAlertEvent(this.getId(), this.productId, expirationDate, 30));
             }
         } else if (daysUntilExpiry > 365) {
             newClassification = StockClassification.EXTENDED_SHELF_LIFE;
@@ -127,8 +127,8 @@ public class StockItem extends TenantAwareAggregateRoot<StockItemId> {
             this.lastModifiedAt = LocalDateTime.now();
 
             // Publish classification change event
-            addDomainEvent(
-                    new StockClassifiedEvent(this.getId().getValueAsString(), this.productId, this.getTenantId(), oldClassification, newClassification, expiryDate, this.quantity));
+            addDomainEvent(new StockClassifiedEvent(this.getId().getValueAsString(), this.productId, this.getTenantId(), oldClassification, newClassification, expirationDate,
+                    this.quantity));
         }
     }
 

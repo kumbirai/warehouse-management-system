@@ -137,5 +137,55 @@ public class LocationViewRepositoryAdapter implements LocationViewRepository {
             return entities.stream().map(mapper::toView).collect(Collectors.toList());
         });
     }
+
+    @Override
+    public List<LocationView> findWarehousesByTenantId(TenantId tenantId) {
+        return executeInTenantSchema(tenantId, () -> {
+            // Using string literal here is acceptable as this is infrastructure layer passing through to JPA
+            // The constants are used in the application service layer where business logic resides
+            List<LocationViewEntity> entities = jpaRepository.findByTenantIdAndType(tenantId.getValue(), "WAREHOUSE");
+            return entities.stream().map(mapper::toView).collect(Collectors.toList());
+        });
+    }
+
+    @Override
+    public List<LocationView> findZonesByWarehouseId(TenantId tenantId, LocationId warehouseId) {
+        return executeInTenantSchema(tenantId, () -> {
+            List<LocationViewEntity> entities = jpaRepository.findByTenantIdAndTypeAndParentLocationId(tenantId.getValue(), "ZONE", warehouseId.getValue());
+            return entities.stream().map(mapper::toView).collect(Collectors.toList());
+        });
+    }
+
+    @Override
+    public List<LocationView> findAislesByZoneId(TenantId tenantId, LocationId zoneId) {
+        return executeInTenantSchema(tenantId, () -> {
+            List<LocationViewEntity> entities = jpaRepository.findByTenantIdAndTypeAndParentLocationId(tenantId.getValue(), "AISLE", zoneId.getValue());
+            return entities.stream().map(mapper::toView).collect(Collectors.toList());
+        });
+    }
+
+    @Override
+    public List<LocationView> findRacksByAisleId(TenantId tenantId, LocationId aisleId) {
+        return executeInTenantSchema(tenantId, () -> {
+            List<LocationViewEntity> entities = jpaRepository.findByTenantIdAndTypeAndParentLocationId(tenantId.getValue(), "RACK", aisleId.getValue());
+            return entities.stream().map(mapper::toView).collect(Collectors.toList());
+        });
+    }
+
+    @Override
+    public List<LocationView> findBinsByRackId(TenantId tenantId, LocationId rackId) {
+        return executeInTenantSchema(tenantId, () -> {
+            List<LocationViewEntity> entities = jpaRepository.findByTenantIdAndTypeAndParentLocationId(tenantId.getValue(), "BIN", rackId.getValue());
+            return entities.stream().map(mapper::toView).collect(Collectors.toList());
+        });
+    }
+
+    @Override
+    public List<LocationView> findByTenantIdAndType(TenantId tenantId, String type) {
+        return executeInTenantSchema(tenantId, () -> {
+            List<LocationViewEntity> entities = jpaRepository.findByTenantIdAndType(tenantId.getValue(), type);
+            return entities.stream().map(mapper::toView).collect(Collectors.toList());
+        });
+    }
 }
 

@@ -4,9 +4,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import com.ccbsa.common.keycloak.config.KeycloakConfig;
+import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
 
 /**
  * User Service Application
@@ -21,6 +23,7 @@ import com.ccbsa.common.keycloak.config.KeycloakConfig;
 @EnableConfigurationProperties(KeycloakConfig.class)
 @EnableJpaRepositories(basePackages = "com.ccbsa.wms.user.dataaccess.jpa")
 @EntityScan(basePackages = "com.ccbsa.wms.user.dataaccess.entity")
+@Import(MultiTenantDataAccessConfig.class)
 public class UserServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(UserServiceApplication.class, args);

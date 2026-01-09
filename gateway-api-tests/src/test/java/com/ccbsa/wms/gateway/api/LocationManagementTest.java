@@ -1,5 +1,9 @@
 package com.ccbsa.wms.gateway.api;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -9,6 +13,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
@@ -19,8 +24,12 @@ import com.ccbsa.wms.gateway.api.dto.CreateLocationResponse;
 import com.ccbsa.wms.gateway.api.dto.ListLocationsResponse;
 import com.ccbsa.wms.gateway.api.dto.LocationResponse;
 import com.ccbsa.wms.gateway.api.dto.UpdateLocationRequest;
+import com.ccbsa.wms.gateway.api.dto.AssignLocationsFEFORequest;
+import com.ccbsa.wms.gateway.api.dto.LocationAvailabilityResponse;
 import com.ccbsa.wms.gateway.api.dto.UpdateLocationStatusRequest;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
+import com.ccbsa.wms.gateway.api.fixture.StockItemTestDataBuilder;
+import com.ccbsa.wms.gateway.api.util.RequestHeaderHelper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,6 +48,20 @@ public class LocationManagementTest extends BaseIntegrationTest {
 
     private static AuthenticationResult tenantAdminAuth;
     private static String testTenantId;
+    private static CreateLocationResponse sharedWarehouse;
+    
+    // Warehouse hierarchy test data
+    private static CreateLocationResponse warehouse1;
+    private static CreateLocationResponse warehouse2;
+    private static List<CreateLocationResponse> warehouse1Zones;
+    private static List<CreateLocationResponse> warehouse2Zones;
+    private static List<CreateLocationResponse> warehouse1Aisles;
+    private static List<CreateLocationResponse> warehouse2Aisles;
+    private static List<CreateLocationResponse> warehouse1Racks;
+    private static List<CreateLocationResponse> warehouse2Racks;
+    private static List<CreateLocationResponse> warehouse1Bins;
+    private static List<CreateLocationResponse> warehouse2Bins;
+    private static boolean hierarchiesInitialized = false;
 
     @BeforeAll
     public static void setupTestData() {
@@ -55,6 +78,109 @@ public class LocationManagementTest extends BaseIntegrationTest {
 
         // Note: Service availability check removed - tests will run and show actual errors
         // if service is not properly configured
+        
+        // Setup warehouse hierarchies once after authentication
+        if (!hierarchiesInitialized) {
+            setupWarehouseHierarchies();
+            hierarchiesInitialized = true;
+        }
+    }
+    
+    /**
+     * Sets up warehouse hierarchies for testing.
+     * Creates 2 warehouses, each with complete location hierarchies:
+     * - 2 zones per warehouse
+     * - 2 aisles per zone
+     * - 2 racks per aisle
+     * - 2 bins per rack
+     */
+    private void setupWarehouseHierarchies() {
+        // Initialize lists
+        warehouse1Zones = new ArrayList<>();
+        warehouse2Zones = new ArrayList<>();
+        warehouse1Aisles = new ArrayList<>();
+        warehouse2Aisles = new ArrayList<>();
+        warehouse1Racks = new ArrayList<>();
+        warehouse2Racks = new ArrayList<>();
+        warehouse1Bins = new ArrayList<>();
+        warehouse2Bins = new ArrayList<>();
+        
+        // Create first warehouse with hierarchy
+        warehouse1 = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        createLocationHierarchy(warehouse1, 2, 2, 2, 2, 
+                warehouse1Zones, warehouse1Aisles, warehouse1Racks, warehouse1Bins);
+        
+        // Create second warehouse with hierarchy
+        warehouse2 = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        createLocationHierarchy(warehouse2, 2, 2, 2, 2, 
+                warehouse2Zones, warehouse2Aisles, warehouse2Racks, warehouse2Bins);
+    }
+    
+    /**
+     * Creates a complete location hierarchy under a warehouse.
+     * 
+     * @param warehouse The warehouse to create hierarchy under
+     * @param zonesPerWarehouse Number of zones to create
+     * @param aislesPerZone Number of aisles per zone
+     * @param racksPerAisle Number of racks per aisle
+     * @param binsPerRack Number of bins per rack
+     * @param zonesList List to store created zones
+     * @param aislesList List to store created aisles
+     * @param racksList List to store created racks
+     * @param binsList List to store created bins
+     */
+    private void createLocationHierarchy(
+            CreateLocationResponse warehouse,
+            int zonesPerWarehouse,
+            int aislesPerZone,
+            int racksPerAisle,
+            int binsPerRack,
+            List<CreateLocationResponse> zonesList,
+            List<CreateLocationResponse> aislesList,
+            List<CreateLocationResponse> racksList,
+            List<CreateLocationResponse> binsList) {
+        
+        // Create zones
+        for (int z = 0; z < zonesPerWarehouse; z++) {
+            CreateLocationResponse zone = createLocation(
+                    LocationTestDataBuilder.buildZoneRequest(warehouse.getLocationId()));
+            zonesList.add(zone);
+            
+            // Create aisles for this zone
+            for (int a = 0; a < aislesPerZone; a++) {
+                CreateLocationResponse aisle = createLocation(
+                        LocationTestDataBuilder.buildAisleRequest(zone.getLocationId()));
+                aislesList.add(aisle);
+                
+                // Create racks for this aisle
+                for (int r = 0; r < racksPerAisle; r++) {
+                    CreateLocationResponse rack = createLocation(
+                            LocationTestDataBuilder.buildRackRequest(aisle.getLocationId()));
+                    racksList.add(rack);
+                    
+                    // Create bins for this rack
+                    for (int b = 0; b < binsPerRack; b++) {
+                        CreateLocationResponse bin = createLocation(
+                                LocationTestDataBuilder.buildBinRequest(rack.getLocationId()));
+                        binsList.add(bin);
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Helper method to get a random location from a list.
+     * 
+     * @param locations List of locations
+     * @return A random location from the list
+     */
+    private CreateLocationResponse getRandomLocationFromList(List<CreateLocationResponse> locations) {
+        if (locations == null || locations.isEmpty()) {
+            throw new IllegalStateException("Location list is empty or null");
+        }
+        int index = faker.number().numberBetween(0, locations.size());
+        return locations.get(index);
     }
 
     // ==================== LOCATION CREATION TESTS ====================
@@ -89,64 +215,35 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(location.getLocationId()).isNotBlank();
         assertThat(location.getCode()).isEqualTo(request.getCode());
         assertThat(location.getPath()).isEqualTo("/" + request.getCode());
+        
+        // Store shared warehouse for use in other tests
+        sharedWarehouse = location;
     }
 
     @Test
     @Order(2)
     public void testCreateZone_Success() {
-        // Arrange - Create warehouse first
-        CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
-        EntityExchangeResult<ApiResponse<CreateLocationResponse>> warehouseExchangeResult = authenticatedPost(
-                "/api/v1/location-management/locations",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                warehouseRequest
-        ).exchange()
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                })
-                .returnResult();
-
-        ApiResponse<CreateLocationResponse> warehouseApiResponse = warehouseExchangeResult.getResponseBody();
-        assertThat(warehouseApiResponse).isNotNull();
-        assertThat(warehouseApiResponse.isSuccess()).isTrue();
-
-        CreateLocationResponse warehouse = warehouseApiResponse.getData();
-        assertThat(warehouse).isNotNull();
-
-        CreateLocationRequest zoneRequest = LocationTestDataBuilder.buildZoneRequest(warehouse.getLocationId());
+        // Arrange - Use warehouse1 from setup
+        assertThat(warehouse1).isNotNull();
+        CreateLocationRequest zoneRequest = LocationTestDataBuilder.buildZoneRequest(warehouse1.getLocationId());
 
         // Act
-        WebTestClient.ResponseSpec response = authenticatedPost(
-                "/api/v1/location-management/locations",
-                tenantAdminAuth.getAccessToken(),
-                testTenantId,
-                zoneRequest
-        ).exchange();
+        CreateLocationResponse zone = createLocation(zoneRequest);
 
         // Assert
-        EntityExchangeResult<ApiResponse<CreateLocationResponse>> zoneExchangeResult = response
-                .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                })
-                .returnResult();
-
-        ApiResponse<CreateLocationResponse> zoneApiResponse = zoneExchangeResult.getResponseBody();
-        assertThat(zoneApiResponse).isNotNull();
-        assertThat(zoneApiResponse.isSuccess()).isTrue();
-
-        CreateLocationResponse zone = zoneApiResponse.getData();
         assertThat(zone).isNotNull();
-        assertThat(zone.getPath()).contains(warehouse.getCode());
+        assertThat(zone.getLocationId()).isNotBlank();
+        assertThat(zone.getCode()).isEqualTo(zoneRequest.getCode());
+        assertThat(zone.getPath()).contains(warehouse1.getCode());
     }
 
     @Test
     @Order(3)
     public void testCreateAisle_Success() {
-        // Arrange - Create warehouse and zone first
-        CreateLocationResponse warehouse = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        CreateLocationResponse zone = createLocation(LocationTestDataBuilder.buildZoneRequest(warehouse.getLocationId()));
-        
+        // Arrange - Use warehouse1Zones from setup
+        assertThat(warehouse1Zones).isNotNull();
+        assertThat(warehouse1Zones).isNotEmpty();
+        CreateLocationResponse zone = warehouse1Zones.get(0);
         CreateLocationRequest aisleRequest = LocationTestDataBuilder.buildAisleRequest(zone.getLocationId());
 
         // Act
@@ -156,18 +253,17 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(aisle).isNotNull();
         assertThat(aisle.getLocationId()).isNotBlank();
         assertThat(aisle.getCode()).isEqualTo(aisleRequest.getCode());
-        assertThat(aisle.getPath()).contains(warehouse.getCode());
+        assertThat(aisle.getPath()).contains(warehouse1.getCode());
         assertThat(aisle.getPath()).contains(zone.getCode());
     }
 
     @Test
     @Order(4)
     public void testCreateRack_Success() {
-        // Arrange - Create full hierarchy up to aisle
-        CreateLocationResponse warehouse = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        CreateLocationResponse zone = createLocation(LocationTestDataBuilder.buildZoneRequest(warehouse.getLocationId()));
-        CreateLocationResponse aisle = createLocation(LocationTestDataBuilder.buildAisleRequest(zone.getLocationId()));
-        
+        // Arrange - Use warehouse1Aisles from setup
+        assertThat(warehouse1Aisles).isNotNull();
+        assertThat(warehouse1Aisles).isNotEmpty();
+        CreateLocationResponse aisle = warehouse1Aisles.get(0);
         CreateLocationRequest rackRequest = LocationTestDataBuilder.buildRackRequest(aisle.getLocationId());
 
         // Act
@@ -176,20 +272,18 @@ public class LocationManagementTest extends BaseIntegrationTest {
         // Assert
         assertThat(rack).isNotNull();
         assertThat(rack.getLocationId()).isNotBlank();
-        assertThat(rack.getPath()).contains(warehouse.getCode());
-        assertThat(rack.getPath()).contains(zone.getCode());
+        assertThat(rack.getPath()).contains(warehouse1.getCode());
+        // Verify path contains zone and aisle codes from the hierarchy
         assertThat(rack.getPath()).contains(aisle.getCode());
     }
 
     @Test
     @Order(5)
     public void testCreateBin_Success() {
-        // Arrange - Create full hierarchy up to rack
-        CreateLocationResponse warehouse = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        CreateLocationResponse zone = createLocation(LocationTestDataBuilder.buildZoneRequest(warehouse.getLocationId()));
-        CreateLocationResponse aisle = createLocation(LocationTestDataBuilder.buildAisleRequest(zone.getLocationId()));
-        CreateLocationResponse rack = createLocation(LocationTestDataBuilder.buildRackRequest(aisle.getLocationId()));
-        
+        // Arrange - Use warehouse1Racks from setup
+        assertThat(warehouse1Racks).isNotNull();
+        assertThat(warehouse1Racks).isNotEmpty();
+        CreateLocationResponse rack = warehouse1Racks.get(0);
         CreateLocationRequest binRequest = LocationTestDataBuilder.buildBinRequest(rack.getLocationId());
 
         // Act
@@ -198,9 +292,8 @@ public class LocationManagementTest extends BaseIntegrationTest {
         // Assert
         assertThat(bin).isNotNull();
         assertThat(bin.getLocationId()).isNotBlank();
-        assertThat(bin.getPath()).contains(warehouse.getCode());
-        assertThat(bin.getPath()).contains(zone.getCode());
-        assertThat(bin.getPath()).contains(aisle.getCode());
+        assertThat(bin.getPath()).contains(warehouse1.getCode());
+        // Verify path contains rack code from the hierarchy
         assertThat(bin.getPath()).contains(rack.getCode());
     }
 
@@ -245,6 +338,62 @@ public class LocationManagementTest extends BaseIntegrationTest {
 
     @Test
     @Order(8)
+    public void testCreateLocation_InvalidHierarchy() {
+        // Arrange - Use pre-created locations from warehouse1 hierarchy
+        assertThat(warehouse1).isNotNull();
+        assertThat(warehouse1Zones).isNotEmpty();
+        assertThat(warehouse1Aisles).isNotEmpty();
+        assertThat(warehouse1Racks).isNotEmpty();
+        assertThat(warehouse1Bins).isNotEmpty();
+        
+        CreateLocationResponse zone = warehouse1Zones.get(0);
+        CreateLocationResponse aisle = warehouse1Aisles.get(0);
+        CreateLocationResponse rack = warehouse1Racks.get(0);
+        CreateLocationResponse bin = warehouse1Bins.get(0);
+
+        // Test 1: Try creating Zone with Bin as parent (should fail)
+        CreateLocationRequest invalidRequest1 = LocationTestDataBuilder.buildZoneRequest(bin.getLocationId());
+        WebTestClient.ResponseSpec response1 = authenticatedPost(
+                "/api/v1/location-management/locations",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                invalidRequest1
+        ).exchange();
+        response1.expectStatus().isBadRequest();
+
+        // Test 2: Try creating Aisle with Warehouse as parent (should fail - must be Zone)
+        CreateLocationRequest invalidRequest2 = LocationTestDataBuilder.buildAisleRequest(warehouse1.getLocationId());
+        WebTestClient.ResponseSpec response2 = authenticatedPost(
+                "/api/v1/location-management/locations",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                invalidRequest2
+        ).exchange();
+        response2.expectStatus().isBadRequest();
+
+        // Test 3: Try creating Rack with Zone as parent (should fail - must be Aisle)
+        CreateLocationRequest invalidRequest3 = LocationTestDataBuilder.buildRackRequest(zone.getLocationId());
+        WebTestClient.ResponseSpec response3 = authenticatedPost(
+                "/api/v1/location-management/locations",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                invalidRequest3
+        ).exchange();
+        response3.expectStatus().isBadRequest();
+
+        // Test 4: Try creating Bin with Aisle as parent (should fail - must be Rack)
+        CreateLocationRequest invalidRequest4 = LocationTestDataBuilder.buildBinRequest(aisle.getLocationId());
+        WebTestClient.ResponseSpec response4 = authenticatedPost(
+                "/api/v1/location-management/locations",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                invalidRequest4
+        ).exchange();
+        response4.expectStatus().isBadRequest();
+    }
+
+    @Test
+    @Order(9)
     public void testCreateLocation_MissingRequiredFields() {
         // Arrange - Missing code
         CreateLocationRequest request = CreateLocationRequest.builder()
@@ -265,7 +414,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
     }
 
     @Test
-    @Order(9)
+    @Order(10)
     public void testCreateLocation_WithoutAuthentication() {
         // Arrange
         CreateLocationRequest request = LocationTestDataBuilder.buildWarehouseRequest();
@@ -273,7 +422,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
         // Act
         WebTestClient.ResponseSpec response = webTestClient.post()
                 .uri("/api/v1/location-management/locations")
-                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .exchange();
 
@@ -318,9 +467,9 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(11)
     public void testListLocations_FilterByType() {
-        // Arrange - Create locations of different types
-        CreateLocationResponse warehouse = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        createLocation(LocationTestDataBuilder.buildZoneRequest(warehouse.getLocationId()));
+        // Arrange - Use pre-created locations from setup (warehouse1 and its zones)
+        assertThat(warehouse1).isNotNull();
+        assertThat(warehouse1Zones).isNotEmpty();
 
         // Act
         EntityExchangeResult<ApiResponse<ListLocationsResponse>> exchangeResult = authenticatedGet(
@@ -346,8 +495,8 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(12)
     public void testListLocations_FilterByStatus() {
-        // Arrange - Create location
-        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        // Arrange - Use pre-created warehouse1 from setup
+        assertThat(warehouse1).isNotNull();
 
         // Act - Filter by AVAILABLE status
         EntityExchangeResult<ApiResponse<ListLocationsResponse>> exchangeResult = authenticatedGet(
@@ -369,13 +518,12 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(13)
     public void testListLocations_SearchByCode() {
-        // Arrange - Create location with specific code
-        CreateLocationRequest request = LocationTestDataBuilder.buildWarehouseRequest();
-        CreateLocationResponse location = createLocation(request);
+        // Arrange - Use pre-created warehouse1 from setup
+        assertThat(warehouse1).isNotNull();
 
         // Act - Search by code
         EntityExchangeResult<ApiResponse<ListLocationsResponse>> exchangeResult = authenticatedGet(
-                "/api/v1/location-management/locations?search=" + location.getCode() + "&page=0&size=10",
+                "/api/v1/location-management/locations?search=" + warehouse1.getCode() + "&page=0&size=10",
                 tenantAdminAuth.getAccessToken(),
                 testTenantId
         ).exchange()
@@ -393,12 +541,12 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(14)
     public void testGetLocationById_Success() {
-        // Arrange - Create location first
-        CreateLocationResponse createdLocation = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        // Arrange - Use pre-created warehouse1 from setup
+        assertThat(warehouse1).isNotNull();
 
         // Act
         EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult = authenticatedGet(
-                "/api/v1/location-management/locations/" + createdLocation.getLocationId(),
+                "/api/v1/location-management/locations/" + warehouse1.getLocationId(),
                 tenantAdminAuth.getAccessToken(),
                 testTenantId
         ).exchange()
@@ -414,9 +562,9 @@ public class LocationManagementTest extends BaseIntegrationTest {
 
         LocationResponse location = apiResponse.getData();
         assertThat(location).isNotNull();
-        assertThat(location.getLocationId()).isEqualTo(createdLocation.getLocationId());
-        assertThat(location.getCode()).isEqualTo(createdLocation.getCode());
-        assertThat(location.getPath()).isEqualTo(createdLocation.getPath());
+        assertThat(location.getLocationId()).isEqualTo(warehouse1.getLocationId());
+        assertThat(location.getCode()).isEqualTo(warehouse1.getCode());
+        assertThat(location.getPath()).isEqualTo(warehouse1.getPath());
     }
 
     @Test
@@ -441,8 +589,8 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(20)
     public void testUpdateLocationStatus_ToBlocked() {
-        // Arrange - Create location
-        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        // Arrange - Use pre-created warehouse2 from setup (use warehouse2 to avoid affecting other tests)
+        assertThat(warehouse2).isNotNull();
         
         UpdateLocationStatusRequest statusRequest = UpdateLocationStatusRequest.builder()
                 .status("BLOCKED")
@@ -451,7 +599,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
 
         // Act
         WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId() + "/status",
+                "/api/v1/location-management/locations/" + warehouse2.getLocationId() + "/status",
                 tenantAdminAuth.getAccessToken(),
                 testTenantId,
                 statusRequest
@@ -471,8 +619,8 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(21)
     public void testUpdateLocationStatus_ToAvailable() {
-        // Arrange - Create location
-        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        // Arrange - Use pre-created warehouse2 from setup
+        assertThat(warehouse2).isNotNull();
         
         UpdateLocationStatusRequest statusRequest = UpdateLocationStatusRequest.builder()
                 .status("AVAILABLE")
@@ -480,7 +628,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
 
         // Act
         WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId() + "/status",
+                "/api/v1/location-management/locations/" + warehouse2.getLocationId() + "/status",
                 tenantAdminAuth.getAccessToken(),
                 testTenantId,
                 statusRequest
@@ -498,8 +646,8 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(22)
     public void testUpdateLocationStatus_InvalidStatus() {
-        // Arrange - Create location
-        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        // Arrange - Use pre-created warehouse2 from setup
+        assertThat(warehouse2).isNotNull();
         
         UpdateLocationStatusRequest statusRequest = UpdateLocationStatusRequest.builder()
                 .status("INVALID_STATUS")
@@ -507,7 +655,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
 
         // Act
         WebTestClient.ResponseSpec response = authenticatedPutWithTenant(
-                "/api/v1/location-management/locations/" + location.getLocationId() + "/status",
+                "/api/v1/location-management/locations/" + warehouse2.getLocationId() + "/status",
                 tenantAdminAuth.getAccessToken(),
                 testTenantId,
                 statusRequest
@@ -698,7 +846,7 @@ public class LocationManagementTest extends BaseIntegrationTest {
         // Act - Try without authentication
         WebTestClient.ResponseSpec response = webTestClient.put()
                 .uri("/api/v1/location-management/locations/" + location.getLocationId())
-                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(updateRequest)
                 .exchange();
 
@@ -1046,19 +1194,24 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(50)
     public void testLocationPathGeneration() {
-        // Arrange - Create full hierarchy
-        CreateLocationResponse warehouse = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        CreateLocationResponse zone = createLocation(LocationTestDataBuilder.buildZoneRequest(warehouse.getLocationId()));
-        CreateLocationResponse aisle = createLocation(LocationTestDataBuilder.buildAisleRequest(zone.getLocationId()));
-        CreateLocationResponse rack = createLocation(LocationTestDataBuilder.buildRackRequest(aisle.getLocationId()));
-        CreateLocationResponse bin = createLocation(LocationTestDataBuilder.buildBinRequest(rack.getLocationId()));
+        // Arrange - Use pre-created full hierarchy from warehouse1
+        assertThat(warehouse1).isNotNull();
+        assertThat(warehouse1Zones).isNotEmpty();
+        assertThat(warehouse1Aisles).isNotEmpty();
+        assertThat(warehouse1Racks).isNotEmpty();
+        assertThat(warehouse1Bins).isNotEmpty();
+        
+        CreateLocationResponse zone = warehouse1Zones.get(0);
+        CreateLocationResponse aisle = warehouse1Aisles.get(0);
+        CreateLocationResponse rack = warehouse1Racks.get(0);
+        CreateLocationResponse bin = warehouse1Bins.get(0);
 
         // Act - Get bin location
         LocationResponse binLocation = getLocationById(bin.getLocationId());
 
         // Assert
         assertThat(binLocation).isNotNull();
-        assertThat(binLocation.getPath()).contains(warehouse.getCode());
+        assertThat(binLocation.getPath()).contains(warehouse1.getCode());
         assertThat(binLocation.getPath()).contains(zone.getCode());
         assertThat(binLocation.getPath()).contains(aisle.getCode());
         assertThat(binLocation.getPath()).contains(rack.getCode());
@@ -1088,12 +1241,12 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(41)
     public void testGetLocation_Unauthorized() {
-        // Arrange
-        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        // Arrange - Use pre-created warehouse1 from setup
+        assertThat(warehouse1).isNotNull();
 
         // Act - Try without authentication
         WebTestClient.ResponseSpec response = webTestClient.get()
-                .uri("/api/v1/location-management/locations/" + location.getLocationId())
+                .uri("/api/v1/location-management/locations/" + warehouse1.getLocationId())
                 .exchange();
 
         // Assert
@@ -1153,10 +1306,10 @@ public class LocationManagementTest extends BaseIntegrationTest {
     private WebTestClient.RequestHeadersSpec<?> authenticatedPutWithTenant(String uri, String accessToken, String tenantId, Object requestBody) {
         return webTestClient.put()
                 .uri(uri)
-                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
                 .headers(headers -> {
-                    com.ccbsa.wms.gateway.api.util.RequestHeaderHelper.addAuthHeaders(headers, accessToken);
-                    com.ccbsa.wms.gateway.api.util.RequestHeaderHelper.addTenantHeader(headers, tenantId);
+                    RequestHeaderHelper.addAuthHeaders(headers, accessToken);
+                    RequestHeaderHelper.addTenantHeader(headers, tenantId);
                 })
                 .bodyValue(requestBody);
     }
@@ -1166,26 +1319,26 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(200)
     public void testCheckLocationAvailability_AvailableLocation_Success() {
-        // Arrange - Create a location
-        CreateLocationResponse location = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        String locationId = location.getLocationId();
+        // Arrange - Use pre-created warehouse2 from setup
+        assertThat(warehouse2).isNotNull();
+        String locationId = warehouse2.getLocationId();
 
         // Act - Check availability
-        EntityExchangeResult<ApiResponse<com.ccbsa.wms.gateway.api.dto.LocationAvailabilityResponse>> exchangeResult = authenticatedGet(
+        EntityExchangeResult<ApiResponse<LocationAvailabilityResponse>> exchangeResult = authenticatedGet(
                 "/api/v1/location-management/locations/" + locationId + "/check-availability?requiredQuantity=100",
                 tenantAdminAuth.getAccessToken(),
                 testTenantId
         ).exchange()
                 .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<com.ccbsa.wms.gateway.api.dto.LocationAvailabilityResponse>>() {
+                .expectBody(new ParameterizedTypeReference<ApiResponse<LocationAvailabilityResponse>>() {
                 })
                 .returnResult();
 
         // Assert
-        ApiResponse<com.ccbsa.wms.gateway.api.dto.LocationAvailabilityResponse> apiResponse = exchangeResult.getResponseBody();
+        ApiResponse<LocationAvailabilityResponse> apiResponse = exchangeResult.getResponseBody();
         assertThat(apiResponse).isNotNull();
         assertThat(apiResponse.isSuccess()).isTrue();
-        com.ccbsa.wms.gateway.api.dto.LocationAvailabilityResponse availability = apiResponse.getData();
+        LocationAvailabilityResponse availability = apiResponse.getData();
         assertThat(availability).isNotNull();
         assertThat(availability.isAvailable()).isTrue();
     }
@@ -1226,11 +1379,11 @@ public class LocationManagementTest extends BaseIntegrationTest {
         // 4. Use them in FEFO assignment
 
         // For now, we'll test the endpoint structure
-        java.math.BigDecimal quantity = java.math.BigDecimal.valueOf(100);
-        java.time.LocalDate expirationDate = java.time.LocalDate.now().plusDays(30);
-        
-        com.ccbsa.wms.gateway.api.dto.AssignLocationsFEFORequest fefoRequest = 
-                com.ccbsa.wms.gateway.api.fixture.StockItemTestDataBuilder.buildFEFOAssignmentRequest(
+        BigDecimal quantity = BigDecimal.valueOf(100);
+        LocalDate expirationDate = LocalDate.now().plusDays(30);
+
+        AssignLocationsFEFORequest fefoRequest =
+                StockItemTestDataBuilder.buildFEFOAssignmentRequest(
                         UUID.randomUUID().toString(), // Mock stock item ID
                         quantity,
                         expirationDate,

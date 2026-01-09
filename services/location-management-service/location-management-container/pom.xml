@@ -93,6 +93,12 @@
             <artifactId>caffeine</artifactId>
         </dependency>
 
+        <!-- Spring Cache Support -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+
         <!-- Development -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

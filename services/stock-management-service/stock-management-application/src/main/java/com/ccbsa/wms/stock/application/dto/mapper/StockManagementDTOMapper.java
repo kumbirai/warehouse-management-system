@@ -10,6 +10,7 @@ import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.common.domain.valueobject.TenantId;
+import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.application.dto.command.AdjustStockCommandDTO;
@@ -61,7 +62,7 @@ public class StockManagementDTOMapper {
      * @return AllocateStockCommand
      */
     public AllocateStockCommand toAllocateStockCommand(AllocateStockCommandDTO dto, String tenantId) {
-        com.ccbsa.common.domain.valueobject.UserId userId = TenantContext.getUserId();
+        UserId userId = TenantContext.getUserId();
         if (userId == null) {
             throw new IllegalStateException("User ID not found in TenantContext");
         }
@@ -168,7 +169,7 @@ public class StockManagementDTOMapper {
      * @return AdjustStockCommand
      */
     public AdjustStockCommand toAdjustStockCommand(AdjustStockCommandDTO dto, String tenantId) {
-        com.ccbsa.common.domain.valueobject.UserId userId = TenantContext.getUserId();
+        UserId userId = TenantContext.getUserId();
         if (userId == null) {
             throw new IllegalStateException("User ID not found in TenantContext");
         }
@@ -386,8 +387,12 @@ public class StockManagementDTOMapper {
     public GetStockLevelsQuery toGetStockLevelsQuery(String tenantId, String productId, String locationId) {
         var builder = GetStockLevelsQuery.builder().tenantId(TenantId.of(tenantId)).productId(ProductId.of(UUID.fromString(productId)));
 
-        if (locationId != null && !locationId.trim().isEmpty()) {
-            builder.locationId(LocationId.of(UUID.fromString(locationId)));
+        if (locationId != null && !locationId.trim().isEmpty() && !"null".equalsIgnoreCase(locationId)) {
+            try {
+                builder.locationId(LocationId.of(UUID.fromString(locationId)));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid UUID string: " + locationId, e);
+            }
         }
 
         return builder.build();

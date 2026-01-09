@@ -5,6 +5,7 @@ import {
   CreateLocationRequest,
   CreateLocationResponse,
   Location,
+  LocationHierarchyQueryResult,
   LocationListFilters,
   LocationListQueryResult,
   UpdateLocationRequest,
@@ -36,6 +37,18 @@ export const locationService = {
   async getLocation(locationId: string, tenantId: string): Promise<ApiResponse<Location>> {
     const response = await apiClient.get<ApiResponse<Location>>(
       `${LOCATION_BASE_PATH}/${locationId}`,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  async getWarehouse(warehouseId: string, tenantId: string): Promise<ApiResponse<Location>> {
+    const response = await apiClient.get<ApiResponse<Location>>(
+      `/location-management/warehouses/${warehouseId}`,
       {
         headers: {
           'X-Tenant-Id': tenantId,
@@ -143,6 +156,93 @@ export const locationService = {
     const response = await apiClient.post<ApiResponse<void>>(
       `${LOCATION_BASE_PATH}/assign-fefo`,
       request,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Lists all warehouses (locations with type WAREHOUSE).
+   */
+  async listWarehouses(tenantId: string): Promise<ApiResponse<LocationHierarchyQueryResult>> {
+    const response = await apiClient.get<ApiResponse<LocationHierarchyQueryResult>>(
+      `${LOCATION_BASE_PATH}/warehouses`,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Lists zones under a warehouse.
+   */
+  async listZones(
+    warehouseId: string,
+    tenantId: string
+  ): Promise<ApiResponse<LocationHierarchyQueryResult>> {
+    const response = await apiClient.get<ApiResponse<LocationHierarchyQueryResult>>(
+      `${LOCATION_BASE_PATH}/warehouses/${warehouseId}/zones`,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Lists aisles under a zone.
+   */
+  async listAisles(
+    zoneId: string,
+    tenantId: string
+  ): Promise<ApiResponse<LocationHierarchyQueryResult>> {
+    const response = await apiClient.get<ApiResponse<LocationHierarchyQueryResult>>(
+      `${LOCATION_BASE_PATH}/zones/${zoneId}/aisles`,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Lists racks under an aisle.
+   */
+  async listRacks(
+    aisleId: string,
+    tenantId: string
+  ): Promise<ApiResponse<LocationHierarchyQueryResult>> {
+    const response = await apiClient.get<ApiResponse<LocationHierarchyQueryResult>>(
+      `${LOCATION_BASE_PATH}/aisles/${aisleId}/racks`,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Lists bins under a rack.
+   */
+  async listBins(
+    rackId: string,
+    tenantId: string
+  ): Promise<ApiResponse<LocationHierarchyQueryResult>> {
+    const response = await apiClient.get<ApiResponse<LocationHierarchyQueryResult>>(
+      `${LOCATION_BASE_PATH}/racks/${rackId}/bins`,
       {
         headers: {
           'X-Tenant-Id': tenantId,

@@ -14,11 +14,13 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { Consignment } from '../types/stockManagement';
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { StatusBadge } from '../../../components/common';
 import { getStatusVariant } from '../../../utils/statusUtils';
 import { formatDateTime } from '../../../utils/dateUtils';
+import { Routes } from '../../../utils/navigationUtils';
 
 interface ConsignmentDetailProps {
   consignment: Consignment | null;
@@ -73,18 +75,9 @@ export const ConsignmentDetail = ({
           <Stack spacing={2}>
             <Box>
               <Typography variant="caption" color="text.secondary">
-                Consignment ID
-              </Typography>
-              <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                {consignment.consignmentId}
-              </Typography>
-            </Box>
-
-            <Box>
-              <Typography variant="caption" color="text.secondary">
                 Consignment Reference
               </Typography>
-              <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+              <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
                 {consignment.consignmentReference}
               </Typography>
             </Box>
@@ -93,11 +86,21 @@ export const ConsignmentDetail = ({
               <Typography variant="caption" color="text.secondary">
                 Warehouse
               </Typography>
-              <Typography variant="body1" fontWeight="medium">
+              <Typography
+                variant="body1"
+                fontWeight="medium"
+                component={Link}
+                to={Routes.warehouseDetail(consignment.warehouseId)}
+                sx={{
+                  color: 'primary.main',
+                  textDecoration: 'none',
+                  display: 'inline-block',
+                  '&:hover': {
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
                 {getWarehouseDisplayName()}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                ID: {consignment.warehouseId}
               </Typography>
             </Box>
 

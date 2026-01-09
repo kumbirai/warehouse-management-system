@@ -1,150 +1,129 @@
-import { Button, FormControl, Grid, InputLabel, MenuItem, Select, TextField } from '@mui/material';
+import { Button, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useCallback, useMemo, useState } from 'react';
-import { Add as AddIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 
 import { ListPageLayout } from '../../../components/layouts';
-import { BarcodeInput, EmptyState, FilterBar } from '../../../components/common';
-import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
-import { LocationList } from '../components/LocationList';
-import { useLocations } from '../hooks/useLocations';
-import { useAuth } from '../../../hooks/useAuth';
-import { LocationListFilters, LocationStatus } from '../types/location';
+import { Routes } from '../../../utils/navigationUtils';
+import { LocationTreeView } from '../components/LocationTreeView';
+import { useLocationHierarchy } from '../hooks/useLocationHierarchy';
 
 export const LocationListPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const {
+    data,
+    isLoading,
+    error,
+    navigationState,
+    navigateToZone,
+    navigateToAisle,
+    navigateToRack,
+    navigateToBin,
+    navigateUp,
+  } = useLocationHierarchy();
 
-  // Filter state
-  const [page, setPage] = useState(0);
-  const [size] = useState(100);
-  const [statusFilter, setStatusFilter] = useState<LocationStatus | ''>('');
-  const [zoneFilter, setZoneFilter] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  // Build breadcrumbs based on current hierarchy level
+  const getBreadcrumbItems = () => {
+    const items: Array<{ label: string; href?: string }> = [
+      { label: 'Dashboard', href: '/dashboard' },
+      { label: 'Locations', href: Routes.locations },
+    ];
 
-  // Memoize filters object to prevent infinite loop in useLocations hook
-  const filters: LocationListFilters = useMemo(
-    () => ({
-      tenantId: user?.tenantId ?? undefined,
-      page,
-      size,
-      status: statusFilter || undefined,
-      zone: zoneFilter || undefined,
-      search: searchQuery || undefined,
-    }),
-    [user?.tenantId, page, size, statusFilter, zoneFilter, searchQuery]
-  );
+    if (navigationState.level !== 'warehouse' && data?.parent) {
+      const parentName = data.parent.name || data.parent.code || data.parent.barcode;
+      items.push({ label: parentName });
+    }
 
-  const { locations, isLoading, error } = useLocations(filters);
+    return items;
+  };
 
-  // Filter handlers
-  const handleStatusChange = useCallback((newStatus: LocationStatus | '') => {
-    setStatusFilter(newStatus);
-    setPage(0);
-  }, []);
+  // Get page title based on current level
+  const getPageTitle = () => {
+    switch (navigationState.level) {
+      case 'warehouse':
+        return 'Warehouses';
+      case 'zone':
+        return 'Zones';
+      case 'aisle':
+        return 'Aisles';
+      case 'rack':
+        return 'Racks';
+      case 'bin':
+        return 'Bins';
+      default:
+        return 'Locations';
+    }
+  };
 
-  const handleZoneChange = useCallback((newZone: string) => {
-    setZoneFilter(newZone);
-    setPage(0);
-  }, []);
-
-  const handleSearchChange = useCallback((query: string) => {
-    setSearchQuery(query);
-    setPage(0);
-  }, []);
-
-  const handleClearFilters = useCallback(() => {
-    setStatusFilter('');
-    setZoneFilter('');
-    setSearchQuery('');
-    setPage(0);
-  }, []);
-
-  const hasActiveFilters = Boolean(statusFilter || zoneFilter || searchQuery);
+  // Get page description based on current level
+  const getPageDescription = () => {
+    switch (navigationState.level) {
+      case 'warehouse':
+        return 'Navigate through warehouse locations hierarchy';
+      case 'zone':
+        return `Zones in ${data?.parent?.name || data?.parent?.code || 'warehouse'}`;
+      case 'aisle':
+        return `Aisles in ${data?.parent?.name || data?.parent?.code || 'zone'}`;
+      case 'rack':
+        return `Racks in ${data?.parent?.name || data?.parent?.code || 'aisle'}`;
+      case 'bin':
+        return `Bins in ${data?.parent?.name || data?.parent?.code || 'rack'}`;
+      default:
+        return 'Manage warehouse locations and storage areas';
+    }
+  };
 
   return (
     <ListPageLayout
-      breadcrumbs={getBreadcrumbs.locationList()}
-      title="Locations"
-      description="Manage warehouse locations and storage areas"
+      breadcrumbs={getBreadcrumbItems()}
+      title={getPageTitle()}
+      description={getPageDescription()}
       actions={
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate(Routes.locationCreate)}
-        >
-          Create Location
-        </Button>
+        <Stack direction="row" spacing={1}>
+          {navigationState.level !== 'warehouse' && (
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackIcon />}
+              onClick={navigateUp}
+            >
+              Back
+            </Button>
+          )}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate(Routes.locationCreate)}
+          >
+            Create Location
+          </Button>
+        </Stack>
       }
       isLoading={isLoading}
       error={error?.message || null}
     >
-      <FilterBar onClearFilters={handleClearFilters} hasActiveFilters={hasActiveFilters}>
-        <Grid container spacing={2} sx={{ flex: 1 }}>
-          <Grid item xs={12} sm={4}>
-            <BarcodeInput
-              fullWidth
-              label="Search"
-              placeholder="Search by code, barcode..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              onScan={barcode => {
-                handleSearchChange(barcode);
-              }}
-              autoSubmitOnEnter={true}
-              InputProps={{
-                startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <FormControl fullWidth>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={statusFilter}
-                label="Status"
-                onChange={e => handleStatusChange(e.target.value as LocationStatus | '')}
-              >
-                <MenuItem value="">All</MenuItem>
-                <MenuItem value="AVAILABLE">Available</MenuItem>
-                <MenuItem value="OCCUPIED">Occupied</MenuItem>
-                <MenuItem value="RESERVED">Reserved</MenuItem>
-                <MenuItem value="BLOCKED">Blocked</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <TextField
-              fullWidth
-              label="Zone"
-              placeholder="Filter by zone"
-              value={zoneFilter}
-              onChange={e => handleZoneChange(e.target.value)}
-            />
-          </Grid>
-        </Grid>
-      </FilterBar>
-
-      {!isLoading && locations.length === 0 ? (
-        <EmptyState
-          title="No locations found"
-          description={
-            hasActiveFilters
-              ? 'Try adjusting your filters to find locations'
-              : 'Create your first location to start managing warehouse storage'
+      <LocationTreeView
+        data={data}
+        isLoading={isLoading}
+        error={error}
+        level={navigationState.level}
+        onExpand={(locationId) => {
+          switch (navigationState.level) {
+            case 'warehouse':
+              navigateToZone(locationId);
+              break;
+            case 'zone':
+              navigateToAisle(locationId);
+              break;
+            case 'aisle':
+              navigateToRack(locationId);
+              break;
+            case 'rack':
+              navigateToBin(locationId);
+              break;
+            default:
+              break;
           }
-          action={
-            !hasActiveFilters
-              ? {
-                  label: 'Create Location',
-                  onClick: () => navigate(Routes.locationCreate),
-                }
-              : undefined
-          }
-        />
-      ) : (
-        <LocationList locations={locations} isLoading={isLoading} error={error} />
-      )}
+        }}
+      />
     </ListPageLayout>
   );
 };

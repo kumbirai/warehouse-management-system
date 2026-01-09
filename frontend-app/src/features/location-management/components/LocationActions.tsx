@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { LocationStatus } from '../types/location';
 import { useUpdateLocationStatus } from '../hooks/useUpdateLocationStatus';
+import { logger } from '../../../utils/logger';
 
 type ActionType = 'block' | 'unblock' | 'reserve' | 'release';
 
@@ -101,7 +102,7 @@ export const LocationActions = ({
     } catch (error) {
       // Error is handled by the hook and can be accessed via error state if needed
       // For now, we'll just close the dialog on error
-      console.error('Failed to update location status:', error);
+      logger.error('Failed to update location status:', error);
     }
   };
 

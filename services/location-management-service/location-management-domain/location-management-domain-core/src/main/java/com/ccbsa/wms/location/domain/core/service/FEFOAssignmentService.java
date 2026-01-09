@@ -2,6 +2,7 @@ package com.ccbsa.wms.location.domain.core.service;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,6 +61,18 @@ public class FEFOAssignmentService {
             throw new IllegalArgumentException("Available locations list cannot be empty");
         }
 
+        // Filter to only BIN type locations (stock allocation must be at lowest hierarchy level)
+        List<Location> binLocations = availableLocations.stream().filter(location -> {
+            if (location.getType() == null || location.getType().getValue() == null) {
+                return false;
+            }
+            return "BIN".equalsIgnoreCase(location.getType().getValue().trim());
+        }).collect(Collectors.toList());
+
+        if (binLocations.isEmpty()) {
+            throw new IllegalStateException("No BIN type locations available. Stock allocation must be at BIN level (lowest hierarchy level).");
+        }
+
         // Filter out expired stock items - they cannot be assigned locations
         List<StockItemAssignmentRequest> validStockItems = stockItems.stream().filter(item -> item.getClassification() != StockClassification.EXPIRED).collect(Collectors.toList());
 
@@ -91,19 +104,19 @@ public class FEFOAssignmentService {
         }).collect(Collectors.toList());
 
         // Sort locations by proximity to picking zones (closest first)
-        List<Location> sortedLocations =
-                availableLocations.stream().filter(location -> location.isAvailable() || location.getStatus() == LocationStatus.RESERVED).sorted((a, b) -> {
-                    int proximityA = calculateProximityToPickingZone(a);
-                    int proximityB = calculateProximityToPickingZone(b);
-                    return Integer.compare(proximityA, proximityB);
-                }).collect(Collectors.toList());
+        // Use binLocations instead of availableLocations (already filtered to BIN type)
+        List<Location> sortedLocations = binLocations.stream().filter(location -> location.isAvailable() || location.getStatus() == LocationStatus.RESERVED).sorted((a, b) -> {
+            int proximityA = calculateProximityToPickingZone(a);
+            int proximityB = calculateProximityToPickingZone(b);
+            return Integer.compare(proximityA, proximityB);
+        }).collect(Collectors.toList());
 
         // Match stock items to locations
         // Strategy: Fill locations to capacity before moving to the next location
         // This optimizes warehouse space utilization
         Map<String, LocationId> assignments = new HashMap<>();
         // Track locations that are full and cannot accept more stock
-        Set<LocationId> fullLocationIds = new java.util.HashSet<>();
+        Set<LocationId> fullLocationIds = new HashSet<>();
 
         for (StockItemAssignmentRequest stockItem : sortedStockItems) {
             // Find next available location with sufficient capacity

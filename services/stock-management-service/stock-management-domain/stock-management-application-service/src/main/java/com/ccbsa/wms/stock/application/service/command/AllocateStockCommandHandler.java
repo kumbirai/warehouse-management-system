@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,12 +18,14 @@ import com.ccbsa.common.domain.valueobject.AllocationType;
 import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.common.domain.valueobject.StockClassification;
+import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.application.service.command.dto.AllocateStockCommand;
 import com.ccbsa.wms.stock.application.service.command.dto.AllocateStockResult;
 import com.ccbsa.wms.stock.application.service.port.messaging.StockManagementEventPublisher;
 import com.ccbsa.wms.stock.application.service.port.repository.StockAllocationRepository;
 import com.ccbsa.wms.stock.application.service.port.repository.StockItemRepository;
+import com.ccbsa.wms.stock.application.service.port.service.LocationServicePort;
 import com.ccbsa.wms.stock.domain.core.entity.StockAllocation;
 import com.ccbsa.wms.stock.domain.core.entity.StockItem;
 import com.ccbsa.wms.stock.domain.core.valueobject.Notes;
@@ -53,6 +56,7 @@ public class AllocateStockCommandHandler {
     private final StockAllocationRepository allocationRepository;
     private final StockItemRepository stockItemRepository;
     private final StockManagementEventPublisher eventPublisher;
+    private final LocationServicePort locationServicePort;
 
     @Transactional
     public AllocateStockResult handle(AllocateStockCommand command) {
@@ -60,6 +64,11 @@ public class AllocateStockCommandHandler {
 
         // 1. Validate command
         validateCommand(command);
+
+        // 1a. Validate location is BIN type if location is specified (stock allocations must be at lowest hierarchy level)
+        if (command.getLocationId() != null) {
+            validateLocationIsBinType(command.getLocationId(), command.getTenantId());
+        }
 
         // 2. Find stock items for allocation (FEFO if location not specified)
         List<StockItem> stockItems = findStockItemsForAllocation(command.getTenantId(), command.getProductId(), command.getLocationId(), command.getQuantity().getValue());
@@ -73,16 +82,19 @@ public class AllocateStockCommandHandler {
         int totalAvailable = calculateTotalAvailable(stockItems);
 
         if (totalAvailable < command.getQuantity().getValue()) {
-            // Calculate available at location for better error message
+            // Calculate available at location and unassigned for better error message
             int availableAtLocation = 0;
+            int availableUnassigned = 0;
             if (command.getLocationId() != null) {
                 availableAtLocation = stockItems.stream().filter(item -> item.getLocationId() != null && item.getLocationId().equals(command.getLocationId()))
                         .filter(item -> item.getClassification() != StockClassification.EXPIRED).mapToInt(item -> item.getAvailableQuantity().getValue()).sum();
+                availableUnassigned = stockItems.stream().filter(item -> item.getLocationId() == null).filter(item -> item.getClassification() != StockClassification.EXPIRED)
+                        .mapToInt(item -> item.getAvailableQuantity().getValue()).sum();
             }
 
-            log.warn("Insufficient available stock for allocation: productId={}, locationId={}, required={}, available={}, availableAtLocation={}",
+            log.warn("Insufficient available stock for allocation: productId={}, locationId={}, required={}, available={}, availableAtLocation={}, availableUnassigned={}",
                     command.getProductId().getValueAsString(), command.getLocationId() != null ? command.getLocationId().getValueAsString() : "all locations",
-                    command.getQuantity().getValue(), totalAvailable, availableAtLocation);
+                    command.getQuantity().getValue(), totalAvailable, availableAtLocation, availableUnassigned);
             throw new IllegalStateException(String.format("Insufficient available stock. Required: %d, Available: %d", command.getQuantity().getValue(), totalAvailable));
         }
 
@@ -161,6 +173,29 @@ public class AllocateStockCommandHandler {
     }
 
     /**
+     * Validates that the specified location is of BIN type (lowest hierarchy level).
+     * Stock allocations must be at the BIN level as per business requirement.
+     *
+     * @param locationId Location ID to validate
+     * @param tenantId   Tenant ID
+     * @throws IllegalArgumentException if location is not BIN type
+     */
+    private void validateLocationIsBinType(LocationId locationId, TenantId tenantId) {
+        Optional<LocationServicePort.LocationInfo> locationInfo = locationServicePort.getLocationInfo(locationId, tenantId);
+
+        if (locationInfo.isEmpty()) {
+            throw new IllegalArgumentException(String.format("Location not found: %s", locationId.getValueAsString()));
+        }
+
+        LocationServicePort.LocationInfo info = locationInfo.get();
+        if (!info.isBinType()) {
+            throw new IllegalArgumentException(
+                    String.format("Stock allocations must be at BIN level (lowest hierarchy level). Location %s is of type: %s", locationId.getValueAsString(),
+                            info.type() != null ? info.type() : "UNKNOWN"));
+        }
+    }
+
+    /**
      * Finds stock items for allocation using FEFO principles.
      * <p>
      * FEFO Algorithm:
@@ -175,7 +210,7 @@ public class AllocateStockCommandHandler {
      * @param requestedQuantity Requested quantity (used to determine if unassigned stock should be included)
      * @return List of stock items sorted by FEFO
      */
-    private List<StockItem> findStockItemsForAllocation(com.ccbsa.common.domain.valueobject.TenantId tenantId, ProductId productId, LocationId locationId, int requestedQuantity) {
+    private List<StockItem> findStockItemsForAllocation(TenantId tenantId, ProductId productId, LocationId locationId, int requestedQuantity) {
         List<StockItem> stockItems;
 
         if (locationId != null) {
@@ -220,6 +255,22 @@ public class AllocateStockCommandHandler {
             // FEFO: Find all locations with stock, sort by expiration
             // When locationId is null, include stock items without location assignment (for FEFO allocation)
             stockItems = stockItemRepository.findByTenantIdAndProductId(tenantId, productId);
+        }
+
+        // When doing FEFO allocation (locationId is null), filter to only BIN locations or unassigned
+        if (locationId == null) {
+            stockItems = stockItems.stream().filter(item -> {
+                if (item.getLocationId() == null) {
+                    return true; // Unassigned items are allowed
+                }
+                // Check if location is BIN type
+                Optional<LocationServicePort.LocationInfo> locationInfo = locationServicePort.getLocationInfo(item.getLocationId(), tenantId);
+                if (locationInfo.isEmpty()) {
+                    log.warn("Location not found for stock item: {}, locationId: {}", item.getId().getValueAsString(), item.getLocationId().getValueAsString());
+                    return false; // Exclude items with invalid locations
+                }
+                return locationInfo.get().isBinType(); // Only include BIN locations
+            }).collect(Collectors.toList());
         }
 
         // Filter by available quantity, exclude expired stock, and sort by expiration (FEFO)

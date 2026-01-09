@@ -41,9 +41,7 @@ export const StockAllocationList = ({ allocations, error }: StockAllocationListP
     {
       key: 'locationId',
       label: 'Location',
-      render: allocation => (
-        <Typography variant="body2">{allocation.locationId || '—'}</Typography>
-      ),
+      render: allocation => <Typography variant="body2">{allocation.locationId || '—'}</Typography>,
       hideOnMobile: true,
     },
     {
@@ -102,4 +100,3 @@ export const StockAllocationList = ({ allocations, error }: StockAllocationListP
     />
   );
 };
-

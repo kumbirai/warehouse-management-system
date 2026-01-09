@@ -172,4 +172,3 @@ export const StockAllocationDetail = ({
     </Box>
   );
 };
-

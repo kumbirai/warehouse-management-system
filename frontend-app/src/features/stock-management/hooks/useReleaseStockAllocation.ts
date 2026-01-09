@@ -40,4 +40,3 @@ export const useReleaseStockAllocation = (): UseReleaseStockAllocationResult => 
 
   return { releaseStockAllocation, isLoading, error };
 };
-

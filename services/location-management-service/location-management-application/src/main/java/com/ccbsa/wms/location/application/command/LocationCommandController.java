@@ -13,19 +13,29 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.application.api.ApiResponseBuilder;
 import com.ccbsa.wms.location.application.dto.command.AssignLocationsFEFOCommandDTO;
+import com.ccbsa.wms.location.application.dto.command.BlockLocationCommandDTO;
+import com.ccbsa.wms.location.application.dto.command.BlockLocationResultDTO;
 import com.ccbsa.wms.location.application.dto.command.CreateLocationCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.CreateLocationResultDTO;
+import com.ccbsa.wms.location.application.dto.command.UnblockLocationCommandDTO;
+import com.ccbsa.wms.location.application.dto.command.UnblockLocationResultDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationStatusCommandDTO;
 import com.ccbsa.wms.location.application.dto.mapper.LocationDTOMapper;
 import com.ccbsa.wms.location.application.dto.query.LocationQueryResultDTO;
 import com.ccbsa.wms.location.application.service.command.AssignLocationsFEFOCommandHandler;
+import com.ccbsa.wms.location.application.service.command.BlockLocationCommandHandler;
 import com.ccbsa.wms.location.application.service.command.CreateLocationCommandHandler;
+import com.ccbsa.wms.location.application.service.command.UnblockLocationCommandHandler;
 import com.ccbsa.wms.location.application.service.command.UpdateLocationCommandHandler;
 import com.ccbsa.wms.location.application.service.command.UpdateLocationStatusCommandHandler;
 import com.ccbsa.wms.location.application.service.command.dto.AssignLocationsFEFOCommand;
+import com.ccbsa.wms.location.application.service.command.dto.BlockLocationCommand;
+import com.ccbsa.wms.location.application.service.command.dto.BlockLocationResult;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationCommand;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationResult;
+import com.ccbsa.wms.location.application.service.command.dto.UnblockLocationCommand;
+import com.ccbsa.wms.location.application.service.command.dto.UnblockLocationResult;
 import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationCommand;
 import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationStatusCommand;
 import com.ccbsa.wms.location.application.service.query.GetLocationQueryHandler;
@@ -56,8 +66,8 @@ public class LocationCommandController {
     private final UpdateLocationStatusCommandHandler updateStatusCommandHandler;
     private final AssignLocationsFEFOCommandHandler fefoCommandHandler;
     private final GetLocationQueryHandler getLocationQueryHandler;
-    private final com.ccbsa.wms.location.application.service.command.BlockLocationCommandHandler blockLocationCommandHandler;
-    private final com.ccbsa.wms.location.application.service.command.UnblockLocationCommandHandler unblockLocationCommandHandler;
+    private final BlockLocationCommandHandler blockLocationCommandHandler;
+    private final UnblockLocationCommandHandler unblockLocationCommandHandler;
     private final LocationDTOMapper mapper;
 
     @PostMapping
@@ -135,18 +145,16 @@ public class LocationCommandController {
     @PostMapping("/{locationId}/block")
     @Operation(summary = "Block Location", description = "Blocks a location, preventing stock movements to/from it")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'SERVICE')")
-    public ResponseEntity<ApiResponse<com.ccbsa.wms.location.application.dto.command.BlockLocationResultDTO>> blockLocation(@PathVariable String locationId,
-                                                                                                                            @RequestHeader("X-Tenant-Id") String tenantId,
-                                                                                                                            @Valid @RequestBody
-                                                                                                                            com.ccbsa.wms.location.application.dto.command.BlockLocationCommandDTO commandDTO) {
+    public ResponseEntity<ApiResponse<BlockLocationResultDTO>> blockLocation(@PathVariable String locationId, @RequestHeader("X-Tenant-Id") String tenantId,
+                                                                             @Valid @RequestBody BlockLocationCommandDTO commandDTO) {
         // Map DTO to command
-        com.ccbsa.wms.location.application.service.command.dto.BlockLocationCommand command = mapper.toBlockLocationCommand(locationId, tenantId, commandDTO);
+        BlockLocationCommand command = mapper.toBlockLocationCommand(locationId, tenantId, commandDTO);
 
         // Execute command
-        com.ccbsa.wms.location.application.service.command.dto.BlockLocationResult result = blockLocationCommandHandler.handle(command);
+        BlockLocationResult result = blockLocationCommandHandler.handle(command);
 
         // Map result to DTO
-        com.ccbsa.wms.location.application.dto.command.BlockLocationResultDTO resultDTO = mapper.toBlockLocationResultDTO(result);
+        BlockLocationResultDTO resultDTO = mapper.toBlockLocationResultDTO(result);
 
         return ApiResponseBuilder.ok(resultDTO);
     }
@@ -154,18 +162,16 @@ public class LocationCommandController {
     @PostMapping("/{locationId}/unblock")
     @Operation(summary = "Unblock Location", description = "Unblocks a location, allowing stock movements to/from it")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER', 'SERVICE')")
-    public ResponseEntity<ApiResponse<com.ccbsa.wms.location.application.dto.command.UnblockLocationResultDTO>> unblockLocation(@PathVariable String locationId,
-                                                                                                                                @RequestHeader("X-Tenant-Id") String tenantId,
-                                                                                                                                @Valid @RequestBody(required = false)
-                                                                                                                                com.ccbsa.wms.location.application.dto.command.UnblockLocationCommandDTO commandDTO) {
+    public ResponseEntity<ApiResponse<UnblockLocationResultDTO>> unblockLocation(@PathVariable String locationId, @RequestHeader("X-Tenant-Id") String tenantId,
+                                                                                 @Valid @RequestBody(required = false) UnblockLocationCommandDTO commandDTO) {
         // Map DTO to command
-        com.ccbsa.wms.location.application.service.command.dto.UnblockLocationCommand command = mapper.toUnblockLocationCommand(locationId, tenantId);
+        UnblockLocationCommand command = mapper.toUnblockLocationCommand(locationId, tenantId);
 
         // Execute command
-        com.ccbsa.wms.location.application.service.command.dto.UnblockLocationResult result = unblockLocationCommandHandler.handle(command);
+        UnblockLocationResult result = unblockLocationCommandHandler.handle(command);
 
         // Map result to DTO
-        com.ccbsa.wms.location.application.dto.command.UnblockLocationResultDTO resultDTO = mapper.toUnblockLocationResultDTO(result);
+        UnblockLocationResultDTO resultDTO = mapper.toUnblockLocationResultDTO(result);
 
         return ApiResponseBuilder.ok(resultDTO);
     }

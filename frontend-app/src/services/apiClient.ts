@@ -13,6 +13,25 @@ interface ExtendedAxiosInstance extends AxiosInstance {
 }
 
 /**
+ * Circuit breaker state for tracking persistent failures.
+ * Prevents infinite retry loops by temporarily disabling retries after repeated failures.
+ */
+interface CircuitBreakerState {
+  failures: number;
+  lastFailureTime: number;
+  isOpen: boolean;
+}
+
+// Circuit breaker configuration
+const CIRCUIT_BREAKER_CONFIG = {
+  failureThreshold: 5, // Open circuit after 5 consecutive failures
+  resetTimeout: 30000, // Reset after 30 seconds
+};
+
+// Track circuit breaker state per URL pattern
+const circuitBreakers = new Map<string, CircuitBreakerState>();
+
+/**
  * Base API client configuration.
  * Handles authentication token injection and error handling.
  *
@@ -183,43 +202,111 @@ apiClient.interceptors.response.use(
 
     // Handle 429 Too Many Requests - rate limited
     if (error.response?.status === 429) {
-      // Don't retry rate limit errors immediately - wait a bit
       const retryAfter = error.response.headers['retry-after'];
       const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : 2000;
 
       if (originalRequest && !originalRequest._retry) {
         originalRequest._retry = true;
+        logger.warn('Rate limited (429), waiting before retry', {
+          url: originalRequest.url,
+          waitTime,
+        });
         await new Promise(resolve => setTimeout(resolve, waitTime));
         return apiClient(originalRequest);
       }
       // If already retried, reject to prevent infinite loops
+      logger.error('Rate limit retry already attempted, rejecting', {
+        url: originalRequest?.url,
+      });
       return Promise.reject(error);
     }
 
-    // Handle 5xx server errors - retry with exponential backoff
+    // Handle 5xx server errors - retry with exponential backoff and circuit breaker
     if (error.response?.status && error.response.status >= 500 && error.response.status < 600) {
-      const retryCount = (originalRequest?._retryCount as number) || 0;
-      const maxRetries = 3;
-
-      if (originalRequest && retryCount < maxRetries) {
-        originalRequest._retryCount = retryCount + 1;
-        const backoffDelay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 1s, 2s, 4s
-
-        logger.warn(`Retrying request after ${backoffDelay}ms (attempt ${retryCount + 1}/${maxRetries})`, {
-          url: originalRequest.url,
+      if (!originalRequest) {
+        logger.error('No original request config for 5xx error, cannot retry', {
           status: error.response.status,
         });
+        return Promise.reject(error);
+      }
+
+      // Get or initialize retry count
+      const retryCount = (originalRequest._retryCount as number) || 0;
+      const maxRetries = 3;
+
+      // Check circuit breaker
+      const urlKey = originalRequest.url || 'unknown';
+      const circuitBreaker = circuitBreakers.get(urlKey) || {
+        failures: 0,
+        lastFailureTime: 0,
+        isOpen: false,
+      };
+
+      // Reset circuit breaker if enough time has passed
+      const now = Date.now();
+      if (circuitBreaker.isOpen && now - circuitBreaker.lastFailureTime > CIRCUIT_BREAKER_CONFIG.resetTimeout) {
+        logger.info('Circuit breaker reset, allowing retries again', { url: urlKey });
+        circuitBreaker.isOpen = false;
+        circuitBreaker.failures = 0;
+      }
+
+      // If circuit is open, reject immediately
+      if (circuitBreaker.isOpen) {
+        logger.warn('Circuit breaker is open, rejecting request without retry', {
+          url: urlKey,
+          status: error.response.status,
+        });
+        return Promise.reject(error);
+      }
+
+      // Increment failure count
+      circuitBreaker.failures++;
+      circuitBreaker.lastFailureTime = now;
+
+      // Open circuit if threshold exceeded
+      if (circuitBreaker.failures >= CIRCUIT_BREAKER_CONFIG.failureThreshold) {
+        circuitBreaker.isOpen = true;
+        logger.error('Circuit breaker opened due to persistent failures', {
+          url: urlKey,
+          failures: circuitBreaker.failures,
+          threshold: CIRCUIT_BREAKER_CONFIG.failureThreshold,
+        });
+        circuitBreakers.set(urlKey, circuitBreaker);
+        return Promise.reject(error);
+      }
+
+      // Retry if under max retries
+      if (retryCount < maxRetries) {
+        originalRequest._retryCount = retryCount + 1;
+        
+        // Exponential backoff with jitter to prevent thundering herd
+        const baseDelay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+        const jitter = Math.random() * 1000; // Random jitter up to 1s
+        const backoffDelay = baseDelay + jitter;
+
+        logger.warn(`Retrying request after ${Math.round(backoffDelay)}ms (attempt ${retryCount + 1}/${maxRetries})`, {
+          url: originalRequest.url,
+          status: error.response.status,
+          circuitBreakerFailures: circuitBreaker.failures,
+        });
+
+        // Store updated circuit breaker state
+        circuitBreakers.set(urlKey, circuitBreaker);
 
         await new Promise(resolve => setTimeout(resolve, backoffDelay));
         return apiClient(originalRequest);
       }
 
-      // Max retries reached or no original request
+      // Max retries reached
       logger.error('Max retries reached for 5xx error', {
-        url: originalRequest?.url,
+        url: originalRequest.url,
         status: error.response.status,
         retryCount,
+        circuitBreakerFailures: circuitBreaker.failures,
       });
+      
+      // Update circuit breaker
+      circuitBreakers.set(urlKey, circuitBreaker);
       return Promise.reject(error);
     }
 
@@ -316,6 +403,17 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         // Refresh failed - already handled in refresh promise
         return Promise.reject(refreshError);
+      }
+    }
+
+    // For successful responses or non-retryable errors, reset circuit breaker for this URL
+    if (originalRequest?.url) {
+      const urlKey = originalRequest.url;
+      const circuitBreaker = circuitBreakers.get(urlKey);
+      if (circuitBreaker && circuitBreaker.failures > 0) {
+        // Reset failure count on success (but keep circuit breaker state)
+        circuitBreaker.failures = 0;
+        circuitBreakers.set(urlKey, circuitBreaker);
       }
     }
 

@@ -1,5 +1,6 @@
 package com.ccbsa.wms.gateway.api;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Assumptions;
@@ -15,8 +16,15 @@ import java.util.List;
 
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
+import com.ccbsa.wms.gateway.api.dto.CreateConsignmentRequest;
+import com.ccbsa.wms.gateway.api.dto.CreateLocationRequest;
+import com.ccbsa.wms.gateway.api.dto.CreateLocationResponse;
+import com.ccbsa.wms.gateway.api.dto.CreateProductRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateProductResponse;
 import com.ccbsa.wms.gateway.api.dto.StockLevelResponse;
+import com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder;
+import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
+import com.ccbsa.wms.gateway.api.fixture.ProductTestDataBuilder;
 import com.ccbsa.wms.gateway.api.helper.AuthenticationHelper;
 import com.ccbsa.wms.gateway.api.util.CookieExtractor;
 import com.ccbsa.wms.gateway.api.util.RequestHeaderHelper;
@@ -144,7 +152,7 @@ public abstract class BaseIntegrationTest {
         if (tenantAdminUsername == null || tenantAdminUsername.isEmpty() ||
                 tenantAdminPassword == null || tenantAdminPassword.isEmpty() ||
                 "tenantadmin".equals(tenantAdminUsername)) {
-            org.junit.jupiter.api.Assumptions.assumeTrue(false,
+            Assumptions.assumeTrue(false,
                     "Tenant admin credentials not configured. " +
                             "Set TEST_TENANT_ADMIN_USERNAME and TEST_TENANT_ADMIN_PASSWORD environment variables " +
                             "to enable tenant admin tests.");
@@ -154,7 +162,7 @@ public abstract class BaseIntegrationTest {
             return authHelper.login(tenantAdminUsername, tenantAdminPassword);
         } catch (AssertionError e) {
             // If login fails, skip the test with a helpful message
-            org.junit.jupiter.api.Assumptions.assumeTrue(false,
+            Assumptions.assumeTrue(false,
                     "Tenant admin login failed. " +
                             "Please ensure tenant admin user exists and credentials are correct. " +
                             "Error: " + e.getMessage());
@@ -616,24 +624,24 @@ public abstract class BaseIntegrationTest {
      * @return CreateProductResponse containing the created product details
      */
     protected CreateProductResponse createProduct(String accessToken, String tenantId) {
-        com.ccbsa.wms.gateway.api.dto.CreateProductRequest productRequest = 
-                com.ccbsa.wms.gateway.api.fixture.ProductTestDataBuilder.buildCreateProductRequest();
+        CreateProductRequest productRequest = 
+                ProductTestDataBuilder.buildCreateProductRequest();
         
-        EntityExchangeResult<ApiResponse<com.ccbsa.wms.gateway.api.dto.CreateProductResponse>> productResult = authenticatedPost(
+        EntityExchangeResult<ApiResponse<CreateProductResponse>> productResult = authenticatedPost(
                 "/api/v1/products",
                 accessToken,
                 tenantId,
                 productRequest
         ).exchange()
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<com.ccbsa.wms.gateway.api.dto.CreateProductResponse>>() {
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
                 })
                 .returnResult();
 
-        ApiResponse<com.ccbsa.wms.gateway.api.dto.CreateProductResponse> productApiResponse = productResult.getResponseBody();
+        ApiResponse<CreateProductResponse> productApiResponse = productResult.getResponseBody();
         assertThat(productApiResponse).isNotNull();
         assertThat(productApiResponse.isSuccess()).isTrue();
-        com.ccbsa.wms.gateway.api.dto.CreateProductResponse product = productApiResponse.getData();
+        CreateProductResponse product = productApiResponse.getData();
         assertThat(product).isNotNull();
         return product;
     }
@@ -645,25 +653,25 @@ public abstract class BaseIntegrationTest {
      * @param tenantId the tenant ID
      * @return CreateLocationResponse containing the created location details
      */
-    protected com.ccbsa.wms.gateway.api.dto.CreateLocationResponse createLocation(String accessToken, String tenantId) {
-        com.ccbsa.wms.gateway.api.dto.CreateLocationRequest locationRequest = 
-                com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder.buildWarehouseRequest();
+    protected CreateLocationResponse createLocation(String accessToken, String tenantId) {
+        CreateLocationRequest locationRequest = 
+                LocationTestDataBuilder.buildWarehouseRequest();
         
-        EntityExchangeResult<ApiResponse<com.ccbsa.wms.gateway.api.dto.CreateLocationResponse>> locationResult = authenticatedPost(
+        EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationResult = authenticatedPost(
                 "/api/v1/location-management/locations",
                 accessToken,
                 tenantId,
                 locationRequest
         ).exchange()
                 .expectStatus().isCreated()
-                .expectBody(new ParameterizedTypeReference<ApiResponse<com.ccbsa.wms.gateway.api.dto.CreateLocationResponse>>() {
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
                 })
                 .returnResult();
 
-        ApiResponse<com.ccbsa.wms.gateway.api.dto.CreateLocationResponse> locationApiResponse = locationResult.getResponseBody();
+        ApiResponse<CreateLocationResponse> locationApiResponse = locationResult.getResponseBody();
         assertThat(locationApiResponse).isNotNull();
         assertThat(locationApiResponse.isSuccess()).isTrue();
-        com.ccbsa.wms.gateway.api.dto.CreateLocationResponse location = locationApiResponse.getData();
+        CreateLocationResponse location = locationApiResponse.getData();
         assertThat(location).isNotNull();
         return location;
     }
@@ -685,18 +693,18 @@ public abstract class BaseIntegrationTest {
             String warehouseId, 
             String productCode, 
             int quantity, 
-            java.time.LocalDate expirationDate,
+            LocalDate expirationDate,
             String productId,
             String accessToken, 
             String tenantId,
             int maxWaitSeconds) {
         
-        com.ccbsa.wms.gateway.api.dto.CreateConsignmentRequest consignmentRequest;
+        CreateConsignmentRequest consignmentRequest;
         if (expirationDate != null) {
-            consignmentRequest = com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder
+            consignmentRequest = ConsignmentTestDataBuilder
                     .buildCreateConsignmentRequestV2WithExpiration(warehouseId, productCode, expirationDate);
         } else {
-            consignmentRequest = com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder
+            consignmentRequest = ConsignmentTestDataBuilder
                     .buildCreateConsignmentRequestV2(warehouseId, productCode, quantity, null);
         }
         

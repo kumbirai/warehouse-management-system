@@ -76,8 +76,9 @@ public class GetStockItemsByProductQueryHandler {
                     .productCode(productInfoValue != null ? productInfoValue.getProductCode() : null)
                     .productDescription(productInfoValue != null ? productInfoValue.getDescription() : null).locationId(stockItemView.getLocationId())
                     .locationCode(locationInfo != null ? locationInfo.code() : null).locationName(locationInfo != null ? locationInfo.getDisplayName() : null)
-                    .quantity(stockItemView.getQuantity()).expirationDate(stockItemView.getExpirationDate()).classification(stockItemView.getClassification())
-                    .consignmentId(stockItemView.getConsignmentId()).createdAt(stockItemView.getCreatedAt()).lastModifiedAt(stockItemView.getLastModifiedAt()).build();
+                    .locationHierarchy(locationInfo != null ? locationInfo.getHierarchy() : null).quantity(stockItemView.getQuantity())
+                    .expirationDate(stockItemView.getExpirationDate()).classification(stockItemView.getClassification()).consignmentId(stockItemView.getConsignmentId())
+                    .createdAt(stockItemView.getCreatedAt()).lastModifiedAt(stockItemView.getLastModifiedAt()).build();
         }).collect(Collectors.toList());
     }
 }

@@ -1,21 +1,17 @@
-import { Alert, Box, Button, Grid, IconButton, InputAdornment, Paper, TextField, Typography } from '@mui/material';
-import { useState, useEffect } from 'react';
-import { z } from 'zod';
-import { useFieldArray, useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  QrCodeScanner as QrCodeIcon,
-} from '@mui/icons-material';
-import { CreateConsignmentRequest } from '../types/stockManagement';
-import { BarcodeScanner } from './BarcodeScanner';
-import { useValidateBarcode } from '../hooks/useValidateBarcode';
-import { FormActions } from '../../../components/common';
-import { WarehouseSelector } from './WarehouseSelector';
-import { UserSelector } from './UserSelector';
-import { useAppSelector } from '../../../store/hooks';
-import { selectUser } from '../../../store/authSlice';
+import {Alert, Box, Button, Grid, IconButton, InputAdornment, Paper, TextField, Typography,} from '@mui/material';
+import {useEffect, useState} from 'react';
+import {z} from 'zod';
+import {Controller, useFieldArray, useForm} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
+import {Add as AddIcon, Delete as DeleteIcon, QrCodeScanner as QrCodeIcon,} from '@mui/icons-material';
+import {CreateConsignmentRequest} from '../types/stockManagement';
+import {BarcodeScanner} from './BarcodeScanner';
+import {useValidateBarcode} from '../hooks/useValidateBarcode';
+import {FormActions} from '../../../components/common';
+import {WarehouseSelector} from './WarehouseSelector';
+import {UserSelector} from './UserSelector';
+import {useAppSelector} from '../../../store/hooks';
+import {selectUser} from '../../../store/authSlice';
 
 /**
  * Formats a Date object to a local datetime string in the format required by datetime-local input.
@@ -151,7 +147,7 @@ export const ConsignmentForm = ({
     // The datetime-local input gives us local time without timezone, which is what the backend expects
     // receivedAt is required by form validation, so it will always be present
     const receivedAtLocal = `${values.receivedAt}:00`;
-    
+
     const request: CreateConsignmentRequest = {
       consignmentReference: values.consignmentReference,
       warehouseId: values.warehouseId,
@@ -383,11 +379,7 @@ export const ConsignmentForm = ({
         </form>
       </Paper>
 
-      <BarcodeScanner 
-        open={scannerOpen} 
-        onClose={handleCloseScanner} 
-        onScan={handleScan}
-      />
+      <BarcodeScanner open={scannerOpen} onClose={handleCloseScanner} onScan={handleScan} />
     </>
   );
 };

@@ -3,7 +3,10 @@ package com.ccbsa.wms.location;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+
+import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
 
 /**
  * Location Management Service Application
@@ -15,6 +18,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication(scanBasePackages = {"com.ccbsa.wms.location", "com.ccbsa.wms.common.security", "com.ccbsa.common.cache"})
 @EnableJpaRepositories(basePackages = "com.ccbsa.wms.location.dataaccess.jpa")
 @EntityScan(basePackages = "com.ccbsa.wms.location.dataaccess.entity")
+@Import(MultiTenantDataAccessConfig.class)
 public class LocationManagementServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(LocationManagementServiceApplication.class, args);

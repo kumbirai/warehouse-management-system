@@ -165,7 +165,9 @@ export const stockManagementService = {
     allocationId: string,
     tenantId: string
   ): Promise<ApiResponse<{ allocationId: string; status: string; releasedAt: string }>> {
-    const response = await apiClient.put<ApiResponse<{ allocationId: string; status: string; releasedAt: string }>>(
+    const response = await apiClient.put<
+      ApiResponse<{ allocationId: string; status: string; releasedAt: string }>
+    >(
       `${STOCK_MANAGEMENT_BASE_PATH}/allocations/${allocationId}/release`,
       {},
       {
@@ -236,9 +238,7 @@ export const stockManagementService = {
   /**
    * Gets all stock items for a tenant (Sprint 3).
    */
-  async getAllStockItems(
-    tenantId: string
-  ): Promise<GetStockItemsByClassificationApiResponse> {
+  async getAllStockItems(tenantId: string): Promise<GetStockItemsByClassificationApiResponse> {
     const response = await apiClient.get<GetStockItemsByClassificationApiResponse>(
       `${STOCK_MANAGEMENT_BASE_PATH}/stock-items/all`,
       {

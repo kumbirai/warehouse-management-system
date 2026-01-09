@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useAssignLocationsFEFO } from '../hooks/useAssignLocationsFEFO';
 import { FEFOAssignmentForm } from '../components/FEFOAssignmentForm';
-import { FormPageLayout } from '../../../components/layouts/FormPageLayout';
+import { FormPageLayout } from '../../../components/layouts';
 import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
 import { useStockItemsByClassification } from '../../stock-management/hooks/useStockItemsByClassification';
 import { StockItem } from '../../stock-management/types/stockManagement';

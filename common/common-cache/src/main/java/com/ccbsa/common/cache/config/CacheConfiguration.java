@@ -9,6 +9,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
@@ -109,8 +110,13 @@ public class CacheConfiguration {
      * Tenant-Aware Cache Manager.
      * <p>
      * Features: - Automatic tenant prefix injection - Per-cache TTL configuration - JSON serialization with type safety - Cache-aside pattern support
+     * <p>
+     * Marked as @Primary to serve as the default CacheManager for Spring's @EnableCaching.
+     * Service-specific cache managers (e.g., hierarchyCacheManager) should be explicitly named
+     * and used with @Cacheable(cacheManager = "beanName") to avoid ambiguity.
      */
     @Bean
+    @Primary
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory, ObjectMapper redisCacheObjectMapper) {
         // JSON serializer for cache values
         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisCacheObjectMapper);

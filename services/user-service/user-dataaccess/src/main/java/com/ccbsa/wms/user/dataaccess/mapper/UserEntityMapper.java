@@ -10,7 +10,6 @@ import com.ccbsa.wms.user.domain.core.entity.User;
 import com.ccbsa.wms.user.domain.core.valueobject.FirstName;
 import com.ccbsa.wms.user.domain.core.valueobject.KeycloakUserId;
 import com.ccbsa.wms.user.domain.core.valueobject.LastName;
-import com.ccbsa.wms.user.domain.core.valueobject.UserStatus;
 import com.ccbsa.wms.user.domain.core.valueobject.Username;
 
 /**
@@ -43,7 +42,7 @@ public class UserEntityMapper {
         entity.setFirstName(user.getFirstName().map(FirstName::getValue).orElse(null));
         entity.setLastName(user.getLastName().map(LastName::getValue).orElse(null));
         entity.setKeycloakUserId(user.getKeycloakUserId().map(KeycloakUserId::getValue).orElse(null));
-        entity.setStatus(mapToEntityStatus(user.getStatus()));
+        entity.setStatus(user.getStatus());
         entity.setCreatedAt(user.getCreatedAt());
         entity.setLastModifiedAt(user.getLastModifiedAt());
 
@@ -60,19 +59,6 @@ public class UserEntityMapper {
     }
 
     /**
-     * Maps domain UserStatus to JPA entity UserStatus enum.
-     *
-     * @param domainStatus Domain status
-     * @return JPA entity status
-     */
-    private UserEntity.UserStatus mapToEntityStatus(UserStatus domainStatus) {
-        if (domainStatus == null) {
-            throw new IllegalArgumentException("UserStatus cannot be null");
-        }
-        return UserEntity.UserStatus.valueOf(domainStatus.name());
-    }
-
-    /**
      * Converts UserEntity JPA entity to User domain entity.
      *
      * @param entity UserEntity JPA entity
@@ -86,22 +72,9 @@ public class UserEntityMapper {
 
         return User.builder().userId(UserId.of(entity.getUserId())).tenantId(TenantId.of(entity.getTenantId())).username(Username.of(entity.getUsername()))
                 .email(EmailAddress.of(entity.getEmailAddress())).firstName(FirstName.of(entity.getFirstName())).lastName(LastName.of(entity.getLastName()))
-                .keycloakUserId(entity.getKeycloakUserId() != null ? KeycloakUserId.of(entity.getKeycloakUserId()) : null).status(mapToDomainStatus(entity.getStatus()))
+                .keycloakUserId(entity.getKeycloakUserId() != null ? KeycloakUserId.of(entity.getKeycloakUserId()) : null).status(entity.getStatus())
                 .createdAt(entity.getCreatedAt()).lastModifiedAt(entity.getLastModifiedAt()).version(entity.getVersion() != null ? entity.getVersion().intValue() : 0)
                 .buildWithoutEvents();
-    }
-
-    /**
-     * Maps JPA entity UserStatus enum to domain UserStatus.
-     *
-     * @param entityStatus JPA entity status
-     * @return Domain status
-     */
-    private UserStatus mapToDomainStatus(UserEntity.UserStatus entityStatus) {
-        if (entityStatus == null) {
-            throw new IllegalArgumentException("UserStatus cannot be null");
-        }
-        return UserStatus.valueOf(entityStatus.name());
     }
 }
 

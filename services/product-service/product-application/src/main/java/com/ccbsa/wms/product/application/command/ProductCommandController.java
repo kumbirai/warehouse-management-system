@@ -23,8 +23,11 @@ import com.ccbsa.wms.product.application.dto.mapper.ProductDTOMapper;
 import com.ccbsa.wms.product.application.service.command.CreateProductCommandHandler;
 import com.ccbsa.wms.product.application.service.command.UpdateProductCommandHandler;
 import com.ccbsa.wms.product.application.service.command.UploadProductCsvCommandHandler;
+import com.ccbsa.wms.product.application.service.command.dto.CreateProductCommand;
 import com.ccbsa.wms.product.application.service.command.dto.CreateProductResult;
+import com.ccbsa.wms.product.application.service.command.dto.UpdateProductCommand;
 import com.ccbsa.wms.product.application.service.command.dto.UpdateProductResult;
+import com.ccbsa.wms.product.application.service.command.dto.UploadProductCsvCommand;
 import com.ccbsa.wms.product.application.service.command.dto.UploadProductCsvResult;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -57,7 +60,7 @@ public class ProductCommandController {
     public ResponseEntity<ApiResponse<CreateProductResultDTO>> createProduct(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                              @Valid @RequestBody CreateProductCommandDTO commandDTO) {
         // Map DTO to command
-        com.ccbsa.wms.product.application.service.command.dto.CreateProductCommand command = mapper.toCreateCommand(commandDTO, tenantId);
+        CreateProductCommand command = mapper.toCreateCommand(commandDTO, tenantId);
 
         // Execute command
         CreateProductResult result = createCommandHandler.handle(command);
@@ -74,7 +77,7 @@ public class ProductCommandController {
     public ResponseEntity<ApiResponse<UpdateProductResultDTO>> updateProduct(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable String productId,
                                                                              @Valid @RequestBody UpdateProductCommandDTO commandDTO) {
         // Map DTO to command
-        com.ccbsa.wms.product.application.service.command.dto.UpdateProductCommand command = mapper.toUpdateCommand(commandDTO, productId, tenantId);
+        UpdateProductCommand command = mapper.toUpdateCommand(commandDTO, productId, tenantId);
 
         // Execute command
         UpdateProductResult result = updateCommandHandler.handle(command);
@@ -90,7 +93,7 @@ public class ProductCommandController {
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TENANT_ADMIN', 'SERVICE')")
     public ResponseEntity<ApiResponse<UploadProductCsvResultDTO>> uploadProductCsv(@RequestHeader("X-Tenant-Id") String tenantId, @RequestParam("file") MultipartFile file) {
         // Map file to command
-        com.ccbsa.wms.product.application.service.command.dto.UploadProductCsvCommand command = mapper.toUploadCsvCommand(file, tenantId);
+        UploadProductCsvCommand command = mapper.toUploadCsvCommand(file, tenantId);
 
         // Execute command
         UploadProductCsvResult result = uploadCsvCommandHandler.handle(command);

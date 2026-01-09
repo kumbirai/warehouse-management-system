@@ -10,7 +10,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import App from './App';
 import { store } from './store';
 import { theme } from './utils/theme';
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { ErrorBoundaryWithRetry } from './components/common';
 import { logger } from './utils/logger';
 import './index.css';
 
@@ -54,7 +54,7 @@ const queryClient = new QueryClient({
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ErrorBoundary>
+    <ErrorBoundaryWithRetry>
       <QueryClientProvider client={queryClient}>
         <Provider store={store}>
           <BrowserRouter
@@ -82,6 +82,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           </BrowserRouter>
         </Provider>
       </QueryClientProvider>
-    </ErrorBoundary>
+    </ErrorBoundaryWithRetry>
   </React.StrictMode>
 );

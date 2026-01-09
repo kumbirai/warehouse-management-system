@@ -1,6 +1,8 @@
 import { Box, Chip, Divider, Grid, Paper, Stack, Typography } from '@mui/material';
 import { Product } from '../types/product';
 import { formatDateTime } from '../../../utils/dateUtils';
+import { useStockLevels } from '../../stock-management/hooks/useStockLevels';
+import { StockLevelList } from '../../stock-management/components/StockLevelList';
 
 interface ProductDetailProps {
   product: Product | null;
@@ -8,6 +10,12 @@ interface ProductDetailProps {
 }
 
 export const ProductDetail = ({ product }: ProductDetailProps) => {
+  const { data: stockLevelsResponse, isLoading: isLoadingStockLevels } = useStockLevels({
+    productId: product?.productId,
+  });
+
+  const stockLevels = stockLevelsResponse?.data || [];
+
   if (!product) {
     return null;
   }
@@ -119,6 +127,27 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
               </Box>
             )}
           </Stack>
+        </Paper>
+      </Grid>
+
+      {/* Stock by Location */}
+      <Grid item xs={12}>
+        <Paper elevation={1} sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Stock by Location
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          {isLoadingStockLevels ? (
+            <Typography variant="body2" color="text.secondary">
+              Loading stock levels...
+            </Typography>
+          ) : stockLevels.length > 0 ? (
+            <StockLevelList stockLevels={stockLevels} />
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              No stock available for this product
+            </Typography>
+          )}
         </Paper>
       </Grid>
     </Grid>

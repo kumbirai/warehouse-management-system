@@ -14,6 +14,8 @@ import com.ccbsa.wms.stock.application.dto.command.AdjustStockCommandDTO;
 import com.ccbsa.wms.stock.application.dto.command.AdjustStockResultDTO;
 import com.ccbsa.wms.stock.application.dto.mapper.StockManagementDTOMapper;
 import com.ccbsa.wms.stock.application.service.command.AdjustStockCommandHandler;
+import com.ccbsa.wms.stock.application.service.command.dto.AdjustStockCommand;
+import com.ccbsa.wms.stock.application.service.command.dto.AdjustStockResult;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,10 +49,10 @@ public class StockAdjustmentCommandController {
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'SERVICE')")
     public ResponseEntity<ApiResponse<AdjustStockResultDTO>> adjustStock(@RequestHeader("X-Tenant-Id") String tenantId, @Valid @RequestBody AdjustStockCommandDTO commandDTO) {
         // Map DTO to command
-        com.ccbsa.wms.stock.application.service.command.dto.AdjustStockCommand command = mapper.toAdjustStockCommand(commandDTO, tenantId);
+        AdjustStockCommand command = mapper.toAdjustStockCommand(commandDTO, tenantId);
 
         // Execute command
-        com.ccbsa.wms.stock.application.service.command.dto.AdjustStockResult result = adjustCommandHandler.handle(command);
+        AdjustStockResult result = adjustCommandHandler.handle(command);
 
         // Map result to DTO
         AdjustStockResultDTO resultDTO = mapper.toAdjustStockResultDTO(result);

@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.application.api.ApiResponseBuilder;
+import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.stock.application.dto.command.CreateConsignmentCommandDTO;
 import com.ccbsa.wms.stock.application.dto.command.CreateConsignmentResultDTO;
 import com.ccbsa.wms.stock.application.dto.command.UploadConsignmentCsvResultDTO;
@@ -33,6 +34,7 @@ import com.ccbsa.wms.stock.application.service.command.dto.UploadConsignmentCsvC
 import com.ccbsa.wms.stock.application.service.command.dto.UploadConsignmentCsvResult;
 import com.ccbsa.wms.stock.application.service.command.dto.ValidateConsignmentCommand;
 import com.ccbsa.wms.stock.application.service.command.dto.ValidateConsignmentResult;
+import com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -102,16 +104,23 @@ public class StockConsignmentCommandController {
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'SERVICE')")
     public ResponseEntity<ApiResponse<ValidateConsignmentResultDTO>> validateConsignment(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                                          @Valid @RequestBody ValidateConsignmentCommandDTO commandDTO) {
-        // Map DTO to command
-        ValidateConsignmentCommand command = mapper.toValidateCommand(commandDTO, tenantId);
+        try {
+            // Map DTO to command
+            ValidateConsignmentCommand command = mapper.toValidateCommand(commandDTO, tenantId);
 
-        // Execute command
-        ValidateConsignmentResult result = validateCommandHandler.handle(command);
+            // Execute command
+            ValidateConsignmentResult result = validateCommandHandler.handle(command);
 
-        // Map result to DTO
-        ValidateConsignmentResultDTO resultDTO = mapper.toValidateResultDTO(result);
+            // Map result to DTO
+            ValidateConsignmentResultDTO resultDTO = mapper.toValidateResultDTO(result);
 
-        return ApiResponseBuilder.ok(resultDTO);
+            return ApiResponseBuilder.ok(resultDTO);
+        } catch (IllegalArgumentException e) {
+            // Handle validation errors from mapper (e.g., invalid quantity in value objects)
+            // Convert to validation result so handler can process it
+            ValidateConsignmentResultDTO resultDTO = ValidateConsignmentResultDTO.builder().valid(false).validationErrors(java.util.List.of(e.getMessage())).build();
+            return ApiResponseBuilder.ok(resultDTO);
+        }
     }
 
     @PutMapping("/{consignmentId}/confirm")
@@ -119,8 +128,7 @@ public class StockConsignmentCommandController {
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'SERVICE')")
     public ResponseEntity<ApiResponse<Void>> confirmConsignment(@RequestHeader("X-Tenant-Id") String tenantId, @PathVariable("consignmentId") String consignmentId) {
         // Map to command
-        ConfirmConsignmentCommand command = ConfirmConsignmentCommand.builder().tenantId(com.ccbsa.common.domain.valueobject.TenantId.of(tenantId))
-                .consignmentId(com.ccbsa.wms.stock.domain.core.valueobject.ConsignmentId.of(consignmentId)).build();
+        ConfirmConsignmentCommand command = ConfirmConsignmentCommand.builder().tenantId(TenantId.of(tenantId)).consignmentId(ConsignmentId.of(consignmentId)).build();
 
         // Execute command
         confirmCommandHandler.handle(command);

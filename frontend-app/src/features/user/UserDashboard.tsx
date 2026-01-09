@@ -1,7 +1,7 @@
 import {Box, Button, Card, CardContent, Grid, Paper, Typography} from '@mui/material';
 import {Link as RouterLink} from 'react-router-dom';
 import {useAuth} from '../../hooks/useAuth';
-import {DashboardPageLayout} from '../../components/layouts/DashboardPageLayout';
+import {DashboardPageLayout} from '../../components/layouts';
 import {ExpiryAlertCard} from '../stock-management/components/ExpiryAlertCard';
 import {Routes} from '../../utils/navigationUtils';
 
@@ -42,8 +42,14 @@ export const UserDashboard = () => {
               <Typography variant="body2" color="text.secondary">
                 View and execute picking lists for orders.
               </Typography>
-              <Button sx={{ mt: 2 }} size="small" variant="outlined" disabled>
-                Coming Soon
+              <Button
+                sx={{ mt: 2 }}
+                size="small"
+                variant="contained"
+                component={RouterLink}
+                to={Routes.pickingLists}
+              >
+                View Picking Lists
               </Button>
             </CardContent>
           </Card>
@@ -62,11 +68,16 @@ export const UserDashboard = () => {
                   size="small"
                   variant="contained"
                   component={RouterLink}
-                  to="/locations/create"
+                  to={Routes.locationCreate}
                 >
                   Create Location
                 </Button>
-                <Button size="small" variant="outlined" component={RouterLink} to="/locations">
+                <Button
+                  size="small"
+                  variant="outlined"
+                  component={RouterLink}
+                  to={Routes.locations}
+                >
                   View Locations
                 </Button>
               </Box>
@@ -87,11 +98,11 @@ export const UserDashboard = () => {
                   size="small"
                   variant="contained"
                   component={RouterLink}
-                  to="/products/create"
+                  to={Routes.productCreate}
                 >
                   Create Product
                 </Button>
-                <Button size="small" variant="outlined" component={RouterLink} to="/products">
+                <Button size="small" variant="outlined" component={RouterLink} to={Routes.products}>
                   View Products
                 </Button>
               </Box>
@@ -112,7 +123,7 @@ export const UserDashboard = () => {
                   size="small"
                   variant="contained"
                   component={RouterLink}
-                  to="/stock-management/consignments/create"
+                  to={Routes.consignmentCreate}
                 >
                   Create Consignment
                 </Button>
@@ -120,7 +131,7 @@ export const UserDashboard = () => {
                   size="small"
                   variant="outlined"
                   component={RouterLink}
-                  to="/stock-management/consignments"
+                  to={Routes.consignments}
                 >
                   View Consignments
                 </Button>
@@ -128,7 +139,7 @@ export const UserDashboard = () => {
                   size="small"
                   variant="outlined"
                   component={RouterLink}
-                  to="/stock-management/consignments/upload-csv"
+                  to={Routes.consignmentUploadCsv}
                 >
                   Upload CSV
                 </Button>
@@ -151,7 +162,7 @@ export const UserDashboard = () => {
                   size="small"
                   variant="contained"
                   component={RouterLink}
-                  to="/stock-management/stock-items"
+                  to={Routes.stockItems}
                 >
                   View Stock Items
                 </Button>
@@ -213,7 +224,7 @@ export const UserDashboard = () => {
                   size="small"
                   variant="contained"
                   component={RouterLink}
-                  to="/admin/users"
+                  to={Routes.admin.users}
                 >
                   Manage Users
                 </Button>

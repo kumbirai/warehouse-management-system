@@ -12,6 +12,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.ccbsa.common.domain.DomainEvent;
+import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationCommand;
 import com.ccbsa.wms.location.application.service.command.dto.CreateLocationResult;
 import com.ccbsa.wms.location.application.service.port.messaging.LocationEventPublisher;
@@ -48,6 +49,11 @@ public class CreateLocationCommandHandler {
         // 2. Validate parent location exists if parentLocationId is provided
         if (command.getParentLocationId() != null && !command.getParentLocationId().trim().isEmpty()) {
             validateParentLocationExists(command.getParentLocationId(), command.getTenantId());
+            // 2a. Validate location hierarchy (parent-child type relationships)
+            if (command.getType() != null && !command.getType().trim().isEmpty()) {
+                LocationId parentId = LocationId.of(UUID.fromString(command.getParentLocationId()));
+                validateLocationHierarchy(command.getType(), parentId, command.getTenantId());
+            }
         }
 
         // 3. Validate barcode uniqueness if barcode is provided
@@ -151,7 +157,7 @@ public class CreateLocationCommandHandler {
      * @param tenantId         Tenant identifier
      * @throws IllegalArgumentException if parent location does not exist (returns 400 BAD_REQUEST)
      */
-    private void validateParentLocationExists(String parentLocationId, com.ccbsa.common.domain.valueobject.TenantId tenantId) {
+    private void validateParentLocationExists(String parentLocationId, TenantId tenantId) {
         try {
             LocationId parentId = LocationId.of(UUID.fromString(parentLocationId));
             if (repository.findByIdAndTenantId(parentId, tenantId).isEmpty()) {
@@ -164,13 +170,72 @@ public class CreateLocationCommandHandler {
     }
 
     /**
+     * Validates location hierarchy to ensure valid parent-child type relationships.
+     * <p>
+     * Hierarchy rules:
+     * - WAREHOUSE: no parent (root)
+     * - ZONE: parent must be WAREHOUSE
+     * - AISLE: parent must be ZONE
+     * - RACK: parent must be AISLE
+     * - BIN: parent must be RACK
+     *
+     * @param childType        Child location type to validate
+     * @param parentLocationId Parent location ID
+     * @param tenantId         Tenant identifier
+     * @throws IllegalArgumentException if hierarchy is invalid (returns 400 BAD_REQUEST)
+     */
+    private void validateLocationHierarchy(String childType, LocationId parentLocationId, TenantId tenantId) {
+        Location parentLocation = repository.findByIdAndTenantId(parentLocationId, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException(String.format("Parent location not found: %s", parentLocationId.getValueAsString())));
+
+        String parentType = parentLocation.getType() != null ? parentLocation.getType().getValue() : null;
+        if (parentType == null || parentType.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    String.format("Parent location type is required for hierarchy validation. Parent location ID: %s", parentLocationId.getValueAsString()));
+        }
+
+        String normalizedChildType = childType.trim().toUpperCase();
+        String normalizedParentType = parentType.trim().toUpperCase();
+
+        // Validate hierarchy rules
+        switch (normalizedChildType) {
+            case "WAREHOUSE":
+                throw new IllegalArgumentException("WAREHOUSE type locations cannot have a parent. They are the root of the hierarchy.");
+            case "ZONE":
+                if (!"WAREHOUSE".equals(normalizedParentType)) {
+                    throw new IllegalArgumentException(String.format("ZONE type locations must have a WAREHOUSE parent, but parent is of type: %s", parentType));
+                }
+                break;
+            case "AISLE":
+                if (!"ZONE".equals(normalizedParentType)) {
+                    throw new IllegalArgumentException(String.format("AISLE type locations must have a ZONE parent, but parent is of type: %s", parentType));
+                }
+                break;
+            case "RACK":
+                if (!"AISLE".equals(normalizedParentType)) {
+                    throw new IllegalArgumentException(String.format("RACK type locations must have an AISLE parent, but parent is of type: %s", parentType));
+                }
+                break;
+            case "BIN":
+                if (!"RACK".equals(normalizedParentType)) {
+                    throw new IllegalArgumentException(String.format("BIN type locations must have a RACK parent, but parent is of type: %s", parentType));
+                }
+                break;
+            default:
+                // Unknown type - log warning but don't fail (allows for future extension)
+                log.warn("Unknown location type for hierarchy validation: {}. Skipping hierarchy validation.", childType);
+                break;
+        }
+    }
+
+    /**
      * Validates that the barcode is unique for the tenant.
      *
      * @param barcode  Barcode to validate
      * @param tenantId Tenant identifier
      * @throws BarcodeAlreadyExistsException if barcode already exists
      */
-    private void validateBarcodeUniqueness(LocationBarcode barcode, com.ccbsa.common.domain.valueobject.TenantId tenantId) {
+    private void validateBarcodeUniqueness(LocationBarcode barcode, TenantId tenantId) {
         if (repository.existsByBarcodeAndTenantId(barcode, tenantId)) {
             throw new BarcodeAlreadyExistsException(String.format("Location barcode already exists: %s", barcode.getValue()));
         }
@@ -183,7 +248,7 @@ public class CreateLocationCommandHandler {
      * @param tenantId Tenant identifier
      * @throws CodeAlreadyExistsException if code already exists
      */
-    private void validateCodeUniqueness(String code, com.ccbsa.common.domain.valueobject.TenantId tenantId) {
+    private void validateCodeUniqueness(String code, TenantId tenantId) {
         if (repository.existsByCodeAndTenantId(code, tenantId)) {
             throw new CodeAlreadyExistsException(String.format("Location code already exists: %s", code));
         }
@@ -260,7 +325,7 @@ public class CreateLocationCommandHandler {
      * @param visitedIds       Set of visited location IDs to prevent infinite loops
      * @return Path string (e.g., "/WH-12/ZONE-X" for a zone)
      */
-    private String buildParentPathRecursively(LocationId parentLocationId, com.ccbsa.common.domain.valueobject.TenantId tenantId, Set<LocationId> visitedIds) {
+    private String buildParentPathRecursively(LocationId parentLocationId, TenantId tenantId, Set<LocationId> visitedIds) {
         // Prevent infinite loops
         if (visitedIds.contains(parentLocationId)) {
             log.warn("Circular reference detected in location hierarchy: {}", parentLocationId.getValueAsString());

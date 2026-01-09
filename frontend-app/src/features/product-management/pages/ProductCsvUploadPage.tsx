@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useUploadProductCsv } from '../hooks/useUploadProductCsv';
 import { ProductCsvUploadForm } from '../components/ProductCsvUploadForm';
 import { useAuth } from '../../../hooks/useAuth';
-import { FormPageLayout } from '../../../components/layouts/FormPageLayout';
+import { FormPageLayout } from '../../../components/layouts';
 import { getBreadcrumbs } from '../../../utils/navigationUtils';
 
 export const ProductCsvUploadPage = () => {

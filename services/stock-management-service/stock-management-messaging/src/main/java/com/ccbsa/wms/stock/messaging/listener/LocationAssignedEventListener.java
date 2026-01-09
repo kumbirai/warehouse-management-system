@@ -325,10 +325,8 @@ public class LocationAssignedEventListener {
                 log.info("Updated stock item with location assignment: stockItemId={}, locationId={}", stockItemIdString, locationIdString);
             } catch (IllegalStateException e) {
                 // Handle business rule violations gracefully (e.g., expired stock, zero quantity)
-                log.warn(
-                        "Cannot assign location to stock item due to business rule violation: stockItemId={}, locationId={}, error={}. Acknowledging event to prevent "
-                                + "reprocessing.",
-                        stockItemIdString, locationIdString, e.getMessage());
+                log.warn("Cannot assign location to stock item due to business rule violation: stockItemId={}, locationId={}, error={}. Acknowledging event to prevent "
+                        + "reprocessing.", stockItemIdString, locationIdString, e.getMessage());
                 return true;
             }
         } else {

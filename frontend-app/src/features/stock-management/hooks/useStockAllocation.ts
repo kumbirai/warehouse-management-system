@@ -17,4 +17,3 @@ export const useStockAllocation = (allocationId: string | null) => {
     enabled: !!allocationId && !!user?.tenantId,
   });
 };
-

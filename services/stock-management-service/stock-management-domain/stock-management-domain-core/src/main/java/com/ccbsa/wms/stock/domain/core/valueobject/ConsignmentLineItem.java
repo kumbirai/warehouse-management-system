@@ -1,8 +1,9 @@
 package com.ccbsa.wms.stock.domain.core.valueobject;
 
-import java.time.LocalDate;
 import java.util.Objects;
 
+import com.ccbsa.common.domain.valueobject.ExpirationDate;
+import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
 
 /**
@@ -14,8 +15,8 @@ import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
  */
 public final class ConsignmentLineItem {
     private final ProductCode productCode;
-    private final int quantity;
-    private final LocalDate expirationDate;
+    private final Quantity quantity;
+    private final ExpirationDate expirationDate;
 
     private ConsignmentLineItem(Builder builder) {
         validate(builder.productCode, builder.quantity, builder.expirationDate);
@@ -32,11 +33,14 @@ public final class ConsignmentLineItem {
      * @param expirationDate Expiration date (optional)
      * @throws IllegalArgumentException if validation fails
      */
-    private void validate(ProductCode productCode, int quantity, LocalDate expirationDate) {
+    private void validate(ProductCode productCode, Quantity quantity, ExpirationDate expirationDate) {
         if (productCode == null) {
             throw new IllegalArgumentException("ProductCode is required");
         }
-        if (quantity <= 0) {
+        if (quantity == null) {
+            throw new IllegalArgumentException("Quantity is required");
+        }
+        if (!quantity.isPositive()) {
             throw new IllegalArgumentException("Quantity must be positive");
         }
         // Note: Expiration date validation is lenient - past dates are allowed
@@ -69,7 +73,7 @@ public final class ConsignmentLineItem {
      *
      * @return Quantity (always positive)
      */
-    public int getQuantity() {
+    public Quantity getQuantity() {
         return quantity;
     }
 
@@ -78,7 +82,7 @@ public final class ConsignmentLineItem {
      *
      * @return ExpirationDate (optional, may be null)
      */
-    public LocalDate getExpirationDate() {
+    public ExpirationDate getExpirationDate() {
         return expirationDate;
     }
 
@@ -100,7 +104,7 @@ public final class ConsignmentLineItem {
             return false;
         }
         ConsignmentLineItem that = (ConsignmentLineItem) o;
-        return quantity == that.quantity && Objects.equals(productCode, that.productCode) && Objects.equals(expirationDate, that.expirationDate);
+        return Objects.equals(quantity, that.quantity) && Objects.equals(productCode, that.productCode) && Objects.equals(expirationDate, that.expirationDate);
     }
 
     @Override
@@ -110,7 +114,7 @@ public final class ConsignmentLineItem {
 
     @Override
     public String toString() {
-        return String.format("ConsignmentLineItem{productCode=%s, quantity=%d, expirationDate=%s}", productCode, quantity, expirationDate);
+        return String.format("ConsignmentLineItem{productCode=%s, quantity=%s, expirationDate=%s}", productCode, quantity, expirationDate);
     }
 
     /**
@@ -118,8 +122,8 @@ public final class ConsignmentLineItem {
      */
     public static class Builder {
         private ProductCode productCode;
-        private int quantity;
-        private LocalDate expirationDate;
+        private Quantity quantity;
+        private ExpirationDate expirationDate;
 
         public Builder productCode(ProductCode productCode) {
             this.productCode = productCode;
@@ -131,13 +135,37 @@ public final class ConsignmentLineItem {
             return this;
         }
 
-        public Builder quantity(int quantity) {
+        public Builder quantity(Quantity quantity) {
             this.quantity = quantity;
             return this;
         }
 
-        public Builder expirationDate(LocalDate expirationDate) {
+        /**
+         * Convenience method to set quantity from integer value.
+         * Converts int to Quantity value object.
+         *
+         * @param quantity Integer value (must be positive)
+         * @return Builder instance
+         */
+        public Builder quantity(int quantity) {
+            this.quantity = Quantity.of(quantity);
+            return this;
+        }
+
+        public Builder expirationDate(ExpirationDate expirationDate) {
             this.expirationDate = expirationDate;
+            return this;
+        }
+
+        /**
+         * Convenience method to set expiration date from LocalDate.
+         * Converts LocalDate to ExpirationDate value object.
+         *
+         * @param expirationDate LocalDate value (may be null)
+         * @return Builder instance
+         */
+        public Builder expirationDate(java.time.LocalDate expirationDate) {
+            this.expirationDate = expirationDate != null ? ExpirationDate.of(expirationDate) : null;
             return this;
         }
 

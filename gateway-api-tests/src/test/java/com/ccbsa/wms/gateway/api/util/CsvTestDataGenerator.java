@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 
 import com.ccbsa.wms.gateway.api.fixture.TestData;
 
@@ -64,7 +65,7 @@ public class CsvTestDataGenerator {
 
             // Write rows - each row is a line item, multiple rows with same ConsignmentReference form one consignment
             String consignmentRef = "CONS-TEST-" + System.currentTimeMillis();
-            java.time.LocalDateTime receivedDate = java.time.LocalDateTime.now();
+            LocalDateTime receivedDate = LocalDateTime.now();
             
             for (int i = 0; i < rowCount; i++) {
                 // Use same consignment reference for all rows (single consignment with multiple line items)

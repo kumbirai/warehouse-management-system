@@ -1,5 +1,6 @@
 package com.ccbsa.wms.gateway.api.util;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.springframework.http.HttpHeaders;
@@ -66,7 +67,7 @@ public class CookieExtractor {
             } else if (attr.startsWith("max-age=")) {
                 try {
                     long maxAge = Long.parseLong(attr.substring("max-age=".length()).trim());
-                    builder.maxAge(java.time.Duration.ofSeconds(maxAge));
+                    builder.maxAge(Duration.ofSeconds(maxAge));
                 } catch (NumberFormatException e) {
                     // Ignore invalid max-age
                 }

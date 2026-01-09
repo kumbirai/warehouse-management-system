@@ -85,10 +85,11 @@ public class PickingServiceTest extends BaseIntegrationTest {
             assertThat(location).isNotNull();
             testLocationId = location.getLocationId();
 
-            // Create consignment for picking
+            // Create consignment for picking using new API structure
             if (testProductId != null && testLocationId != null) {
-                CreateConsignmentRequest consignmentRequest = ConsignmentTestDataBuilder.buildCreateConsignmentRequestWithQuantity(
-                        testProductId, testLocationId, 100);
+                String productCode = product.getProductCode();
+                CreateConsignmentRequest consignmentRequest = ConsignmentTestDataBuilder.buildCreateConsignmentRequestV2(
+                        testLocationId, productCode, 100, null);
                 authenticatedPost(
                         "/api/v1/stock-management/consignments",
                         tenantAdminAuth.getAccessToken(),

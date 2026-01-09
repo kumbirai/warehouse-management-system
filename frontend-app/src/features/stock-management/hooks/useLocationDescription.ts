@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
-import { useLocations } from '../../location-management/hooks/useLocations';
-import { useAppSelector } from '../../../store/hooks';
-import { selectUser } from '../../../store/authSlice';
+import {useMemo} from 'react';
+import {useLocations} from '../../location-management/hooks/useLocations';
+import {useAppSelector} from '../../../store/hooks';
+import {selectUser} from '../../../store/authSlice';
 
 /**
  * Hook to get location description by location ID
@@ -24,7 +24,7 @@ export const useLocationDescription = (locationId?: string): string | undefined 
     locations.forEach(location => {
       if (location.locationId) {
         // Prefer description, then name, then code, then barcode, finally locationId
-        const displayText = 
+        const displayText =
           location.description ||
           location.name ||
           location.code ||
@@ -64,7 +64,7 @@ export const useLocationDescriptionMap = (): Map<string, string> => {
     locations.forEach(location => {
       if (location.locationId) {
         // Prefer description, then name, then code, then barcode, finally locationId
-        const displayText = 
+        const displayText =
           location.description ||
           location.name ||
           location.code ||

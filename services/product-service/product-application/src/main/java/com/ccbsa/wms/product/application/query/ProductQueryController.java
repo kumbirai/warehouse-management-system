@@ -21,12 +21,14 @@ import com.ccbsa.wms.product.application.service.query.GetProductByCodeQueryHand
 import com.ccbsa.wms.product.application.service.query.GetProductQueryHandler;
 import com.ccbsa.wms.product.application.service.query.ListProductsQueryHandler;
 import com.ccbsa.wms.product.application.service.query.ValidateProductBarcodeQueryHandler;
+import com.ccbsa.wms.product.application.service.query.dto.CheckProductCodeUniquenessQuery;
 import com.ccbsa.wms.product.application.service.query.dto.GetProductByCodeQuery;
 import com.ccbsa.wms.product.application.service.query.dto.GetProductQuery;
 import com.ccbsa.wms.product.application.service.query.dto.ListProductsQuery;
 import com.ccbsa.wms.product.application.service.query.dto.ListProductsQueryResult;
 import com.ccbsa.wms.product.application.service.query.dto.ProductCodeUniquenessResult;
 import com.ccbsa.wms.product.application.service.query.dto.ProductQueryResult;
+import com.ccbsa.wms.product.application.service.query.dto.ValidateProductBarcodeQuery;
 import com.ccbsa.wms.product.application.service.query.dto.ValidateProductBarcodeResult;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -117,7 +119,7 @@ public class ProductQueryController {
     public ResponseEntity<ApiResponse<ProductCodeUniquenessResultDTO>> checkProductCodeUniqueness(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                                                   @RequestParam("productCode") String productCode) {
         // Map to query
-        com.ccbsa.wms.product.application.service.query.dto.CheckProductCodeUniquenessQuery query = mapper.toCheckProductCodeUniquenessQuery(productCode, tenantId);
+        CheckProductCodeUniquenessQuery query = mapper.toCheckProductCodeUniquenessQuery(productCode, tenantId);
 
         // Execute query
         ProductCodeUniquenessResult result = checkProductCodeUniquenessQueryHandler.handle(query);
@@ -133,7 +135,7 @@ public class ProductQueryController {
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'OPERATOR', 'PICKER', 'STOCK_CLERK', 'RECONCILIATION_CLERK', 'RETURNS_CLERK', 'SERVICE')")
     public ResponseEntity<ApiResponse<ValidateProductBarcodeResultDTO>> validateBarcode(@RequestHeader("X-Tenant-Id") String tenantId, @RequestParam("barcode") String barcode) {
         // Map to query
-        com.ccbsa.wms.product.application.service.query.dto.ValidateProductBarcodeQuery query = mapper.toValidateProductBarcodeQuery(barcode, tenantId);
+        ValidateProductBarcodeQuery query = mapper.toValidateProductBarcodeQuery(barcode, tenantId);
 
         // Execute query
         ValidateProductBarcodeResult result = validateProductBarcodeQueryHandler.handle(query);

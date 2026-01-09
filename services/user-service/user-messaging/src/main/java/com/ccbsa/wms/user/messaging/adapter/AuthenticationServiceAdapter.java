@@ -20,6 +20,7 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -59,6 +60,9 @@ import lombok.extern.slf4j.Slf4j;
  * Adapter: AuthenticationServiceAdapter
  * <p>
  * Implements AuthenticationServicePort for BFF authentication operations. Handles Keycloak token operations, masking IAM complexity.
+ * <p>
+ * Uses externalRestTemplate (non-load-balanced) for Keycloak calls since Keycloak is an external service
+ * not registered with Eureka.
  */
 @Component
 @Slf4j
@@ -74,7 +78,7 @@ public class AuthenticationServiceAdapter implements AuthenticationServicePort {
     private final KeycloakClientPort keycloakClientPort;
 
     @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW", justification = "Configuration validation is intentionally performed before publishing the bean")
-    public AuthenticationServiceAdapter(KeycloakConfig keycloakConfig, RestTemplate restTemplate, KeycloakClientPort keycloakClientPort) {
+    public AuthenticationServiceAdapter(KeycloakConfig keycloakConfig, @Qualifier("externalRestTemplate") RestTemplate restTemplate, KeycloakClientPort keycloakClientPort) {
         KeycloakConfig validatedConfig = validateConfig(keycloakConfig);
         this.keycloakConfig = validatedConfig;
         this.clientSecret = validatedConfig.getClientSecret();

@@ -19,6 +19,10 @@ import com.ccbsa.wms.stock.application.dto.command.ReleaseStockAllocationResultD
 import com.ccbsa.wms.stock.application.dto.mapper.StockManagementDTOMapper;
 import com.ccbsa.wms.stock.application.service.command.AllocateStockCommandHandler;
 import com.ccbsa.wms.stock.application.service.command.ReleaseStockAllocationCommandHandler;
+import com.ccbsa.wms.stock.application.service.command.dto.AllocateStockCommand;
+import com.ccbsa.wms.stock.application.service.command.dto.AllocateStockResult;
+import com.ccbsa.wms.stock.application.service.command.dto.ReleaseStockAllocationCommand;
+import com.ccbsa.wms.stock.application.service.command.dto.ReleaseStockAllocationResult;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -57,10 +61,10 @@ public class StockAllocationCommandController {
     public ResponseEntity<ApiResponse<AllocateStockResultDTO>> allocateStock(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                              @Valid @RequestBody AllocateStockCommandDTO commandDTO) {
         // Map DTO to command
-        com.ccbsa.wms.stock.application.service.command.dto.AllocateStockCommand command = mapper.toAllocateStockCommand(commandDTO, tenantId);
+        AllocateStockCommand command = mapper.toAllocateStockCommand(commandDTO, tenantId);
 
         // Execute command
-        com.ccbsa.wms.stock.application.service.command.dto.AllocateStockResult result = allocateCommandHandler.handle(command);
+        AllocateStockResult result = allocateCommandHandler.handle(command);
 
         // Map result to DTO
         AllocateStockResultDTO resultDTO = mapper.toAllocateStockResultDTO(result);
@@ -74,10 +78,10 @@ public class StockAllocationCommandController {
     public ResponseEntity<ApiResponse<ReleaseStockAllocationResultDTO>> releaseStockAllocation(@PathVariable String allocationId, @RequestHeader("X-Tenant-Id") String tenantId,
                                                                                                @Valid @RequestBody(required = false) ReleaseStockAllocationCommandDTO commandDTO) {
         // Map DTO to command
-        com.ccbsa.wms.stock.application.service.command.dto.ReleaseStockAllocationCommand command = mapper.toReleaseStockAllocationCommand(allocationId, tenantId);
+        ReleaseStockAllocationCommand command = mapper.toReleaseStockAllocationCommand(allocationId, tenantId);
 
         // Execute command
-        com.ccbsa.wms.stock.application.service.command.dto.ReleaseStockAllocationResult result = releaseCommandHandler.handle(command);
+        ReleaseStockAllocationResult result = releaseCommandHandler.handle(command);
 
         // Map result to DTO
         ReleaseStockAllocationResultDTO resultDTO = mapper.toReleaseStockAllocationResultDTO(result);

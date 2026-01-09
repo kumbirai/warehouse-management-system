@@ -10,6 +10,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import com.ccbsa.common.domain.DomainEvent;
 import com.ccbsa.common.domain.valueobject.Quantity;
+import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 import com.ccbsa.wms.stock.application.service.command.dto.CreateConsignmentCommand;
 import com.ccbsa.wms.stock.application.service.command.dto.CreateConsignmentResult;
@@ -143,7 +144,7 @@ public class CreateConsignmentCommandHandler {
      * @param tenantId    Tenant identifier
      * @throws IllegalArgumentException if warehouse location is invalid
      */
-    private void validateWarehouseLocation(com.ccbsa.common.domain.valueobject.WarehouseId warehouseId, com.ccbsa.common.domain.valueobject.TenantId tenantId) {
+    private void validateWarehouseLocation(com.ccbsa.common.domain.valueobject.WarehouseId warehouseId, TenantId tenantId) {
         try {
             LocationId locationId = LocationId.of(warehouseId.getValue());
             LocationServicePort.LocationAvailability availability = locationServicePort.checkLocationAvailability(locationId, Quantity.of(1), tenantId);
@@ -180,7 +181,7 @@ public class CreateConsignmentCommandHandler {
      * @param tenantId  Tenant identifier
      * @throws IllegalArgumentException if any product code is invalid
      */
-    private void validateProductCodes(List<ConsignmentLineItem> lineItems, com.ccbsa.common.domain.valueobject.TenantId tenantId) {
+    private void validateProductCodes(List<ConsignmentLineItem> lineItems, TenantId tenantId) {
         for (ConsignmentLineItem lineItem : lineItems) {
             var productInfo = productServicePort.getProductByCode(lineItem.getProductCode(), tenantId);
             if (productInfo.isEmpty()) {

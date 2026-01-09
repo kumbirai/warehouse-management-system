@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { FormControl, InputLabel, MenuItem, Select, Box } from '@mui/material';
 import { useNotifications } from '../hooks/useNotifications';
 import { NotificationList } from '../components/NotificationList';
-import { ListPageLayout } from '../../../components/layouts/ListPageLayout';
-import { FilterBar } from '../../../components/common/FilterBar';
-import { Pagination } from '../../../components/common/Pagination';
+import { ListPageLayout } from '../../../components/layouts';
+import { FilterBar, Pagination } from '../../../components/common';
 import { getBreadcrumbs } from '../../../utils/navigationUtils';
 import { NotificationStatus, NotificationType } from '../types/notification';
 

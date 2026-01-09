@@ -1,8 +1,7 @@
 package com.ccbsa.wms.stock.domain.core.event;
 
-import java.time.LocalDate;
-
 import com.ccbsa.common.domain.EventMetadata;
+import com.ccbsa.common.domain.valueobject.ExpirationDate;
 import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.common.domain.valueobject.StockClassification;
@@ -26,7 +25,7 @@ public class StockClassifiedEvent extends StockManagementEvent<StockItem> {
     private final TenantId tenantId;
     private final StockClassification oldClassification;
     private final StockClassification newClassification;
-    private final LocalDate expirationDate;
+    private final ExpirationDate expirationDate;
     private final Quantity quantity;
 
     /**
@@ -41,7 +40,7 @@ public class StockClassifiedEvent extends StockManagementEvent<StockItem> {
      * @param quantity          Stock item quantity (required for FEFO location assignment)
      */
     public StockClassifiedEvent(String aggregateId, ProductId productId, TenantId tenantId, StockClassification oldClassification, StockClassification newClassification,
-                                LocalDate expirationDate, Quantity quantity) {
+                                ExpirationDate expirationDate, Quantity quantity) {
         super(aggregateId, AGGREGATE_TYPE);
         this.productId = productId;
         this.tenantId = tenantId;
@@ -64,7 +63,7 @@ public class StockClassifiedEvent extends StockManagementEvent<StockItem> {
      * @param metadata          Event metadata for traceability
      */
     public StockClassifiedEvent(String aggregateId, ProductId productId, TenantId tenantId, StockClassification oldClassification, StockClassification newClassification,
-                                LocalDate expirationDate, Quantity quantity, EventMetadata metadata) {
+                                ExpirationDate expirationDate, Quantity quantity, EventMetadata metadata) {
         super(aggregateId, AGGREGATE_TYPE, metadata);
         this.productId = productId;
         this.tenantId = tenantId;
@@ -90,7 +89,7 @@ public class StockClassifiedEvent extends StockManagementEvent<StockItem> {
         return newClassification;
     }
 
-    public LocalDate getExpirationDate() {
+    public ExpirationDate getExpirationDate() {
         return expirationDate;
     }
 

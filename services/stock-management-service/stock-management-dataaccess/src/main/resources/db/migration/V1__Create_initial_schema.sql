@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS stock_items
     product_id UUID NOT NULL,
     location_id UUID,
     quantity INTEGER NOT NULL,
+    allocated_quantity INTEGER NOT NULL DEFAULT 0,
     expiration_date DATE,
     classification VARCHAR
 (
@@ -124,6 +125,18 @@ CREATE TABLE IF NOT EXISTS stock_items
 (
     quantity >
     0
+),
+    CONSTRAINT chk_stock_items_allocated_quantity_non_negative CHECK
+(
+    allocated_quantity
+    >=
+    0
+),
+    CONSTRAINT chk_stock_items_allocated_quantity_not_exceed_total CHECK
+(
+    allocated_quantity
+    <=
+    quantity
 )
     );
 
@@ -184,6 +197,8 @@ COMMENT
 ON COLUMN stock_items.location_id IS 'Location identifier (nullable if not yet assigned)';
 COMMENT
 ON COLUMN stock_items.quantity IS 'Stock quantity (must be positive)';
+COMMENT
+ON COLUMN stock_items.allocated_quantity IS 'Quantity allocated for picking orders (must be <= quantity)';
 COMMENT
 ON COLUMN stock_items.expiration_date IS 'Expiration date (nullable for non-perishable)';
 COMMENT

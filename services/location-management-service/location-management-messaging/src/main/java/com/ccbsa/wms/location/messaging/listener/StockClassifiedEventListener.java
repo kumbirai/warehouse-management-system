@@ -21,6 +21,7 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.common.security.TenantContext;
 import com.ccbsa.wms.location.application.service.command.AssignLocationsFEFOCommandHandler;
 import com.ccbsa.wms.location.application.service.command.dto.AssignLocationsFEFOCommand;
+import com.ccbsa.wms.location.application.service.command.dto.AssignLocationsFEResult;
 import com.ccbsa.wms.location.domain.core.valueobject.StockItemAssignmentRequest;
 
 import lombok.RequiredArgsConstructor;
@@ -241,7 +242,7 @@ public class StockClassifiedEventListener {
         AssignLocationsFEFOCommand command = AssignLocationsFEFOCommand.builder().tenantId(tenantId).stockItems(stockItems).build();
 
         try {
-            com.ccbsa.wms.location.application.service.command.dto.AssignLocationsFEResult result = fefoCommandHandler.handle(command);
+            AssignLocationsFEResult result = fefoCommandHandler.handle(command);
 
             // Check if assignment was successful
             if (result.getAssignments().containsKey(stockItemIdString)) {

@@ -31,6 +31,8 @@ export const Routes = {
   locationDetail: (id: string) => `/locations/${id}`,
   locationCreate: '/locations/create',
   locationEdit: (id: string) => `/locations/${id}/edit`,
+  warehouses: '/locations/warehouses',
+  warehouseDetail: (id: string) => `/locations/warehouses/${id}`,
 
   products: '/products',
   productDetail: (id: string) => `/products/${id}`,
@@ -75,6 +77,11 @@ export const Routes = {
   // Future routes (placeholder)
   inventory: '/inventory',
   picking: '/picking',
+  pickingLists: '/picking/picking-lists',
+  pickingListDetail: (id: string) => `/picking/picking-lists/${id}`,
+  pickingListCreate: '/picking/picking-lists/create',
+  pickingListUploadCsv: '/picking/picking-lists/upload-csv',
+  loadDetail: (id: string) => `/picking/loads/${id}`,
   returns: '/returns',
   reconciliation: '/reconciliation',
   reports: '/reports',
@@ -247,6 +254,34 @@ export const getBreadcrumbs = {
     { label: 'Dashboard', href: Routes.dashboard },
     { label: 'Locations', href: Routes.locations },
     { label: 'FEFO Assignment' },
+  ],
+
+  // Picking List Management
+  pickingLists: () => [{ label: 'Dashboard', href: Routes.dashboard }, { label: 'Picking Lists' }],
+  pickingListDetail: (pickingListReference: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Picking Lists', href: Routes.pickingLists },
+    { label: pickingListReference },
+  ],
+  pickingListCreate: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Picking Lists', href: Routes.pickingLists },
+    { label: 'Create Picking List' },
+  ],
+  pickingListUploadCsv: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Picking Lists', href: Routes.pickingLists },
+    { label: 'Upload CSV' },
+  ],
+  loadDetail: (loadId: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Picking Lists', href: Routes.pickingLists },
+    { label: 'Load ' + loadId.substring(0, 8) + '...' },
+  ],
+  warehouseDetail: (warehouseName: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Locations', href: Routes.locations },
+    { label: warehouseName },
   ],
 };
 

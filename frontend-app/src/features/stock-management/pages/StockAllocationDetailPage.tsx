@@ -12,7 +12,12 @@ export const StockAllocationDetailPage = () => {
   const { allocationId } = useParams<{ allocationId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: queryResponse, isLoading, error, refetch } = useStockAllocation(allocationId || null);
+  const {
+    data: queryResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useStockAllocation(allocationId || null);
   const { releaseStockAllocation, isLoading: isReleasing } = useReleaseStockAllocation();
 
   const allocation = queryResponse?.data;
@@ -56,4 +61,3 @@ export const StockAllocationDetailPage = () => {
     </DetailPageLayout>
   );
 };
-

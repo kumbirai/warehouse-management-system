@@ -30,14 +30,15 @@ public final class StockItemView {
     private final ProductId productId;
     private final LocationId locationId;
     private final Quantity quantity;
+    private final Quantity allocatedQuantity;
     private final ExpirationDate expirationDate;
     private final StockClassification classification;
     private final ConsignmentId consignmentId;
     private final LocalDateTime createdAt;
     private final LocalDateTime lastModifiedAt;
 
-    public StockItemView(StockItemId stockItemId, String tenantId, ProductId productId, LocationId locationId, Quantity quantity, ExpirationDate expirationDate,
-                         StockClassification classification, ConsignmentId consignmentId, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
+    public StockItemView(StockItemId stockItemId, String tenantId, ProductId productId, LocationId locationId, Quantity quantity, Quantity allocatedQuantity,
+                         ExpirationDate expirationDate, StockClassification classification, ConsignmentId consignmentId, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
         if (stockItemId == null) {
             throw new IllegalArgumentException("StockItemId is required");
         }
@@ -58,6 +59,7 @@ public final class StockItemView {
         this.productId = productId;
         this.locationId = locationId;
         this.quantity = quantity;
+        this.allocatedQuantity = allocatedQuantity != null ? allocatedQuantity : Quantity.of(0);
         this.expirationDate = expirationDate;
         this.classification = classification;
         this.consignmentId = consignmentId;

@@ -33,12 +33,15 @@ spring:
       hibernate:
         # Dialect is auto-detected, no need to specify explicitly
         format_sql: true
+        # Configure tenant-aware physical naming strategy for dynamic schema resolution
+        physical_naming_strategy: com.ccbsa.wms.common.dataaccess.naming.TenantAwarePhysicalNamingStrategy
   
   # Flyway Configuration
-  # Note: Flyway is disabled at startup since migrations are run programmatically
-  # in TenantSchemaCreatedEventListener when tenant schemas are created.
+  # Note: Flyway is enabled to create validation tables in the public schema (default) for Hibernate schema validation at startup.
+  # These validation tables are NOT used at runtime - all runtime operations use tenant-specific schemas.
+  # Tenant schema migrations are run programmatically in TenantSchemaCreatedEventListener when tenant schemas are created.
   flyway:
-    enabled: false
+    enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
   

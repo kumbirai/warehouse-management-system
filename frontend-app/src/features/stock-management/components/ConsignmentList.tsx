@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Column, ResponsiveTable, StatusBadge } from '../../../components/common';
 import { getStatusVariant } from '../../../utils/statusUtils';
 import { Consignment } from '../types/stockManagement';
@@ -60,13 +60,25 @@ export const ConsignmentList = ({ consignments, error }: ConsignmentListProps) =
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <LocationIcon fontSize="small" color="action" />
-            <Typography variant="body2" fontWeight="medium">
+            <Typography
+              variant="body2"
+              fontWeight="medium"
+              component={Link}
+              to={Routes.warehouseDetail(consignment.warehouseId)}
+              onClick={e => {
+                e.stopPropagation(); // Prevent row click
+              }}
+              sx={{
+                color: 'primary.main',
+                textDecoration: 'none',
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+            >
               {getWarehouseDisplayName(consignment)}
             </Typography>
           </Box>
-          <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem', ml: 3 }}>
-            ID: {consignment.warehouseId.substring(0, 8)}...
-          </Typography>
         </Box>
       ),
     },

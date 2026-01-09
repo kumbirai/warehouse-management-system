@@ -61,6 +61,16 @@ public class AssignLocationToStockCommandHandler {
                     command.getQuantity().getValue(), locationAvailability.getAvailableCapacity() != null ? locationAvailability.getAvailableCapacity().getValue() : "unlimited"));
         }
 
+        // 3a. Validate location is BIN type (stock allocation must be at lowest hierarchy level)
+        LocationServicePort.LocationInfo locationInfo = locationServicePort.getLocationInfo(command.getLocationId(), command.getTenantId())
+                .orElseThrow(() -> new IllegalArgumentException(String.format("Location not found: %s", command.getLocationId().getValueAsString())));
+
+        if (!locationInfo.isBinType()) {
+            throw new IllegalArgumentException(
+                    String.format("Stock allocation must be at BIN level (lowest hierarchy level). Location %s is of type: %s", command.getLocationId().getValueAsString(),
+                            locationInfo.type() != null ? locationInfo.type() : "UNKNOWN"));
+        }
+
         // 4. Assign location to stock item
         stockItem.assignLocation(command.getLocationId(), command.getQuantity());
 

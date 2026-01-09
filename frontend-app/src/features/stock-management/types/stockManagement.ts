@@ -182,7 +182,13 @@ export interface CreateStockAdjustmentRequest {
 
 export type AdjustmentType = 'INCREASE' | 'DECREASE';
 
-export type AdjustmentReason = 'STOCK_COUNT' | 'DAMAGE' | 'CORRECTION' | 'THEFT' | 'EXPIRATION' | 'OTHER';
+export type AdjustmentReason =
+  | 'STOCK_COUNT'
+  | 'DAMAGE'
+  | 'CORRECTION'
+  | 'THEFT'
+  | 'EXPIRATION'
+  | 'OTHER';
 
 export interface StockAdjustmentResponse {
   adjustmentId: string;
@@ -257,6 +263,7 @@ export interface StockItem {
   locationId?: string;
   locationCode?: string;
   locationName?: string;
+  locationHierarchy?: string;
   quantity: number;
   expirationDate?: string; // ISO date string (YYYY-MM-DD)
   classification: StockClassification;

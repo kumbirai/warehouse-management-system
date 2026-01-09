@@ -1,7 +1,8 @@
 import {Box, Button, Card, CardContent, Grid, Paper, Typography} from '@mui/material';
 import {Link as RouterLink} from 'react-router-dom';
 import {useAuth} from '../../hooks/useAuth';
-import {DashboardPageLayout} from '../../components/layouts/DashboardPageLayout';
+import {DashboardPageLayout} from '../../components/layouts';
+import {Routes} from '../../utils/navigationUtils';
 
 /**
  * System Admin dashboard component.
@@ -30,7 +31,7 @@ export const AdminDashboard = () => {
                 size="small"
                 variant="contained"
                 component={RouterLink}
-                to="/admin/tenants"
+                to={Routes.admin.tenants}
               >
                 Manage Tenants
               </Button>
@@ -51,7 +52,7 @@ export const AdminDashboard = () => {
                 size="small"
                 variant="contained"
                 component={RouterLink}
-                to="/admin/users"
+                to={Routes.admin.users}
               >
                 Manage Users
               </Button>

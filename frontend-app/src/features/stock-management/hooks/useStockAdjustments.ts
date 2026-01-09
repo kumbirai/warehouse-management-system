@@ -18,4 +18,3 @@ export const useStockAdjustments = (filters: StockAdjustmentFilters = {}) => {
     enabled: !!user?.tenantId,
   });
 };
-

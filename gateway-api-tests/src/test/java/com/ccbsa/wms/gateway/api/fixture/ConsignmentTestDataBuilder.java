@@ -84,6 +84,12 @@ public class ConsignmentTestDataBuilder {
 
     public static CreateStockMovementRequest buildCreateStockMovementRequest(
             String productId, String sourceLocationId, String targetLocationId, int quantity) {
+        if (sourceLocationId == null) {
+            throw new IllegalArgumentException("sourceLocationId cannot be null for stock movement");
+        }
+        if (targetLocationId == null) {
+            throw new IllegalArgumentException("targetLocationId cannot be null for stock movement");
+        }
         return CreateStockMovementRequest.builder()
                 .productId(UUID.fromString(productId))
                 .sourceLocationId(UUID.fromString(sourceLocationId))

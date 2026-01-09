@@ -1,7 +1,6 @@
 package com.ccbsa.wms.stock.domain.core.event;
 
-import java.time.LocalDate;
-
+import com.ccbsa.common.domain.valueobject.ExpirationDate;
 import com.ccbsa.common.domain.valueobject.ProductId;
 import com.ccbsa.common.domain.valueobject.StockItemId;
 import com.ccbsa.wms.stock.domain.core.entity.StockItem;
@@ -21,7 +20,7 @@ public class StockExpiredEvent extends StockManagementEvent<StockItem> {
 
     private final StockItemId stockItemId;
     private final ProductId productId;
-    private final LocalDate expirationDate;
+    private final ExpirationDate expirationDate;
 
     /**
      * Constructor for StockExpiredEvent.
@@ -30,7 +29,7 @@ public class StockExpiredEvent extends StockManagementEvent<StockItem> {
      * @param productId      Product identifier
      * @param expirationDate Expiration date
      */
-    public StockExpiredEvent(StockItemId stockItemId, ProductId productId, LocalDate expirationDate) {
+    public StockExpiredEvent(StockItemId stockItemId, ProductId productId, ExpirationDate expirationDate) {
         super(stockItemId.getValueAsString(), AGGREGATE_TYPE);
         this.stockItemId = stockItemId;
         this.productId = productId;
@@ -45,7 +44,7 @@ public class StockExpiredEvent extends StockManagementEvent<StockItem> {
         return productId;
     }
 
-    public LocalDate getExpirationDate() {
+    public ExpirationDate getExpirationDate() {
         return expirationDate;
     }
 }

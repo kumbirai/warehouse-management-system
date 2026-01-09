@@ -7,7 +7,7 @@ import { Routes } from '../../../utils/navigationUtils';
 
 export const ExpiryAlertCard = () => {
   const { user } = useAuth();
-  
+
   // Memoize filters to prevent unnecessary re-renders and API calls
   const filters = useMemo(
     () => ({

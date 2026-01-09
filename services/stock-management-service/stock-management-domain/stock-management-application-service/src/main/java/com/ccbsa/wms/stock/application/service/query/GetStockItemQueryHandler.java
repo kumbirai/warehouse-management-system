@@ -68,7 +68,8 @@ public class GetStockItemQueryHandler {
                 .productCode(productInfo.map(ProductServicePort.ProductInfo::getProductCode).orElse(null))
                 .productDescription(productInfo.map(ProductServicePort.ProductInfo::getDescription).orElse(null)).locationId(stockItemView.getLocationId())
                 .locationCode(locationInfo.map(LocationServicePort.LocationInfo::code).orElse(null))
-                .locationName(locationInfo.map(LocationServicePort.LocationInfo::getDisplayName).orElse(null)).quantity(stockItemView.getQuantity())
+                .locationName(locationInfo.map(LocationServicePort.LocationInfo::getDisplayName).orElse(null))
+                .locationHierarchy(locationInfo.map(LocationServicePort.LocationInfo::getHierarchy).orElse(null)).quantity(stockItemView.getQuantity())
                 .allocatedQuantity(Quantity.of(allocatedQuantity)).expirationDate(stockItemView.getExpirationDate()).classification(stockItemView.getClassification())
                 .consignmentId(stockItemView.getConsignmentId()).createdAt(stockItemView.getCreatedAt()).lastModifiedAt(stockItemView.getLastModifiedAt()).build();
     }

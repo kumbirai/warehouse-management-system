@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -159,7 +160,7 @@ public class UserRepositoryAdapter implements UserRepository {
         entity.setFirstName(user.getFirstName().map(FirstName::getValue).orElse(null));
         entity.setLastName(user.getLastName().map(LastName::getValue).orElse(null));
         entity.setKeycloakUserId(user.getKeycloakUserId().map(KeycloakUserId::getValue).orElse(null));
-        entity.setStatus(mapToEntityStatus(user.getStatus()));
+        entity.setStatus(user.getStatus());
         entity.setCreatedAt(user.getCreatedAt());
         entity.setLastModifiedAt(user.getLastModifiedAt());
         // Version is managed by JPA - don't set it manually
@@ -185,19 +186,6 @@ public class UserRepositoryAdapter implements UserRepository {
             log.error("Failed to set search_path to schema '{}': {}", schemaName, e.getMessage(), e);
             throw new RuntimeException("Failed to set database schema", e);
         }
-    }
-
-    /**
-     * Maps domain UserStatus to JPA entity UserStatus enum.
-     *
-     * @param domainStatus Domain status
-     * @return JPA entity status
-     */
-    private UserEntity.UserStatus mapToEntityStatus(UserStatus domainStatus) {
-        if (domainStatus == null) {
-            throw new IllegalArgumentException("UserStatus cannot be null");
-        }
-        return UserEntity.UserStatus.valueOf(domainStatus.name());
     }
 
     /**
@@ -430,7 +418,7 @@ public class UserRepositoryAdapter implements UserRepository {
 
             // 3. Execute query using JdbcTemplate (bypasses Hibernate naming strategy)
             // We need to pass parameters for each UNION part: status (if provided) and searchTerm (twice for username and email)
-            String searchPattern = String.format("%%%s%%", searchTerm.toLowerCase(java.util.Locale.ROOT));
+            String searchPattern = String.format("%%%s%%", searchTerm.toLowerCase(Locale.ROOT));
             List<UserEntity> entities;
             if (status != null) {
                 // For UNION queries: status, username search, email search for each UNION part
@@ -589,8 +577,7 @@ public class UserRepositoryAdapter implements UserRepository {
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        UserEntity.UserStatus entityStatus = UserEntity.UserStatus.valueOf(status.name());
-        return jpaRepository.findByTenantIdAndStatus(tenantId.getValue(), entityStatus).stream().map(mapper::toDomain).collect(Collectors.toList());
+        return jpaRepository.findByTenantIdAndStatus(tenantId.getValue(), status).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 
     @Override
@@ -664,8 +651,7 @@ public class UserRepositoryAdapter implements UserRepository {
         setSearchPath(session, schemaName);
 
         // Now query using JPA repository (will use the schema set in search_path)
-        UserEntity.UserStatus entityStatus = UserEntity.UserStatus.valueOf(status.name());
-        return jpaRepository.findByTenantIdAndStatusAndSearchTerm(tenantId.getValue(), entityStatus, searchTerm).stream().map(mapper::toDomain).collect(Collectors.toList());
+        return jpaRepository.findByTenantIdAndStatusAndSearchTerm(tenantId.getValue(), status, searchTerm).stream().map(mapper::toDomain).collect(Collectors.toList());
     }
 
     @Override
@@ -705,7 +691,7 @@ public class UserRepositoryAdapter implements UserRepository {
 
             String statusStr = rs.getString("status");
             if (statusStr != null) {
-                entity.setStatus(UserEntity.UserStatus.valueOf(statusStr));
+                entity.setStatus(UserStatus.valueOf(statusStr));
             }
 
             entity.setCreatedAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null);

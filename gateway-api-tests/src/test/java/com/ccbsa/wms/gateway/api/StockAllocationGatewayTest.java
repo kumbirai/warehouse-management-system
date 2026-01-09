@@ -25,10 +25,13 @@ import com.ccbsa.wms.gateway.api.dto.CreateStockAllocationResponse;
 import com.ccbsa.wms.gateway.api.dto.ListStockAllocationsQueryResultDTO;
 import com.ccbsa.wms.gateway.api.dto.ReleaseStockAllocationResultDTO;
 import com.ccbsa.wms.gateway.api.dto.StockAllocationQueryDTO;
+import com.ccbsa.wms.gateway.api.dto.StockLevelResponse;
 import com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.ProductTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.StockAllocationTestDataBuilder;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -86,26 +89,103 @@ public class StockAllocationGatewayTest extends BaseIntegrationTest {
             testProductId = UUID.fromString(product.getProductId());
             testProductCode = product.getProductCode();
 
-            // Create location
-            CreateLocationRequest locationRequest = LocationTestDataBuilder.buildWarehouseRequest();
-            EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationResult = authenticatedPost(
+            // Create warehouse first
+            CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> warehouseResult = authenticatedPost(
                     "/api/v1/location-management/locations",
                     tenantAdminAuth.getAccessToken(),
                     testTenantId,
-                    locationRequest
+                    warehouseRequest
             ).exchange()
                     .expectStatus().isCreated()
                     .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
                     })
                     .returnResult();
 
-            ApiResponse<CreateLocationResponse> locationApiResponse = locationResult.getResponseBody();
-            assertThat(locationApiResponse).isNotNull();
-            assertThat(locationApiResponse.isSuccess()).isTrue();
-            CreateLocationResponse location = locationApiResponse.getData();
-            assertThat(location).isNotNull();
-            testLocationId = UUID.fromString(location.getLocationId());
-            testWarehouseId = location.getLocationId();
+            ApiResponse<CreateLocationResponse> warehouseApiResponse = warehouseResult.getResponseBody();
+            assertThat(warehouseApiResponse).isNotNull();
+            assertThat(warehouseApiResponse.isSuccess()).isTrue();
+            CreateLocationResponse warehouse = warehouseApiResponse.getData();
+            assertThat(warehouse).isNotNull();
+            testWarehouseId = warehouse.getLocationId();
+
+            // Create location hierarchy: WAREHOUSE -> ZONE -> AISLE -> RACK -> BIN
+            // Create zone
+            CreateLocationRequest zoneRequest = LocationTestDataBuilder.buildZoneRequest(testWarehouseId);
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> zoneResult = authenticatedPost(
+                    "/api/v1/location-management/locations",
+                    tenantAdminAuth.getAccessToken(),
+                    testTenantId,
+                    zoneRequest
+            ).exchange()
+                    .expectStatus().isCreated()
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
+                    .returnResult();
+
+            ApiResponse<CreateLocationResponse> zoneApiResponse = zoneResult.getResponseBody();
+            assertThat(zoneApiResponse).isNotNull();
+            assertThat(zoneApiResponse.isSuccess()).isTrue();
+            CreateLocationResponse zone = zoneApiResponse.getData();
+            assertThat(zone).isNotNull();
+
+            // Create aisle
+            CreateLocationRequest aisleRequest = LocationTestDataBuilder.buildAisleRequest(zone.getLocationId());
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> aisleResult = authenticatedPost(
+                    "/api/v1/location-management/locations",
+                    tenantAdminAuth.getAccessToken(),
+                    testTenantId,
+                    aisleRequest
+            ).exchange()
+                    .expectStatus().isCreated()
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
+                    .returnResult();
+
+            ApiResponse<CreateLocationResponse> aisleApiResponse = aisleResult.getResponseBody();
+            assertThat(aisleApiResponse).isNotNull();
+            assertThat(aisleApiResponse.isSuccess()).isTrue();
+            CreateLocationResponse aisle = aisleApiResponse.getData();
+            assertThat(aisle).isNotNull();
+
+            // Create rack
+            CreateLocationRequest rackRequest = LocationTestDataBuilder.buildRackRequest(aisle.getLocationId());
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> rackResult = authenticatedPost(
+                    "/api/v1/location-management/locations",
+                    tenantAdminAuth.getAccessToken(),
+                    testTenantId,
+                    rackRequest
+            ).exchange()
+                    .expectStatus().isCreated()
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
+                    .returnResult();
+
+            ApiResponse<CreateLocationResponse> rackApiResponse = rackResult.getResponseBody();
+            assertThat(rackApiResponse).isNotNull();
+            assertThat(rackApiResponse.isSuccess()).isTrue();
+            CreateLocationResponse rack = rackApiResponse.getData();
+            assertThat(rack).isNotNull();
+
+            // Create BIN location (stock allocations must be at BIN level)
+            CreateLocationRequest binRequest = LocationTestDataBuilder.buildBinRequest(rack.getLocationId());
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> binResult = authenticatedPost(
+                    "/api/v1/location-management/locations",
+                    tenantAdminAuth.getAccessToken(),
+                    testTenantId,
+                    binRequest
+            ).exchange()
+                    .expectStatus().isCreated()
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
+                    .returnResult();
+
+            ApiResponse<CreateLocationResponse> binApiResponse = binResult.getResponseBody();
+            assertThat(binApiResponse).isNotNull();
+            assertThat(binApiResponse.isSuccess()).isTrue();
+            CreateLocationResponse bin = binApiResponse.getData();
+            assertThat(bin).isNotNull();
+            testLocationId = UUID.fromString(bin.getLocationId());
         }
     }
 
@@ -236,11 +316,42 @@ public class StockAllocationGatewayTest extends BaseIntegrationTest {
         boolean stockItemsCreated = waitForStockItems(testProductId.toString(), tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
         assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
+        // Query total available stock for the product (including unassigned stock)
+        // The allocation handler includes unassigned stock when location stock is insufficient,
+        // so we need to query all stock levels (not filtered by location) to get the true total
+        EntityExchangeResult<ApiResponse<List<StockLevelResponse>>> stockLevelsResult = authenticatedGet(
+                "/api/v1/stock-management/stock-levels?productId=" + testProductId,
+                tenantAdminAuth.getAccessToken(),
+                testTenantId
+        ).exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<List<StockLevelResponse>>>() {
+                })
+                .returnResult();
+
+        ApiResponse<List<StockLevelResponse>> stockLevelsApiResponse = stockLevelsResult.getResponseBody();
+        assertThat(stockLevelsApiResponse).isNotNull();
+        assertThat(stockLevelsApiResponse.isSuccess()).isTrue();
+
+        List<StockLevelResponse> stockLevels = stockLevelsApiResponse.getData();
+        assertThat(stockLevels).isNotNull();
+
+        // Calculate total available quantity across all locations (including unassigned)
+        // This matches what the allocation handler uses for validation when locationId is specified
+        // (it includes unassigned stock if location stock is insufficient)
+        int totalAvailable = stockLevels.stream()
+                .filter(level -> level.getAvailableQuantity() != null)
+                .mapToInt(StockLevelResponse::getAvailableQuantity)
+                .sum();
+
+        // Request more than available to trigger insufficient stock error
+        int requestedQuantity = totalAvailable + 100;
+
         String orderId = "ORDER-" + faker.number().digits(5);
         CreateStockAllocationRequest request = StockAllocationTestDataBuilder.buildCreateStockAllocationRequest(
                 testProductId,
                 testLocationId,
-                150, // More than available
+                requestedQuantity, // More than available
                 orderId
         );
 

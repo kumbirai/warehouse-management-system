@@ -14,6 +14,7 @@ import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
@@ -148,7 +149,7 @@ public class TenantManagementTest extends BaseIntegrationTest {
         // Act - No authentication
         WebTestClient.ResponseSpec response = webTestClient.post()
                 .uri("/api/v1/tenants")
-                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .exchange();
 

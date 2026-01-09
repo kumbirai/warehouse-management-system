@@ -37,14 +37,14 @@ public class LocationServiceAdapter implements LocationServicePort {
     private static final ParameterizedTypeReference<ApiResponse<LocationAvailabilityResponse>> LOCATION_AVAILABILITY_RESPONSE_TYPE =
             new ParameterizedTypeReference<ApiResponse<LocationAvailabilityResponse>>() {
             };
-    private static final ParameterizedTypeReference<ApiResponse<LocationInfoResponse>> LOCATION_INFO_RESPONSE_TYPE =
-            new ParameterizedTypeReference<ApiResponse<LocationInfoResponse>>() {
+    private static final ParameterizedTypeReference<ApiResponse<LocationQueryResultResponse>> LOCATION_INFO_RESPONSE_TYPE =
+            new ParameterizedTypeReference<ApiResponse<LocationQueryResultResponse>>() {
             };
 
     private final RestTemplate restTemplate;
     private final String locationServiceUrl;
 
-    public LocationServiceAdapter(RestTemplate restTemplate, @Value("${location.service.url:http://location-management-service:8080}") String locationServiceUrl) {
+    public LocationServiceAdapter(RestTemplate restTemplate, @Value("${location.service.url:http://location-management-service}") String locationServiceUrl) {
         this.restTemplate = restTemplate;
         this.locationServiceUrl = locationServiceUrl;
     }
@@ -121,12 +121,21 @@ public class LocationServiceAdapter implements LocationServicePort {
             headers.set("X-Tenant-Id", tenantId.getValue());
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
-            ResponseEntity<ApiResponse<LocationInfoResponse>> response = restTemplate.exchange(url, HttpMethod.GET, entity, LOCATION_INFO_RESPONSE_TYPE);
+            ResponseEntity<ApiResponse<LocationQueryResultResponse>> response = restTemplate.exchange(url, HttpMethod.GET, entity, LOCATION_INFO_RESPONSE_TYPE);
 
-            ApiResponse<LocationInfoResponse> responseBody = response.getBody();
+            ApiResponse<LocationQueryResultResponse> responseBody = response.getBody();
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
-                LocationInfoResponse locationResponse = responseBody.getData();
-                return Optional.of(new LocationInfo(locationResponse.getLocationId(), locationResponse.getName(), locationResponse.getDescription(), locationResponse.getCode()));
+                LocationQueryResultResponse locationResponse = responseBody.getData();
+
+                // Extract coordinates if available
+                LocationServicePort.LocationCoordinates coordinates = null;
+                if (locationResponse.getCoordinates() != null) {
+                    coordinates = new LocationServicePort.LocationCoordinates(locationResponse.getCoordinates().getZone(), locationResponse.getCoordinates().getAisle(),
+                            locationResponse.getCoordinates().getRack(), locationResponse.getCoordinates().getLevel());
+                }
+
+                return Optional.of(new LocationServicePort.LocationInfo(locationResponse.getLocationId(), locationResponse.getName(), locationResponse.getDescription(),
+                        locationResponse.getCode(), locationResponse.getType(), coordinates));
             }
 
             log.warn("Location service returned unexpected response: status={}", response.getStatusCode());
@@ -210,13 +219,15 @@ public class LocationServiceAdapter implements LocationServicePort {
     }
 
     /**
-     * DTO for location-service info response.
+     * DTO for location-service query result response.
      */
-    private static class LocationInfoResponse {
+    private static class LocationQueryResultResponse {
         private String locationId;
         private String name;
         private String description;
         private String code;
+        private String type;
+        private LocationCoordinatesResponse coordinates;
 
         public String getLocationId() {
             return locationId;
@@ -252,6 +263,70 @@ public class LocationServiceAdapter implements LocationServicePort {
         @SuppressWarnings("unused")
         public void setCode(String code) {
             this.code = code;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        @SuppressWarnings("unused")
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public LocationCoordinatesResponse getCoordinates() {
+            return coordinates;
+        }
+
+        @SuppressWarnings("unused")
+        public void setCoordinates(LocationCoordinatesResponse coordinates) {
+            this.coordinates = coordinates;
+        }
+    }
+
+    /**
+     * DTO for location coordinates in response.
+     */
+    private static class LocationCoordinatesResponse {
+        private String zone;
+        private String aisle;
+        private String rack;
+        private String level;
+
+        public String getZone() {
+            return zone;
+        }
+
+        @SuppressWarnings("unused")
+        public void setZone(String zone) {
+            this.zone = zone;
+        }
+
+        public String getAisle() {
+            return aisle;
+        }
+
+        @SuppressWarnings("unused")
+        public void setAisle(String aisle) {
+            this.aisle = aisle;
+        }
+
+        public String getRack() {
+            return rack;
+        }
+
+        @SuppressWarnings("unused")
+        public void setRack(String rack) {
+            this.rack = rack;
+        }
+
+        public String getLevel() {
+            return level;
+        }
+
+        @SuppressWarnings("unused")
+        public void setLevel(String level) {
+            this.level = level;
         }
     }
 }

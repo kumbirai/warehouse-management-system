@@ -160,6 +160,13 @@ product:
   service:
     url: ${PRODUCT_SERVICE_URL:http://product-service}
 
+# Location Service Configuration
+# Note: Uses Eureka service discovery via @LoadBalanced RestTemplate when using service name
+# Service name is resolved through Eureka registry (no port needed)
+location:
+  service:
+    url: ${LOCATION_SERVICE_URL:http://location-management-service}
+
 # Resilience4j Circuit Breaker Configuration
 resilience4j:
   circuitbreaker:

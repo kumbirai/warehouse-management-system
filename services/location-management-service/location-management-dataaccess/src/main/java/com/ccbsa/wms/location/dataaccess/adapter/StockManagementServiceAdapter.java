@@ -13,8 +13,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.common.domain.valueobject.ProductId;
@@ -23,7 +21,6 @@ import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.location.application.service.port.service.StockManagementServicePort;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationId;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -37,16 +34,13 @@ import lombok.extern.slf4j.Slf4j;
 public class StockManagementServiceAdapter implements StockManagementServicePort {
     private static final ParameterizedTypeReference<ApiResponse<StockItemResponse>> STOCK_ITEM_RESPONSE_TYPE = new ParameterizedTypeReference<ApiResponse<StockItemResponse>>() {
     };
-
-    private static final ParameterizedTypeReference<ApiResponse<List<StockItemResponse>>> STOCK_ITEMS_LIST_RESPONSE_TYPE =
-            new ParameterizedTypeReference<ApiResponse<List<StockItemResponse>>>() {
+    private static final ParameterizedTypeReference<ApiResponse<StockItemsByClassificationResponseDTO>> STOCK_ITEMS_LIST_RESPONSE_TYPE =
+            new ParameterizedTypeReference<ApiResponse<StockItemsByClassificationResponseDTO>>() {
             };
-
     private final RestTemplate restTemplate;
     private final String stockManagementServiceUrl;
 
-    public StockManagementServiceAdapter(RestTemplate restTemplate,
-                                         @Value("${stock-management.service.url:http://stock-management-service:8080}") String stockManagementServiceUrl) {
+    public StockManagementServiceAdapter(RestTemplate restTemplate, @Value("${stock-management.service.url:http://stock-management-service}") String stockManagementServiceUrl) {
         this.restTemplate = restTemplate;
         this.stockManagementServiceUrl = stockManagementServiceUrl;
     }
@@ -59,27 +53,12 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
             String url = String.format("%s/api/v1/stock-management/stock-items/%s", stockManagementServiceUrl, stockItemId);
             log.debug("Calling stock management service: {}", url);
 
+            // Service-to-service authentication is handled automatically by ServiceAccountAuthenticationInterceptor
+            // The interceptor will:
+            // 1. Forward Authorization header from HTTP request context (if available)
+            // 2. Use service account token for event-driven calls (no HTTP context)
             HttpHeaders headers = new HttpHeaders();
-
-            // Forward Authorization header from current request for service-to-service authentication
-            String authorizationHeader = getAuthorizationHeader();
-            if (authorizationHeader != null) {
-                headers.set("Authorization", authorizationHeader);
-                log.debug("Forwarding Authorization header to stock management service");
-            } else {
-                log.warn("No Authorization header found in current request - stock management service call may fail");
-            }
-
-            // Forward X-Tenant-Id header (required by stock management service)
-            String tenantIdHeader = getTenantIdHeader();
-            if (tenantIdHeader != null) {
-                headers.set("X-Tenant-Id", tenantIdHeader);
-                log.debug("Forwarding X-Tenant-Id header to stock management service: {}", tenantIdHeader);
-            } else {
-                // Set the tenantId from the method parameter as fallback
-                headers.set("X-Tenant-Id", tenantId.getValue());
-                log.debug("Setting X-Tenant-Id header from method parameter: {}", tenantId.getValue());
-            }
+            headers.set("X-Tenant-Id", tenantId.getValue());
 
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
@@ -128,42 +107,6 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
         }
     }
 
-    /**
-     * Extracts the Authorization header from the current HTTP request. This allows service-to-service calls to forward the JWT token.
-     *
-     * @return Authorization header value or null if not available
-     */
-    private String getAuthorizationHeader() {
-        try {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                return request.getHeader("Authorization");
-            }
-        } catch (Exception e) {
-            log.debug("Could not extract Authorization header from request context: {}", e.getMessage());
-        }
-        return null;
-    }
-
-    /**
-     * Extracts the X-Tenant-Id header from the current HTTP request. This allows service-to-service calls to forward the tenant context.
-     *
-     * @return X-Tenant-Id header value or null if not available
-     */
-    private String getTenantIdHeader() {
-        try {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                return request.getHeader("X-Tenant-Id");
-            }
-        } catch (Exception e) {
-            log.debug("Could not extract X-Tenant-Id header from request context: {}", e.getMessage());
-        }
-        return null;
-    }
-
     @Override
     public StockItemQueryResult findStockItemByProductAndLocation(ProductId productId, LocationId locationId, TenantId tenantId) {
         log.debug("Finding stock item by product and location: productId={}, locationId={}, tenantId={}", productId.getValueAsString(), locationId.getValueAsString(),
@@ -175,32 +118,36 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
                     locationId.getValueAsString());
             log.debug("Calling stock management service: {}", url);
 
+            // Service-to-service authentication is handled automatically by ServiceAccountAuthenticationInterceptor
             HttpHeaders headers = new HttpHeaders();
-            String authorizationHeader = getAuthorizationHeader();
-            if (authorizationHeader != null) {
-                headers.set("Authorization", authorizationHeader);
-            }
-            String tenantIdHeader = getTenantIdHeader();
-            if (tenantIdHeader != null) {
-                headers.set("X-Tenant-Id", tenantIdHeader);
-            } else {
-                headers.set("X-Tenant-Id", tenantId.getValue());
-            }
+            headers.set("X-Tenant-Id", tenantId.getValue());
 
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
             // Query stock items by product and location
-            ResponseEntity<ApiResponse<List<StockItemResponse>>> response = restTemplate.exchange(url, HttpMethod.GET, entity, STOCK_ITEMS_LIST_RESPONSE_TYPE);
+            ResponseEntity<ApiResponse<StockItemsByClassificationResponseDTO>> response = restTemplate.exchange(url, HttpMethod.GET, entity, STOCK_ITEMS_LIST_RESPONSE_TYPE);
 
-            ApiResponse<List<StockItemResponse>> responseBody = response.getBody();
+            ApiResponse<StockItemsByClassificationResponseDTO> responseBody = response.getBody();
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
-                List<StockItemResponse> stockItems = responseBody.getData();
+                StockItemsByClassificationResponseDTO responseData = responseBody.getData();
+                List<StockItemResponse> stockItems = responseData.getStockItems() != null ? responseData.getStockItems() : List.of();
 
                 if (stockItems.isEmpty()) {
                     log.debug("No stock items found for product: {} at location: {}", productId.getValueAsString(), locationId.getValueAsString());
                     return StockItemQueryResult.notFound(
                             String.format("No stock items found for product: %s at location: %s", productId.getValueAsString(), locationId.getValueAsString()));
                 }
+
+                // Calculate total available quantity across all stock items at this location
+                // This ensures we validate against total available, not just a single stock item
+                int totalAvailable = stockItems.stream().mapToInt(item -> {
+                    int totalQty = item.getQuantity() != null ? item.getQuantity() : 0;
+                    int allocatedQty = item.getAllocatedQuantity() != null ? item.getAllocatedQuantity() : 0;
+                    return Math.max(0, totalQty - allocatedQty);
+                }).sum();
+
+                log.debug("Found {} stock item(s) for product: {} at location: {} with total available quantity: {}", stockItems.size(), productId.getValueAsString(),
+                        locationId.getValueAsString(), totalAvailable);
 
                 // Return the first stock item found (for stock movements, we typically need one item)
                 // In the future, we might want to implement FEFO logic here
@@ -210,8 +157,9 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
                     return StockItemQueryResult.notFound("Stock item response missing stockItemId");
                 }
 
-                log.debug("Found stock item: {} for product: {} at location: {}", firstItem.getStockItemId(), productId.getValueAsString(), locationId.getValueAsString());
-                return StockItemQueryResult.found(firstItem.getStockItemId());
+                log.debug("Found stock item: {} for product: {} at location: {} (total available: {})", firstItem.getStockItemId(), productId.getValueAsString(),
+                        locationId.getValueAsString(), totalAvailable);
+                return StockItemQueryResult.found(firstItem.getStockItemId(), totalAvailable);
             }
 
             log.warn("Stock management service returned unexpected response: status={}", response.getStatusCode());
@@ -231,22 +179,17 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
             String url = String.format("%s/api/v1/stock-management/stock-items/by-product?productId=%s", stockManagementServiceUrl, productId.getValueAsString());
             log.debug("Calling stock management service: {}", url);
 
+            // Service-to-service authentication is handled automatically by ServiceAccountAuthenticationInterceptor
             HttpHeaders headers = new HttpHeaders();
-            String authorizationHeader = getAuthorizationHeader();
-            if (authorizationHeader != null) {
-                headers.set("Authorization", authorizationHeader);
-            }
-            String tenantIdHeader = getTenantIdHeader();
-            if (tenantIdHeader != null) {
-                headers.set("X-Tenant-Id", tenantIdHeader);
-            } else {
-                headers.set("X-Tenant-Id", tenantId.getValue());
-            }
+            headers.set("X-Tenant-Id", tenantId.getValue());
 
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
             // Query stock items by product only
-            ResponseEntity<ApiResponse<List<StockItemResponse>>> response = restTemplate.exchange(url, HttpMethod.GET, entity, STOCK_ITEMS_LIST_RESPONSE_TYPE);
+            // Note: /by-product endpoint returns List<StockItemQueryDTO> directly, not wrapped
+            ParameterizedTypeReference<ApiResponse<List<StockItemResponse>>> byProductResponseType = new ParameterizedTypeReference<ApiResponse<List<StockItemResponse>>>() {
+            };
+            ResponseEntity<ApiResponse<List<StockItemResponse>>> response = restTemplate.exchange(url, HttpMethod.GET, entity, byProductResponseType);
 
             ApiResponse<List<StockItemResponse>> responseBody = response.getBody();
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
@@ -275,6 +218,22 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
         } catch (Exception e) {
             log.error("Failed to find stock item by product: productId={}", productId.getValueAsString(), e);
             return StockItemQueryResult.notFound("Stock management service error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * DTO for stock-management-service stock items response wrapper.
+     */
+    private static class StockItemsByClassificationResponseDTO {
+        private List<StockItemResponse> stockItems;
+
+        public List<StockItemResponse> getStockItems() {
+            return stockItems;
+        }
+
+        @SuppressWarnings("unused")
+        public void setStockItems(List<StockItemResponse> stockItems) {
+            this.stockItems = stockItems;
         }
     }
 
@@ -310,7 +269,6 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
             this.productId = productId;
         }
 
-        @SuppressWarnings("unused")
         public String getLocationId() {
             return locationId;
         }
@@ -338,7 +296,6 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
             this.allocatedQuantity = allocatedQuantity;
         }
 
-        @SuppressWarnings("unused")
         public String getExpirationDate() {
             return expirationDate;
         }
@@ -348,7 +305,6 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
             this.expirationDate = expirationDate;
         }
 
-        @SuppressWarnings("unused")
         public String getClassification() {
             return classification;
         }
@@ -358,7 +314,6 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
             this.classification = classification;
         }
 
-        @SuppressWarnings("unused")
         public String getCreatedAt() {
             return createdAt;
         }
@@ -368,7 +323,6 @@ public class StockManagementServiceAdapter implements StockManagementServicePort
             this.createdAt = createdAt;
         }
 
-        @SuppressWarnings("unused")
         public String getLastModifiedAt() {
             return lastModifiedAt;
         }

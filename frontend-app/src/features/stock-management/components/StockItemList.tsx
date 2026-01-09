@@ -1,12 +1,27 @@
-import { Box, Button, Chip, Collapse, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Chip,
+  Collapse,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { EmptyState } from '../../../components/common';
 import { StockItem } from '../types/stockManagement';
 import { Routes } from '../../../utils/navigationUtils';
 import { formatDate } from '../../../utils/dateUtils';
 import { StockClassificationBadge } from './StockClassificationBadge';
-import { LocationOn as LocationIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
+import {
+  ExpandLess as ExpandLessIcon,
+  ExpandMore as ExpandMoreIcon,
+  LocationOn as LocationIcon,
+} from '@mui/icons-material';
 
 interface StockItemListProps {
   stockItems: StockItem[];
@@ -23,6 +38,7 @@ interface GroupedStockItem {
     locationId: string | undefined;
     locationCode: string | undefined;
     locationName: string | undefined;
+    locationHierarchy?: string;
     quantity: number;
     stockItemId: string;
     classification: StockItem['classification'];
@@ -63,6 +79,7 @@ export const StockItemList = ({ stockItems, error, isLoading }: StockItemListPro
         locationId: item.locationId,
         locationCode: item.locationCode,
         locationName: item.locationName,
+        locationHierarchy: item.locationHierarchy,
         quantity: item.quantity,
         stockItemId: item.stockItemId,
         classification: item.classification,
@@ -102,7 +119,9 @@ export const StockItemList = ({ stockItems, error, isLoading }: StockItemListPro
 
   const getProductDisplayName = (item: GroupedStockItem): string => {
     if (item.productCode) {
-      return item.productDescription ? `${item.productCode} - ${item.productDescription}` : item.productCode;
+      return item.productDescription
+        ? `${item.productCode} - ${item.productDescription}`
+        : item.productCode;
     }
     if (item.productDescription) {
       return item.productDescription;
@@ -112,7 +131,9 @@ export const StockItemList = ({ stockItems, error, isLoading }: StockItemListPro
 
   const getLocationDisplayName = (location: GroupedStockItem['locations'][0]): string => {
     if (location.locationName) {
-      return location.locationCode ? `${location.locationCode} - ${location.locationName}` : location.locationName;
+      return location.locationCode
+        ? `${location.locationCode} - ${location.locationName}`
+        : location.locationName;
     }
     if (location.locationCode) {
       return location.locationCode;
@@ -147,19 +168,23 @@ export const StockItemList = ({ stockItems, error, isLoading }: StockItemListPro
                 sx={{ cursor: 'pointer', backgroundColor: isExpanded ? 'action.hover' : 'inherit' }}
                 onClick={() => toggleProduct(group.productId)}
               >
-                <TableCell>
-                  {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                </TableCell>
+                <TableCell>{isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}</TableCell>
                 <TableCell>
                   <Typography variant="body2" fontWeight="medium">
                     {getProductDisplayName(group)}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontFamily: 'monospace' }}
+                  >
                     ID: {group.productId.substring(0, 8)}...
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <StockClassificationBadge classification={group.locations[0]?.classification || 'NORMAL'} />
+                  <StockClassificationBadge
+                    classification={group.locations[0]?.classification || 'NORMAL'}
+                  />
                 </TableCell>
                 <TableCell align="right">
                   <Typography variant="body2" fontWeight="bold">
@@ -173,7 +198,9 @@ export const StockItemList = ({ stockItems, error, isLoading }: StockItemListPro
                 </TableCell>
                 <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   <Typography variant="body2" color="text.secondary">
-                    {group.locations[0]?.expirationDate ? formatDate(group.locations[0].expirationDate) : 'N/A'}
+                    {group.locations[0]?.expirationDate
+                      ? formatDate(group.locations[0].expirationDate)
+                      : 'N/A'}
                   </Typography>
                 </TableCell>
                 <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
@@ -210,35 +237,57 @@ export const StockItemList = ({ stockItems, error, isLoading }: StockItemListPro
                           {group.locations.map(location => (
                             <TableRow key={location.stockItemId} hover>
                               <TableCell>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                                   {location.locationId ? (
                                     <>
-                                      <LocationIcon fontSize="small" color="action" />
-                                      <Typography variant="body2">
-                                        {getLocationDisplayName(location)}
-                                      </Typography>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        <LocationIcon fontSize="small" color="action" />
+                                        <Typography variant="body2">
+                                          {getLocationDisplayName(location)}
+                                        </Typography>
+                                      </Box>
+                                      {location.locationHierarchy && (
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                          sx={{ fontFamily: 'monospace', ml: 3 }}
+                                        >
+                                          {location.locationHierarchy}
+                                        </Typography>
+                                      )}
                                     </>
                                   ) : (
-                                    <Chip label="Unassigned" size="small" variant="outlined" color="warning" />
+                                    <Chip
+                                      label="Unassigned"
+                                      size="small"
+                                      variant="outlined"
+                                      color="warning"
+                                    />
                                   )}
                                 </Box>
                               </TableCell>
                               <TableCell>
-                                <StockClassificationBadge classification={location.classification} />
+                                <StockClassificationBadge
+                                  classification={location.classification}
+                                />
                               </TableCell>
                               <TableCell align="right">
                                 <Typography variant="body2">{location.quantity}</Typography>
                               </TableCell>
                               <TableCell>
                                 <Typography variant="body2">
-                                  {location.expirationDate ? formatDate(location.expirationDate) : 'N/A'}
+                                  {location.expirationDate
+                                    ? formatDate(location.expirationDate)
+                                    : 'N/A'}
                                 </Typography>
                               </TableCell>
                               <TableCell>
                                 <Button
                                   size="small"
                                   variant="outlined"
-                                  onClick={() => navigate(Routes.stockItemDetail(location.stockItemId))}
+                                  onClick={() =>
+                                    navigate(Routes.stockItemDetail(location.stockItemId))
+                                  }
                                 >
                                   View
                                 </Button>

@@ -112,7 +112,7 @@ public class ValidateConsignmentCommandHandler {
             }
 
             // Validate quantity
-            if (lineItem.getQuantity() <= 0) {
+            if (lineItem.getQuantity() == null || !lineItem.getQuantity().isPositive()) {
                 errors.add(String.format("Line %d: Quantity must be positive", lineNumber));
             }
 

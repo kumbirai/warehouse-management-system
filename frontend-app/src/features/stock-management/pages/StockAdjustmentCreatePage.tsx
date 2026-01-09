@@ -30,8 +30,11 @@ export const StockAdjustmentCreatePage = () => {
       error={error?.message || null}
       maxWidth="md"
     >
-      <StockAdjustmentForm onSubmit={handleSubmit} onCancel={handleCancel} isSubmitting={isLoading} />
+      <StockAdjustmentForm
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        isSubmitting={isLoading}
+      />
     </FormPageLayout>
   );
 };
-

@@ -1,4 +1,4 @@
-import {StatusVariant} from '../components/common/StatusBadge';
+import {StatusVariant} from '../components/common';
 
 /**
  * Utility function to get the status variant for a given status string

@@ -28,6 +28,7 @@ public final class GetStockItemQueryResult {
     private final LocationId locationId;
     private final String locationCode;
     private final String locationName;
+    private final String locationHierarchy;
     private final Quantity quantity;
     private final Quantity allocatedQuantity;
     private final ExpirationDate expirationDate;
@@ -37,8 +38,8 @@ public final class GetStockItemQueryResult {
     private final LocalDateTime lastModifiedAt;
 
     public GetStockItemQueryResult(StockItemId stockItemId, ProductId productId, String productCode, String productDescription, LocationId locationId, String locationCode,
-                                   String locationName, Quantity quantity, Quantity allocatedQuantity, ExpirationDate expirationDate, StockClassification classification,
-                                   ConsignmentId consignmentId, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
+                                   String locationName, String locationHierarchy, Quantity quantity, Quantity allocatedQuantity, ExpirationDate expirationDate,
+                                   StockClassification classification, ConsignmentId consignmentId, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
         if (stockItemId == null) {
             throw new IllegalArgumentException("StockItemId is required");
         }
@@ -58,6 +59,7 @@ public final class GetStockItemQueryResult {
         this.locationId = locationId;
         this.locationCode = locationCode;
         this.locationName = locationName;
+        this.locationHierarchy = locationHierarchy;
         this.quantity = quantity;
         this.allocatedQuantity = allocatedQuantity != null ? allocatedQuantity : Quantity.of(0);
         this.expirationDate = expirationDate;

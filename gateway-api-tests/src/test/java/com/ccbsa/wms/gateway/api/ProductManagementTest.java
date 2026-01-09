@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +32,7 @@ import com.ccbsa.wms.gateway.api.fixture.ProductTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.TestData;
 import com.ccbsa.wms.gateway.api.util.BarcodeGenerator;
 import com.ccbsa.wms.gateway.api.util.CsvTestDataGenerator;
+import com.ccbsa.wms.gateway.api.util.RequestHeaderHelper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -296,7 +298,7 @@ public class ProductManagementTest extends BaseIntegrationTest {
     public void testGetProduct_NotFound() {
         // Act
         WebTestClient.ResponseSpec response = authenticatedGet(
-                "/api/v1/products/" + java.util.UUID.randomUUID(),
+                "/api/v1/products/" + UUID.randomUUID(),
                 tenantAdminAuth.getAccessToken(),
                 testTenantId
         ).exchange();
@@ -553,7 +555,7 @@ public class ProductManagementTest extends BaseIntegrationTest {
 
         // Act
         WebTestClient.ResponseSpec response = authenticatedPut(
-                "/api/v1/products/" + java.util.UUID.randomUUID(),
+                "/api/v1/products/" + UUID.randomUUID(),
                 tenantAdminAuth.getAccessToken(),
                 testTenantId,
                 updateRequest
@@ -616,8 +618,8 @@ public class ProductManagementTest extends BaseIntegrationTest {
         WebTestClient.ResponseSpec response = webTestClient.post()
                 .uri("/api/v1/products/upload-csv")
                 .headers(headers -> {
-                    com.ccbsa.wms.gateway.api.util.RequestHeaderHelper.addAuthHeaders(headers, tenantAdminAuth.getAccessToken());
-                    com.ccbsa.wms.gateway.api.util.RequestHeaderHelper.addTenantHeader(headers, testTenantId);
+                    RequestHeaderHelper.addAuthHeaders(headers, tenantAdminAuth.getAccessToken());
+                    RequestHeaderHelper.addTenantHeader(headers, testTenantId);
                 })
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(body))
@@ -668,8 +670,8 @@ public class ProductManagementTest extends BaseIntegrationTest {
         WebTestClient.ResponseSpec response = webTestClient.post()
                 .uri("/api/v1/products/upload-csv")
                 .headers(headers -> {
-                    com.ccbsa.wms.gateway.api.util.RequestHeaderHelper.addAuthHeaders(headers, tenantAdminAuth.getAccessToken());
-                    com.ccbsa.wms.gateway.api.util.RequestHeaderHelper.addTenantHeader(headers, testTenantId);
+                    RequestHeaderHelper.addAuthHeaders(headers, tenantAdminAuth.getAccessToken());
+                    RequestHeaderHelper.addTenantHeader(headers, testTenantId);
                 })
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(body))
@@ -719,8 +721,8 @@ public class ProductManagementTest extends BaseIntegrationTest {
         WebTestClient.ResponseSpec response = webTestClient.post()
                 .uri("/api/v1/products/upload-csv")
                 .headers(headers -> {
-                    com.ccbsa.wms.gateway.api.util.RequestHeaderHelper.addAuthHeaders(headers, tenantAdminAuth.getAccessToken());
-                    com.ccbsa.wms.gateway.api.util.RequestHeaderHelper.addTenantHeader(headers, testTenantId);
+                    RequestHeaderHelper.addAuthHeaders(headers, tenantAdminAuth.getAccessToken());
+                    RequestHeaderHelper.addTenantHeader(headers, testTenantId);
                 })
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(body))

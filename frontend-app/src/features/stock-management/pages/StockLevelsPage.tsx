@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { FormControl, InputLabel, MenuItem, Select, Box, Typography } from '@mui/material';
+import { Box, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
 import { useStockLevels } from '../hooks/useStockLevels';
 import { StockLevelList } from '../components/StockLevelList';
-import { ListPageLayout } from '../../../components/layouts/ListPageLayout';
-import { FilterBar } from '../../../components/common/FilterBar';
+import { ListPageLayout } from '../../../components/layouts';
+import { FilterBar } from '../../../components/common';
 import { getBreadcrumbs } from '../../../utils/navigationUtils';
 import { useProducts } from '../../product-management/hooks/useProducts';
 import { useAuth } from '../../../hooks/useAuth';
@@ -18,7 +18,11 @@ export const StockLevelsPage = () => {
     tenantId: user?.tenantId || '',
   });
 
-  const { data: stockLevelsResponse, isLoading, error } = useStockLevels({
+  const {
+    data: stockLevelsResponse,
+    isLoading,
+    error,
+  } = useStockLevels({
     productId: selectedProductId,
   });
 
@@ -45,14 +49,14 @@ export const StockLevelsPage = () => {
             labelId="product-filter-label"
             value={selectedProductId}
             label="Product"
-            onChange={(e) => setSelectedProductId(e.target.value)}
+            onChange={e => setSelectedProductId(e.target.value)}
             aria-label="Filter stock levels by product"
             required
           >
             <MenuItem value="">
               <em>Select a product</em>
             </MenuItem>
-            {products.map((product) => (
+            {products.map(product => (
               <MenuItem key={product.productId} value={product.productId}>
                 {product.productCode} - {product.description}
               </MenuItem>

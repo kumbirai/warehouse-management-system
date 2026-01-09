@@ -133,4 +133,3 @@ export const StockAdjustmentDetail = ({ adjustment }: StockAdjustmentDetailProps
     </Paper>
   );
 };
-

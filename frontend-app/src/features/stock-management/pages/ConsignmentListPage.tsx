@@ -1,6 +1,6 @@
 import { Button, FormControl, Grid, InputLabel, MenuItem, Select } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useCallback, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Add as AddIcon,
   Search as SearchIcon,
@@ -18,12 +18,26 @@ import { ConsignmentListFilters, ConsignmentStatus } from '../types/stockManagem
 export const ConsignmentListPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Filter state
   const [page, setPage] = useState(0);
   const [size] = useState(20);
   const [statusFilter, setStatusFilter] = useState<ConsignmentStatus | ''>('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Read expiringWithinDays from URL query parameter on mount
+  const [expiringWithinDays, setExpiringWithinDays] = useState<number | undefined>(() => {
+    const expiringParam = searchParams.get('expiringWithinDays');
+    return expiringParam ? parseInt(expiringParam, 10) : undefined;
+  });
+
+  // Update expiringWithinDays when URL query parameter changes
+  useEffect(() => {
+    const expiringParam = searchParams.get('expiringWithinDays');
+    const newValue = expiringParam ? parseInt(expiringParam, 10) : undefined;
+    setExpiringWithinDays(newValue);
+  }, [searchParams]);
 
   // Memoize filters object to prevent infinite loop in useConsignments hook
   const filters: ConsignmentListFilters = useMemo(
@@ -32,8 +46,9 @@ export const ConsignmentListPage = () => {
       size,
       status: statusFilter || undefined,
       search: searchQuery || undefined,
+      expiringWithinDays,
     }),
-    [page, size, statusFilter, searchQuery]
+    [page, size, statusFilter, searchQuery, expiringWithinDays]
   );
 
   const { consignments, isLoading, error, pagination } = useConsignments(
@@ -55,14 +70,17 @@ export const ConsignmentListPage = () => {
   const handleClearFilters = useCallback(() => {
     setStatusFilter('');
     setSearchQuery('');
+    setExpiringWithinDays(undefined);
     setPage(0);
-  }, []);
+    // Clear URL query parameters
+    setSearchParams({});
+  }, [setSearchParams]);
 
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage - 1); // Convert to 0-based index
   }, []);
 
-  const hasActiveFilters = Boolean(statusFilter || searchQuery);
+  const hasActiveFilters = Boolean(statusFilter || searchQuery || expiringWithinDays);
 
   return (
     <ListPageLayout

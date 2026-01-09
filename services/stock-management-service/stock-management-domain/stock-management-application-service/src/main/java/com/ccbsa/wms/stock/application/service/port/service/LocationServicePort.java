@@ -83,7 +83,7 @@ public interface LocationServicePort {
     /**
      * Location information result object.
      */
-    record LocationInfo(String locationId, String name, String description, String code) {
+    record LocationInfo(String locationId, String name, String description, String code, String type, LocationCoordinates coordinates) {
         /**
          * Gets the display name for the location.
          * Prefers description, then name, then code, finally locationId.
@@ -102,6 +102,35 @@ public interface LocationServicePort {
             }
             return locationId;
         }
+
+        /**
+         * Checks if the location is of BIN type (lowest hierarchy level).
+         *
+         * @return true if location type is BIN, false otherwise
+         */
+        public boolean isBinType() {
+            return type != null && "BIN".equalsIgnoreCase(type.trim());
+        }
+
+        /**
+         * Gets the location hierarchy as a formatted string.
+         * Format: {zone}-{aisle}-{rack}-{level}
+         *
+         * @return Hierarchy string or null if coordinates are not available
+         */
+        public String getHierarchy() {
+            if (coordinates == null) {
+                return null;
+            }
+            return String.format("%s-%s-%s-%s", coordinates.zone() != null ? coordinates.zone() : "", coordinates.aisle() != null ? coordinates.aisle() : "",
+                    coordinates.rack() != null ? coordinates.rack() : "", coordinates.level() != null ? coordinates.level() : "");
+        }
+    }
+
+    /**
+     * Location coordinates (zone, aisle, rack, level).
+     */
+    record LocationCoordinates(String zone, String aisle, String rack, String level) {
     }
 }
 

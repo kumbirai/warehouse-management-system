@@ -134,9 +134,11 @@ keycloak:
     socketTimeout: 20000      # 20 seconds - increased to prevent timeouts during group operations
 
 # Tenant Service Configuration
+# Note: Uses Eureka service discovery via @LoadBalanced RestTemplate
+# Service name is resolved through Eureka registry (no port needed)
 tenant:
   service:
-    url: ${TENANT_SERVICE_URL:http://localhost:8089}
+    url: ${TENANT_SERVICE_URL:http://tenant-service}
 
 # Frontend Configuration
 frontend:

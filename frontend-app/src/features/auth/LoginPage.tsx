@@ -3,6 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import {Alert, Box, Button, Container, Link, Paper, TextField, Typography} from '@mui/material';
 import axios from 'axios';
 import {useAuth} from '../../hooks/useAuth';
+import {logger} from '../../utils/logger';
 
 /**
  * Login page component.
@@ -21,7 +22,7 @@ export const LoginPage = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && !loginSuccessRef.current) {
-      console.log('[LoginPage] User already authenticated, redirecting to dashboard');
+      logger.debug('[LoginPage] User already authenticated, redirecting to dashboard');
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
@@ -29,7 +30,7 @@ export const LoginPage = () => {
   // Navigate to dashboard when authentication state becomes true after successful login
   useEffect(() => {
     if (loginSuccessRef.current && isAuthenticated) {
-      console.log('[LoginPage] Login successful, navigating to dashboard', {
+      logger.debug('[LoginPage] Login successful, navigating to dashboard', {
         isAuthenticated,
         loginSuccess: loginSuccessRef.current,
       });
@@ -51,13 +52,13 @@ export const LoginPage = () => {
     loginInProgressRef.current = true;
 
     try {
-      console.log('[LoginPage] Calling login function');
+      logger.debug('[LoginPage] Calling login function');
       // Trim username to prevent validation errors from trailing/leading spaces
       await login(username.trim(), password);
-      console.log('[LoginPage] Login function completed successfully, setting loginSuccessRef');
+      logger.debug('[LoginPage] Login function completed successfully, setting loginSuccessRef');
       // Mark login as successful - navigation will happen via useEffect when isAuthenticated becomes true
       loginSuccessRef.current = true;
-      console.log(
+      logger.debug(
         '[LoginPage] loginSuccessRef set to true, waiting for isAuthenticated to become true'
       );
     } catch (err) {

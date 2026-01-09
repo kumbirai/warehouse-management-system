@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.UserId;
 import com.ccbsa.common.domain.valueobject.WarehouseId;
@@ -63,8 +64,8 @@ public class StockConsignmentDTOMapper {
      */
     public CreateConsignmentCommand toCreateCommand(CreateConsignmentCommandDTO dto, String tenantId) {
         List<ConsignmentLineItem> lineItems = dto.getLineItems().stream()
-                .map(item -> ConsignmentLineItem.builder().productCode(ProductCode.of(item.getProductCode())).quantity(item.getQuantity()).expirationDate(item.getExpirationDate())
-                        .build()).collect(Collectors.toList());
+                .map(item -> ConsignmentLineItem.builder().productCode(ProductCode.of(item.getProductCode())).quantity(Quantity.of(item.getQuantity()))
+                        .expirationDate(item.getExpirationDate()).build()).collect(Collectors.toList());
 
         return CreateConsignmentCommand.builder().tenantId(TenantId.of(tenantId)).consignmentReference(ConsignmentReference.of(dto.getConsignmentReference()))
                 .warehouseId(WarehouseId.of(dto.getWarehouseId())).receivedAt(dto.getReceivedAt()).receivedBy(ReceivedBy.of(dto.getReceivedBy())).lineItems(lineItems).build();
@@ -141,8 +142,8 @@ public class StockConsignmentDTOMapper {
      */
     public ValidateConsignmentCommand toValidateCommand(ValidateConsignmentCommandDTO dto, String tenantId) {
         List<ConsignmentLineItem> lineItems = dto.getLineItems().stream()
-                .map(item -> ConsignmentLineItem.builder().productCode(ProductCode.of(item.getProductCode())).quantity(item.getQuantity()).expirationDate(item.getExpirationDate())
-                        .build()).collect(Collectors.toList());
+                .map(item -> ConsignmentLineItem.builder().productCode(ProductCode.of(item.getProductCode())).quantity(Quantity.of(item.getQuantity()))
+                        .expirationDate(item.getExpirationDate()).build()).collect(Collectors.toList());
 
         return ValidateConsignmentCommand.builder().tenantId(TenantId.of(tenantId)).consignmentReference(ConsignmentReference.of(dto.getConsignmentReference()))
                 .warehouseId(WarehouseId.of(dto.getWarehouseId())).receivedAt(dto.getReceivedAt()).lineItems(lineItems).build();
@@ -250,8 +251,8 @@ public class StockConsignmentDTOMapper {
         List<ConsignmentQueryDTO.ConsignmentLineItemDTO> lineItemDTOs = result.getLineItems().stream().map(item -> {
             ConsignmentQueryDTO.ConsignmentLineItemDTO itemDTO = new ConsignmentQueryDTO.ConsignmentLineItemDTO();
             itemDTO.setProductCode(item.getProductCode().getValue());
-            itemDTO.setQuantity(item.getQuantity());
-            itemDTO.setExpirationDate(item.getExpirationDate());
+            itemDTO.setQuantity(item.getQuantity().getValue());
+            itemDTO.setExpirationDate(item.getExpirationDate() != null ? item.getExpirationDate().getValue() : null);
             return itemDTO;
         }).collect(Collectors.toList());
         dto.setLineItems(lineItemDTOs);

@@ -71,7 +71,14 @@ export const UserSelector = ({
         )}
       </Select>
       {helperText && (
-        <span style={{ fontSize: '0.75rem', marginTop: '3px', marginLeft: '14px', color: error ? '#d32f2f' : 'rgba(0, 0, 0, 0.6)' }}>
+        <span
+          style={{
+            fontSize: '0.75rem',
+            marginTop: '3px',
+            marginLeft: '14px',
+            color: error ? '#d32f2f' : 'rgba(0, 0, 0, 0.6)',
+          }}
+        >
           {helperText}
         </span>
       )}

@@ -38,6 +38,7 @@ public class StockItemEntityMapper {
         entity.setProductId(stockItem.getProductId().getValue());
         entity.setLocationId(stockItem.getLocationId() != null ? stockItem.getLocationId().getValue() : null);
         entity.setQuantity(stockItem.getQuantity().getValue());
+        entity.setAllocatedQuantity(stockItem.getAllocatedQuantity().getValue());
         entity.setExpirationDate(stockItem.getExpirationDate() != null ? stockItem.getExpirationDate().getValue() : null);
         entity.setClassification(stockItem.getClassification());
         entity.setConsignmentId(stockItem.getConsignmentId() != null ? stockItem.getConsignmentId().getValue() : null);
@@ -68,7 +69,7 @@ public class StockItemEntityMapper {
         // Build domain entity using builder
         StockItem.Builder builder =
                 StockItem.builder().stockItemId(StockItemId.of(entity.getId())).tenantId(TenantId.of(entity.getTenantId())).productId(ProductId.of(entity.getProductId()))
-                        .quantity(Quantity.of(entity.getQuantity()));
+                        .quantity(Quantity.of(entity.getQuantity())).allocatedQuantity(Quantity.of(entity.getAllocatedQuantity() != null ? entity.getAllocatedQuantity() : 0));
 
         if (entity.getLocationId() != null) {
             builder.locationId(LocationId.of(entity.getLocationId()));

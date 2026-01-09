@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ccbsa.wms.user.dataaccess.entity.UserEntity;
+import com.ccbsa.wms.user.domain.core.valueobject.UserStatus;
 
 /**
  * JPA Repository: UserJpaRepository
@@ -58,7 +59,7 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, String> {
      * @param status   User status
      * @return List of users with the specified status
      */
-    List<UserEntity> findByTenantIdAndStatus(String tenantId, UserEntity.UserStatus status);
+    List<UserEntity> findByTenantIdAndStatus(String tenantId, UserStatus status);
 
     /**
      * Checks if a user exists by tenant ID and user ID.
@@ -106,7 +107,6 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, String> {
      */
     @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId AND u.status = :status AND " + "(LOWER(u.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR "
             + "LOWER(u.emailAddress) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    List<UserEntity> findByTenantIdAndStatusAndSearchTerm(@Param("tenantId") String tenantId, @Param("status") UserEntity.UserStatus status,
-                                                          @Param("searchTerm") String searchTerm);
+    List<UserEntity> findByTenantIdAndStatusAndSearchTerm(@Param("tenantId") String tenantId, @Param("status") UserStatus status, @Param("searchTerm") String searchTerm);
 }
 

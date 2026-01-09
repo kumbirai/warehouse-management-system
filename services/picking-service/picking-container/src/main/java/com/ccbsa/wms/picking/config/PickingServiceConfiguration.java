@@ -3,42 +3,59 @@ package com.ccbsa.wms.picking.config;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.core5.util.Timeout;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.util.backoff.BackOff;
 import org.springframework.util.backoff.ExponentialBackOff;
+import org.springframework.web.client.RestTemplate;
 
 import com.ccbsa.common.messaging.config.KafkaConfig;
 import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
+import com.ccbsa.wms.common.security.ServiceAccountAuthenticationConfig;
 import com.ccbsa.wms.common.security.ServiceSecurityConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Picking Service Configuration
  * <p>
  * Imports common security configuration for JWT validation and tenant context. Imports common data access configuration for multi-tenant schema resolution. Imports Kafka
- * configuration for messaging infrastructure (provides
- * kafkaObjectMapper bean).
+ * configuration for messaging infrastructure (provides kafkaObjectMapper bean). Imports service account authentication configuration for service-to-service authentication.
  * <p>
  * The {@link MultiTenantDataAccessConfig} provides the {@link com.ccbsa.wms.common.dataaccess.TenantSchemaResolver} bean which implements schema-per-tenant strategy for
  * multi-tenant isolation.
  * <p>
  * The {@link KafkaConfig} provides the {@code kafkaObjectMapper} bean used for Kafka message serialization/deserialization with type information.
+ * <p>
+ * The {@link ServiceAccountAuthenticationConfig} provides service account token provider and RestTemplate interceptor for production-grade service-to-service authentication.
+ * This enables event listeners and scheduled jobs to make authenticated inter-service calls without HTTP request context.
  */
+@Slf4j
 @Configuration
-@Import( {ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class})
+@Import( {ServiceSecurityConfig.class, MultiTenantDataAccessConfig.class, KafkaConfig.class, ServiceAccountAuthenticationConfig.class})
 public class PickingServiceConfiguration {
 
     @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
@@ -67,6 +84,9 @@ public class PickingServiceConfiguration {
 
     @Value("${spring.kafka.error-handling.max-interval:10000}")
     private Long maxInterval;
+
+    @Value("${spring.kafka.error-handling.dead-letter-topic-suffix:.dlq}")
+    private String deadLetterTopicSuffix;
 
     /**
      * Custom consumer factory for external events (tenant events).
@@ -145,6 +165,149 @@ public class PickingServiceConfiguration {
         backOff.setMaxInterval(maxInterval);
         backOff.setMaxElapsedTime(maxInterval * maxRetries);
         return backOff;
+    }
+
+    /**
+     * Dead letter publishing recoverer for internal events.
+     * <p>
+     * Publishes failed messages to dead letter topic with configured suffix after all retries are exhausted.
+     *
+     * @param kafkaTemplate Kafka template for publishing to DLQ
+     * @return Dead letter publishing recoverer
+     */
+    @Bean("internalEventDeadLetterPublishingRecoverer")
+    public DeadLetterPublishingRecoverer internalEventDeadLetterPublishingRecoverer(KafkaTemplate<String, Object> kafkaTemplate) {
+        return new DeadLetterPublishingRecoverer(kafkaTemplate, (record, ex) -> {
+            String originalTopic = record.topic();
+            String dlqTopic = originalTopic + deadLetterTopicSuffix;
+            log.warn("Publishing failed message to dead letter topic: {} -> {}, error: {}", originalTopic, dlqTopic, ex.getMessage());
+            return new org.apache.kafka.common.TopicPartition(dlqTopic, record.partition());
+        });
+    }
+
+    /**
+     * Consumer factory for internal picking events (PickingListReceivedEvent, etc.).
+     * <p>
+     * Uses typed deserialization with @class property from JSON payload. The ObjectMapper is configured with JsonTypeInfo to include @class property, allowing proper typed
+     * deserialization of internal events.
+     * <p>
+     * Explicitly uses kafkaObjectMapper to ensure type information is properly deserialized.
+     *
+     * @param kafkaObjectMapper Kafka ObjectMapper for JSON deserialization (configured with JsonTypeInfo)
+     * @return Consumer factory configured for internal events with typed deserialization
+     */
+    @Bean("internalEventConsumerFactory")
+    public ConsumerFactory<String, Object> internalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "picking-service");
+        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+
+        // Production-grade consumer settings
+        configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
+        configProps.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollIntervalMs);
+        configProps.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, sessionTimeoutMs);
+        configProps.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
+
+        // Configure JsonDeserializer to use @class property from JSON payload
+        // ObjectMapper is configured with JsonTypeInfo mixin to include @class property
+        JsonDeserializer<Object> jsonDeserializer = new JsonDeserializer<>(Object.class, kafkaObjectMapper);
+        jsonDeserializer.addTrustedPackages("*");
+        // Use @class property from JSON payload, not type headers
+        jsonDeserializer.setUseTypeHeaders(false);
+        jsonDeserializer.setRemoveTypeHeaders(true);
+
+        // Wrap with ErrorHandlingDeserializer to handle deserialization errors gracefully
+        ErrorHandlingDeserializer<Object> errorHandlingDeserializer = new ErrorHandlingDeserializer<>(jsonDeserializer);
+
+        DefaultKafkaConsumerFactory<String, Object> factory = new DefaultKafkaConsumerFactory<>(configProps);
+        factory.setValueDeserializer(errorHandlingDeserializer);
+        return factory;
+    }
+
+    /**
+     * Listener container factory for internal picking events.
+     * <p>
+     * Uses the internalEventConsumerFactory to handle PickingListReceivedEvent with production-grade error handling without overriding the common factory bean.
+     * <p>
+     * Includes dead letter queue support for failed messages after retries are exhausted.
+     *
+     * @param internalEventConsumerFactory Consumer factory for internal events
+     * @param deadLetterRecoverer          Dead letter publishing recoverer for failed messages
+     * @return Listener container factory
+     */
+    @Bean("internalEventKafkaListenerContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory<String, Object> internalEventKafkaListenerContainerFactory(ConsumerFactory<String, Object> internalEventConsumerFactory,
+                                                                                                              @Qualifier("internalEventDeadLetterPublishingRecoverer")
+                                                                                                              DeadLetterPublishingRecoverer deadLetterRecoverer) {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(internalEventConsumerFactory);
+
+        // Manual acknowledgment mode for reliable processing
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+
+        // Concurrency for parallel processing
+        factory.setConcurrency(concurrency);
+
+        // Error handler with dead letter queue support and exponential backoff
+        BackOff backOff = createExponentialBackOff();
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(deadLetterRecoverer, backOff);
+
+        // Skip retries for deserialization errors - acknowledge and move on
+        errorHandler.addNotRetryableExceptions(org.apache.kafka.common.errors.SerializationException.class,
+                org.springframework.kafka.support.serializer.DeserializationException.class);
+
+        // Add retry listener for logging
+        errorHandler.setRetryListeners((record, ex, deliveryAttempt) -> {
+            log.warn("Retry attempt {} for message from topic {}: {}", deliveryAttempt, record.topic(), ex.getMessage());
+        });
+
+        factory.setCommonErrorHandler(errorHandler);
+
+        return factory;
+    }
+
+    /**
+     * RestTemplate bean for external service calls (e.g., Product Service).
+     * <p>
+     * Configured with @LoadBalanced to enable Eureka service discovery. Uses service names
+     * (e.g., http://product-service) which are resolved via Eureka registry.
+     * <p>
+     * Configured with connection pooling and timeouts for production use. Uses HttpComponentsClientHttpRequestFactory to avoid deprecated RestTemplateBuilder methods.
+     * <p>
+     * The ServiceAccountAuthenticationConfig automatically adds the authentication interceptor
+     * to this RestTemplate bean via BeanPostProcessor, enabling service-to-service authentication.
+     *
+     * @param builder RestTemplateBuilder
+     * @return RestTemplate configured with LoadBalancer for service discovery
+     */
+    @Bean
+    @LoadBalanced
+    public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        // Create connection pool manager
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+        connectionManager.setMaxTotal(200);
+        connectionManager.setDefaultMaxPerRoute(50);
+
+        // Configure request timeouts using HttpClient 5 API
+        // Note: setConnectTimeout is deprecated in HttpClient 5 but still functional.
+        // The replacement API is not yet stable, so we continue using this method.
+        // This is a known limitation and will be updated when HttpClient 5 provides a stable replacement.
+        @SuppressWarnings("deprecation") RequestConfig requestConfig =
+                RequestConfig.custom().setConnectTimeout(Timeout.ofSeconds(10)).setResponseTimeout(Timeout.ofSeconds(30)).setConnectionRequestTimeout(Timeout.ofSeconds(10))
+                        .build();
+
+        // Create HTTP client with connection pooling
+        HttpClient httpClient =
+                HttpClientBuilder.create().setConnectionManager(connectionManager).setDefaultRequestConfig(requestConfig).evictIdleConnections(Timeout.ofSeconds(30))
+                        .evictExpiredConnections().build();
+
+        // Create request factory with pooled HTTP client
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+
+        return builder.requestFactory(() -> requestFactory).build();
     }
 }
 

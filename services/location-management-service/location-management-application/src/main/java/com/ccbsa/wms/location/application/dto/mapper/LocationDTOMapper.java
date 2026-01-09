@@ -33,6 +33,8 @@ import com.ccbsa.wms.location.application.dto.query.ListLocationsQueryResultDTO;
 import com.ccbsa.wms.location.application.dto.query.ListStockMovementsQueryResultDTO;
 import com.ccbsa.wms.location.application.dto.query.LocationAvailabilityQueryResultDTO;
 import com.ccbsa.wms.location.application.dto.query.LocationCapacityDTO;
+import com.ccbsa.wms.location.application.dto.query.LocationHierarchyItemDTO;
+import com.ccbsa.wms.location.application.dto.query.LocationHierarchyQueryResultDTO;
 import com.ccbsa.wms.location.application.dto.query.LocationQueryResultDTO;
 import com.ccbsa.wms.location.application.dto.query.StockMovementQueryResultDTO;
 import com.ccbsa.wms.location.application.service.command.dto.AssignLocationsFEFOCommand;
@@ -54,11 +56,18 @@ import com.ccbsa.wms.location.application.service.command.dto.UpdateLocationStat
 import com.ccbsa.wms.location.application.service.query.dto.CheckLocationAvailabilityQuery;
 import com.ccbsa.wms.location.application.service.query.dto.GetLocationQuery;
 import com.ccbsa.wms.location.application.service.query.dto.GetStockMovementQuery;
+import com.ccbsa.wms.location.application.service.query.dto.ListAislesQuery;
+import com.ccbsa.wms.location.application.service.query.dto.ListBinsQuery;
 import com.ccbsa.wms.location.application.service.query.dto.ListLocationsQuery;
 import com.ccbsa.wms.location.application.service.query.dto.ListLocationsQueryResult;
+import com.ccbsa.wms.location.application.service.query.dto.ListRacksQuery;
 import com.ccbsa.wms.location.application.service.query.dto.ListStockMovementsQuery;
 import com.ccbsa.wms.location.application.service.query.dto.ListStockMovementsQueryResult;
+import com.ccbsa.wms.location.application.service.query.dto.ListWarehousesQuery;
+import com.ccbsa.wms.location.application.service.query.dto.ListZonesQuery;
 import com.ccbsa.wms.location.application.service.query.dto.LocationAvailabilityResult;
+import com.ccbsa.wms.location.application.service.query.dto.LocationHierarchyItemResult;
+import com.ccbsa.wms.location.application.service.query.dto.LocationHierarchyQueryResult;
 import com.ccbsa.wms.location.application.service.query.dto.LocationQueryResult;
 import com.ccbsa.wms.location.application.service.query.dto.StockMovementQueryResult;
 import com.ccbsa.wms.location.domain.core.valueobject.LocationBarcode;
@@ -720,6 +729,97 @@ public class LocationDTOMapper {
         UnblockLocationResultDTO dto = new UnblockLocationResultDTO();
         dto.setLocationId(result.getLocationId().getValue());
         dto.setStatus(result.getStatus());
+        return dto;
+    }
+
+    /**
+     * Converts ListWarehousesQuery query parameters to ListWarehousesQuery.
+     *
+     * @param tenantId Tenant ID string
+     * @return ListWarehousesQuery
+     */
+    public ListWarehousesQuery toListWarehousesQuery(String tenantId) {
+        return ListWarehousesQuery.of(TenantId.of(tenantId));
+    }
+
+    /**
+     * Converts ListZonesQuery query parameters to ListZonesQuery.
+     *
+     * @param warehouseId Warehouse ID string
+     * @param tenantId    Tenant ID string
+     * @return ListZonesQuery
+     */
+    public ListZonesQuery toListZonesQuery(String warehouseId, String tenantId) {
+        return ListZonesQuery.of(TenantId.of(tenantId), LocationId.of(UUID.fromString(warehouseId)));
+    }
+
+    /**
+     * Converts ListAislesQuery query parameters to ListAislesQuery.
+     *
+     * @param zoneId   Zone ID string
+     * @param tenantId Tenant ID string
+     * @return ListAislesQuery
+     */
+    public ListAislesQuery toListAislesQuery(String zoneId, String tenantId) {
+        return ListAislesQuery.of(TenantId.of(tenantId), LocationId.of(UUID.fromString(zoneId)));
+    }
+
+    /**
+     * Converts ListRacksQuery query parameters to ListRacksQuery.
+     *
+     * @param aisleId  Aisle ID string
+     * @param tenantId Tenant ID string
+     * @return ListRacksQuery
+     */
+    public ListRacksQuery toListRacksQuery(String aisleId, String tenantId) {
+        return ListRacksQuery.of(TenantId.of(tenantId), LocationId.of(UUID.fromString(aisleId)));
+    }
+
+    /**
+     * Converts ListBinsQuery query parameters to ListBinsQuery.
+     *
+     * @param rackId   Rack ID string
+     * @param tenantId Tenant ID string
+     * @return ListBinsQuery
+     */
+    public ListBinsQuery toListBinsQuery(String rackId, String tenantId) {
+        return ListBinsQuery.of(TenantId.of(tenantId), LocationId.of(UUID.fromString(rackId)));
+    }
+
+    /**
+     * Converts LocationHierarchyQueryResult to LocationHierarchyQueryResultDTO.
+     *
+     * @param result Query result
+     * @return LocationHierarchyQueryResultDTO
+     */
+    public LocationHierarchyQueryResultDTO toLocationHierarchyQueryResultDTO(LocationHierarchyQueryResult result) {
+        LocationHierarchyQueryResultDTO dto = new LocationHierarchyQueryResultDTO();
+
+        // Map parent (if present)
+        if (result.getParent() != null) {
+            dto.setParent(toQueryResultDTO(result.getParent()));
+        }
+
+        // Map items
+        List<LocationHierarchyItemDTO> itemDTOs = result.getItems().stream().map(this::toLocationHierarchyItemDTO).collect(Collectors.toList());
+        dto.setItems(itemDTOs);
+
+        dto.setHierarchyLevel(result.getHierarchyLevel());
+
+        return dto;
+    }
+
+    /**
+     * Converts LocationHierarchyItemResult to LocationHierarchyItemDTO.
+     *
+     * @param result Item result
+     * @return LocationHierarchyItemDTO
+     */
+    private LocationHierarchyItemDTO toLocationHierarchyItemDTO(LocationHierarchyItemResult result) {
+        LocationHierarchyItemDTO dto = new LocationHierarchyItemDTO();
+        dto.setLocation(toQueryResultDTO(result.getLocation()));
+        dto.setChildCount(result.getChildCount());
+        dto.setStatusSummary(result.getStatusSummary());
         return dto;
     }
 }

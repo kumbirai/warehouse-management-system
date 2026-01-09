@@ -22,6 +22,12 @@ import com.ccbsa.wms.location.application.dto.mapper.LocationDTOMapper;
 import com.ccbsa.wms.location.application.service.command.CancelStockMovementCommandHandler;
 import com.ccbsa.wms.location.application.service.command.CompleteStockMovementCommandHandler;
 import com.ccbsa.wms.location.application.service.command.CreateStockMovementCommandHandler;
+import com.ccbsa.wms.location.application.service.command.dto.CancelStockMovementCommand;
+import com.ccbsa.wms.location.application.service.command.dto.CancelStockMovementResult;
+import com.ccbsa.wms.location.application.service.command.dto.CompleteStockMovementCommand;
+import com.ccbsa.wms.location.application.service.command.dto.CompleteStockMovementResult;
+import com.ccbsa.wms.location.application.service.command.dto.CreateStockMovementCommand;
+import com.ccbsa.wms.location.application.service.command.dto.CreateStockMovementResult;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -63,10 +69,10 @@ public class StockMovementCommandController {
     public ResponseEntity<ApiResponse<CreateStockMovementResultDTO>> createStockMovement(@RequestHeader("X-Tenant-Id") String tenantId,
                                                                                          @Valid @RequestBody CreateStockMovementCommandDTO commandDTO) {
         // Map DTO to command
-        com.ccbsa.wms.location.application.service.command.dto.CreateStockMovementCommand command = mapper.toCreateStockMovementCommand(commandDTO, tenantId);
+        CreateStockMovementCommand command = mapper.toCreateStockMovementCommand(commandDTO, tenantId);
 
         // Execute command
-        com.ccbsa.wms.location.application.service.command.dto.CreateStockMovementResult result = createCommandHandler.handle(command);
+        CreateStockMovementResult result = createCommandHandler.handle(command);
 
         // Map result to DTO
         CreateStockMovementResultDTO resultDTO = mapper.toCreateStockMovementResultDTO(result);
@@ -80,10 +86,10 @@ public class StockMovementCommandController {
     public ResponseEntity<ApiResponse<CompleteStockMovementResultDTO>> completeStockMovement(@PathVariable String movementId, @RequestHeader("X-Tenant-Id") String tenantId,
                                                                                              @Valid @RequestBody(required = false) CompleteStockMovementCommandDTO commandDTO) {
         // Map DTO to command
-        com.ccbsa.wms.location.application.service.command.dto.CompleteStockMovementCommand command = mapper.toCompleteStockMovementCommand(movementId, tenantId);
+        CompleteStockMovementCommand command = mapper.toCompleteStockMovementCommand(movementId, tenantId);
 
         // Execute command
-        com.ccbsa.wms.location.application.service.command.dto.CompleteStockMovementResult result = completeCommandHandler.handle(command);
+        CompleteStockMovementResult result = completeCommandHandler.handle(command);
 
         // Map result to DTO
         CompleteStockMovementResultDTO resultDTO = mapper.toCompleteStockMovementResultDTO(result);
@@ -97,10 +103,10 @@ public class StockMovementCommandController {
     public ResponseEntity<ApiResponse<CancelStockMovementResultDTO>> cancelStockMovement(@PathVariable String movementId, @RequestHeader("X-Tenant-Id") String tenantId,
                                                                                          @Valid @RequestBody CancelStockMovementCommandDTO commandDTO) {
         // Map DTO to command
-        com.ccbsa.wms.location.application.service.command.dto.CancelStockMovementCommand command = mapper.toCancelStockMovementCommand(commandDTO, movementId, tenantId);
+        CancelStockMovementCommand command = mapper.toCancelStockMovementCommand(commandDTO, movementId, tenantId);
 
         // Execute command
-        com.ccbsa.wms.location.application.service.command.dto.CancelStockMovementResult result = cancelCommandHandler.handle(command);
+        CancelStockMovementResult result = cancelCommandHandler.handle(command);
 
         // Map result to DTO
         CancelStockMovementResultDTO resultDTO = mapper.toCancelStockMovementResultDTO(result);

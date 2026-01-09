@@ -3,9 +3,8 @@ import { Box, Button, Card, CardContent, Chip, Typography } from '@mui/material'
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useNotification } from '../hooks/useNotification';
 import { useMarkAsRead } from '../hooks/useMarkAsRead';
-import { DetailPageLayout } from '../../../components/layouts/DetailPageLayout';
+import { DetailPageLayout } from '../../../components/layouts';
 import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
-import { LoadingSpinner } from '../../../components/common/LoadingSpinner';
 
 const getStatusColor = (status: string): 'default' | 'primary' | 'success' | 'error' => {
   switch (status) {
@@ -53,7 +52,7 @@ export const NotificationDetailPage = () => {
         isLoading={true}
         error={null}
       >
-        <LoadingSpinner />
+        <div />
       </DetailPageLayout>
     );
   }

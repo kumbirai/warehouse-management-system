@@ -2,6 +2,7 @@ package com.ccbsa.wms.gateway.api;
 
 import java.util.UUID;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
@@ -24,12 +25,14 @@ import com.ccbsa.wms.gateway.api.dto.CreateProductResponse;
 import com.ccbsa.wms.gateway.api.dto.CreateStockMovementRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateStockMovementResponse;
 import com.ccbsa.wms.gateway.api.dto.ListStockMovementsQueryResultDTO;
+import com.ccbsa.wms.gateway.api.dto.AssignLocationToStockRequest;
 import com.ccbsa.wms.gateway.api.dto.StockItemResponse;
 import com.ccbsa.wms.gateway.api.dto.StockItemsByClassificationResponse;
 import com.ccbsa.wms.gateway.api.dto.StockMovementQueryResultDTO;
 import com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.ProductTestDataBuilder;
+import com.ccbsa.wms.gateway.api.fixture.StockItemTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.StockMovementTestDataBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,8 +55,8 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
     private static String testTenantId;
     private static UUID testProductId;
     private static String testProductCode;
-    private static UUID testLocationId1;
-    private static UUID testLocationId2;
+    private static UUID testLocationId1; // Source BIN location
+    private static UUID testLocationId2; // Destination BIN location
     private static String testStockItemId;
     private static String testWarehouseId;
 
@@ -90,43 +93,141 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
             testProductId = UUID.fromString(product.getProductId());
             testProductCode = product.getProductCode();
 
-            // Create locations
-            CreateLocationRequest locationRequest1 = LocationTestDataBuilder.buildWarehouseRequest();
-            EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationResult1 = authenticatedPost(
+            // Create warehouse first
+            CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> warehouseResult = authenticatedPost(
                     "/api/v1/location-management/locations",
                     tenantAdminAuth.getAccessToken(),
                     testTenantId,
-                    locationRequest1
+                    warehouseRequest
             ).exchange()
                     .expectStatus().isCreated()
                     .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
                     })
                     .returnResult();
 
-            ApiResponse<CreateLocationResponse> locationApiResponse1 = locationResult1.getResponseBody();
-            assertThat(locationApiResponse1).isNotNull();
-            CreateLocationResponse location1 = locationApiResponse1.getData();
-            assertThat(location1).isNotNull();
-            testLocationId1 = UUID.fromString(location1.getLocationId());
-            testWarehouseId = location1.getLocationId();
+            ApiResponse<CreateLocationResponse> warehouseApiResponse = warehouseResult.getResponseBody();
+            assertThat(warehouseApiResponse).isNotNull();
+            assertThat(warehouseApiResponse.isSuccess()).isTrue();
+            CreateLocationResponse warehouse = warehouseApiResponse.getData();
+            assertThat(warehouse).isNotNull();
+            testWarehouseId = warehouse.getLocationId();
 
-            CreateLocationRequest locationRequest2 = LocationTestDataBuilder.buildWarehouseRequest();
-            EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationResult2 = authenticatedPost(
+            // Create location hierarchy: WAREHOUSE -> ZONE -> AISLE -> RACK -> BIN
+            // Create zone
+            CreateLocationRequest zoneRequest = LocationTestDataBuilder.buildZoneRequest(testWarehouseId);
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> zoneResult = authenticatedPost(
                     "/api/v1/location-management/locations",
                     tenantAdminAuth.getAccessToken(),
                     testTenantId,
-                    locationRequest2
+                    zoneRequest
             ).exchange()
                     .expectStatus().isCreated()
                     .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
                     })
                     .returnResult();
 
-            ApiResponse<CreateLocationResponse> locationApiResponse2 = locationResult2.getResponseBody();
-            assertThat(locationApiResponse2).isNotNull();
-            CreateLocationResponse location2 = locationApiResponse2.getData();
-            assertThat(location2).isNotNull();
-            testLocationId2 = UUID.fromString(location2.getLocationId());
+            ApiResponse<CreateLocationResponse> zoneApiResponse = zoneResult.getResponseBody();
+            assertThat(zoneApiResponse).isNotNull();
+            assertThat(zoneApiResponse.isSuccess()).isTrue();
+            CreateLocationResponse zone = zoneApiResponse.getData();
+            assertThat(zone).isNotNull();
+
+            // Create aisle
+            CreateLocationRequest aisleRequest = LocationTestDataBuilder.buildAisleRequest(zone.getLocationId());
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> aisleResult = authenticatedPost(
+                    "/api/v1/location-management/locations",
+                    tenantAdminAuth.getAccessToken(),
+                    testTenantId,
+                    aisleRequest
+            ).exchange()
+                    .expectStatus().isCreated()
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
+                    .returnResult();
+
+            ApiResponse<CreateLocationResponse> aisleApiResponse = aisleResult.getResponseBody();
+            assertThat(aisleApiResponse).isNotNull();
+            assertThat(aisleApiResponse.isSuccess()).isTrue();
+            CreateLocationResponse aisle = aisleApiResponse.getData();
+            assertThat(aisle).isNotNull();
+
+            // Create rack
+            CreateLocationRequest rackRequest = LocationTestDataBuilder.buildRackRequest(aisle.getLocationId());
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> rackResult = authenticatedPost(
+                    "/api/v1/location-management/locations",
+                    tenantAdminAuth.getAccessToken(),
+                    testTenantId,
+                    rackRequest
+            ).exchange()
+                    .expectStatus().isCreated()
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
+                    .returnResult();
+
+            ApiResponse<CreateLocationResponse> rackApiResponse = rackResult.getResponseBody();
+            assertThat(rackApiResponse).isNotNull();
+            assertThat(rackApiResponse.isSuccess()).isTrue();
+            CreateLocationResponse rack = rackApiResponse.getData();
+            assertThat(rack).isNotNull();
+
+            // Create source BIN location
+            CreateLocationRequest binRequest1 = LocationTestDataBuilder.buildBinRequest(rack.getLocationId());
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> binResult1 = authenticatedPost(
+                    "/api/v1/location-management/locations",
+                    tenantAdminAuth.getAccessToken(),
+                    testTenantId,
+                    binRequest1
+            ).exchange()
+                    .expectStatus().isCreated()
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
+                    .returnResult();
+
+            ApiResponse<CreateLocationResponse> binApiResponse1 = binResult1.getResponseBody();
+            assertThat(binApiResponse1).isNotNull();
+            assertThat(binApiResponse1.isSuccess()).isTrue();
+            CreateLocationResponse bin1 = binApiResponse1.getData();
+            assertThat(bin1).isNotNull();
+            testLocationId1 = UUID.fromString(bin1.getLocationId());
+
+            // Create destination BIN location (another rack in same aisle)
+            CreateLocationRequest rackRequest2 = LocationTestDataBuilder.buildRackRequest(aisle.getLocationId());
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> rackResult2 = authenticatedPost(
+                    "/api/v1/location-management/locations",
+                    tenantAdminAuth.getAccessToken(),
+                    testTenantId,
+                    rackRequest2
+            ).exchange()
+                    .expectStatus().isCreated()
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
+                    .returnResult();
+
+            ApiResponse<CreateLocationResponse> rackApiResponse2 = rackResult2.getResponseBody();
+            assertThat(rackApiResponse2).isNotNull();
+            assertThat(rackApiResponse2.isSuccess()).isTrue();
+            CreateLocationResponse rack2 = rackApiResponse2.getData();
+            assertThat(rack2).isNotNull();
+
+            CreateLocationRequest binRequest2 = LocationTestDataBuilder.buildBinRequest(rack2.getLocationId());
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> binResult2 = authenticatedPost(
+                    "/api/v1/location-management/locations",
+                    tenantAdminAuth.getAccessToken(),
+                    testTenantId,
+                    binRequest2
+            ).exchange()
+                    .expectStatus().isCreated()
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
+                    .returnResult();
+
+            ApiResponse<CreateLocationResponse> binApiResponse2 = binResult2.getResponseBody();
+            assertThat(binApiResponse2).isNotNull();
+            assertThat(binApiResponse2.isSuccess()).isTrue();
+            CreateLocationResponse bin2 = binApiResponse2.getData();
+            assertThat(bin2).isNotNull();
+            testLocationId2 = UUID.fromString(bin2.getLocationId());
 
             // Create consignment to get stock item
             CreateConsignmentRequest consignmentRequest = ConsignmentTestDataBuilder.buildCreateConsignmentRequestV2(
@@ -158,7 +259,21 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
             if (stockItemsApiResponse != null && stockItemsApiResponse.getData() != null 
                     && stockItemsApiResponse.getData().getStockItems() != null 
                     && !stockItemsApiResponse.getData().getStockItems().isEmpty()) {
-                testStockItemId = stockItemsApiResponse.getData().getStockItems().get(0).getStockItemId();
+                StockItemResponse stockItem = stockItemsApiResponse.getData().getStockItems().get(0);
+                testStockItemId = stockItem.getStockItemId();
+
+                // Assign stock item to source BIN location (stock must be at BIN level)
+                AssignLocationToStockRequest assignRequest =
+                        StockItemTestDataBuilder.buildAssignLocationRequest(
+                                testLocationId1.toString(), stockItem.getQuantity());
+
+                authenticatedPost(
+                        "/api/v1/stock-management/stock-items/" + testStockItemId + "/assign-location",
+                        tenantAdminAuth.getAccessToken(),
+                        testTenantId,
+                        assignRequest
+                ).exchange()
+                        .expectStatus().isOk();
             }
         }
     }
@@ -169,7 +284,7 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
     @Order(1)
     public void testCreateStockMovement_Success() {
         // Arrange
-        org.junit.jupiter.api.Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
+        Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
         
         CreateStockMovementRequest request = StockMovementTestDataBuilder.buildCreateStockMovementRequest(
                 testStockItemId,
@@ -208,7 +323,7 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
     @Order(2)
     public void testCreateStockMovement_InvalidLocation() {
         // Arrange
-        org.junit.jupiter.api.Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
+        Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
         
         CreateStockMovementRequest request = StockMovementTestDataBuilder.buildCreateStockMovementRequest(
                 testStockItemId,
@@ -230,13 +345,107 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
         response.expectStatus().isNotFound();
     }
 
+    @Test
+    @Order(3)
+    public void testCreateStockMovement_NonBinSourceLocation_ShouldFail() {
+        // Arrange - Create non-BIN location (warehouse) to test validation
+        Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
+        
+        CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
+        EntityExchangeResult<ApiResponse<CreateLocationResponse>> warehouseResult = authenticatedPost(
+                "/api/v1/location-management/locations",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                warehouseRequest
+        ).exchange()
+                .expectStatus().isCreated()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                })
+                .returnResult();
+
+        ApiResponse<CreateLocationResponse> warehouseApiResponse = warehouseResult.getResponseBody();
+        assertThat(warehouseApiResponse).isNotNull();
+        assertThat(warehouseApiResponse.isSuccess()).isTrue();
+        CreateLocationResponse warehouse = warehouseApiResponse.getData();
+        assertThat(warehouse).isNotNull();
+        UUID warehouseLocationId = UUID.fromString(warehouse.getLocationId());
+
+        // Act - Try to create stock movement with warehouse (non-BIN) as source location
+        CreateStockMovementRequest request = StockMovementTestDataBuilder.buildCreateStockMovementRequest(
+                testStockItemId,
+                testProductId,
+                warehouseLocationId, // Non-BIN source location
+                testLocationId2,
+                10
+        );
+
+        WebTestClient.ResponseSpec response = authenticatedPost(
+                "/api/v1/location-management/stock-movements",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                request
+        ).exchange();
+
+        // Assert - Should fail with 400 Bad Request because source location is not BIN type
+        // Note: This test documents the requirement. If implementation doesn't validate yet,
+        // the test may need to be updated when validation is added.
+        response.expectStatus().isBadRequest();
+    }
+
+    @Test
+    @Order(4)
+    public void testCreateStockMovement_NonBinDestinationLocation_ShouldFail() {
+        // Arrange - Create non-BIN location (warehouse) to test validation
+        Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
+        
+        CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
+        EntityExchangeResult<ApiResponse<CreateLocationResponse>> warehouseResult = authenticatedPost(
+                "/api/v1/location-management/locations",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                warehouseRequest
+        ).exchange()
+                .expectStatus().isCreated()
+                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                })
+                .returnResult();
+
+        ApiResponse<CreateLocationResponse> warehouseApiResponse = warehouseResult.getResponseBody();
+        assertThat(warehouseApiResponse).isNotNull();
+        assertThat(warehouseApiResponse.isSuccess()).isTrue();
+        CreateLocationResponse warehouse = warehouseApiResponse.getData();
+        assertThat(warehouse).isNotNull();
+        UUID warehouseLocationId = UUID.fromString(warehouse.getLocationId());
+
+        // Act - Try to create stock movement with warehouse (non-BIN) as destination location
+        CreateStockMovementRequest request = StockMovementTestDataBuilder.buildCreateStockMovementRequest(
+                testStockItemId,
+                testProductId,
+                testLocationId1,
+                warehouseLocationId, // Non-BIN destination location
+                10
+        );
+
+        WebTestClient.ResponseSpec response = authenticatedPost(
+                "/api/v1/location-management/stock-movements",
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                request
+        ).exchange();
+
+        // Assert - Should fail with 400 Bad Request because destination location is not BIN type
+        // Note: This test documents the requirement. If implementation doesn't validate yet,
+        // the test may need to be updated when validation is added.
+        response.expectStatus().isBadRequest();
+    }
+
     // ==================== STOCK MOVEMENT COMPLETION TESTS ====================
 
     @Test
     @Order(10)
     public void testCompleteStockMovement_Success() {
         // Arrange - Create movement first
-        org.junit.jupiter.api.Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
+        Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
         
         CreateStockMovementRequest createRequest = StockMovementTestDataBuilder.buildCreateStockMovementRequest(
                 testStockItemId,
@@ -293,7 +502,7 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
     @Order(20)
     public void testCancelStockMovement_Success() {
         // Arrange - Create movement first
-        org.junit.jupiter.api.Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
+        Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
         
         CreateStockMovementRequest createRequest = StockMovementTestDataBuilder.buildCreateStockMovementRequest(
                 testStockItemId,
@@ -342,7 +551,7 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
     @Order(30)
     public void testGetStockMovementById_Success() {
         // Arrange - Create movement first
-        org.junit.jupiter.api.Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
+        Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
         
         CreateStockMovementRequest createRequest = StockMovementTestDataBuilder.buildCreateStockMovementRequest(
                 testStockItemId,
@@ -396,7 +605,7 @@ public class StockMovementGatewayTest extends BaseIntegrationTest {
     @Order(31)
     public void testListStockMovements_Success() {
         // Arrange - Create a movement first
-        org.junit.jupiter.api.Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
+        Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
         
         CreateStockMovementRequest createRequest = StockMovementTestDataBuilder.buildCreateStockMovementRequest(
                 testStockItemId,

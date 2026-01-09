@@ -30,8 +30,11 @@ export const StockAllocationCreatePage = () => {
       error={error?.message || null}
       maxWidth="md"
     >
-      <StockAllocationForm onSubmit={handleSubmit} onCancel={handleCancel} isSubmitting={isLoading} />
+      <StockAllocationForm
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        isSubmitting={isLoading}
+      />
     </FormPageLayout>
   );
 };
-

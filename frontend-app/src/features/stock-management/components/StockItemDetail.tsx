@@ -68,7 +68,11 @@ export const StockItemDetail = ({ stockItem, onLocationAssigned }: StockItemDeta
                     ? `${stockItem.productCode} - ${stockItem.productDescription}`
                     : stockItem.productCode || stockItem.productDescription || 'Unknown Product'}
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                >
                   ID: {stockItem.productId}
                 </Typography>
               </Box>
@@ -115,9 +119,15 @@ export const StockItemDetail = ({ stockItem, onLocationAssigned }: StockItemDeta
                           : stockItem.locationName || stockItem.locationCode || 'Unknown Location'}
                       </Typography>
                     </Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem', ml: 4 }}>
-                      ID: {stockItem.locationId}
-                    </Typography>
+                    {stockItem.locationHierarchy && (
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontFamily: 'monospace', fontSize: '0.75rem', ml: 4 }}
+                      >
+                        Hierarchy: {stockItem.locationHierarchy}
+                      </Typography>
+                    )}
                   </Box>
                 ) : (
                   <Alert severity="warning" sx={{ mt: 0.5 }}>

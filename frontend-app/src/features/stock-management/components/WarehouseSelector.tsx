@@ -1,5 +1,5 @@
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import { useMemo, useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocations } from '../../location-management/hooks/useLocations';
 import { useAppSelector } from '../../../store/hooks';
 import { selectUser } from '../../../store/authSlice';
@@ -61,10 +61,10 @@ export const WarehouseSelector = ({
   // Filter to only warehouse locations (type='WAREHOUSE') or use all locations if no warehouses found
   const warehouseOptions = useMemo(() => {
     // First, try to get only warehouses (type='WAREHOUSE')
-    const warehouses = locations.filter(location => 
-      location.type?.toUpperCase() === 'WAREHOUSE' && location.locationId
+    const warehouses = locations.filter(
+      location => location.type?.toUpperCase() === 'WAREHOUSE' && location.locationId
     );
-    
+
     if (import.meta.env.DEV) {
       logger.debug('WarehouseSelector filtering:', {
         totalLocations: locations.length,
@@ -72,10 +72,10 @@ export const WarehouseSelector = ({
         warehouseTypes: warehouses.map(w => w.type),
       });
     }
-    
+
     // If we have warehouses, use them; otherwise use all locations as fallback
     const locationsToUse = warehouses.length > 0 ? warehouses : locations;
-    
+
     // Extract unique location IDs
     const uniqueIds = new Set<string>();
     locationsToUse.forEach(location => {
@@ -124,7 +124,11 @@ export const WarehouseSelector = ({
             const location = locations.find(loc => loc.locationId === warehouseId);
             // Prefer description, then name, then code, then barcode, finally locationId
             const displayText = location
-              ? location.description || location.name || location.code || location.barcode || warehouseId
+              ? location.description ||
+                location.name ||
+                location.code ||
+                location.barcode ||
+                warehouseId
               : warehouseId;
             return (
               <MenuItem key={warehouseId} value={warehouseId}>
@@ -135,7 +139,14 @@ export const WarehouseSelector = ({
         )}
       </Select>
       {helperText && (
-        <span style={{ fontSize: '0.75rem', marginTop: '3px', marginLeft: '14px', color: error ? '#d32f2f' : 'rgba(0, 0, 0, 0.6)' }}>
+        <span
+          style={{
+            fontSize: '0.75rem',
+            marginTop: '3px',
+            marginLeft: '14px',
+            color: error ? '#d32f2f' : 'rgba(0, 0, 0, 0.6)',
+          }}
+        >
           {helperText}
         </span>
       )}

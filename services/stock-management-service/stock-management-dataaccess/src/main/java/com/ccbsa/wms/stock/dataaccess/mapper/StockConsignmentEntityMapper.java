@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
+import com.ccbsa.common.domain.valueobject.Quantity;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.common.domain.valueobject.WarehouseId;
 import com.ccbsa.wms.product.domain.core.valueobject.ProductCode;
@@ -57,8 +58,8 @@ public class StockConsignmentEntityMapper {
             lineItemEntity.setId(UUID.randomUUID());
             lineItemEntity.setConsignment(entity);
             lineItemEntity.setProductCode(lineItem.getProductCode().getValue());
-            lineItemEntity.setQuantity(lineItem.getQuantity());
-            lineItemEntity.setExpirationDate(lineItem.getExpirationDate());
+            lineItemEntity.setQuantity(lineItem.getQuantity().getValue());
+            lineItemEntity.setExpirationDate(lineItem.getExpirationDate() != null ? lineItem.getExpirationDate().getValue() : null);
             lineItemEntity.setCreatedAt(LocalDateTime.now());
             lineItemEntities.add(lineItemEntity);
         }
@@ -89,8 +90,9 @@ public class StockConsignmentEntityMapper {
         List<ConsignmentLineItem> lineItems = new ArrayList<>();
         if (entity.getLineItems() != null) {
             for (ConsignmentLineItemEntity lineItemEntity : entity.getLineItems()) {
-                ConsignmentLineItem lineItem = ConsignmentLineItem.builder().productCode(ProductCode.of(lineItemEntity.getProductCode())).quantity(lineItemEntity.getQuantity())
-                        .expirationDate(lineItemEntity.getExpirationDate()).build();
+                ConsignmentLineItem lineItem =
+                        ConsignmentLineItem.builder().productCode(ProductCode.of(lineItemEntity.getProductCode())).quantity(Quantity.of(lineItemEntity.getQuantity()))
+                                .expirationDate(lineItemEntity.getExpirationDate()).build();
                 lineItems.add(lineItem);
             }
         }

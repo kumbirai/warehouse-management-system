@@ -101,8 +101,69 @@ public class StockLevelGatewayTest extends BaseIntegrationTest {
             assertThat(warehouseData).isNotNull();
             testWarehouseId = warehouseData.getLocationId();
 
-            // Create location 1 (bin)
-            CreateLocationRequest locationRequest1 = LocationTestDataBuilder.buildBinRequest(testWarehouseId);
+            // Create full location hierarchy: WAREHOUSE -> ZONE -> AISLE -> RACK -> BIN
+            // Create zone
+            CreateLocationRequest zoneRequest = LocationTestDataBuilder.buildZoneRequest(testWarehouseId);
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> zoneExchangeResult = authenticatedPost(
+                    "/api/v1/location-management/locations",
+                    tenantAdminAuth.getAccessToken(),
+                    testTenantId,
+                    zoneRequest
+            ).exchange()
+                    .expectStatus().isCreated()
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
+                    .returnResult();
+
+            ApiResponse<CreateLocationResponse> zoneApiResponse = zoneExchangeResult.getResponseBody();
+            assertThat(zoneApiResponse).isNotNull();
+            assertThat(zoneApiResponse.isSuccess()).isTrue();
+            CreateLocationResponse zoneData = zoneApiResponse.getData();
+            assertThat(zoneData).isNotNull();
+            String zoneId = zoneData.getLocationId();
+
+            // Create aisle
+            CreateLocationRequest aisleRequest = LocationTestDataBuilder.buildAisleRequest(zoneId);
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> aisleExchangeResult = authenticatedPost(
+                    "/api/v1/location-management/locations",
+                    tenantAdminAuth.getAccessToken(),
+                    testTenantId,
+                    aisleRequest
+            ).exchange()
+                    .expectStatus().isCreated()
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
+                    .returnResult();
+
+            ApiResponse<CreateLocationResponse> aisleApiResponse = aisleExchangeResult.getResponseBody();
+            assertThat(aisleApiResponse).isNotNull();
+            assertThat(aisleApiResponse.isSuccess()).isTrue();
+            CreateLocationResponse aisleData = aisleApiResponse.getData();
+            assertThat(aisleData).isNotNull();
+            String aisleId = aisleData.getLocationId();
+
+            // Create rack
+            CreateLocationRequest rackRequest = LocationTestDataBuilder.buildRackRequest(aisleId);
+            EntityExchangeResult<ApiResponse<CreateLocationResponse>> rackExchangeResult = authenticatedPost(
+                    "/api/v1/location-management/locations",
+                    tenantAdminAuth.getAccessToken(),
+                    testTenantId,
+                    rackRequest
+            ).exchange()
+                    .expectStatus().isCreated()
+                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                    })
+                    .returnResult();
+
+            ApiResponse<CreateLocationResponse> rackApiResponse = rackExchangeResult.getResponseBody();
+            assertThat(rackApiResponse).isNotNull();
+            assertThat(rackApiResponse.isSuccess()).isTrue();
+            CreateLocationResponse rackData = rackApiResponse.getData();
+            assertThat(rackData).isNotNull();
+            String rackId = rackData.getLocationId();
+
+            // Create location 1 (bin) - must have RACK as parent
+            CreateLocationRequest locationRequest1 = LocationTestDataBuilder.buildBinRequest(rackId);
             EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationExchangeResult1 = authenticatedPost(
                     "/api/v1/location-management/locations",
                     tenantAdminAuth.getAccessToken(),
@@ -121,8 +182,8 @@ public class StockLevelGatewayTest extends BaseIntegrationTest {
             assertThat(locationData1).isNotNull();
             testLocationId = locationData1.getLocationId();
 
-            // Create location 2 (bin)
-            CreateLocationRequest locationRequest2 = LocationTestDataBuilder.buildBinRequest(testWarehouseId);
+            // Create location 2 (bin) - must have RACK as parent
+            CreateLocationRequest locationRequest2 = LocationTestDataBuilder.buildBinRequest(rackId);
             EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationExchangeResult2 = authenticatedPost(
                     "/api/v1/location-management/locations",
                     tenantAdminAuth.getAccessToken(),
@@ -247,11 +308,11 @@ public class StockLevelGatewayTest extends BaseIntegrationTest {
     @Test
     @Order(2)
     public void testGetStockLevelByProductOnly_Success() {
-        // Arrange - Create consignments in multiple locations
+        // Arrange - Create consignments in warehouse (warehouseId is required, not locationId)
         CreateConsignmentRequest request1 = ConsignmentTestDataBuilder.buildCreateConsignmentRequestV2(
                 testWarehouseId, testProductCode, 100, null);
         CreateConsignmentRequest request2 = ConsignmentTestDataBuilder.buildCreateConsignmentRequestV2(
-                testLocationId2, testProductCode, 50, null);
+                testWarehouseId, testProductCode, 50, null);
 
         authenticatedPost("/api/v1/stock-management/consignments",
                 tenantAdminAuth.getAccessToken(), testTenantId, request1)

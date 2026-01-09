@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Chip, LinearProgress, Typography, Alert } from '@mui/material';
+import { Alert, Box, Card, CardContent, Chip, LinearProgress, Typography } from '@mui/material';
 import { StockLevelResponse } from '../types/stockManagement';
 import { useLocations } from '../../location-management/hooks/useLocations';
 
@@ -6,11 +6,15 @@ interface StockLevelListProps {
   stockLevels: StockLevelResponse[];
 }
 
-type StockLevelStatus = 'NORMAL' | 'LOW' | 'CRITICAL' | 'ABOVE_MAX' | 'APPROACHING_MIN' | 'APPROACHING_MAX';
+type StockLevelStatus =
+  | 'NORMAL'
+  | 'LOW'
+  | 'CRITICAL'
+  | 'ABOVE_MAX'
+  | 'APPROACHING_MIN'
+  | 'APPROACHING_MAX';
 
-const getStockLevelStatus = (
-  stockLevel: StockLevelResponse
-): StockLevelStatus => {
+const getStockLevelStatus = (stockLevel: StockLevelResponse): StockLevelStatus => {
   const { availableQuantity, minimumQuantity, maximumQuantity } = stockLevel;
 
   if (minimumQuantity === undefined && maximumQuantity === undefined) {
@@ -82,7 +86,7 @@ const getStatusLabel = (status: StockLevelStatus): string => {
 export const StockLevelList = ({ stockLevels }: StockLevelListProps) => {
   const { locations } = useLocations({ page: 0, size: 1000, tenantId: '' }); // tenantId will be set by hook
 
-  const locationsMap = new Map(locations.map((loc) => [loc.locationId, loc]));
+  const locationsMap = new Map(locations.map(loc => [loc.locationId, loc]));
 
   if (stockLevels.length === 0) {
     return (
@@ -96,11 +100,9 @@ export const StockLevelList = ({ stockLevels }: StockLevelListProps) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {stockLevels.map((stockLevel) => {
+      {stockLevels.map(stockLevel => {
         const status = getStockLevelStatus(stockLevel);
-        const location = stockLevel.locationId
-          ? locationsMap.get(stockLevel.locationId)
-          : null;
+        const location = stockLevel.locationId ? locationsMap.get(stockLevel.locationId) : null;
 
         // Calculate capacity percentage if max is defined
         const capacityPercentage =
@@ -111,22 +113,28 @@ export const StockLevelList = ({ stockLevels }: StockLevelListProps) => {
         return (
           <Card key={stockLevel.stockLevelId}>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  mb: 2,
+                }}
+              >
                 <Box>
                   <Typography variant="h6" component="div">
-                    {location ? location.barcode || `Location ${stockLevel.locationId}` : 'All Locations'}
+                    {location
+                      ? location.barcode || `Location ${stockLevel.locationId}`
+                      : 'All Locations'}
                   </Typography>
                   {location && location.coordinates && (
                     <Typography variant="body2" color="text.secondary">
-                      {location.coordinates.zone}-{location.coordinates.aisle}-{location.coordinates.rack}-{location.coordinates.level}
+                      {location.coordinates.zone}-{location.coordinates.aisle}-
+                      {location.coordinates.rack}-{location.coordinates.level}
                     </Typography>
                   )}
                 </Box>
-                <Chip
-                  label={getStatusLabel(status)}
-                  color={getStatusColor(status)}
-                  size="small"
-                />
+                <Chip label={getStatusLabel(status)} color={getStatusColor(status)} size="small" />
               </Box>
 
               <Box sx={{ mb: 2 }}>

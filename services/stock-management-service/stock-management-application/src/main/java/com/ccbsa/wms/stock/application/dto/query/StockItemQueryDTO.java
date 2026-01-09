@@ -27,6 +27,7 @@ public class StockItemQueryDTO {
     private String locationId;
     private String locationCode;
     private String locationName;
+    private String locationHierarchy;
     private Integer quantity;
     private Integer allocatedQuantity;
     private LocalDate expirationDate;

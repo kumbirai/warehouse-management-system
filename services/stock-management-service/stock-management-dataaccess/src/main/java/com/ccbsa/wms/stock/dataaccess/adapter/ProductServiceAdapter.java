@@ -158,10 +158,8 @@ public class ProductServiceAdapter implements ProductServicePort {
         } catch (IllegalArgumentException e) {
             // Handle LoadBalancer service discovery failures
             if (e.getMessage() != null && e.getMessage().contains("Service Instance cannot be null")) {
-                log.error(
-                        "Product service not found in service registry (Eureka). Please ensure product-service is running and registered with Eureka: productCode={}, "
-                                + "serviceUrl={}",
-                        productCode.getValue(), productServiceUrl, e);
+                log.error("Product service not found in service registry (Eureka). Please ensure product-service is running and registered with Eureka: productCode={}, "
+                        + "serviceUrl={}", productCode.getValue(), productServiceUrl, e);
                 throw new ProductServiceException(String.format(
                         "Product service is not available. The service may not be running or not registered with service discovery. Please contact system administrator."), e);
             }

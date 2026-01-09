@@ -48,6 +48,9 @@ public class StockItemEntity {
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
+    @Column(name = "allocated_quantity", nullable = false)
+    private Integer allocatedQuantity; // Quantity allocated for picking orders
+
     @Column(name = "expiration_date")
     private LocalDate expirationDate; // May be null for non-perishable
 
