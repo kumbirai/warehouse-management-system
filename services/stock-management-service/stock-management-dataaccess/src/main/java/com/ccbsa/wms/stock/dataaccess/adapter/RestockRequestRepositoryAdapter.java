@@ -110,8 +110,7 @@ public class RestockRequestRepositoryAdapter implements RestockRequestRepository
         entity.setD365OrderReference(restockRequest.getD365OrderReference());
     }
 
-    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
-            justification = "Schema name validated against expected patterns and escaped")
+    @SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE", justification = "Schema name validated against expected patterns and escaped")
     private void executeSetSearchPath(Connection connection, String schemaName) throws SQLException {
         try (Statement statement = connection.createStatement()) {
             statement.execute(String.format("SET search_path TO %s, public", schemaName));

@@ -269,6 +269,24 @@ export const stockManagementService = {
   },
 
   /**
+   * Gets stock items by location ID.
+   */
+  async getStockItemsByLocation(
+    locationId: string,
+    tenantId: string
+  ): Promise<GetStockItemsByClassificationApiResponse> {
+    const response = await apiClient.get<GetStockItemsByClassificationApiResponse>(
+      `${STOCK_MANAGEMENT_BASE_PATH}/stock-items/by-location?locationId=${locationId}`,
+      {
+        headers: {
+          'X-Tenant-Id': tenantId,
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
    * Assigns a location to a stock item (Sprint 3).
    */
   async assignLocationToStock(

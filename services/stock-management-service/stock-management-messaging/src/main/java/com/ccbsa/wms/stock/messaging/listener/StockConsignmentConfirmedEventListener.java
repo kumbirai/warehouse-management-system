@@ -55,7 +55,7 @@ public class StockConsignmentConfirmedEventListener {
     private final CreateStockItemCommandHandler createStockItemCommandHandler;
     private final ProductServicePort productServicePort;
 
-    @KafkaListener(topics = "stock-management-events", groupId = "stock-management-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    @KafkaListener(topics = "stock-management-events", groupId = "stock-management-service-consignment-confirmed", containerFactory = "externalEventKafkaListenerContainerFactory")
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
                        @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         boolean shouldAcknowledge = false;

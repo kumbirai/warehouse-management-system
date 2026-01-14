@@ -26,18 +26,42 @@ export const getStatusVariant = (status: string): StatusVariant => {
   const statusLower = status.toLowerCase();
 
   // Active/available statuses
-  if (['active', 'available', 'confirmed', 'completed', 'open'].includes(statusLower)) {
+  if (
+    [
+      'active',
+      'available',
+      'confirmed',
+      'completed',
+      'open',
+      'reconciled',
+      'location_assigned',
+      'success',
+      'synced',
+    ].includes(statusLower)
+  ) {
     return 'success';
   }
 
   // Pending/in-progress statuses
-  if (['pending', 'reserved', 'in_progress', 'processing', 'in-progress'].includes(statusLower)) {
+  if (
+    [
+      'pending',
+      'reserved',
+      'in_progress',
+      'processing',
+      'in-progress',
+      'initiated',
+      'processed',
+      'retrying',
+      'in_progress',
+    ].includes(statusLower)
+  ) {
     return 'warning';
   }
 
   // Inactive/unavailable statuses
   if (
-    ['inactive', 'suspended', 'unavailable', 'closed', 'cancelled', 'canceled'].includes(
+    ['inactive', 'suspended', 'unavailable', 'closed', 'cancelled', 'canceled', 'failed'].includes(
       statusLower
     )
   ) {

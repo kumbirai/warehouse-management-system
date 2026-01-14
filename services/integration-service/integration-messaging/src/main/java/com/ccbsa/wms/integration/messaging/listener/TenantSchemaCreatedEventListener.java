@@ -49,7 +49,7 @@ public class TenantSchemaCreatedEventListener {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
-    @KafkaListener(topics = "tenant-events", groupId = "integration-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    @KafkaListener(topics = "tenant-events", groupId = "integration-service-tenant-schema-creation", containerFactory = "externalEventKafkaListenerContainerFactory")
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
                        @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         log.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));

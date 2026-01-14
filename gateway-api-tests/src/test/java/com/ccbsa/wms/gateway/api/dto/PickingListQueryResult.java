@@ -4,10 +4,12 @@ import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,7 +23,8 @@ public class PickingListQueryResult {
     private String notes;
     private List<LoadQueryResult> loads;
 
-    @Data
+    @Getter
+@Setter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
@@ -33,7 +36,8 @@ public class PickingListQueryResult {
         private List<OrderQueryResult> orders;
     }
 
-    @Data
+    @Getter
+@Setter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
@@ -47,7 +51,8 @@ public class PickingListQueryResult {
         private List<OrderLineItemQueryResult> lineItems;
     }
 
-    @Data
+    @Getter
+@Setter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor

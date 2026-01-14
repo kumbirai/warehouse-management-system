@@ -973,6 +973,7 @@ private static ReturnProcessedEvent createReturnProcessedEvent(Return returnAggr
 Due to length constraints, continuing in next section...
 
 **Remaining sections to be added:**
+
 - ReturnLineItem extension for ProductCondition
 - Application Service layer (Command, Handler, Result)
 - Application Layer (REST API, DTOs, Controller)
@@ -1085,7 +1086,8 @@ public String getLineNotes() { return lineNotes; }
 
 #### 2.1 Command DTO
 
-**File:** `services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/dto/ProcessFullOrderReturnCommand.java`
+**File:**
+`services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/dto/ProcessFullOrderReturnCommand.java`
 
 ```java
 package com.ccbsa.wms.returns.application.service.command.dto;
@@ -1128,7 +1130,8 @@ public class ProcessFullOrderReturnCommand {
 
 #### 2.2 Result DTO
 
-**File:** `services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/dto/ProcessFullOrderReturnResult.java`
+**File:**
+`services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/dto/ProcessFullOrderReturnResult.java`
 
 ```java
 package com.ccbsa.wms.returns.application.service.command.dto;
@@ -1355,7 +1358,8 @@ public class ProcessFullOrderReturnResult {
 
 #### 2.3 Command Handler
 
-**File:** `services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/ProcessFullOrderReturnCommandHandler.java`
+**File:**
+`services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/ProcessFullOrderReturnCommandHandler.java`
 
 ```java
 package com.ccbsa.wms.returns.application.service.command;
@@ -1691,6 +1695,7 @@ void processFullReturn_WithAcceptedItems_ShouldThrowException() {
 ### AC1: System records return reason ✅
 
 **Implementation:**
+
 - `Return` stores `primaryReturnReason`
 - `ProcessFullOrderReturnCommand` includes primary return reason
 - Database persistence via `ReturnEntity`
@@ -1698,6 +1703,7 @@ void processFullReturn_WithAcceptedItems_ShouldThrowException() {
 ### AC2: System validates returned products against original order ✅
 
 **Implementation:**
+
 - `PickingServicePort.isOrderPickingCompleted()` validates order exists
 - Product IDs and codes validated against order line items
 - Returned quantities must match picked quantities
@@ -1705,6 +1711,7 @@ void processFullReturn_WithAcceptedItems_ShouldThrowException() {
 ### AC3: System checks product condition ✅
 
 **Implementation:**
+
 - `ProductCondition` enum with GOOD, DAMAGED, EXPIRED, QUARANTINE, WRITE_OFF
 - `ReturnLineItem.productCondition` field stores assessment
 - Validation ensures condition is assessed for all line items
@@ -1712,6 +1719,7 @@ void processFullReturn_WithAcceptedItems_ShouldThrowException() {
 ### AC4: System updates stock levels ✅
 
 **Implementation:**
+
 - `ReturnProcessedEvent` published after successful creation
 - Stock Management Service listens and updates stock levels
 - Condition-based stock updates (good condition → available, damaged → quarantine)
@@ -1719,6 +1727,7 @@ void processFullReturn_WithAcceptedItems_ShouldThrowException() {
 ### AC5: System publishes ReturnProcessedEvent ✅
 
 **Implementation:**
+
 - Event published in `Return.processFullReturn()`
 - Event includes condition counts and return metadata
 - Event consumed by Stock Management, Location Management, Notification services
@@ -1726,6 +1735,7 @@ void processFullReturn_WithAcceptedItems_ShouldThrowException() {
 ### AC6: System supports return reason codes ✅
 
 **Implementation:**
+
 - `ReturnReason` enum with all required codes
 - Primary return reason required at order level
 - Return reason displayed in UI and stored in database
@@ -1735,6 +1745,7 @@ void processFullReturn_WithAcceptedItems_ShouldThrowException() {
 ## Implementation Checklist
 
 ### Domain Core ✅
+
 - [x] Return aggregate extension for full returns
 - [x] ReturnLineItem extension for product condition
 - [x] ProductCondition value object
@@ -1742,16 +1753,19 @@ void processFullReturn_WithAcceptedItems_ShouldThrowException() {
 - [x] Business logic validation
 
 ### Application Service ✅
+
 - [x] ProcessFullOrderReturnCommand
 - [x] ProcessFullOrderReturnResult
 - [x] ProcessFullOrderReturnCommandHandler
 - [x] Integration with PickingServicePort
 
 ### Application Layer
+
 - [ ] REST API DTOs and Controller
 - [ ] OpenAPI documentation
 
 ### Frontend ✅
+
 - [x] FullOrderReturnPage component
 - [x] useProcessFullOrderReturn hook
 - [x] fullOrderReturnService
@@ -1760,6 +1774,7 @@ void processFullReturn_WithAcceptedItems_ShouldThrowException() {
 - [x] Evidence upload
 
 ### Testing
+
 - [ ] Domain core unit tests
 - [ ] Command handler unit tests
 - [ ] REST controller integration tests

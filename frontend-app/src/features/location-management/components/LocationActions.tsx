@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   ButtonGroup,
@@ -10,15 +11,18 @@ import {
   DialogTitle,
   TextField,
   Tooltip,
+  Typography,
 } from '@mui/material';
-import { LocationStatus } from '../types/location';
+import { Location, LocationStatus } from '../types/location';
 import { useUpdateLocationStatus } from '../hooks/useUpdateLocationStatus';
+import { useLocationChildren } from '../hooks/useLocationChildren';
 import { logger } from '../../../utils/logger';
 
 type ActionType = 'block' | 'unblock' | 'reserve' | 'release';
 
 interface LocationActionsProps {
   locationId: string;
+  location: Location | null;
   status: LocationStatus;
   tenantId: string;
   onCompleted?: () => void;
@@ -47,6 +51,7 @@ const statusToAction: Record<LocationStatus, ActionType[]> = {
 
 export const LocationActions = ({
   locationId,
+  location,
   status,
   tenantId,
   onCompleted,
@@ -54,6 +59,15 @@ export const LocationActions = ({
   const { updateStatus, isLoading } = useUpdateLocationStatus();
   const [dialogAction, setDialogAction] = useState<ActionType | null>(null);
   const [reason, setReason] = useState('');
+
+  // Fetch child locations to show cascade impact
+  const hasChildren = location?.type?.toUpperCase() !== 'BIN';
+  const {
+    data: childrenData,
+  } = useLocationChildren(location, tenantId);
+
+  const childCount = childrenData?.items?.length || 0;
+  const shouldShowCascadeWarning = (dialogAction === 'block' || dialogAction === 'reserve') && hasChildren && childCount > 0;
 
   const openDialog = (action: ActionType) => {
     setDialogAction(action);
@@ -191,6 +205,23 @@ export const LocationActions = ({
           <DialogContentText id="location-action-dialog-description" sx={{ mb: 2 }}>
             {dialogAction ? actionDescriptions[dialogAction] : ''}
           </DialogContentText>
+
+          {/* Cascade Warning */}
+          {shouldShowCascadeWarning && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="body2" fontWeight="medium" gutterBottom>
+                This action will affect child locations
+              </Typography>
+              <Typography variant="body2">
+                {childCount > 0
+                  ? `This location has ${childCount} immediate child location${childCount !== 1 ? 's' : ''}. ` +
+                    `Blocking or reserving this location will prevent stock assignment to all child locations. ` +
+                    `Consider the impact on your warehouse operations.`
+                  : 'This location may have child locations that will be affected.'}
+              </Typography>
+            </Alert>
+          )}
+
           {dialogAction === 'block' && (
             <TextField
               autoFocus

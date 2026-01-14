@@ -197,5 +197,31 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         ApiError error = ApiError.builder("DATA_INTEGRITY_VIOLATION", message).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.CONFLICT, error);
     }
+
+    /**
+     * Override IllegalStateException handler to provide more specific error codes for stock-related errors.
+     * Returns 400 Bad Request with appropriate error code based on the error message.
+     *
+     * @param ex      The exception
+     * @param request The HTTP request
+     * @return Error response with 400 Bad Request
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalState(IllegalStateException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+        String message = ex.getMessage();
+
+        // Check if this is an insufficient stock error
+        String errorCode = "INVALID_OPERATION";
+        if (message != null && (message.contains("Insufficient") && message.contains("stock"))) {
+            errorCode = "INSUFFICIENT_STOCK";
+        }
+
+        logger.warn("Invalid state: {} - RequestId: {}, Path: {}", message, requestId, path);
+
+        ApiError error = ApiError.builder(errorCode, message).path(path).requestId(requestId).build();
+        return ApiResponseBuilder.error(HttpStatus.BAD_REQUEST, error);
+    }
 }
 

@@ -72,4 +72,10 @@ public class CachedLoadRepositoryAdapter extends CachedRepositoryDecorator<Load,
         // Not cached - direct query
         return baseRepository.findPickingListIdByLoadId(loadId, tenantId);
     }
+
+    @Override
+    public List<Load> findByPickingListIdAndTenantId(PickingListId pickingListId, TenantId tenantId) {
+        // Not cached - direct query to ensure fresh load statuses
+        return baseRepository.findByPickingListIdAndTenantId(pickingListId, tenantId);
+    }
 }

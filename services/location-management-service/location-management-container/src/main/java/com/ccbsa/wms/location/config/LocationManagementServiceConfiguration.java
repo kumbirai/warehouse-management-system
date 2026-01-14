@@ -34,6 +34,7 @@ import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
 import com.ccbsa.wms.common.security.ServiceAccountAuthenticationConfig;
 import com.ccbsa.wms.common.security.ServiceSecurityConfig;
 import com.ccbsa.wms.location.domain.core.service.FEFOAssignmentService;
+import com.ccbsa.wms.location.domain.core.service.ReturnLocationAssignmentStrategy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -98,7 +99,7 @@ public class LocationManagementServiceConfiguration {
     public ConsumerFactory<String, Object> externalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "location-management-service");
+        // GROUP_ID_CONFIG removed - each listener specifies its own unique group ID in @KafkaListener annotation
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -173,6 +174,20 @@ public class LocationManagementServiceConfiguration {
     @Bean
     public FEFOAssignmentService fefoAssignmentService() {
         return new FEFOAssignmentService();
+    }
+
+    /**
+     * Creates a bean for ReturnLocationAssignmentStrategy domain service.
+     * <p>
+     * This domain service coordinates logic for assigning locations to returns based on product condition.
+     * <p>
+     * The service is stateless and can be safely shared as a singleton bean.
+     *
+     * @return ReturnLocationAssignmentStrategy instance
+     */
+    @Bean
+    public ReturnLocationAssignmentStrategy returnLocationAssignmentStrategy() {
+        return new ReturnLocationAssignmentStrategy();
     }
 
     /**

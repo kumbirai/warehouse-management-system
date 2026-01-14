@@ -1,9 +1,12 @@
-import {useQuery} from '@tanstack/react-query';
-import {useEffect} from 'react';
-import {useAuth} from '../../../hooks/useAuth';
-import {stockManagementService} from '../services/stockManagementService';
-import {GetStockItemsByClassificationApiResponse, StockClassification,} from '../types/stockManagement';
-import {logger} from '../../../utils/logger';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useAuth } from '../../../hooks/useAuth';
+import { stockManagementService } from '../services/stockManagementService';
+import {
+  GetStockItemsByClassificationApiResponse,
+  StockClassification,
+} from '../types/stockManagement';
+import { logger } from '../../../utils/logger';
 
 /**
  * Hook: useStockItemsByClassification

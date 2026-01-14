@@ -4,6 +4,8 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,13 +26,14 @@ import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
 import com.ccbsa.wms.gateway.api.dto.CompletePickingListResponse;
 import com.ccbsa.wms.gateway.api.dto.CreateConsignmentRequest;
+import com.ccbsa.wms.gateway.api.dto.CreateConsignmentResponse;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationResponse;
 import com.ccbsa.wms.gateway.api.dto.CreatePickingListRequest;
 import com.ccbsa.wms.gateway.api.dto.CreatePickingListResponse;
+import com.ccbsa.wms.gateway.api.dto.OrderQueryResult;
 import com.ccbsa.wms.gateway.api.dto.CreatePickingTaskRequest;
 import com.ccbsa.wms.gateway.api.dto.CreatePickingTaskResponse;
-import com.ccbsa.wms.gateway.api.dto.CreateProductRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateProductResponse;
 import com.ccbsa.wms.gateway.api.dto.ExecutePickingTaskRequest;
 import com.ccbsa.wms.gateway.api.dto.ListPickingListsQueryResult;
@@ -43,7 +46,7 @@ import com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.PickingListTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.PickingTestDataBuilder;
-import com.ccbsa.wms.gateway.api.fixture.ProductTestDataBuilder;
+import com.ccbsa.wms.gateway.api.fixture.TestDataManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -89,87 +92,163 @@ public class PickingServiceTest extends BaseIntegrationTest {
             testTenantId = tenantAdminAuth.getTenantId();
 
             // Create product, location, and stock for tests
-            CreateProductRequest productRequest = ProductTestDataBuilder.buildCreateProductRequest();
-            EntityExchangeResult<ApiResponse<CreateProductResponse>> productExchangeResult =
-                    authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, productRequest).exchange().expectStatus().isCreated()
-                            .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                            }).returnResult();
-
-            ApiResponse<CreateProductResponse> productApiResponse = productExchangeResult.getResponseBody();
-            assertThat(productApiResponse).isNotNull();
-            assertThat(productApiResponse.isSuccess()).isTrue();
-            CreateProductResponse product = productApiResponse.getData();
+            // Use createProduct() helper which checks repository first and saves new products
+            CreateProductResponse product = createProduct(tenantAdminAuth.getAccessToken(), testTenantId);
             assertThat(product).isNotNull();
             testProductId = product.getProductId();
             testProductCode = product.getProductCode();
 
             // Create product with expiring stock
-            CreateProductRequest expiringProductRequest = ProductTestDataBuilder.buildCreateProductRequest();
-            EntityExchangeResult<ApiResponse<CreateProductResponse>> expiringProductResult =
-                    authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, expiringProductRequest).exchange().expectStatus().isCreated()
-                            .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                            }).returnResult();
-
-            ApiResponse<CreateProductResponse> expiringProductApiResponse = expiringProductResult.getResponseBody();
-            assertThat(expiringProductApiResponse).isNotNull();
-            assertThat(expiringProductApiResponse.isSuccess()).isTrue();
-            CreateProductResponse expiringProduct = expiringProductApiResponse.getData();
+            // Use createProduct() helper which checks repository first and saves new products
+            CreateProductResponse expiringProduct = createProduct(tenantAdminAuth.getAccessToken(), testTenantId);
             assertThat(expiringProduct).isNotNull();
             testExpiringProductId = expiringProduct.getProductId();
             testExpiringProductCode = expiringProduct.getProductCode();
 
             // Create product with expired stock
-            CreateProductRequest expiredProductRequest = ProductTestDataBuilder.buildCreateProductRequest();
-            EntityExchangeResult<ApiResponse<CreateProductResponse>> expiredProductResult =
-                    authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, expiredProductRequest).exchange().expectStatus().isCreated()
-                            .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                            }).returnResult();
-
-            ApiResponse<CreateProductResponse> expiredProductApiResponse = expiredProductResult.getResponseBody();
-            assertThat(expiredProductApiResponse).isNotNull();
-            assertThat(expiredProductApiResponse.isSuccess()).isTrue();
-            CreateProductResponse expiredProduct = expiredProductApiResponse.getData();
+            // Use createProduct() helper which checks repository first and saves new products
+            CreateProductResponse expiredProduct = createProduct(tenantAdminAuth.getAccessToken(), testTenantId);
             assertThat(expiredProduct).isNotNull();
             testExpiredProductId = expiredProduct.getProductId();
             testExpiredProductCode = expiredProduct.getProductCode();
 
-            // Create location
-            CreateLocationRequest locationRequest = LocationTestDataBuilder.buildWarehouseRequest();
-            EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationExchangeResult =
-                    authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, locationRequest).exchange().expectStatus()
-                            .isCreated().expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                            }).returnResult();
+            // Try to reuse existing warehouse from repository, otherwise create new
+            Optional<CreateLocationResponse> existingWarehouse = TestDataManager.getLocationByType("WAREHOUSE", testTenantId);
+            CreateLocationResponse warehouse;
+            if (existingWarehouse.isPresent()) {
+                warehouse = existingWarehouse.get();
+                testWarehouseId = warehouse.getLocationId();
+            } else {
+                // Create warehouse using BaseIntegrationTest helper which automatically checks repository and saves
+                warehouse = createLocation(tenantAdminAuth.getAccessToken(), testTenantId);
+                testWarehouseId = warehouse.getLocationId();
+            }
 
-            ApiResponse<CreateLocationResponse> locationApiResponse = locationExchangeResult.getResponseBody();
-            assertThat(locationApiResponse).isNotNull();
-            assertThat(locationApiResponse.isSuccess()).isTrue();
-            CreateLocationResponse location = locationApiResponse.getData();
-            assertThat(location).isNotNull();
-            testLocationId = location.getLocationId();
-            testWarehouseId = location.getLocationId();
+            // Create full location hierarchy: WAREHOUSE -> ZONE -> AISLE -> RACK -> BIN
+            // Use BaseIntegrationTest helper which automatically checks repository and saves
+            // Create ZONE under warehouse
+            CreateLocationRequest zoneRequest = LocationTestDataBuilder.buildZoneRequest(testWarehouseId);
+            CreateLocationResponse zone = createLocation(tenantAdminAuth.getAccessToken(), testTenantId, zoneRequest);
+            assertThat(zone).isNotNull();
+            String zoneId = zone.getLocationId();
 
-            // Create consignment for normal picking
-            CreateConsignmentRequest consignmentRequest = ConsignmentTestDataBuilder.buildCreateConsignmentRequestV2(testLocationId, testProductCode, 100, null);
-            authenticatedPost("/api/v1/stock-management/consignments", tenantAdminAuth.getAccessToken(), testTenantId, consignmentRequest).exchange().expectStatus().isCreated();
+            // Create AISLE under zone
+            CreateLocationRequest aisleRequest = LocationTestDataBuilder.buildAisleRequest(zoneId);
+            CreateLocationResponse aisle = createLocation(tenantAdminAuth.getAccessToken(), testTenantId, aisleRequest);
+            assertThat(aisle).isNotNull();
+            String aisleId = aisle.getLocationId();
 
-            // Create consignment with expiring stock (expires in 5 days)
-            LocalDate expiringDate = LocalDate.now().plusDays(5);
-            CreateConsignmentRequest expiringConsignmentRequest =
-                    ConsignmentTestDataBuilder.buildCreateConsignmentRequestV2WithExpiration(testLocationId, testExpiringProductCode, expiringDate);
-            authenticatedPost("/api/v1/stock-management/consignments", tenantAdminAuth.getAccessToken(), testTenantId, expiringConsignmentRequest).exchange().expectStatus()
-                    .isCreated();
+            // Create RACK under aisle
+            CreateLocationRequest rackRequest = LocationTestDataBuilder.buildRackRequest(aisleId);
+            CreateLocationResponse rack = createLocation(tenantAdminAuth.getAccessToken(), testTenantId, rackRequest);
+            assertThat(rack).isNotNull();
+            String rackId = rack.getLocationId();
 
-            // Create consignment with expired stock (expired 5 days ago)
-            LocalDate expiredDate = LocalDate.now().minusDays(5);
-            CreateConsignmentRequest expiredConsignmentRequest =
-                    ConsignmentTestDataBuilder.buildCreateConsignmentRequestV2WithExpiration(testLocationId, testExpiredProductCode, expiredDate);
-            authenticatedPost("/api/v1/stock-management/consignments", tenantAdminAuth.getAccessToken(), testTenantId, expiredConsignmentRequest).exchange().expectStatus()
-                    .isCreated();
+            // Create BIN location under rack (required for FEFO assignment)
+            CreateLocationRequest binRequest = LocationTestDataBuilder.buildBinRequest(rackId);
+            CreateLocationResponse binLocation = createLocation(tenantAdminAuth.getAccessToken(), testTenantId, binRequest);
+            assertThat(binLocation).isNotNull();
+            testLocationId = binLocation.getLocationId();
 
-            // Wait for stock items to be created
-            waitForStockItems(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
-            waitForStockItems(testExpiringProductId, tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
-            waitForStockItems(testExpiredProductId, tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
+            // Check H2 for existing stock items before creating consignment
+            List<com.ccbsa.wms.gateway.api.dto.StockItemResponse> existingStockItems = TestDataManager.getStockItemsByProductId(testProductId, testTenantId);
+            int totalQuantity = existingStockItems.stream()
+                    .filter(item -> item.getQuantity() != null && item.getQuantity() > 0)
+                    .mapToInt(com.ccbsa.wms.gateway.api.dto.StockItemResponse::getQuantity)
+                    .sum();
+
+            if (totalQuantity < 100) {
+                // Create consignment for normal picking - check repository first, then save if new
+                CreateConsignmentRequest consignmentRequest = ConsignmentTestDataBuilder.buildCreateConsignmentRequestV2(testLocationId, testProductCode, 100, null);
+                EntityExchangeResult<ApiResponse<CreateConsignmentResponse>> consignmentResult =
+                        authenticatedPost("/api/v1/stock-management/consignments", tenantAdminAuth.getAccessToken(), testTenantId, consignmentRequest).exchange().expectStatus().isCreated()
+                                .expectBody(new ParameterizedTypeReference<ApiResponse<CreateConsignmentResponse>>() {
+                                }).returnResult();
+                ApiResponse<CreateConsignmentResponse> consignmentApiResponse = consignmentResult.getResponseBody();
+                if (consignmentApiResponse != null && consignmentApiResponse.isSuccess() && consignmentApiResponse.getData() != null) {
+                    CreateConsignmentResponse consignment = consignmentApiResponse.getData();
+                    // Check if consignment already exists in repository
+                    Optional<CreateConsignmentResponse> existing = TestDataManager.getRepository().findConsignmentById(consignment.getConsignmentId(), testTenantId);
+                    if (existing.isEmpty()) {
+                        TestDataManager.saveConsignment(consignment, testTenantId);
+                    }
+                }
+            }
+
+            // Check H2 for existing expiring stock items before creating consignment
+            List<com.ccbsa.wms.gateway.api.dto.StockItemResponse> existingExpiringStockItems = TestDataManager.getStockItemsByProductId(testExpiringProductId, testTenantId);
+            int totalExpiringQuantity = existingExpiringStockItems.stream()
+                    .filter(item -> item.getQuantity() != null && item.getQuantity() > 0)
+                    .mapToInt(com.ccbsa.wms.gateway.api.dto.StockItemResponse::getQuantity)
+                    .sum();
+
+            if (totalExpiringQuantity < 100) {
+                // Create consignment with expiring stock (expires in 5 days) - check repository first, then save if new
+                LocalDate expiringDate = LocalDate.now().plusDays(5);
+                CreateConsignmentRequest expiringConsignmentRequest =
+                        ConsignmentTestDataBuilder.buildCreateConsignmentRequestV2WithExpiration(testLocationId, testExpiringProductCode, expiringDate);
+                EntityExchangeResult<ApiResponse<CreateConsignmentResponse>> expiringConsignmentResult =
+                        authenticatedPost("/api/v1/stock-management/consignments", tenantAdminAuth.getAccessToken(), testTenantId, expiringConsignmentRequest).exchange().expectStatus()
+                                .isCreated().expectBody(new ParameterizedTypeReference<ApiResponse<CreateConsignmentResponse>>() {
+                                }).returnResult();
+                ApiResponse<CreateConsignmentResponse> expiringConsignmentApiResponse = expiringConsignmentResult.getResponseBody();
+                if (expiringConsignmentApiResponse != null && expiringConsignmentApiResponse.isSuccess() && expiringConsignmentApiResponse.getData() != null) {
+                    CreateConsignmentResponse consignment = expiringConsignmentApiResponse.getData();
+                    Optional<CreateConsignmentResponse> existing = TestDataManager.getRepository().findConsignmentById(consignment.getConsignmentId(), testTenantId);
+                    if (existing.isEmpty()) {
+                        TestDataManager.saveConsignment(consignment, testTenantId);
+                    }
+                }
+            }
+
+            // Check H2 for existing expired stock items before creating consignment
+            List<com.ccbsa.wms.gateway.api.dto.StockItemResponse> existingExpiredStockItems = TestDataManager.getStockItemsByProductId(testExpiredProductId, testTenantId);
+            int totalExpiredQuantity = existingExpiredStockItems.stream()
+                    .filter(item -> item.getQuantity() != null && item.getQuantity() > 0)
+                    .mapToInt(com.ccbsa.wms.gateway.api.dto.StockItemResponse::getQuantity)
+                    .sum();
+
+            if (totalExpiredQuantity < 100) {
+                // Create consignment with expired stock (expired 5 days ago) - check repository first, then save if new
+                LocalDate expiredDate = LocalDate.now().minusDays(5);
+                CreateConsignmentRequest expiredConsignmentRequest =
+                        ConsignmentTestDataBuilder.buildCreateConsignmentRequestV2WithExpiration(testLocationId, testExpiredProductCode, expiredDate);
+                EntityExchangeResult<ApiResponse<CreateConsignmentResponse>> expiredConsignmentResult =
+                        authenticatedPost("/api/v1/stock-management/consignments", tenantAdminAuth.getAccessToken(), testTenantId, expiredConsignmentRequest).exchange().expectStatus()
+                                .isCreated().expectBody(new ParameterizedTypeReference<ApiResponse<CreateConsignmentResponse>>() {
+                                }).returnResult();
+                ApiResponse<CreateConsignmentResponse> expiredConsignmentApiResponse = expiredConsignmentResult.getResponseBody();
+                if (expiredConsignmentApiResponse != null && expiredConsignmentApiResponse.isSuccess() && expiredConsignmentApiResponse.getData() != null) {
+                    CreateConsignmentResponse consignment = expiredConsignmentApiResponse.getData();
+                    Optional<CreateConsignmentResponse> existing = TestDataManager.getRepository().findConsignmentById(consignment.getConsignmentId(), testTenantId);
+                    if (existing.isEmpty()) {
+                        TestDataManager.saveConsignment(consignment, testTenantId);
+                    }
+                }
+            }
+
+            // Wait for stock items to be created (only if we created new consignments)
+            if (totalQuantity < 100) {
+                waitForStockItems(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
+                // Query and save stock items to H2
+                queryAndSaveStockItems(testProductId, tenantAdminAuth.getAccessToken(), testTenantId);
+            }
+            if (totalExpiringQuantity < 100) {
+                waitForStockItems(testExpiringProductId, tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
+                // Query and save stock items to H2
+                queryAndSaveStockItems(testExpiringProductId, tenantAdminAuth.getAccessToken(), testTenantId);
+            }
+            if (totalExpiredQuantity < 100) {
+                waitForStockItems(testExpiredProductId, tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
+                // Query and save stock items to H2
+                queryAndSaveStockItems(testExpiredProductId, tenantAdminAuth.getAccessToken(), testTenantId);
+            }
+
+            // Wait for stock items to be assigned to locations (FEFO assignment happens asynchronously)
+            // This ensures stock items are available for picking list planning
+            waitForStockItemsAssignedToLocations(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 15, 500, 1);
+            waitForStockItemsAssignedToLocations(testExpiringProductId, tenantAdminAuth.getAccessToken(), testTenantId, 15, 500, 1);
+            // Note: Expired stock items are NOT assigned to locations (by design), so we don't wait for them
         }
     }
 
@@ -357,8 +436,8 @@ public class PickingServiceTest extends BaseIntegrationTest {
         // The endpoint returns 200 OK with errors in the response body when CSV format is invalid
         EntityExchangeResult<ApiResponse<UploadPickingListCsvResponse>> result =
                 webTestClient.post().uri("/api/v1/picking/picking-lists/upload-csv").header("Authorization", "Bearer " + tenantAdminAuth.getAccessToken())
-                        .header("X-Tenant-Id", testTenantId).contentType(MediaType.MULTIPART_FORM_DATA).body(BodyInserters.fromMultipartData(formData)).exchange()
-                        .expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<UploadPickingListCsvResponse>>() {
+                        .header("X-Tenant-Id", testTenantId).contentType(MediaType.MULTIPART_FORM_DATA).body(BodyInserters.fromMultipartData(formData)).exchange().expectStatus()
+                        .isOk().expectBody(new ParameterizedTypeReference<ApiResponse<UploadPickingListCsvResponse>>() {
                         }).returnResult();
 
         // Assert - Should have errors in response
@@ -446,6 +525,9 @@ public class PickingServiceTest extends BaseIntegrationTest {
         assertThat(response).isNotNull();
         assertThat(response.getId()).isEqualTo(pickingListId);
         assertThat(response.getLoadCount()).isGreaterThan(0);
+        
+        // Save orders from picking list to H2 repository for reuse
+        saveOrdersFromPickingList(response, testTenantId);
     }
 
     @Test
@@ -607,6 +689,9 @@ public class PickingServiceTest extends BaseIntegrationTest {
         PickingListQueryResult pickingListData = listApiResponse.getData();
         assertThat(pickingListData).isNotNull();
         assertThat(pickingListData.getStatus()).isEqualTo("PLANNED");
+        
+        // Save orders from picking list to H2 repository for reuse
+        saveOrdersFromPickingList(pickingListData, testTenantId);
 
         // Get picking tasks (they should be created by now)
         // Wait a bit for tasks to be created
@@ -636,9 +721,9 @@ public class PickingServiceTest extends BaseIntegrationTest {
         assertThat(tasksApiResponse).isNotNull();
         assertThat(tasksApiResponse.isSuccess()).isTrue();
 
-        @SuppressWarnings("unchecked")
-        java.util.List<java.util.Map<String, Object>> allTasks = (java.util.List<java.util.Map<String, Object>>) tasksApiResponse.getData().get("pickingTasks");
-        
+        @SuppressWarnings("unchecked") java.util.List<java.util.Map<String, Object>> allTasks =
+                (java.util.List<java.util.Map<String, Object>>) tasksApiResponse.getData().get("pickingTasks");
+
         // Filter tasks by load ID and execute them
         if (allTasks != null && !allTasks.isEmpty() && !loadIds.isEmpty()) {
             for (java.util.Map<String, Object> task : allTasks) {
@@ -646,17 +731,13 @@ public class PickingServiceTest extends BaseIntegrationTest {
                 if (loadIds.contains(taskLoadId)) {
                     String taskId = (String) task.get("taskId");
                     Object quantityObj = task.get("quantity");
-                    Integer quantity = quantityObj instanceof Integer ? (Integer) quantityObj : 
-                                      quantityObj instanceof Number ? ((Number) quantityObj).intValue() : null;
-                    
-                    if (taskId != null && quantity != null) {
-                        ExecutePickingTaskRequest executeRequest = ExecutePickingTaskRequest.builder()
-                                .pickedQuantity(quantity)
-                                .isPartialPicking(false)
-                                .build();
+                    Integer quantity = quantityObj instanceof Integer ? (Integer) quantityObj : quantityObj instanceof Number ? ((Number) quantityObj).intValue() : null;
 
-                        authenticatedPost("/api/v1/picking/picking-tasks/" + taskId + "/execute", tenantAdminAuth.getAccessToken(), testTenantId, executeRequest)
-                                .exchange().expectStatus().isOk();
+                    if (taskId != null && quantity != null) {
+                        ExecutePickingTaskRequest executeRequest = ExecutePickingTaskRequest.builder().pickedQuantity(quantity).isPartialPicking(false).build();
+
+                        authenticatedPost("/api/v1/picking/picking-tasks/" + taskId + "/execute", tenantAdminAuth.getAccessToken(), testTenantId, executeRequest).exchange()
+                                .expectStatus().isOk();
                     }
                 }
             }
@@ -682,7 +763,16 @@ public class PickingServiceTest extends BaseIntegrationTest {
     @Test
     @Order(18)
     public void testCheckStockExpiration_ExpiredStock_ReturnsExpired() {
+        // Note: Expired stock items are NOT assigned to locations via FEFO (by design - expired stock cannot be assigned)
+        // However, consignments are created with a locationId, so the stock item initially has that location
+        // The stock expiration check endpoint requires both productCode and locationId
+        // We use testLocationId (the BIN) where the consignment was created
+
+        // Ensure testLocationId is set (from setup)
+        assertThat(testLocationId).as("testLocationId must be set from setup").isNotNull();
+
         // Act: Check expiration for expired stock (endpoint expects productCode, not productId)
+        // The consignment was created with testLocationId, so we check at that location
         EntityExchangeResult<ApiResponse<StockExpirationCheckResponse>> result =
                 authenticatedGet("/api/v1/stock-management/stock-items/check-expiration?productCode=" + testExpiredProductCode + "&locationId=" + testLocationId,
                         tenantAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus().isOk()
@@ -696,8 +786,8 @@ public class PickingServiceTest extends BaseIntegrationTest {
 
         StockExpirationCheckResponse response = apiResponse.getData();
         assertThat(response).isNotNull();
-        assertThat(response.isExpired()).isTrue(); // Use isExpired() getter which returns the expired field
-        assertThat(response.getClassification()).isEqualTo("EXPIRED");
+        assertThat(response.isExpired()).as("Expired stock should be detected as expired").isTrue(); // Use isExpired() getter which returns the expired field
+        assertThat(response.getClassification()).as("Expired stock should have EXPIRED classification").isEqualTo("EXPIRED");
     }
 
     @Test
@@ -737,9 +827,8 @@ public class PickingServiceTest extends BaseIntegrationTest {
         // The endpoint returns ApiResponse<List<StockItemQueryDTO>>, not ListExpiringStockResponse
         EntityExchangeResult<ApiResponse<java.util.List<StockItemQueryDTO>>> result =
                 authenticatedGet("/api/v1/stock-management/stock-items/expiring?startDate=" + startDate + "&endDate=" + endDate, tenantAdminAuth.getAccessToken(),
-                        testTenantId).exchange().expectStatus().isOk()
-                        .expectBody(new ParameterizedTypeReference<ApiResponse<java.util.List<StockItemQueryDTO>>>() {
-                        }).returnResult();
+                        testTenantId).exchange().expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<java.util.List<StockItemQueryDTO>>>() {
+                }).returnResult();
 
         // Assert
         ApiResponse<java.util.List<StockItemQueryDTO>> apiResponse = result.getResponseBody();
@@ -830,6 +919,50 @@ public class PickingServiceTest extends BaseIntegrationTest {
     }
 
     // ==================== HELPER METHODS ====================
+
+    /**
+     * Save orders from a picking list to H2 repository for reuse.
+     * Extracts order numbers from the picking list and queries them to save to repository.
+     *
+     * @param pickingList the picking list query result
+     * @param tenantId   the tenant ID
+     */
+    private void saveOrdersFromPickingList(PickingListQueryResult pickingList, String tenantId) {
+        if (pickingList.getLoads() == null) {
+            return;
+        }
+        
+        for (PickingListQueryResult.LoadQueryResult load : pickingList.getLoads()) {
+            if (load.getOrders() == null) {
+                continue;
+            }
+            
+            for (PickingListQueryResult.OrderQueryResult order : load.getOrders()) {
+                if (order.getOrderNumber() != null) {
+                    try {
+                        // Query the order to get full details
+                        EntityExchangeResult<ApiResponse<OrderQueryResult>> orderResult =
+                                authenticatedGet("/api/v1/picking/orders/" + order.getOrderNumber(), tenantAdminAuth.getAccessToken(), tenantId).exchange().expectStatus().isOk()
+                                        .expectBody(new ParameterizedTypeReference<ApiResponse<OrderQueryResult>>() {
+                                        }).returnResult();
+                        
+                        ApiResponse<OrderQueryResult> orderApiResponse = orderResult.getResponseBody();
+                        if (orderApiResponse != null && orderApiResponse.isSuccess() && orderApiResponse.getData() != null) {
+                            OrderQueryResult orderData = orderApiResponse.getData();
+                            // Check if order already exists in repository
+                            Optional<OrderQueryResult> existing = TestDataManager.getRepository().findOrderByNumber(order.getOrderNumber(), tenantId);
+                            if (existing.isEmpty()) {
+                                TestDataManager.saveOrder(orderData, tenantId);
+                            }
+                        }
+                    } catch (Exception e) {
+                        // Log but don't fail test if order save fails
+                        // Order might not exist yet or might be in a different state
+                    }
+                }
+            }
+        }
+    }
 
     @Test
     @Order(24)

@@ -1,5 +1,5 @@
 import apiClient from '../../../services/apiClient';
-import {logger} from '../../../utils/logger';
+import { logger } from '../../../utils/logger';
 
 /**
  * Service for handling email verification operations.

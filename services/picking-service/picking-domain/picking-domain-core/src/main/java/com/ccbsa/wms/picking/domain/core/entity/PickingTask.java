@@ -108,8 +108,7 @@ public class PickingTask extends AggregateRoot<PickingTaskId> {
         // Publish appropriate event
         if (this.isPartialPicking) {
             addDomainEvent(new PartialPickingCompletedEvent(this.getId().getValueAsString(), tenantId, pickingListId, this.loadId, this.orderId, this.productCode, this.locationId,
-                    this.quantity.getValue(), this.pickedQuantity.getValue(), this.partialReason.getValue(),
-                    this.pickedByUserId != null ? this.pickedByUserId.getValue() : null));
+                    this.quantity.getValue(), this.pickedQuantity.getValue(), this.partialReason.getValue(), this.pickedByUserId != null ? this.pickedByUserId.getValue() : null));
         } else {
             addDomainEvent(new PickingTaskCompletedEvent(this.getId().getValueAsString(), tenantId, pickingListId, this.loadId, this.orderId, this.productCode, this.locationId,
                     this.pickedQuantity.getValue(), this.pickedByUserId != null ? this.pickedByUserId.getValue() : null));

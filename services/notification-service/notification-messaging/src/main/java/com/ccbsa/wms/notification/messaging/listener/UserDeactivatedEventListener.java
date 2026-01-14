@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UserDeactivatedEventListener {
     private final CreateNotificationCommandHandler createNotificationCommandHandler;
 
-    @KafkaListener(topics = "user-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    @KafkaListener(topics = "user-events", groupId = "notification-service-user-deactivated", containerFactory = "externalEventKafkaListenerContainerFactory")
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
                        @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         try {

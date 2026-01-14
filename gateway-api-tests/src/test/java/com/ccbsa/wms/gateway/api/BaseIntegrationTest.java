@@ -1,7 +1,9 @@
 package com.ccbsa.wms.gateway.api;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Assumptions;
@@ -14,16 +16,25 @@ import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.ccbsa.common.application.api.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
 import com.ccbsa.wms.gateway.api.dto.CreateConsignmentRequest;
+import com.ccbsa.wms.gateway.api.dto.CreateConsignmentResponse;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationResponse;
-import com.ccbsa.wms.gateway.api.dto.CreateProductRequest;
+import com.ccbsa.wms.gateway.api.dto.AssignLocationToStockRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateProductResponse;
+import com.ccbsa.wms.gateway.api.dto.CreateUserResponse;
+import com.ccbsa.wms.gateway.api.dto.ListStockItemsResponse;
+import com.ccbsa.wms.gateway.api.dto.StockItemResponse;
+import com.ccbsa.wms.gateway.api.dto.StockItemsByClassificationResponse;
 import com.ccbsa.wms.gateway.api.dto.StockLevelResponse;
 import com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.ProductTestDataBuilder;
+import com.ccbsa.wms.gateway.api.fixture.StockItemTestDataBuilder;
+import com.ccbsa.wms.gateway.api.fixture.TestDataManager;
+import com.ccbsa.wms.gateway.api.fixture.UserTestDataBuilder;
 import com.ccbsa.wms.gateway.api.helper.AuthenticationHelper;
 import com.ccbsa.wms.gateway.api.util.CookieExtractor;
 import com.ccbsa.wms.gateway.api.util.RequestHeaderHelper;
@@ -47,6 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - Common assertion utilities
  * - Request header management (correlation ID, tenant context)
  */
+@Slf4j
 public abstract class BaseIntegrationTest {
 
     protected WebTestClient webTestClient;
@@ -102,7 +114,7 @@ public abstract class BaseIntegrationTest {
         } catch (Exception e) {
             // Gateway is not available - this is expected when services aren't running
             // Log the exception for debugging
-            System.err.println("Gateway health check failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            log.warn("Gateway health check failed: {}: {}", e.getClass().getSimpleName(), e.getMessage());
             gatewayAvailable = false;
         }
 
@@ -454,25 +466,28 @@ public abstract class BaseIntegrationTest {
 
     /**
      * Create a product via the API and return the response.
+     * Uses TestDataManager to check repository first, then creates if not found.
      *
      * @param accessToken the JWT access token
      * @param tenantId    the tenant ID
      * @return CreateProductResponse containing the created product details
      */
     protected CreateProductResponse createProduct(String accessToken, String tenantId) {
-        CreateProductRequest productRequest = ProductTestDataBuilder.buildCreateProductRequest();
+        return TestDataManager.getOrCreateProduct(accessToken, tenantId,
+                ProductTestDataBuilder::buildCreateProductRequest,
+                request -> {
+                    EntityExchangeResult<ApiResponse<CreateProductResponse>> productResult =
+                            authenticatedPost("/api/v1/products", accessToken, tenantId, request).exchange().expectStatus().isCreated()
+                                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                                    }).returnResult();
 
-        EntityExchangeResult<ApiResponse<CreateProductResponse>> productResult =
-                authenticatedPost("/api/v1/products", accessToken, tenantId, productRequest).exchange().expectStatus().isCreated()
-                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                        }).returnResult();
-
-        ApiResponse<CreateProductResponse> productApiResponse = productResult.getResponseBody();
-        assertThat(productApiResponse).isNotNull();
-        assertThat(productApiResponse.isSuccess()).isTrue();
-        CreateProductResponse product = productApiResponse.getData();
-        assertThat(product).isNotNull();
-        return product;
+                    ApiResponse<CreateProductResponse> productApiResponse = productResult.getResponseBody();
+                    assertThat(productApiResponse).isNotNull();
+                    assertThat(productApiResponse.isSuccess()).isTrue();
+                    CreateProductResponse product = productApiResponse.getData();
+                    assertThat(product).isNotNull();
+                    return product;
+                });
     }
 
     /**
@@ -509,17 +524,76 @@ public abstract class BaseIntegrationTest {
     // ==================== STOCK ITEM WAITING HELPERS ====================
 
     /**
+     * Create a user via the API and return the response.
+     * Uses TestDataManager to check repository first, then creates if not found.
+     *
+     * @param accessToken the JWT access token
+     * @param tenantId    the tenant ID
+     * @return CreateUserResponse containing the created user details
+     */
+    protected CreateUserResponse createUser(String accessToken, String tenantId) {
+        return TestDataManager.getOrCreateUser(accessToken, tenantId,
+                () -> UserTestDataBuilder.buildCreateUserRequest(tenantId),
+                request -> {
+                    EntityExchangeResult<ApiResponse<CreateUserResponse>> userResult =
+                            authenticatedPost("/api/v1/users", accessToken, tenantId, request).exchange().expectStatus().isCreated()
+                                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
+                                    }).returnResult();
+
+                    ApiResponse<CreateUserResponse> userApiResponse = userResult.getResponseBody();
+                    assertThat(userApiResponse).isNotNull();
+                    assertThat(userApiResponse.isSuccess()).isTrue();
+                    CreateUserResponse user = userApiResponse.getData();
+                    assertThat(user).isNotNull();
+                    return user;
+                });
+    }
+
+    /**
      * Create a location (warehouse) via the API and return the response.
+     * Uses TestDataManager to check repository first, then creates if not found.
      *
      * @param accessToken the JWT access token
      * @param tenantId    the tenant ID
      * @return CreateLocationResponse containing the created location details
      */
     protected CreateLocationResponse createLocation(String accessToken, String tenantId) {
-        CreateLocationRequest locationRequest = LocationTestDataBuilder.buildWarehouseRequest();
+        return TestDataManager.getOrCreateLocation(accessToken, tenantId,
+                LocationTestDataBuilder::buildWarehouseRequest,
+                request -> {
+                    EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationResult =
+                            authenticatedPost("/api/v1/location-management/locations", accessToken, tenantId, request).exchange().expectStatus().isCreated()
+                                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                                    }).returnResult();
 
+                    ApiResponse<CreateLocationResponse> locationApiResponse = locationResult.getResponseBody();
+                    assertThat(locationApiResponse).isNotNull();
+                    assertThat(locationApiResponse.isSuccess()).isTrue();
+                    CreateLocationResponse location = locationApiResponse.getData();
+                    assertThat(location).isNotNull();
+                    return location;
+                });
+    }
+
+    /**
+     * Create a location via the API and return the response.
+     * Uses TestDataManager to check repository first, then creates if not found.
+     *
+     * @param accessToken the JWT access token
+     * @param tenantId    the tenant ID
+     * @param request     the location request
+     * @return CreateLocationResponse containing the created location details
+     */
+    protected CreateLocationResponse createLocation(String accessToken, String tenantId, CreateLocationRequest request) {
+        // Check repository first by code
+        Optional<CreateLocationResponse> existing = TestDataManager.getRepository().findLocationByCode(request.getCode(), tenantId);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
+        // Create new location
         EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationResult =
-                authenticatedPost("/api/v1/location-management/locations", accessToken, tenantId, locationRequest).exchange().expectStatus().isCreated()
+                authenticatedPost("/api/v1/location-management/locations", accessToken, tenantId, request).exchange().expectStatus().isCreated()
                         .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
                         }).returnResult();
 
@@ -528,6 +602,9 @@ public abstract class BaseIntegrationTest {
         assertThat(locationApiResponse.isSuccess()).isTrue();
         CreateLocationResponse location = locationApiResponse.getData();
         assertThat(location).isNotNull();
+        
+        // Save to repository
+        TestDataManager.saveLocation(location, tenantId);
         return location;
     }
 
@@ -536,6 +613,7 @@ public abstract class BaseIntegrationTest {
     /**
      * Create a consignment and wait for stock items to be created.
      * This is a common pattern in tests that need stock items available.
+     * Saves consignment and stock items to H2 for reuse.
      *
      * @param warehouseId    the warehouse ID where consignment is received
      * @param productCode    the product code for the consignment line item
@@ -556,11 +634,108 @@ public abstract class BaseIntegrationTest {
             consignmentRequest = ConsignmentTestDataBuilder.buildCreateConsignmentRequestV2(warehouseId, productCode, quantity, null);
         }
 
-        authenticatedPost("/api/v1/stock-management/consignments", accessToken, tenantId, consignmentRequest).exchange().expectStatus().isCreated();
+        EntityExchangeResult<ApiResponse<CreateConsignmentResponse>> consignmentResult =
+                authenticatedPost("/api/v1/stock-management/consignments", accessToken, tenantId, consignmentRequest).exchange().expectStatus().isCreated()
+                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateConsignmentResponse>>() {
+                        }).returnResult();
+
+        ApiResponse<CreateConsignmentResponse> consignmentApiResponse = consignmentResult.getResponseBody();
+        if (consignmentApiResponse != null && consignmentApiResponse.isSuccess() && consignmentApiResponse.getData() != null) {
+            CreateConsignmentResponse consignment = consignmentApiResponse.getData();
+            TestDataManager.saveConsignment(consignment, tenantId);
+        }
 
         // Wait for stock items to be created (async via Kafka events)
         boolean stockItemsCreated = waitForStockItems(productId, accessToken, tenantId, maxWaitSeconds, 500);
         assertThat(stockItemsCreated).as("Stock items should be created from consignment within " + maxWaitSeconds + " seconds").isTrue();
+
+        // Query stock items from API and save to H2
+        queryAndSaveStockItems(productId, accessToken, tenantId);
+    }
+
+    /**
+     * Query stock items from API by product ID and save them to H2.
+     *
+     * @param productId   the product ID
+     * @param accessToken the JWT access token
+     * @param tenantId    the tenant ID
+     * @return list of stock items queried and saved
+     */
+    protected List<StockItemResponse> queryAndSaveStockItems(String productId, String accessToken, String tenantId) {
+        try {
+            EntityExchangeResult<ApiResponse<ListStockItemsResponse>> queryResult =
+                    authenticatedGet("/api/v1/stock-management/stock-items?productId=" + productId, accessToken, tenantId).exchange().expectStatus().isOk()
+                            .expectBody(new ParameterizedTypeReference<ApiResponse<ListStockItemsResponse>>() {
+                            }).returnResult();
+
+            ApiResponse<ListStockItemsResponse> queryApiResponse = queryResult.getResponseBody();
+            if (queryApiResponse != null && queryApiResponse.isSuccess() && queryApiResponse.getData() != null
+                    && queryApiResponse.getData().getStockItems() != null) {
+                List<StockItemResponse> stockItems = queryApiResponse.getData().getStockItems();
+                TestDataManager.saveStockItems(stockItems, tenantId);
+                return stockItems;
+            }
+        } catch (Exception e) {
+            log.warn("Failed to query and save stock items for product {}: {}", productId, e.getMessage());
+        }
+        return new java.util.ArrayList<>();
+    }
+
+    /**
+     * Get or create stock items for a product.
+     * Checks H2 first for existing stock items with quantity > 0.
+     * If not found or insufficient, creates consignment, waits for stock items, queries from API, saves to H2, and returns them.
+     *
+     * @param productId      the product ID
+     * @param productCode    the product code for consignment creation
+     * @param warehouseId     the warehouse ID for consignment creation
+     * @param minQuantity     minimum quantity required (default: 1)
+     * @param accessToken     the JWT access token
+     * @param tenantId       the tenant ID
+     * @param maxWaitSeconds maximum seconds to wait for stock items (default: 10)
+     * @return list of stock items (from H2 or newly created)
+     */
+    protected List<StockItemResponse> getOrCreateStockItemsForProduct(String productId, String productCode, String warehouseId, int minQuantity, String accessToken,
+                                                                       String tenantId, int maxWaitSeconds) {
+        // Check H2 for existing stock items
+        List<StockItemResponse> existingStockItems = TestDataManager.getStockItemsByProductId(productId, tenantId);
+        int totalQuantity = existingStockItems.stream()
+                .filter(item -> item.getQuantity() != null && item.getQuantity() > 0)
+                .mapToInt(StockItemResponse::getQuantity)
+                .sum();
+
+        if (totalQuantity >= minQuantity) {
+            log.debug("Reusing {} stock items from H2 with total quantity {}", existingStockItems.size(), totalQuantity);
+            return existingStockItems.stream()
+                    .filter(item -> item.getQuantity() != null && item.getQuantity() > 0)
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        // Not enough stock in H2, create consignment
+        log.debug("Insufficient stock in H2 ({} < {}), creating new consignment", totalQuantity, minQuantity);
+        createConsignmentAndWaitForStock(warehouseId, productCode, minQuantity, null, productId, accessToken, tenantId, maxWaitSeconds);
+
+        // Query and return stock items (already saved to H2 by createConsignmentAndWaitForStock)
+        return queryAndSaveStockItems(productId, accessToken, tenantId);
+    }
+
+    /**
+     * Ensure stock items are available for a product.
+     * Checks H2 first, then creates consignment if needed.
+     * Saves consignment and stock items to H2.
+     *
+     * @param productId      the product ID
+     * @param productCode    the product code for consignment creation
+     * @param warehouseId     the warehouse ID for consignment creation
+     * @param minQuantity     minimum quantity required (default: 1)
+     * @param accessToken     the JWT access token
+     * @param tenantId       the tenant ID
+     * @param maxWaitSeconds maximum seconds to wait for stock items (default: 10)
+     * @return list of stock items available
+     */
+    protected List<StockItemResponse> ensureStockItemsAvailable(String productId, String productCode, String warehouseId, int minQuantity, String accessToken,
+                                                                 String tenantId, int maxWaitSeconds) {
+        return getOrCreateStockItemsForProduct(productId, productCode, warehouseId, minQuantity, accessToken, tenantId, maxWaitSeconds);
     }
 
     /**
@@ -597,13 +772,13 @@ public abstract class BaseIntegrationTest {
                     boolean hasStock = stockLevels.stream().anyMatch(level -> level.getTotalQuantity() != null && level.getTotalQuantity() > 0);
                     if (hasStock) {
                         int totalQuantity = stockLevels.stream().filter(level -> level.getTotalQuantity() != null).mapToInt(StockLevelResponse::getTotalQuantity).sum();
-                        System.out.println("Stock items found after " + attemptCount + " attempts. Total quantity: " + totalQuantity);
+                        log.debug("Stock items found after {} attempts. Total quantity: {}", attemptCount, totalQuantity);
                         return true;
                     }
                 }
 
                 if (attemptCount % 4 == 0) { // Log every 2 seconds (4 attempts * 500ms)
-                    System.out.println("Waiting for stock items... attempt " + attemptCount);
+                    log.debug("Waiting for stock items... attempt {}", attemptCount);
                 }
 
                 Thread.sleep(pollIntervalMs);
@@ -612,7 +787,7 @@ public abstract class BaseIntegrationTest {
                 return false;
             } catch (Exception e) {
                 // Continue polling on error
-                System.err.println("Error polling for stock items (attempt " + attemptCount + "): " + e.getMessage());
+                log.warn("Error polling for stock items (attempt {}): {}", attemptCount, e.getMessage());
                 try {
                     Thread.sleep(pollIntervalMs);
                 } catch (InterruptedException ie) {
@@ -622,8 +797,23 @@ public abstract class BaseIntegrationTest {
             }
         }
 
-        System.err.println("Timeout waiting for stock items after " + attemptCount + " attempts (" + maxWaitSeconds + " seconds)");
+        log.warn("Timeout waiting for stock items after {} attempts ({} seconds)", attemptCount, maxWaitSeconds);
         return false;
+    }
+
+    /**
+     * Create authenticated GET request with Bearer token and tenant context.
+     *
+     * @param uri         the request URI
+     * @param accessToken the JWT access token
+     * @param tenantId    the tenant ID for X-Tenant-Id header
+     * @return WebTestClient.RequestHeadersSpec for further configuration
+     */
+    protected WebTestClient.RequestHeadersSpec<?> authenticatedGet(String uri, String accessToken, String tenantId) {
+        return webTestClient.get().uri(uri).headers(headers -> {
+            RequestHeaderHelper.addAuthHeaders(headers, accessToken);
+            RequestHeaderHelper.addTenantHeader(headers, tenantId);
+        });
     }
 
     /**
@@ -657,21 +847,17 @@ public abstract class BaseIntegrationTest {
                     List<StockLevelResponse> stockLevels = apiResponse.getData();
                     // Check if we have stock items assigned to locations with available quantity >= minQuantity
                     boolean hasAssignedStock = stockLevels.stream()
-                            .anyMatch(level -> level.getLocationId() != null
-                                    && level.getAvailableQuantity() != null
-                                    && level.getAvailableQuantity() >= minQuantity);
+                            .anyMatch(level -> level.getLocationId() != null && level.getAvailableQuantity() != null && level.getAvailableQuantity() >= minQuantity);
                     if (hasAssignedStock) {
-                        int totalAssignedQuantity = stockLevels.stream()
-                                .filter(level -> level.getLocationId() != null && level.getAvailableQuantity() != null)
-                                .mapToInt(StockLevelResponse::getAvailableQuantity)
-                                .sum();
-                        System.out.println("Stock items assigned to locations found after " + attemptCount + " attempts. Total assigned available quantity: " + totalAssignedQuantity);
+                        int totalAssignedQuantity = stockLevels.stream().filter(level -> level.getLocationId() != null && level.getAvailableQuantity() != null)
+                                .mapToInt(StockLevelResponse::getAvailableQuantity).sum();
+                        log.debug("Stock items assigned to locations found after {} attempts. Total assigned available quantity: {}", attemptCount, totalAssignedQuantity);
                         return true;
                     }
                 }
 
                 if (attemptCount % 4 == 0) { // Log every 2 seconds (4 attempts * 500ms)
-                    System.out.println("Waiting for stock items to be assigned to locations... attempt " + attemptCount);
+                    log.debug("Waiting for stock items to be assigned to locations... attempt {}", attemptCount);
                 }
 
                 Thread.sleep(pollIntervalMs);
@@ -680,7 +866,7 @@ public abstract class BaseIntegrationTest {
                 return false;
             } catch (Exception e) {
                 // Continue polling on error
-                System.err.println("Error polling for assigned stock items (attempt " + attemptCount + "): " + e.getMessage());
+                log.warn("Error polling for assigned stock items (attempt {}): {}", attemptCount, e.getMessage());
                 try {
                     Thread.sleep(pollIntervalMs);
                 } catch (InterruptedException ie) {
@@ -690,23 +876,154 @@ public abstract class BaseIntegrationTest {
             }
         }
 
-        System.err.println("Timeout waiting for stock items to be assigned to locations after " + attemptCount + " attempts (" + maxWaitSeconds + " seconds)");
+        log.warn("Timeout waiting for stock items to be assigned to locations after {} attempts ({} seconds)", attemptCount, maxWaitSeconds);
         return false;
     }
 
     /**
-     * Create authenticated GET request with Bearer token and tenant context.
+     * Wait for stock items to be assigned to a specific location with minimum available quantity.
+     * Polls the stock levels endpoint until stock is available at the specified location or timeout occurs.
+     * If stock is not assigned to the location by FEFO, this method will attempt to manually assign stock items.
      *
-     * @param uri         the request URI
-     * @param accessToken the JWT access token
-     * @param tenantId    the tenant ID for X-Tenant-Id header
-     * @return WebTestClient.RequestHeadersSpec for further configuration
+     * <p>This is necessary because stock assignment to locations happens asynchronously via FEFO events.
+     * Tests should use this method to ensure stock is available at a specific location before attempting allocation.</p>
+     *
+     * @param productId      the product ID to check stock for (as String)
+     * @param locationId     the location ID to check stock at (as String)
+     * @param accessToken    the JWT access token for authentication
+     * @param tenantId       the tenant ID for X-Tenant-Id header
+     * @param maxWaitSeconds maximum number of seconds to wait
+     * @param pollIntervalMs polling interval in milliseconds
+     * @param minQuantity    minimum available quantity required at the location
+     * @return true if stock items with sufficient available quantity were found at the location, false if timeout was reached
      */
-    protected WebTestClient.RequestHeadersSpec<?> authenticatedGet(String uri, String accessToken, String tenantId) {
-        return webTestClient.get().uri(uri).headers(headers -> {
-            RequestHeaderHelper.addAuthHeaders(headers, accessToken);
-            RequestHeaderHelper.addTenantHeader(headers, tenantId);
-        });
+    protected boolean waitForStockAtLocation(String productId, String locationId, String accessToken, String tenantId, int maxWaitSeconds, long pollIntervalMs, int minQuantity) {
+        long endTime = System.currentTimeMillis() + (maxWaitSeconds * 1000L);
+        int attemptCount = 0;
+
+        while (System.currentTimeMillis() < endTime) {
+            attemptCount++;
+            try {
+                EntityExchangeResult<ApiResponse<List<StockLevelResponse>>> result =
+                        authenticatedGet("/api/v1/stock-management/stock-levels?productId=" + productId + "&locationId=" + locationId, accessToken, tenantId).exchange().expectStatus().isOk()
+                                .expectBody(new ParameterizedTypeReference<ApiResponse<List<StockLevelResponse>>>() {
+                                }).returnResult();
+
+                ApiResponse<List<StockLevelResponse>> apiResponse = result.getResponseBody();
+                if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null) {
+                    List<StockLevelResponse> stockLevels = apiResponse.getData();
+                    // Check if we have stock at the specific location with available quantity >= minQuantity
+                    Optional<StockLevelResponse> locationStock = stockLevels.stream()
+                            .filter(level -> locationId.equals(level.getLocationId()))
+                            .filter(level -> level.getAvailableQuantity() != null && level.getAvailableQuantity() >= minQuantity)
+                            .findFirst();
+                    
+                    if (locationStock.isPresent()) {
+                        int availableQuantity = locationStock.get().getAvailableQuantity();
+                        log.debug("Stock found at location {} after {} attempts. Available quantity: {}", locationId, attemptCount, availableQuantity);
+                        return true;
+                    }
+                }
+
+                if (attemptCount % 4 == 0) { // Log every 2 seconds (4 attempts * 500ms)
+                    log.debug("Waiting for stock at location {}... attempt {}", locationId, attemptCount);
+                }
+
+                Thread.sleep(pollIntervalMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            } catch (Exception e) {
+                // Continue polling on error
+                log.warn("Error polling for stock at location (attempt {}): {}", attemptCount, e.getMessage());
+                try {
+                    Thread.sleep(pollIntervalMs);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return false;
+                }
+            }
+        }
+
+        // If we timed out waiting for FEFO assignment, try to manually assign stock to the location
+        log.info("FEFO did not assign stock to location {} within timeout. Attempting manual assignment...", locationId);
+        return assignStockToLocationManually(productId, locationId, accessToken, tenantId, minQuantity);
+    }
+
+    /**
+     * Manually assign stock items to a specific location.
+     * This is a fallback when FEFO doesn't assign stock to the test location.
+     *
+     * @param productId   the product ID
+     * @param locationId  the location ID to assign stock to
+     * @param accessToken the JWT access token
+     * @param tenantId    the tenant ID
+     * @param minQuantity minimum quantity to assign
+     * @return true if stock was successfully assigned, false otherwise
+     */
+    private boolean assignStockToLocationManually(String productId, String locationId, String accessToken, String tenantId, int minQuantity) {
+        try {
+            // Get unassigned stock items or stock items at other locations
+            EntityExchangeResult<ApiResponse<StockItemsByClassificationResponse>> queryResult =
+                    authenticatedGet("/api/v1/stock-management/stock-items/by-classification?classification=NORMAL", accessToken, tenantId).exchange()
+                            .expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<StockItemsByClassificationResponse>>() {
+                            }).returnResult();
+
+            ApiResponse<StockItemsByClassificationResponse> queryApiResponse = queryResult.getResponseBody();
+            if (queryApiResponse == null || queryApiResponse.getData() == null || queryApiResponse.getData().getStockItems() == null) {
+                log.warn("No stock items found for manual assignment");
+                return false;
+            }
+
+            List<StockItemResponse> stockItems = queryApiResponse.getData().getStockItems();
+            // Filter for stock items that are either unassigned or at a different location
+            // Only include items with quantity > 0
+            List<StockItemResponse> assignableItems = stockItems.stream()
+                    .filter(item -> item.getLocationId() == null || !locationId.equals(item.getLocationId()))
+                    .filter(item -> item.getQuantity() != null && item.getQuantity() > 0)
+                    .collect(java.util.stream.Collectors.toList());
+
+            if (assignableItems.isEmpty()) {
+                log.warn("No assignable stock items found (all may be at other locations)");
+                return false;
+            }
+
+            // Assign stock items until we have enough quantity at the location
+            // Note: We assign the full quantity of each stock item
+            int assignedQuantity = 0;
+            for (StockItemResponse stockItem : assignableItems) {
+                if (assignedQuantity >= minQuantity) {
+                    break;
+                }
+
+                int itemQuantity = stockItem.getQuantity();
+                if (itemQuantity <= 0) {
+                    continue;
+                }
+
+                try {
+                    // Assign the full quantity of the stock item to the location
+                    AssignLocationToStockRequest assignRequest = StockItemTestDataBuilder.buildAssignLocationRequest(locationId, itemQuantity);
+                    authenticatedPost("/api/v1/stock-management/stock-items/" + stockItem.getStockItemId() + "/assign-location", accessToken, tenantId, assignRequest)
+                            .exchange().expectStatus().isOk();
+                    assignedQuantity += itemQuantity;
+                } catch (Exception e) {
+                    log.warn("Failed to assign stock item {} to location: {}", stockItem.getStockItemId(), e.getMessage());
+                    // Continue with next item
+                }
+            }
+
+            if (assignedQuantity >= minQuantity) {
+                log.info("Manually assigned {} units to location {}", assignedQuantity, locationId);
+                return true;
+            } else {
+                log.warn("Could not assign sufficient stock to location. Assigned: {}, Required: {}", assignedQuantity, minQuantity);
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("Error during manual stock assignment: {}", e.getMessage(), e);
+            return false;
+        }
     }
 
     /**
@@ -716,12 +1033,12 @@ public abstract class BaseIntegrationTest {
      * <p>This is necessary because picking list status transitions happen asynchronously via Kafka events.
      * Tests should use this method to ensure picking lists are in the expected status before proceeding.</p>
      *
-     * @param pickingListId   the picking list ID to check (as String)
-     * @param expectedStatus  the expected status (e.g., "PLANNED", "COMPLETED")
-     * @param accessToken     the JWT access token for authentication
-     * @param tenantId        the tenant ID for X-Tenant-Id header
-     * @param maxWaitSeconds  maximum number of seconds to wait
-     * @param pollIntervalMs  polling interval in milliseconds
+     * @param pickingListId  the picking list ID to check (as String)
+     * @param expectedStatus the expected status (e.g., "PLANNED", "COMPLETED")
+     * @param accessToken    the JWT access token for authentication
+     * @param tenantId       the tenant ID for X-Tenant-Id header
+     * @param maxWaitSeconds maximum number of seconds to wait
+     * @param pollIntervalMs polling interval in milliseconds
      * @return true if the picking list reached the expected status, false if timeout was reached
      */
     protected boolean waitForPickingListStatus(String pickingListId, String expectedStatus, String accessToken, String tenantId, int maxWaitSeconds, int pollIntervalMs) {
@@ -740,13 +1057,13 @@ public abstract class BaseIntegrationTest {
                 if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null) {
                     com.ccbsa.wms.gateway.api.dto.PickingListQueryResult pickingList = apiResponse.getData();
                     if (expectedStatus.equals(pickingList.getStatus())) {
-                        System.out.println("Picking list reached " + expectedStatus + " status after " + attemptCount + " attempts");
+                        log.debug("Picking list reached {} status after {} attempts", expectedStatus, attemptCount);
                         return true;
                     }
                 }
 
                 if (attemptCount % 4 == 0) { // Log every 2 seconds (4 attempts * 500ms)
-                    System.out.println("Waiting for picking list status " + expectedStatus + "... attempt " + attemptCount);
+                    log.debug("Waiting for picking list status {}... attempt {}", expectedStatus, attemptCount);
                 }
 
                 Thread.sleep(pollIntervalMs);
@@ -755,7 +1072,7 @@ public abstract class BaseIntegrationTest {
                 return false;
             } catch (Exception e) {
                 // Continue polling on error
-                System.err.println("Error polling for picking list status (attempt " + attemptCount + "): " + e.getMessage());
+                log.warn("Error polling for picking list status (attempt {}): {}", attemptCount, e.getMessage());
                 try {
                     Thread.sleep(pollIntervalMs);
                 } catch (InterruptedException ie) {
@@ -765,7 +1082,70 @@ public abstract class BaseIntegrationTest {
             }
         }
 
-        System.err.println("Timeout waiting for picking list status " + expectedStatus + " after " + attemptCount + " attempts (" + maxWaitSeconds + " seconds)");
+        log.warn("Timeout waiting for picking list status {} after {} attempts ({} seconds)", expectedStatus, attemptCount, maxWaitSeconds);
+        return false;
+    }
+
+    /**
+     * Wait for a specific stock item to be available at a location with sufficient available quantity.
+     * Polls the stock item endpoint until the stock item is at the specified location with available quantity > 0 or timeout occurs.
+     *
+     * @param stockItemId   the stock item ID to check
+     * @param locationId    the location ID to check
+     * @param accessToken   the JWT access token for authentication
+     * @param tenantId      the tenant ID for X-Tenant-Id header
+     * @param maxWaitSeconds maximum number of seconds to wait
+     * @param pollIntervalMs polling interval in milliseconds
+     * @return true if stock item is available at the location with available quantity > 0, false if timeout was reached
+     */
+    protected boolean waitForStockItemAtLocation(String stockItemId, String locationId, String accessToken, String tenantId, int maxWaitSeconds, long pollIntervalMs) {
+        long endTime = System.currentTimeMillis() + (maxWaitSeconds * 1000L);
+        int attemptCount = 0;
+
+        while (System.currentTimeMillis() < endTime) {
+            attemptCount++;
+            try {
+                EntityExchangeResult<ApiResponse<com.ccbsa.wms.gateway.api.dto.StockItemQueryDTO>> result =
+                        authenticatedGet("/api/v1/stock-management/stock-items/" + stockItemId, accessToken, tenantId).exchange().expectStatus().isOk()
+                                .expectBody(new ParameterizedTypeReference<ApiResponse<com.ccbsa.wms.gateway.api.dto.StockItemQueryDTO>>() {
+                                }).returnResult();
+
+                ApiResponse<com.ccbsa.wms.gateway.api.dto.StockItemQueryDTO> apiResponse = result.getResponseBody();
+                if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null) {
+                    com.ccbsa.wms.gateway.api.dto.StockItemQueryDTO stockItem = apiResponse.getData();
+                    // Check if stock item is at the specified location and has available quantity
+                    boolean isAtLocation = locationId.equals(stockItem.getLocationId());
+                    int totalQuantity = stockItem.getQuantity() != null ? stockItem.getQuantity() : 0;
+                    int allocatedQuantity = stockItem.getAllocatedQuantity() != null ? stockItem.getAllocatedQuantity() : 0;
+                    int availableQuantity = Math.max(0, totalQuantity - allocatedQuantity);
+                    
+                    if (isAtLocation && availableQuantity > 0) {
+                        log.debug("Stock item {} found at location {} after {} attempts. Available quantity: {}", stockItemId, locationId, attemptCount, availableQuantity);
+                        return true;
+                    }
+                }
+
+                if (attemptCount % 4 == 0) { // Log every 2 seconds (4 attempts * 500ms)
+                    log.debug("Waiting for stock item {} to be available at location {}... attempt {}", stockItemId, locationId, attemptCount);
+                }
+
+                Thread.sleep(pollIntervalMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            } catch (Exception e) {
+                // Continue polling on error
+                log.warn("Error polling for stock item at location (attempt {}): {}", attemptCount, e.getMessage());
+                try {
+                    Thread.sleep(pollIntervalMs);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return false;
+                }
+            }
+        }
+
+        log.warn("Timeout waiting for stock item {} to be available at location {} after {} attempts ({} seconds)", stockItemId, locationId, attemptCount, maxWaitSeconds);
         return false;
     }
 }

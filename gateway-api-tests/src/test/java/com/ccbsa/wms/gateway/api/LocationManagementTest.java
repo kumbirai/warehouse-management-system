@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -33,6 +34,7 @@ import com.ccbsa.wms.gateway.api.dto.UpdateLocationRequest;
 import com.ccbsa.wms.gateway.api.dto.UpdateLocationStatusRequest;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.StockItemTestDataBuilder;
+import com.ccbsa.wms.gateway.api.fixture.TestDataManager;
 import com.ccbsa.wms.gateway.api.util.RequestHeaderHelper;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -98,6 +100,10 @@ public class LocationManagementTest extends BaseIntegrationTest {
      * - 2 aisles per zone
      * - 2 racks per aisle
      * - 2 bins per rack
+     * 
+     * Reuses existing warehouses from repository if available.
+     * Note: When reusing warehouses, we always create fresh hierarchies to ensure
+     * parent-child relationships exist in the service database.
      */
     private void setupWarehouseHierarchies() {
         // Initialize lists
@@ -110,31 +116,93 @@ public class LocationManagementTest extends BaseIntegrationTest {
         warehouse1Bins = new ArrayList<>();
         warehouse2Bins = new ArrayList<>();
 
-        // Create first warehouse with hierarchy
-        warehouse1 = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
-        createLocationHierarchy(warehouse1, 2, 2, 2, 2, warehouse1Zones, warehouse1Aisles, warehouse1Racks, warehouse1Bins);
+        // Try to reuse existing warehouses from repository
+        List<CreateLocationResponse> existingWarehouses = TestDataManager.getRepository().findLocationsByType("WAREHOUSE", testTenantId);
+        
+        if (existingWarehouses.size() >= 2) {
+            // Reuse first two warehouses from repository
+            // Verify they exist in the service database before reusing
+            warehouse1 = verifyLocationExists(existingWarehouses.get(0));
+            warehouse2 = verifyLocationExists(existingWarehouses.get(1));
+        } else if (existingWarehouses.size() == 1) {
+            // Reuse one warehouse, create the second
+            warehouse1 = verifyLocationExists(existingWarehouses.get(0));
+            warehouse2 = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        } else {
+            // Create both warehouses
+            warehouse1 = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+            warehouse2 = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        }
 
-        // Create second warehouse with hierarchy
-        warehouse2 = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
+        // Always create fresh hierarchies to ensure parent-child relationships exist in service database
+        // This prevents issues where parent locations from previous test runs don't exist
+        createLocationHierarchy(warehouse1, 2, 2, 2, 2, warehouse1Zones, warehouse1Aisles, warehouse1Racks, warehouse1Bins);
         createLocationHierarchy(warehouse2, 2, 2, 2, 2, warehouse2Zones, warehouse2Aisles, warehouse2Racks, warehouse2Bins);
     }
 
     /**
+     * Verifies that a location exists in the service database.
+     * If it doesn't exist, creates a new one with the same code.
+     * 
+     * @param location Location from repository to verify
+     * @return Location that exists in the service database
+     */
+    private CreateLocationResponse verifyLocationExists(CreateLocationResponse location) {
+        try {
+            // Try to get the location from the service
+            EntityExchangeResult<ApiResponse<LocationResponse>> exchangeResult =
+                    authenticatedGet("/api/v1/location-management/locations/" + location.getLocationId(), 
+                            tenantAdminAuth.getAccessToken(), testTenantId)
+                            .exchange()
+                            .expectStatus()
+                            .isOk()
+                            .expectBody(new ParameterizedTypeReference<ApiResponse<LocationResponse>>() {})
+                            .returnResult();
+            
+            ApiResponse<LocationResponse> apiResponse = exchangeResult.getResponseBody();
+            if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null 
+                    && apiResponse.getData().getLocationId() != null 
+                    && apiResponse.getData().getLocationId().equals(location.getLocationId())) {
+                // Location exists in service, return the original location response
+                return location;
+            }
+        } catch (Exception e) {
+            // Location doesn't exist in service, create a new one
+            // This can happen when the service database was cleared but H2 repository still has the location
+        }
+        
+        // Create a new location with the same code
+        CreateLocationRequest request = CreateLocationRequest.builder()
+                .code(location.getCode())
+                .name(location.getName() != null ? location.getName() : "Warehouse " + location.getCode())
+                .type(location.getType())
+                .build();
+        return createLocation(request);
+    }
+
+    /**
      * Helper method to create a location and return the response.
+     * Uses TestDataManager.getOrCreateLocation() to check repository first, then creates if not found.
      */
     private CreateLocationResponse createLocation(CreateLocationRequest request) {
-        EntityExchangeResult<ApiResponse<CreateLocationResponse>> exchangeResult =
-                authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange().expectStatus().isCreated()
-                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                        }).returnResult();
+        return TestDataManager.getOrCreateLocation(
+                tenantAdminAuth.getAccessToken(),
+                testTenantId,
+                () -> request,
+                req -> {
+                    EntityExchangeResult<ApiResponse<CreateLocationResponse>> exchangeResult =
+                            authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, req).exchange().expectStatus().isCreated()
+                                    .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
+                                    }).returnResult();
 
-        ApiResponse<CreateLocationResponse> apiResponse = exchangeResult.getResponseBody();
-        assertThat(apiResponse).isNotNull();
-        assertThat(apiResponse.isSuccess()).isTrue();
+                    ApiResponse<CreateLocationResponse> apiResponse = exchangeResult.getResponseBody();
+                    assertThat(apiResponse).isNotNull();
+                    assertThat(apiResponse.isSuccess()).isTrue();
 
-        CreateLocationResponse location = apiResponse.getData();
-        assertThat(location).isNotNull();
-        return location;
+                    CreateLocationResponse location = apiResponse.getData();
+                    assertThat(location).isNotNull();
+                    return location;
+                });
     }
 
     /**
@@ -218,6 +286,9 @@ public class LocationManagementTest extends BaseIntegrationTest {
         assertThat(location.getLocationId()).isNotBlank();
         assertThat(location.getCode()).isEqualTo(request.getCode());
         assertThat(location.getPath()).isEqualTo("/" + request.getCode());
+
+        // Save to repository for reuse
+        TestDataManager.saveLocation(location, testTenantId);
 
         // Store shared warehouse for use in other tests
         sharedWarehouse = location;
@@ -319,8 +390,9 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(7)
     public void testCreateLocation_InvalidParent() {
-        // Arrange
-        CreateLocationRequest request = LocationTestDataBuilder.buildZoneRequest(UUID.randomUUID().toString());
+        // Arrange - Use fixed invalid parent ID format (valid UUID format but non-existent)
+        String invalidParentId = "00000000-0000-0000-0000-000000000001";
+        CreateLocationRequest request = LocationTestDataBuilder.buildZoneRequest(invalidParentId);
 
         // Act
         WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
@@ -401,8 +473,14 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(10)
     public void testListLocations_WithPagination() {
-        // Arrange - Create multiple locations
-        for (int i = 0; i < 5; i++) {
+        // Arrange - Reuse existing warehouses or create new ones as needed
+        // Check how many warehouses already exist
+        List<CreateLocationResponse> existingWarehouses = TestDataManager.getRepository().findLocationsByType("WAREHOUSE", testTenantId);
+        int warehousesNeeded = 5;
+        int warehousesToCreate = Math.max(0, warehousesNeeded - existingWarehouses.size());
+        
+        // Create additional warehouses only if needed
+        for (int i = 0; i < warehousesToCreate; i++) {
             createLocation(LocationTestDataBuilder.buildWarehouseRequest());
         }
 
@@ -513,8 +591,8 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(15)
     public void testGetLocationById_NotFound() {
-        // Arrange
-        String nonExistentId = UUID.randomUUID().toString();
+        // Arrange - Use fixed non-existent location ID (valid UUID format but non-existent)
+        String nonExistentId = "00000000-0000-0000-0000-000000000002";
 
         // Act
         WebTestClient.ResponseSpec response = authenticatedGet("/api/v1/location-management/locations/" + nonExistentId, tenantAdminAuth.getAccessToken(), testTenantId).exchange();
@@ -606,8 +684,8 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(23)
     public void testUpdateLocationStatus_LocationNotFound() {
-        // Arrange
-        String nonExistentId = UUID.randomUUID().toString();
+        // Arrange - Use fixed non-existent location ID (valid UUID format but non-existent)
+        String nonExistentId = "00000000-0000-0000-0000-000000000003";
         UpdateLocationStatusRequest statusRequest = UpdateLocationStatusRequest.builder().status("BLOCKED").build();
 
         // Act
@@ -654,11 +732,11 @@ public class LocationManagementTest extends BaseIntegrationTest {
         // Arrange - Create a new location for this test to avoid conflicts
         CreateLocationResponse testLocation = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
         UUID locationId = UUID.fromString(testLocation.getLocationId());
-        
+
         // Block location first
         BlockLocationRequest blockRequest = BlockLocationRequest.builder().reason("Initial block").build();
-        authenticatedPost("/api/v1/location-management/locations/" + locationId + "/block", tenantAdminAuth.getAccessToken(), testTenantId, blockRequest).exchange()
-                .expectStatus().isOk();
+        authenticatedPost("/api/v1/location-management/locations/" + locationId + "/block", tenantAdminAuth.getAccessToken(), testTenantId, blockRequest).exchange().expectStatus()
+                .isOk();
 
         // Act - Try to block again
         BlockLocationRequest request = BlockLocationRequest.builder().reason("Second block attempt").build();
@@ -676,11 +754,11 @@ public class LocationManagementTest extends BaseIntegrationTest {
         // Arrange - Create a new location for this test
         CreateLocationResponse testLocation = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
         UUID locationId = UUID.fromString(testLocation.getLocationId());
-        
+
         // Block location first
         BlockLocationRequest blockRequest = BlockLocationRequest.builder().reason("Temporary block").build();
-        authenticatedPost("/api/v1/location-management/locations/" + locationId + "/block", tenantAdminAuth.getAccessToken(), testTenantId, blockRequest).exchange()
-                .expectStatus().isOk();
+        authenticatedPost("/api/v1/location-management/locations/" + locationId + "/block", tenantAdminAuth.getAccessToken(), testTenantId, blockRequest).exchange().expectStatus()
+                .isOk();
 
         UnblockLocationRequest request = UnblockLocationRequest.builder().reason("Maintenance complete").build();
 
@@ -727,12 +805,12 @@ public class LocationManagementTest extends BaseIntegrationTest {
         // Arrange - Create a new location for this test
         CreateLocationResponse testLocation = createLocation(LocationTestDataBuilder.buildWarehouseRequest());
         UUID locationId = UUID.fromString(testLocation.getLocationId());
-        
+
         BlockLocationRequest blockRequest = BlockLocationRequest.builder().reason("Test cycle").build();
 
         // Act - Block
-        authenticatedPost("/api/v1/location-management/locations/" + locationId + "/block", tenantAdminAuth.getAccessToken(), testTenantId, blockRequest).exchange()
-                .expectStatus().isOk();
+        authenticatedPost("/api/v1/location-management/locations/" + locationId + "/block", tenantAdminAuth.getAccessToken(), testTenantId, blockRequest).exchange().expectStatus()
+                .isOk();
 
         // Verify location is blocked
         EntityExchangeResult<ApiResponse<LocationResponse>> getResult =
@@ -866,8 +944,8 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(32)
     public void testUpdateLocation_LocationNotFound() {
-        // Arrange
-        String nonExistentId = UUID.randomUUID().toString();
+        // Arrange - Use fixed non-existent location ID (valid UUID format but non-existent)
+        String nonExistentId = "00000000-0000-0000-0000-000000000004";
         UpdateLocationRequest updateRequest = UpdateLocationRequest.builder().zone("ZONE-D").aisle("AISLE-04").rack("RACK-05").level("LEVEL-06").build();
 
         // Act
@@ -1235,8 +1313,8 @@ public class LocationManagementTest extends BaseIntegrationTest {
     @Test
     @Order(201)
     public void testCheckLocationAvailability_NonExistentLocation_ShouldReturnNotFound() {
-        // Arrange
-        String nonExistentLocationId = UUID.randomUUID().toString();
+        // Arrange - Use fixed non-existent location ID (valid UUID format but non-existent)
+        String nonExistentLocationId = "00000000-0000-0000-0000-000000000005";
 
         // Act
         WebTestClient.ResponseSpec response =
@@ -1269,7 +1347,9 @@ public class LocationManagementTest extends BaseIntegrationTest {
         BigDecimal quantity = BigDecimal.valueOf(100);
         LocalDate expirationDate = LocalDate.now().plusDays(30);
 
-        AssignLocationsFEFORequest fefoRequest = StockItemTestDataBuilder.buildFEFOAssignmentRequest(UUID.randomUUID().toString(), // Mock stock item ID
+        // Use fixed mock stock item ID (valid UUID format but non-existent)
+        String mockStockItemId = "00000000-0000-0000-0000-000000000100";
+        AssignLocationsFEFORequest fefoRequest = StockItemTestDataBuilder.buildFEFOAssignmentRequest(mockStockItemId,
                 quantity, expirationDate, "NEAR_EXPIRY");
 
         // Act

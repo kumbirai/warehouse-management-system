@@ -229,9 +229,14 @@ public class StockClassifiedEventListener {
      */
     @Transactional
     private boolean processStockClassifiedEvent(String stockItemIdString, StockClassification newClassification, TenantId tenantId, Map<String, Object> eventData) {
+        log.debug("Processing StockClassifiedEvent for FEFO assignment: stockItemId={}, classification={}, tenantId={}", stockItemIdString, newClassification,
+                tenantId.getValue());
+
         // Extract expiration date and quantity from event
         ExpirationDate expirationDate = extractExpirationDate(eventData);
         BigDecimal quantity = extractQuantity(eventData);
+
+        log.debug("Extracted event data: stockItemId={}, expirationDate={}, quantity={}, classification={}", stockItemIdString, expirationDate, quantity, newClassification);
 
         // Create stock item assignment request
         StockItemAssignmentRequest assignmentRequest =
@@ -242,25 +247,42 @@ public class StockClassifiedEventListener {
         AssignLocationsFEFOCommand command = AssignLocationsFEFOCommand.builder().tenantId(tenantId).stockItems(stockItems).build();
 
         try {
+            log.debug("Calling FEFO assignment handler for stock item: stockItemId={}, tenantId={}", stockItemIdString, tenantId.getValue());
             AssignLocationsFEResult result = fefoCommandHandler.handle(command);
 
             // Check if assignment was successful
             if (result.getAssignments().containsKey(stockItemIdString)) {
-                log.info("Successfully assigned location via FEFO for stock item: stockItemId={}, locationId={}", stockItemIdString,
-                        result.getAssignments().get(stockItemIdString).getValueAsString());
+                log.info("Successfully assigned location via FEFO for stock item: stockItemId={}, locationId={}, tenantId={}", stockItemIdString,
+                        result.getAssignments().get(stockItemIdString).getValueAsString(), tenantId.getValue());
             } else {
                 // Assignment failed - no available locations or insufficient capacity
                 // This is acceptable - stock item remains unassigned and can be:
                 // 1. Assigned later when locations become available
                 // 2. Allocated from unassigned items (handled in allocation logic)
-                log.warn("FEFO assignment did not assign location for stock item: stockItemId={}, tenantId={}. "
-                        + "Stock item will remain unassigned until locations become available or manual assignment.", stockItemIdString, tenantId.getValue());
+                log.warn("FEFO assignment did not assign location for stock item: stockItemId={}, tenantId={}, quantity={}, expirationDate={}. "
+                        + "Possible reasons: no available BIN locations, insufficient capacity, or all locations are full. "
+                        + "Stock item will remain unassigned until locations become available or manual assignment.", stockItemIdString, tenantId.getValue(), quantity,
+                        expirationDate);
             }
+        } catch (IllegalStateException e) {
+            // Handle specific case: no BIN locations available
+            if (e.getMessage() != null && e.getMessage().contains("No BIN type locations")) {
+                log.warn("FEFO assignment failed - no BIN type locations available: stockItemId={}, tenantId={}, error={}. "
+                        + "Stock item will remain unassigned until BIN locations are created. "
+                        + "Stock can still be allocated from unassigned items.", stockItemIdString, tenantId.getValue(), e.getMessage());
+            } else {
+                log.warn("FEFO assignment failed with IllegalStateException: stockItemId={}, tenantId={}, error={}. "
+                        + "Stock item will remain unassigned until locations become available or manual assignment.", stockItemIdString, tenantId.getValue(), e.getMessage());
+            }
+        } catch (IllegalArgumentException e) {
+            // Handle validation errors
+            log.error("FEFO assignment failed with validation error: stockItemId={}, tenantId={}, error={}. "
+                    + "This indicates a configuration issue that should be investigated.", stockItemIdString, tenantId.getValue(), e.getMessage(), e);
         } catch (Exception e) {
-            // Handle assignment failures gracefully
+            // Handle other assignment failures gracefully
             // Stock item remains unassigned, which is acceptable behavior
-            log.warn("FEFO assignment failed for stock item: stockItemId={}, tenantId={}, error={}. "
-                    + "Stock item will remain unassigned until locations become available or manual assignment.", stockItemIdString, tenantId.getValue(), e.getMessage());
+            log.error("FEFO assignment failed with unexpected error: stockItemId={}, tenantId={}, error={}. "
+                    + "Stock item will remain unassigned until locations become available or manual assignment.", stockItemIdString, tenantId.getValue(), e.getMessage(), e);
         }
 
         // Always acknowledge the event to prevent infinite reprocessing

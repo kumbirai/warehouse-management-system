@@ -38,9 +38,7 @@ public class StockAvailabilityResponseDTO {
             return Collections.emptyMap();
         }
         Map<String, List<StockAvailabilityItemDTO>> defensiveCopy = new HashMap<>();
-        stockByProduct.forEach((key, value) ->
-                defensiveCopy.put(key, Collections.unmodifiableList(new ArrayList<>(value)))
-        );
+        stockByProduct.forEach((key, value) -> defensiveCopy.put(key, Collections.unmodifiableList(new ArrayList<>(value))));
         return Collections.unmodifiableMap(defensiveCopy);
     }
 }

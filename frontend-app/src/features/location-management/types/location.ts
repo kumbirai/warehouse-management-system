@@ -45,6 +45,7 @@ export interface Location {
   status: string;
   capacity?: LocationCapacity | number; // Backend may return Integer (maxQuantity) or LocationCapacity object
   description?: string;
+  parentLocationId?: string;
   createdAt: string;
   lastModifiedAt?: string;
 }

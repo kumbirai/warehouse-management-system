@@ -239,10 +239,6 @@ export const PickingListCompletionPage = () => {
                     Complete Picking List
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  <Alert severity="success" sx={{ mb: 2 }}>
-                    All tasks are completed. You can now mark this picking list as complete for
-                    shipping.
-                  </Alert>
                   <Button
                     variant="contained"
                     color="success"
@@ -260,14 +256,6 @@ export const PickingListCompletionPage = () => {
               <Grid item xs={12}>
                 <Alert severity="warning">
                   Cannot complete picking list. Please ensure all picking tasks are completed first.
-                </Alert>
-              </Grid>
-            )}
-
-            {pickingList.status === 'COMPLETED' && (
-              <Grid item xs={12}>
-                <Alert severity="success">
-                  This picking list has been completed and is ready for shipping.
                 </Alert>
               </Grid>
             )}

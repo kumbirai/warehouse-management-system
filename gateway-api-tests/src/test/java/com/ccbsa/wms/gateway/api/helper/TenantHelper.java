@@ -11,18 +11,17 @@ import com.ccbsa.wms.gateway.api.dto.CreateTenantRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateTenantResponse;
 import com.ccbsa.wms.gateway.api.fixture.TenantTestDataBuilder;
 
+import lombok.RequiredArgsConstructor;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Helper for tenant-related test operations.
  */
+@RequiredArgsConstructor
 public class TenantHelper {
 
     private final WebTestClient webTestClient;
-
-    public TenantHelper(WebTestClient webTestClient) {
-        this.webTestClient = webTestClient;
-    }
 
     /**
      * Find first active tenant or create and activate one.

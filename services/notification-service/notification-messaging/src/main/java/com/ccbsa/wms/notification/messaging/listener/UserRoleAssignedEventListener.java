@@ -38,7 +38,7 @@ public class UserRoleAssignedEventListener {
     private final CreateNotificationCommandHandler createNotificationCommandHandler;
     private final UserServicePort userServicePort;
 
-    @KafkaListener(topics = "user-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    @KafkaListener(topics = "user-events", groupId = "notification-service-user-role-assigned", containerFactory = "externalEventKafkaListenerContainerFactory")
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
                        @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         try {

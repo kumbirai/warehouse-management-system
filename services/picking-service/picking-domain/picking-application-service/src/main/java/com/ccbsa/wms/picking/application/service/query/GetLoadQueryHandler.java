@@ -48,14 +48,8 @@ public class GetLoadQueryHandler {
         List<LoadQueryResult.OrderQueryResult> orderResults = orders.stream().map(order -> toOrderQueryResult(order, tenantId)).collect(Collectors.toList());
 
         // Create defensive copy of orders list for builder
-        return LoadQueryResult.builder()
-                .id(view.getId())
-                .loadNumber(view.getLoadNumber())
-                .status(view.getStatus())
-                .createdAt(view.getCreatedAt())
-                .plannedAt(view.getPlannedAt())
-                .orders(new java.util.ArrayList<>(orderResults))
-                .build();
+        return LoadQueryResult.builder().id(view.getId()).loadNumber(view.getLoadNumber()).status(view.getStatus()).createdAt(view.getCreatedAt()).plannedAt(view.getPlannedAt())
+                .orders(new java.util.ArrayList<>(orderResults)).build();
     }
 
     private LoadQueryResult.OrderQueryResult toOrderQueryResult(Order order, TenantId tenantId) {
@@ -63,15 +57,10 @@ public class GetLoadQueryHandler {
                 order.getLineItems().stream().map(lineItem -> toLineItemQueryResult(lineItem, tenantId)).collect(Collectors.toList());
 
         // Create defensive copy of line items list for builder
-        return LoadQueryResult.OrderQueryResult.builder()
-                .orderId(order.getId().getValueAsString())
-                .orderNumber(order.getOrderNumber().getValue())
-                .customerCode(order.getCustomerInfo().getCustomerCode())
-                .customerName(order.getCustomerInfo().getCustomerName())
-                .priority(order.getPriority() != null ? order.getPriority().name() : null)
-                .status(order.getStatus() != null ? order.getStatus().name() : null)
-                .lineItems(new java.util.ArrayList<>(lineItemResults))
-                .build();
+        return LoadQueryResult.OrderQueryResult.builder().orderId(order.getId().getValueAsString()).orderNumber(order.getOrderNumber().getValue())
+                .customerCode(order.getCustomerInfo().getCustomerCode()).customerName(order.getCustomerInfo().getCustomerName())
+                .priority(order.getPriority() != null ? order.getPriority().name() : null).status(order.getStatus() != null ? order.getStatus().name() : null)
+                .lineItems(new java.util.ArrayList<>(lineItemResults)).build();
     }
 
     private LoadQueryResult.OrderLineItemQueryResult toLineItemQueryResult(OrderLineItem lineItem, TenantId tenantId) {

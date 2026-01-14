@@ -34,6 +34,7 @@
 ### Business Context
 
 When goods arrive damaged during transportation (from supplier or customer returns), warehouse operators need to:
+
 - Capture detailed damage information with photographic evidence
 - Classify damage types for pattern analysis and insurance claims
 - Assess whether damaged goods can be salvaged, restocked, or must be written off
@@ -639,48 +640,48 @@ const DamageSummary: React.FC<DamageSummaryProps> = ({ damageReport }) => {
 #### User Flow
 
 1. **Access Damage Assessment**
-   - Navigate to Returns > Damage Assessment
-   - Or from consignment receipt screen when damage is detected
+    - Navigate to Returns > Damage Assessment
+    - Or from consignment receipt screen when damage is detected
 
 2. **Select Source Order/Consignment**
-   - Search by order number, load number, or consignment reference
-   - System loads product information
+    - Search by order number, load number, or consignment reference
+    - System loads product information
 
 3. **Classify Damage**
-   - Select damage type (CRUSHED, BROKEN, LEAKING, etc.)
-   - Choose severity (MINOR, MODERATE, SEVERE)
-   - Identify damage source (CARRIER, SUPPLIER, WAREHOUSE, CUSTOMER)
+    - Select damage type (CRUSHED, BROKEN, LEAKING, etc.)
+    - Choose severity (MINOR, MODERATE, SEVERE)
+    - Identify damage source (CARRIER, SUPPLIER, WAREHOUSE, CUSTOMER)
 
 4. **Record Damaged Products**
-   - For each damaged product:
-     - Enter damaged quantity
-     - Assess product condition (QUARANTINE, DAMAGED, WRITE_OFF)
-     - Upload photos of damage
-     - Add damage notes
-     - Estimate loss value per unit
+    - For each damaged product:
+        - Enter damaged quantity
+        - Assess product condition (QUARANTINE, DAMAGED, WRITE_OFF)
+        - Upload photos of damage
+        - Add damage notes
+        - Estimate loss value per unit
 
 5. **Add Insurance Claim Information**
-   - Enter claim reference if available
-   - Record carrier information
-   - Set incident date and time
-   - Add tracking/waybill number
+    - Enter claim reference if available
+    - Record carrier information
+    - Set incident date and time
+    - Add tracking/waybill number
 
 6. **Upload General Evidence**
-   - Package photos
-   - Delivery documentation
-   - Shipping labels
-   - Any other relevant evidence
+    - Package photos
+    - Delivery documentation
+    - Shipping labels
+    - Any other relevant evidence
 
 7. **Review Summary**
-   - Check damage summary statistics
-   - Verify all information is accurate
-   - Review total estimated loss
+    - Check damage summary statistics
+    - Verify all information is accurate
+    - Review total estimated loss
 
 8. **Submit Damage Report**
-   - Save draft or submit final report
-   - System publishes DamageRecordedEvent
-   - Generates damage report PDF
-   - Auto-assigns quarantine locations
+    - Save draft or submit final report
+    - System publishes DamageRecordedEvent
+    - Generates damage report PDF
+    - Auto-assigns quarantine locations
 
 ---
 
@@ -695,6 +696,7 @@ const DamageSummary: React.FC<DamageSummaryProps> = ({ damageReport }) => {
 **Responsibility:** Root aggregate for tracking damage incidents with detailed assessment, photographic evidence, and insurance claim information
 
 **Key Attributes:**
+
 - `DamageAssessmentId damageAssessmentId` (Aggregate Root ID)
 - `OrderId orderId` (Reference to damaged order)
 - `LoadNumber loadNumber` (Reference to shipment)
@@ -862,6 +864,7 @@ public Map<ProductCondition, Integer> getConditionBreakdown() {
 **Responsibility:** Entity representing individual damaged products within a DamageAssessment
 
 **Key Attributes:**
+
 - `DamagedProductItemId id` (Entity ID)
 - `ProductId productId`
 - `ProductCode productCode`
@@ -1232,6 +1235,7 @@ public class DamageRecordedEvent extends DomainEvent<DamageAssessment> {
 ```
 
 **Consumed By:**
+
 - **Stock Management Service** - Creates quarantine stock items for damaged products
 - **Location Management Service** - Assigns quarantine or disposal locations based on damage severity
 - **Notification Service** - Notifies managers of severe damage requiring approval
@@ -1254,6 +1258,7 @@ public class DamageAssessmentCompletedEvent extends DomainEvent<DamageAssessment
 ```
 
 **Consumed By:**
+
 - **Integration Service** - Syncs damage information to D365 for supplier/carrier claims
 - **Reporting Service** - Updates damage trend analytics
 
@@ -1275,6 +1280,7 @@ public class InsuranceClaimUpdatedEvent extends DomainEvent<DamageAssessment> {
 ```
 
 **Consumed By:**
+
 - **Integration Service** - Updates D365 with insurance claim reference
 - **Notification Service** - Notifies finance team of claim updates
 
@@ -1286,7 +1292,8 @@ public class InsuranceClaimUpdatedEvent extends DomainEvent<DamageAssessment> {
 
 #### Command: RecordDamageAssessmentCommand
 
-**Location:** `services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/dto/RecordDamageAssessmentCommand.java`
+**Location:**
+`services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/dto/RecordDamageAssessmentCommand.java`
 
 ```java
 package com.ccbsa.wms.returns.application.service.command.dto;
@@ -1371,7 +1378,8 @@ public class RecordDamageAssessmentResult {
 
 #### Command Handler
 
-**Location:** `services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/RecordDamageAssessmentCommandHandler.java`
+**Location:**
+`services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/RecordDamageAssessmentCommandHandler.java`
 
 ```java
 package com.ccbsa.wms.returns.application.service.command;
@@ -1499,7 +1507,8 @@ public class RecordDamageAssessmentCommandHandler {
 
 #### Repository Port
 
-**Location:** `services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/port/repository/DamageAssessmentRepository.java`
+**Location:**
+`services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/port/repository/DamageAssessmentRepository.java`
 
 ```java
 package com.ccbsa.wms.returns.application.service.port.repository;
@@ -2139,14 +2148,14 @@ void recordDamageAssessment_WithValidRequest_ShouldReturn201() {
 
 ## Acceptance Criteria Validation
 
-| # | Acceptance Criterion | Implementation Status | Validation |
-|---|---------------------|----------------------|------------|
-| 1 | Operators can record damage type, severity, and affected quantity for each damaged product | ✅ Implemented | DamageAssessment aggregate captures damageType, damageSeverity, and DamagedProductItem.damagedQuantity |
-| 2 | System supports photo evidence capture with multiple images per damaged item | ✅ Implemented | DamagedProductItem.photoUrls supports multiple photos, PhotoUploadWidget component handles upload |
-| 3 | Damage assessment includes fields for insurance claim reference and estimated loss value | ✅ Implemented | InsuranceClaimInfo value object with claimReference, estimatedTotalLoss auto-calculated from line items |
-| 4 | System automatically assigns damaged goods to quarantine location based on damage severity | ✅ Implemented | DamageRecordedEvent consumed by Location Management Service for auto-assignment |
-| 5 | Damage reports are generated with all evidence and can be exported for claims | ✅ Implemented | DamageReport DTO includes all details, conditionBreakdown, and photo counts for report generation |
-| 6 | System publishes DamageRecordedEvent for downstream processing by Stock Management | ✅ Implemented | DamageRecordedEvent published on recordDamageAssessment(), consumed by Stock Management Service |
+| # | Acceptance Criterion                                                                       | Implementation Status | Validation                                                                                              |
+|---|--------------------------------------------------------------------------------------------|-----------------------|---------------------------------------------------------------------------------------------------------|
+| 1 | Operators can record damage type, severity, and affected quantity for each damaged product | ✅ Implemented         | DamageAssessment aggregate captures damageType, damageSeverity, and DamagedProductItem.damagedQuantity  |
+| 2 | System supports photo evidence capture with multiple images per damaged item               | ✅ Implemented         | DamagedProductItem.photoUrls supports multiple photos, PhotoUploadWidget component handles upload       |
+| 3 | Damage assessment includes fields for insurance claim reference and estimated loss value   | ✅ Implemented         | InsuranceClaimInfo value object with claimReference, estimatedTotalLoss auto-calculated from line items |
+| 4 | System automatically assigns damaged goods to quarantine location based on damage severity | ✅ Implemented         | DamageRecordedEvent consumed by Location Management Service for auto-assignment                         |
+| 5 | Damage reports are generated with all evidence and can be exported for claims              | ✅ Implemented         | DamageReport DTO includes all details, conditionBreakdown, and photo counts for report generation       |
+| 6 | System publishes DamageRecordedEvent for downstream processing by Stock Management         | ✅ Implemented         | DamageRecordedEvent published on recordDamageAssessment(), consumed by Stock Management Service         |
 
 ---
 

@@ -1,6 +1,7 @@
 # US-7.5.1: Reconcile Returns with D365 - Implementation Plan
 
-**User Story:** As a warehouse manager, I want the system to automatically reconcile return transactions with Microsoft Dynamics 365, so that inventory and financial records are synchronized across systems.
+**User Story:** As a warehouse manager, I want the system to automatically reconcile return transactions with Microsoft Dynamics 365, so that inventory and financial records are
+synchronized across systems.
 
 **Story Points:** 8
 **Priority:** High
@@ -596,31 +597,31 @@ const ReconciliationSummaryReport: React.FC<ReconciliationSummaryReportProps> = 
 #### User Flow
 
 1. **View Reconciliation Dashboard**
-   - Navigate to Returns > D365 Reconciliation
-   - See summary cards with key metrics
-   - Filter by date range, status, or customer
+    - Navigate to Returns > D365 Reconciliation
+    - See summary cards with key metrics
+    - Filter by date range, status, or customer
 
 2. **Monitor Sync Status**
-   - View real-time sync status for each return
-   - See last sync attempt timestamp
-   - Identify failed syncs with error indicators
+    - View real-time sync status for each return
+    - See last sync attempt timestamp
+    - Identify failed syncs with error indicators
 
 3. **Retry Failed Syncs**
-   - Click retry button for individual failed syncs
-   - Or use "Retry All" for batch processing
-   - System automatically retries with exponential backoff
+    - Click retry button for individual failed syncs
+    - Or use "Retry All" for batch processing
+    - System automatically retries with exponential backoff
 
 4. **View Audit Trail**
-   - Click audit trail button for detailed history
-   - See timeline of all sync attempts
-   - Review D365 response details
-   - Investigate error diagnostics
+    - Click audit trail button for detailed history
+    - See timeline of all sync attempts
+    - Review D365 response details
+    - Investigate error diagnostics
 
 5. **Generate Reports**
-   - Select date range for reporting period
-   - View summary metrics and trends
-   - Export data for external analysis
-   - Print reconciliation reports
+    - Select date range for reporting period
+    - View summary metrics and trends
+    - Export data for external analysis
+    - Print reconciliation reports
 
 ---
 
@@ -686,6 +687,7 @@ public class ReturnReconciledEvent extends DomainEvent<Return> {
 ```
 
 **Consumed By:**
+
 - **Notification Service** - Notifies warehouse manager of successful reconciliation
 - **Returns Service** - Updates return status to RECONCILED
 - **Reporting Service** - Updates reconciliation metrics and dashboards
@@ -700,7 +702,8 @@ The Integration Service uses an **Adapter Pattern** to communicate with D365 via
 
 #### 1. D365 Return Reconciliation Service
 
-**Location:** `services/integration-service/integration-domain/integration-application-service/src/main/java/com/ccbsa/wms/integration/application/service/d365/D365ReturnReconciliationService.java`
+**Location:**
+`services/integration-service/integration-domain/integration-application-service/src/main/java/com/ccbsa/wms/integration/application/service/d365/D365ReturnReconciliationService.java`
 
 ```java
 package com.ccbsa.wms.integration.application.service.d365;
@@ -1550,14 +1553,14 @@ void retryD365Sync_ForFailedReconciliation_ShouldSucceedOnRetry() {
 
 ## Acceptance Criteria Validation
 
-| # | Acceptance Criterion | Implementation Status | Validation |
-|---|---------------------|----------------------|------------|
-| 1 | System synchronizes return initiation to D365 with return type, reason, and customer information | ✅ Implemented | D365ReturnReconciliationService.createD365ReturnOrder() syncs all return metadata |
-| 2 | System updates D365 inventory based on product condition | ✅ Implemented | updateD365Inventory() adjusts inventory with AVAILABLE, QUARANTINE, or WRITE_OFF status |
-| 3 | System calculates credit amounts for good condition returns | ✅ Implemented | processFinancialReconciliation() creates credit notes for GOOD condition products |
-| 4 | System records damaged/expired products as inventory adjustments | ✅ Implemented | recordInventoryWriteOff() creates write-off entries with GL code INV-WRITE-OFF-RETURNS |
-| 5 | System publishes ReturnReconciledEvent after successful synchronization | ✅ Implemented | ReturnReconciledEvent published with D365 Return Order ID and financial totals |
-| 6 | System provides reconciliation dashboard showing sync status | ✅ Implemented | ReconciliationDashboard displays real-time sync status, audit trail, and retry actions |
+| # | Acceptance Criterion                                                                             | Implementation Status | Validation                                                                              |
+|---|--------------------------------------------------------------------------------------------------|-----------------------|-----------------------------------------------------------------------------------------|
+| 1 | System synchronizes return initiation to D365 with return type, reason, and customer information | ✅ Implemented         | D365ReturnReconciliationService.createD365ReturnOrder() syncs all return metadata       |
+| 2 | System updates D365 inventory based on product condition                                         | ✅ Implemented         | updateD365Inventory() adjusts inventory with AVAILABLE, QUARANTINE, or WRITE_OFF status |
+| 3 | System calculates credit amounts for good condition returns                                      | ✅ Implemented         | processFinancialReconciliation() creates credit notes for GOOD condition products       |
+| 4 | System records damaged/expired products as inventory adjustments                                 | ✅ Implemented         | recordInventoryWriteOff() creates write-off entries with GL code INV-WRITE-OFF-RETURNS  |
+| 5 | System publishes ReturnReconciledEvent after successful synchronization                          | ✅ Implemented         | ReturnReconciledEvent published with D365 Return Order ID and financial totals          |
+| 6 | System provides reconciliation dashboard showing sync status                                     | ✅ Implemented         | ReconciliationDashboard displays real-time sync status, audit trail, and retry actions  |
 
 ---
 

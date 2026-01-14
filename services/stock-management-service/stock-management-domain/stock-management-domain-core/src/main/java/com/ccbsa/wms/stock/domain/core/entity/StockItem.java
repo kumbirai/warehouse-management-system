@@ -81,9 +81,10 @@ public class StockItem extends TenantAwareAggregateRoot<StockItemId> {
     public void classify() {
         if (expirationDate == null) {
             // Non-perishable items are always NORMAL
-            if (this.classification != StockClassification.NORMAL) {
+            StockClassification newClassification = StockClassification.NORMAL;
+            if (this.classification != newClassification) {
                 StockClassification oldClassification = this.classification;
-                this.classification = StockClassification.NORMAL;
+                this.classification = newClassification;
                 this.lastModifiedAt = LocalDateTime.now();
 
                 // Publish classification change event

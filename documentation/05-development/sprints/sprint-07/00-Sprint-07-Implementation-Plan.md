@@ -788,15 +788,15 @@ Move to `common-domain` module if not already present:
 
 ### Glossary
 
-| Term                       | Definition                                                              |
-|----------------------------|-------------------------------------------------------------------------|
-| **Partial Return**         | Return of some (not all) items from an order                           |
-| **Full Return**            | Return of all items from an order                                      |
-| **Damage Assessment**      | Evaluation of damaged stock to determine repairability and disposition |
-| **Quarantine Location**    | Designated location for damaged or questionable stock                  |
-| **Return Reconciliation**  | Synchronization of return data with D365 ERP system                    |
-| **FEFO**                   | First Expiring First Out - inventory rotation strategy                 |
-| **Write-Off**              | Stock classified as unsalvageable and removed from inventory           |
+| Term                      | Definition                                                             |
+|---------------------------|------------------------------------------------------------------------|
+| **Partial Return**        | Return of some (not all) items from an order                           |
+| **Full Return**           | Return of all items from an order                                      |
+| **Damage Assessment**     | Evaluation of damaged stock to determine repairability and disposition |
+| **Quarantine Location**   | Designated location for damaged or questionable stock                  |
+| **Return Reconciliation** | Synchronization of return data with D365 ERP system                    |
+| **FEFO**                  | First Expiring First Out - inventory rotation strategy                 |
+| **Write-Off**             | Stock classified as unsalvageable and removed from inventory           |
 
 ---
 

@@ -12,7 +12,7 @@
  * - Secure token handling
  */
 
-import {logger} from '../utils/logger';
+import { logger } from '../utils/logger';
 
 /**
  * In-memory storage for access token.

@@ -88,6 +88,23 @@ public class Load extends TenantAwareAggregateRoot<LoadId> {
      * @throws IllegalStateException if load is not in CREATED status
      */
     public void plan(List<String> pickingTaskIds) {
+        plan(pickingTaskIds, null);
+    }
+
+    /**
+     * Business logic method: Plans picking locations for the load.
+     * <p>
+     * Business Rules:
+     * - Can only plan loads in CREATED status
+     * - Sets status to PLANNED
+     * - Records planning timestamp
+     * - Publishes LoadPlannedEvent
+     *
+     * @param pickingTaskIds List of picking task IDs created during planning
+     * @param pickingListId  Optional picking list ID (as String) to include in event
+     * @throws IllegalStateException if load is not in CREATED status
+     */
+    public void plan(List<String> pickingTaskIds, String pickingListId) {
         if (this.status != LoadStatus.CREATED) {
             throw new IllegalStateException(String.format("Cannot plan load in status: %s. Only CREATED loads can be planned.", this.status));
         }
@@ -96,7 +113,7 @@ public class Load extends TenantAwareAggregateRoot<LoadId> {
         this.plannedAt = ZonedDateTime.now();
 
         // Publish domain event
-        addDomainEvent(new LoadPlannedEvent(this.getId().getValueAsString(), this.getTenantId(), null, // pickingListId will be set by application service
+        addDomainEvent(new LoadPlannedEvent(this.getId().getValueAsString(), this.getTenantId(), pickingListId,
                 pickingTaskIds != null ? pickingTaskIds : List.of()));
     }
 

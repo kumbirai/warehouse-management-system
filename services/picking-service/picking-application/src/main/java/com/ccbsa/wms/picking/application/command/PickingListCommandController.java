@@ -96,8 +96,8 @@ public class PickingListCommandController {
         }
         log.info("Completing picking list: {} by user: {}", pickingListId, username);
 
-        CompletePickingListCommand command = CompletePickingListCommand.builder().pickingListId(PickingListId.of(pickingListId)).tenantId(TenantId.of(tenantId))
-                .completedByUserId(UserId.of(username)).build();
+        CompletePickingListCommand command =
+                CompletePickingListCommand.builder().pickingListId(PickingListId.of(pickingListId)).tenantId(TenantId.of(tenantId)).completedByUserId(UserId.of(username)).build();
 
         CompletePickingListResult result = completePickingListCommandHandler.handle(command);
 

@@ -62,12 +62,9 @@ public class StockLevelEventListener {
             // We'll calculate requested quantity without it (uses default: 2x minimum)
 
             // Create command (maximumQuantity is optional and defaults to null if not set)
-            GenerateRestockRequestCommand.GenerateRestockRequestCommandBuilder commandBuilder = GenerateRestockRequestCommand.builder()
-                    .tenantId(stockLevelEvent.getTenantId())
-                    .productId(stockLevelEvent.getProductId())
-                    .locationId(stockLevelEvent.getLocationId())
-                    .currentQuantity(currentQuantity)
-                    .minimumQuantity(minimumQuantity);
+            GenerateRestockRequestCommand.GenerateRestockRequestCommandBuilder commandBuilder =
+                    GenerateRestockRequestCommand.builder().tenantId(stockLevelEvent.getTenantId()).productId(stockLevelEvent.getProductId())
+                            .locationId(stockLevelEvent.getLocationId()).currentQuantity(currentQuantity).minimumQuantity(minimumQuantity);
             // maximumQuantity is intentionally not set - will default to null
             GenerateRestockRequestCommand command = commandBuilder.build();
 

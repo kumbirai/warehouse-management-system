@@ -141,7 +141,7 @@ public class NotificationServiceConfiguration {
     public ConsumerFactory<String, Object> externalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service");
+        // GROUP_ID_CONFIG removed - each listener specifies its own unique group ID in @KafkaListener annotation
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         // Do not set VALUE_DESERIALIZER_CLASS_CONFIG when configuring deserializer programmatically
 
@@ -240,7 +240,7 @@ public class NotificationServiceConfiguration {
     public ConsumerFactory<String, Object> internalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service");
+        // GROUP_ID_CONFIG removed - each listener specifies its own unique group ID in @KafkaListener annotation
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
         // Production-grade consumer settings

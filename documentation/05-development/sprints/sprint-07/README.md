@@ -9,7 +9,8 @@
 
 ## Sprint Overview
 
-Sprint 7 introduces **comprehensive Returns Management** capabilities to the WMS, enabling seamless handling of partial returns, full returns, damage assessments, automatic location assignment, and bidirectional integration with Microsoft Dynamics 365.
+Sprint 7 introduces **comprehensive Returns Management** capabilities to the WMS, enabling seamless handling of partial returns, full returns, damage assessments, automatic
+location assignment, and bidirectional integration with Microsoft Dynamics 365.
 
 ### Business Value
 
@@ -25,14 +26,14 @@ Sprint 7 introduces **comprehensive Returns Management** capabilities to the WMS
 
 ### Epic: Returns Management
 
-| ID | User Story | Story Points | Priority | Dependencies |
-|----|-----------|--------------|----------|--------------|
-| [US-7.1.1](01-Handle-Partial-Order-Acceptance-Implementation-Plan.md) | Handle Partial Order Acceptance | 5 | High | Picking Service |
-| [US-7.2.1](02-Process-Full-Order-Return-Implementation-Plan.md) | Process Full Order Return | 5 | High | Picking Service |
-| [US-7.3.1](03-Handle-Damage-in-Transit-Returns-Implementation-Plan.md) | Handle Damage-in-Transit Returns | 5 | High | - |
-| [US-7.4.1](04-Assign-Return-Location-Implementation-Plan.md) | Assign Return Location | 5 | High | US-7.1.1, US-7.2.1, US-7.3.1 |
-| [US-7.5.1](05-Reconcile-Returns-with-D365-Implementation-Plan.md) | Reconcile Returns with D365 | 8 | High | US-7.1.1, US-7.2.1 |
-| - | [Gateway API Tests](06-Gateway-API-Tests-Implementation-Plan.md) | - | High | All US |
+| ID                                                                     | User Story                                                       | Story Points | Priority | Dependencies                 |
+|------------------------------------------------------------------------|------------------------------------------------------------------|--------------|----------|------------------------------|
+| [US-7.1.1](01-Handle-Partial-Order-Acceptance-Implementation-Plan.md)  | Handle Partial Order Acceptance                                  | 5            | High     | Picking Service              |
+| [US-7.2.1](02-Process-Full-Order-Return-Implementation-Plan.md)        | Process Full Order Return                                        | 5            | High     | Picking Service              |
+| [US-7.3.1](03-Handle-Damage-in-Transit-Returns-Implementation-Plan.md) | Handle Damage-in-Transit Returns                                 | 5            | High     | -                            |
+| [US-7.4.1](04-Assign-Return-Location-Implementation-Plan.md)           | Assign Return Location                                           | 5            | High     | US-7.1.1, US-7.2.1, US-7.3.1 |
+| [US-7.5.1](05-Reconcile-Returns-with-D365-Implementation-Plan.md)      | Reconcile Returns with D365                                      | 8            | High     | US-7.1.1, US-7.2.1           |
+| -                                                                      | [Gateway API Tests](06-Gateway-API-Tests-Implementation-Plan.md) | -            | High     | All US                       |
 
 **Total Story Points:** 28
 
@@ -116,13 +117,13 @@ Service                  │
 
 ### Key Domain Events
 
-| Event | Publisher | Consumers | Purpose |
-|-------|-----------|-----------|---------|
-| `ReturnInitiatedEvent` | Returns Service | Location Mgmt, Notification | Signals return started |
-| `ReturnProcessedEvent` | Returns Service | Integration Service, Stock Mgmt | Triggers D365 sync |
-| `DamageRecordedEvent` | Returns Service | Location Mgmt, Stock Mgmt | Assigns quarantine locations |
-| `ReturnLocationAssignedEvent` | Location Mgmt Service | Stock Mgmt, Returns Service | Updates stock at assigned location |
-| `ReturnReconciledEvent` | Integration Service | Notification, Returns Service | D365 sync completed |
+| Event                         | Publisher             | Consumers                       | Purpose                            |
+|-------------------------------|-----------------------|---------------------------------|------------------------------------|
+| `ReturnInitiatedEvent`        | Returns Service       | Location Mgmt, Notification     | Signals return started             |
+| `ReturnProcessedEvent`        | Returns Service       | Integration Service, Stock Mgmt | Triggers D365 sync                 |
+| `DamageRecordedEvent`         | Returns Service       | Location Mgmt, Stock Mgmt       | Assigns quarantine locations       |
+| `ReturnLocationAssignedEvent` | Location Mgmt Service | Stock Mgmt, Returns Service     | Updates stock at assigned location |
+| `ReturnReconciledEvent`       | Integration Service   | Notification, Returns Service   | D365 sync completed                |
 
 ---
 
@@ -133,6 +134,7 @@ Service                  │
 **File:** [01-Handle-Partial-Order-Acceptance-Implementation-Plan.md](01-Handle-Partial-Order-Acceptance-Implementation-Plan.md)
 
 **Key Features:**
+
 - Digital signature capture for customer acceptance
 - Line-by-line acceptance tracking (accepted vs. returned quantities)
 - Return reason documentation per line item
@@ -140,9 +142,11 @@ Service                  │
 - Validation: Sum of accepted + returned = picked quantity
 
 **Endpoints:**
+
 - `POST /api/returns/partial-return` - Process partial return
 
 **Domain Objects:**
+
 - `Return` aggregate (returnType = PARTIAL)
 - `ReturnLineItem` entity with accepted/returned quantities
 - `CustomerSignature` value object
@@ -154,17 +158,20 @@ Service                  │
 **File:** [02-Process-Full-Order-Return-Implementation-Plan.md](02-Process-Full-Order-Return-Implementation-Plan.md)
 
 **Key Features:**
+
 - Full order rejection with primary return reason
 - Product condition assessment (GOOD, DAMAGED, EXPIRED, WRITE_OFF)
 - Condition-based stock routing
 - Return statistics (good condition vs. damaged count)
 
 **Endpoints:**
+
 - `POST /api/returns/full-return` - Process full return
 - `GET /api/returns/{returnId}` - Query return details
 - `GET /api/returns` - List returns with filtering
 
 **Domain Objects:**
+
 - `Return` aggregate (returnType = FULL)
 - `ProductCondition` enum
 - `ReturnReason` enum
@@ -176,6 +183,7 @@ Service                  │
 **File:** [03-Handle-Damage-in-Transit-Returns-Implementation-Plan.md](03-Handle-Damage-in-Transit-Returns-Implementation-Plan.md)
 
 **Key Features:**
+
 - Comprehensive damage classification (type, severity, source)
 - Multiple photo evidence per damaged item
 - Insurance claim integration with carrier information
@@ -183,9 +191,11 @@ Service                  │
 - Condition breakdown (quarantine, damaged, write-off counts)
 
 **Endpoints:**
+
 - `POST /api/returns/damage-assessments` - Record damage assessment
 
 **Domain Objects:**
+
 - `DamageAssessment` aggregate
 - `DamagedProductItem` entity
 - `DamageType`, `DamageSeverity`, `DamageSource` enums
@@ -198,21 +208,24 @@ Service                  │
 **File:** [04-Assign-Return-Location-Implementation-Plan.md](04-Assign-Return-Location-Implementation-Plan.md)
 
 **Key Features:**
+
 - Event-driven location assignment (listens to return events)
 - Intelligent routing strategy:
-  - GOOD condition → Available stock locations using FEFO
-  - DAMAGED/QUARANTINE → Quarantine zones
-  - EXPIRED → Disposal areas
-  - WRITE_OFF → Scrap locations
+    - GOOD condition → Available stock locations using FEFO
+    - DAMAGED/QUARANTINE → Quarantine zones
+    - EXPIRED → Disposal areas
+    - WRITE_OFF → Scrap locations
 - Capacity validation before assignment
 - Manual override option for special cases
 
 **Endpoints:**
+
 - `POST /api/location-management/return-assignments/auto-assign` - Auto-assign locations
 - `POST /api/location-management/return-assignments/manual-assign` - Manual assignment
 - `GET /api/location-management/return-assignments/pending` - Pending assignments
 
 **Domain Objects:**
+
 - `ReturnLocationAssignment` aggregate (Location Mgmt Service)
 - `ReturnLocationAssignmentStrategy` domain service
 - `ReturnLocationAssignedEvent`
@@ -224,23 +237,26 @@ Service                  │
 **File:** [05-Reconcile-Returns-with-D365-Implementation-Plan.md](05-Reconcile-Returns-with-D365-Implementation-Plan.md)
 
 **Key Features:**
+
 - Bidirectional D365 integration via OData API
 - Automatic reconciliation triggered by `ReturnProcessedEvent`
 - D365 operations:
-  - Create return order in D365
-  - Update inventory based on product condition
-  - Issue credit notes for good condition returns
-  - Record write-offs for damaged/expired products
+    - Create return order in D365
+    - Update inventory based on product condition
+    - Issue credit notes for good condition returns
+    - Record write-offs for damaged/expired products
 - Retry mechanism with exponential backoff (max 5 attempts)
 - Complete audit trail for all sync attempts
 
 **Endpoints:**
+
 - `GET /api/returns/reconciliation/records` - List reconciliation records
 - `GET /api/returns/reconciliation/{returnId}/audit-trail` - Audit trail
 - `POST /api/returns/reconciliation/{returnId}/retry-sync` - Retry failed sync
 - `GET /api/returns/reconciliation/summary` - Summary report
 
 **Integration Components:**
+
 - `D365ReturnReconciliationService`
 - `D365ODataClientAdapter` (implements D365ClientPort)
 - `D365AuthenticationService` (OAuth token management)
@@ -253,6 +269,7 @@ Service                  │
 **File:** [06-Gateway-API-Tests-Implementation-Plan.md](06-Gateway-API-Tests-Implementation-Plan.md)
 
 **Test Coverage:**
+
 - Partial return processing (US-7.1.1)
 - Full return processing (US-7.2.1)
 - Damage assessment (US-7.3.1)
@@ -262,6 +279,7 @@ Service                  │
 - Validation scenarios (negative tests)
 
 **Test Classes:**
+
 - `ReturnsServiceTest` - Returns processing tests
 - `DamageAssessmentTest` - Damage assessment tests
 - `ReturnReconciliationTest` - D365 reconciliation tests
@@ -275,60 +293,60 @@ Service                  │
 **New Tables:**
 
 1. **returns** - Main return records
-   - `return_id` (UUID, PK)
-   - `order_id` (UUID, FK)
-   - `load_number` (VARCHAR)
-   - `customer_id` (UUID, FK)
-   - `return_type` (ENUM: PARTIAL, FULL)
-   - `status` (ENUM: INITIATED, PROCESSING, LOCATION_ASSIGNED, COMPLETED, RECONCILED, CANCELLED)
-   - `primary_return_reason` (VARCHAR)
-   - `customer_signature_url` (TEXT)
-   - `returned_at` (TIMESTAMP)
-   - `tenant_id` (UUID)
+    - `return_id` (UUID, PK)
+    - `order_id` (UUID, FK)
+    - `load_number` (VARCHAR)
+    - `customer_id` (UUID, FK)
+    - `return_type` (ENUM: PARTIAL, FULL)
+    - `status` (ENUM: INITIATED, PROCESSING, LOCATION_ASSIGNED, COMPLETED, RECONCILED, CANCELLED)
+    - `primary_return_reason` (VARCHAR)
+    - `customer_signature_url` (TEXT)
+    - `returned_at` (TIMESTAMP)
+    - `tenant_id` (UUID)
 
 2. **return_line_items** - Line items for returns
-   - `line_item_id` (UUID, PK)
-   - `return_id` (UUID, FK)
-   - `product_id` (UUID)
-   - `ordered_quantity` (DECIMAL)
-   - `picked_quantity` (DECIMAL)
-   - `accepted_quantity` (DECIMAL)
-   - `returned_quantity` (DECIMAL)
-   - `return_reason` (VARCHAR)
-   - `product_condition` (ENUM)
-   - `line_notes` (TEXT)
+    - `line_item_id` (UUID, PK)
+    - `return_id` (UUID, FK)
+    - `product_id` (UUID)
+    - `ordered_quantity` (DECIMAL)
+    - `picked_quantity` (DECIMAL)
+    - `accepted_quantity` (DECIMAL)
+    - `returned_quantity` (DECIMAL)
+    - `return_reason` (VARCHAR)
+    - `product_condition` (ENUM)
+    - `line_notes` (TEXT)
 
 3. **damage_assessments** - Damage records
-   - `damage_assessment_id` (UUID, PK)
-   - `order_id` (UUID, FK)
-   - `damage_type` (ENUM)
-   - `damage_severity` (ENUM)
-   - `damage_source` (ENUM)
-   - `estimated_total_loss` (DECIMAL)
-   - `status` (ENUM)
-   - `claim_reference` (VARCHAR)
+    - `damage_assessment_id` (UUID, PK)
+    - `order_id` (UUID, FK)
+    - `damage_type` (ENUM)
+    - `damage_severity` (ENUM)
+    - `damage_source` (ENUM)
+    - `estimated_total_loss` (DECIMAL)
+    - `status` (ENUM)
+    - `claim_reference` (VARCHAR)
 
 4. **damaged_product_items** - Damaged products
-   - `item_id` (UUID, PK)
-   - `damage_assessment_id` (UUID, FK)
-   - `product_id` (UUID)
-   - `damaged_quantity` (DECIMAL)
-   - `product_condition` (ENUM)
-   - `estimated_unit_loss` (DECIMAL)
+    - `item_id` (UUID, PK)
+    - `damage_assessment_id` (UUID, FK)
+    - `product_id` (UUID)
+    - `damaged_quantity` (DECIMAL)
+    - `product_condition` (ENUM)
+    - `estimated_unit_loss` (DECIMAL)
 
 ### Integration Service
 
 **New Tables:**
 
 1. **d365_reconciliation_records** - D365 sync tracking
-   - `record_id` (UUID, PK)
-   - `return_id` (UUID, FK)
-   - `d365_return_order_id` (VARCHAR)
-   - `sync_status` (ENUM: PENDING, SYNCED, FAILED, RETRYING)
-   - `sync_attempts` (INT)
-   - `last_sync_attempt` (TIMESTAMP)
-   - `error_message` (TEXT)
-   - `d365_response` (JSON)
+    - `record_id` (UUID, PK)
+    - `return_id` (UUID, FK)
+    - `d365_return_order_id` (VARCHAR)
+    - `sync_status` (ENUM: PENDING, SYNCED, FAILED, RETRYING)
+    - `sync_attempts` (INT)
+    - `last_sync_attempt` (TIMESTAMP)
+    - `error_message` (TEXT)
+    - `d365_response` (JSON)
 
 ---
 
@@ -337,33 +355,33 @@ Service                  │
 ### New Pages
 
 1. **PartialReturnPage** (`/returns/partial-return`)
-   - Order selection
-   - Line-by-line acceptance form
-   - Customer signature canvas
-   - Evidence upload
+    - Order selection
+    - Line-by-line acceptance form
+    - Customer signature canvas
+    - Evidence upload
 
 2. **FullReturnPage** (`/returns/full-return`)
-   - Order selection
-   - Return reason selection
-   - Product condition assessment
-   - Return summary
+    - Order selection
+    - Return reason selection
+    - Product condition assessment
+    - Return summary
 
 3. **DamageAssessmentPage** (`/returns/damage-assessment`)
-   - Damage classification
-   - Product-specific damage recording
-   - Photo evidence upload
-   - Insurance claim information
+    - Damage classification
+    - Product-specific damage recording
+    - Photo evidence upload
+    - Insurance claim information
 
 4. **ReturnLocationAssignmentDashboard** (`/location-management/return-assignments`)
-   - Pending returns summary
-   - Auto-assignment actions
-   - Manual location override
+    - Pending returns summary
+    - Auto-assignment actions
+    - Manual location override
 
 5. **ReturnReconciliationDashboard** (`/returns/reconciliation`)
-   - Reconciliation summary metrics
-   - D365 sync status tracking
-   - Retry failed syncs
-   - Audit trail viewer
+    - Reconciliation summary metrics
+    - D365 sync status tracking
+    - Retry failed syncs
+    - Audit trail viewer
 
 ### React Hooks
 
@@ -503,13 +521,13 @@ export AWS_SECRET_ACCESS_KEY=your-secret-key
 
 ## Acceptance Criteria Summary
 
-| User Story | Total ACs | Status |
-|-----------|-----------|--------|
-| US-7.1.1 | 6 | ✅ All validated |
-| US-7.2.1 | 6 | ✅ All validated |
-| US-7.3.1 | 6 | ✅ All validated |
-| US-7.4.1 | 6 | ✅ All validated |
-| US-7.5.1 | 6 | ✅ All validated |
+| User Story | Total ACs | Status          |
+|------------|-----------|-----------------|
+| US-7.1.1   | 6         | ✅ All validated |
+| US-7.2.1   | 6         | ✅ All validated |
+| US-7.3.1   | 6         | ✅ All validated |
+| US-7.4.1   | 6         | ✅ All validated |
+| US-7.5.1   | 6         | ✅ All validated |
 
 **Total:** 30 acceptance criteria, all validated in implementation plans
 
@@ -519,20 +537,20 @@ export AWS_SECRET_ACCESS_KEY=your-secret-key
 
 ### Technical Risks
 
-| Risk | Mitigation |
-|------|------------|
+| Risk                      | Mitigation                                                                          |
+|---------------------------|-------------------------------------------------------------------------------------|
 | D365 integration failures | Retry mechanism with exponential backoff, complete audit trail, manual retry option |
-| Large photo uploads | File size limits (5MB), compression on frontend, S3 direct upload |
-| Event processing delays | Asynchronous processing with status tracking, timeout configurations |
-| Location capacity issues | Real-time capacity validation, fallback to manual assignment |
+| Large photo uploads       | File size limits (5MB), compression on frontend, S3 direct upload                   |
+| Event processing delays   | Asynchronous processing with status tracking, timeout configurations                |
+| Location capacity issues  | Real-time capacity validation, fallback to manual assignment                        |
 
 ### Operational Risks
 
-| Risk | Mitigation |
-|------|------------|
-| Incomplete damage documentation | Required photo evidence validation, minimum photo count enforcement |
-| Incorrect condition assessment | Clear UI guidelines, training documentation, audit trail |
-| D365 sync monitoring | Reconciliation dashboard, alerting on failed syncs, daily summary reports |
+| Risk                            | Mitigation                                                                |
+|---------------------------------|---------------------------------------------------------------------------|
+| Incomplete damage documentation | Required photo evidence validation, minimum photo count enforcement       |
+| Incorrect condition assessment  | Clear UI guidelines, training documentation, audit trail                  |
+| D365 sync monitoring            | Reconciliation dashboard, alerting on failed syncs, daily summary reports |
 
 ---
 
@@ -613,18 +631,22 @@ export AWS_SECRET_ACCESS_KEY=your-secret-key
 ## Team Allocation
 
 **Backend Developers (3):**
+
 - Developer 1: Returns Service domain core and application service
 - Developer 2: Integration Service (D365 adapter)
 - Developer 3: Location Management Service updates, event listeners
 
 **Frontend Developers (2):**
+
 - Developer 1: Partial/Full return pages, signature capture
 - Developer 2: Damage assessment, reconciliation dashboard
 
 **QA Engineers (1):**
+
 - Gateway API tests, integration testing, UAT coordination
 
 **DevOps (0.5):**
+
 - D365 sandbox configuration, S3 bucket setup, monitoring setup
 
 ---

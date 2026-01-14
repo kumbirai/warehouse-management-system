@@ -11,6 +11,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class ProductInfo {
+    private final String productId;
     private final String productCode;
     private final String productName;
     private final String description;

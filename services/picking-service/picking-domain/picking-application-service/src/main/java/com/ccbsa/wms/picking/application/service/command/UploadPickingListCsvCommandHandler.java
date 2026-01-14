@@ -11,7 +11,9 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.ccbsa.common.domain.DomainEvent;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import com.ccbsa.common.domain.valueobject.CustomerInfo;
 import com.ccbsa.common.domain.valueobject.LoadNumber;
 import com.ccbsa.common.domain.valueobject.OrderNumber;
@@ -61,7 +63,8 @@ public class UploadPickingListCsvCommandHandler {
     private final PickingListReferenceGenerator referenceGenerator;
 
     @Transactional
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Catching all exceptions is intentional for batch CSV processing - continue processing other rows even if one fails")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Catching all exceptions is intentional for batch CSV processing - continue processing other rows even if "
+            + "one fails")
     public CsvUploadResult handle(UploadPickingListCsvCommand command) {
         // 1. Validate command
         validateCommand(command);
@@ -178,7 +181,8 @@ public class UploadPickingListCsvCommandHandler {
                 .build();
     }
 
-    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "Defensive validation is intentional - validates command integrity even if constructor validation exists")
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "Defensive validation is intentional - validates command integrity even if "
+            + "constructor validation exists")
     private void validateCommand(UploadPickingListCsvCommand command) {
         if (command == null) {
             throw new IllegalArgumentException("Command cannot be null");

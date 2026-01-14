@@ -64,7 +64,9 @@ public class ProductServiceAdapter implements ProductServicePort {
             ApiResponse<ProductResponse> responseBody = response.getBody();
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
                 ProductResponse productResponse = responseBody.getData();
-                ProductInfo productInfo = ProductInfo.builder().productCode(productResponse.getProductCode())
+                ProductInfo productInfo = ProductInfo.builder()
+                        .productId(productResponse.getProductId())
+                        .productCode(productResponse.getProductCode())
                         .productName(productResponse.getProductCode()) // Use productCode as name if name not available
                         .description(productResponse.getDescription()).build();
                 return Optional.of(productInfo);
@@ -99,7 +101,9 @@ public class ProductServiceAdapter implements ProductServicePort {
             ApiResponse<ProductResponse> responseBody = response.getBody();
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
                 ProductResponse productResponse = responseBody.getData();
-                ProductInfo productInfo = ProductInfo.builder().productCode(productResponse.getProductCode())
+                ProductInfo productInfo = ProductInfo.builder()
+                        .productId(productResponse.getProductId())
+                        .productCode(productResponse.getProductCode())
                         .productName(productResponse.getProductCode()) // Use productCode as name if name not available
                         .description(productResponse.getDescription()).build();
                 return Optional.of(productInfo);
@@ -140,7 +144,9 @@ public class ProductServiceAdapter implements ProductServicePort {
             ApiResponse<ProductResponse> responseBody = response.getBody();
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null && responseBody.getData() != null) {
                 ProductResponse productResponse = responseBody.getData();
-                ProductInfo productInfo = ProductInfo.builder().productCode(productResponse.getProductCode())
+                ProductInfo productInfo = ProductInfo.builder()
+                        .productId(productResponse.getProductId())
+                        .productCode(productResponse.getProductCode())
                         .productName(productResponse.getProductCode()) // Use productCode as name if name not available
                         .description(productResponse.getDescription()).build();
                 return Optional.of(productInfo);

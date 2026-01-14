@@ -1,11 +1,18 @@
-import { Box, Divider, Grid, LinearProgress, Paper, Stack, Typography } from '@mui/material';
+import { Box, Divider, Grid, LinearProgress, Link, Paper, Stack, Typography } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 import { StatusBadge } from '../../../components/common';
 import { getStatusVariant } from '../../../utils/statusUtils';
 import { formatDateTime } from '../../../utils/dateUtils';
 import { Location, LocationStatus } from '../types/location';
 import { LocationActions } from './LocationActions';
+import { LocationChildrenList } from './LocationChildrenList';
+import { LocationStockList } from './LocationStockList';
 import { useAuth } from '../../../hooks/useAuth';
+import { useLocation } from '../hooks/useLocation';
+import { useLocationChildren } from '../hooks/useLocationChildren';
+import { useStockItemsByLocation } from '../hooks/useStockItemsByLocation';
+import { Routes } from '../../../utils/navigationUtils';
 
 interface LocationDetailProps {
   location: Location | null;
@@ -14,6 +21,28 @@ interface LocationDetailProps {
 
 export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Fetch parent location if parentLocationId is available
+  const shouldFetchParent = !!location?.parentLocationId && !!user?.tenantId;
+  const { location: parentLocation } = useLocation(
+    shouldFetchParent && location?.parentLocationId ? location.parentLocationId : '',
+    shouldFetchParent && user?.tenantId ? user.tenantId : ''
+  );
+
+  // Fetch child locations
+  const {
+    data: childrenData,
+    isLoading: childrenLoading,
+    error: childrenError,
+  } = useLocationChildren(location, user?.tenantId);
+
+  // Fetch stock items at this location
+  const {
+    data: stockData,
+    isLoading: stockLoading,
+    error: stockError,
+  } = useStockItemsByLocation(location?.locationId, user?.tenantId);
 
   if (!location) {
     return (
@@ -22,6 +51,77 @@ export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps
       </Paper>
     );
   }
+
+  // Helper function to navigate to parent location
+  const navigateToParent = () => {
+    if (location.parentLocationId) {
+      navigate(Routes.locationDetail(location.parentLocationId));
+    }
+  };
+
+  // Helper function to determine if a coordinate should be clickable
+  const getCoordinateLink = (coordinateType: 'zone' | 'aisle' | 'rack' | 'level') => {
+    if (!location.parentLocationId) {
+      return null;
+    }
+
+    // Determine which coordinate corresponds to parent based on location type
+    const locationType = location.type?.toUpperCase();
+    switch (locationType) {
+      case 'BIN':
+        // For bins, level corresponds to rack (parent)
+        if (coordinateType === 'level' && location.coordinates.level && location.coordinates.level !== '00' && location.coordinates.level !== '—') {
+          return navigateToParent;
+        }
+        break;
+      case 'RACK':
+        // For racks, rack corresponds to aisle (parent)
+        if (coordinateType === 'rack' && location.coordinates.rack && location.coordinates.rack !== '00' && location.coordinates.rack !== '—') {
+          return navigateToParent;
+        }
+        break;
+      case 'AISLE':
+        // For aisles, aisle corresponds to zone (parent)
+        if (coordinateType === 'aisle' && location.coordinates.aisle && location.coordinates.aisle !== '00' && location.coordinates.aisle !== '—') {
+          return navigateToParent;
+        }
+        break;
+      case 'ZONE':
+        // For zones, zone corresponds to warehouse (parent)
+        if (coordinateType === 'zone' && location.coordinates.zone && location.coordinates.zone !== '00' && location.coordinates.zone !== '—') {
+          return navigateToParent;
+        }
+        break;
+    }
+    return null;
+  };
+
+  // Render coordinate value as link or text
+  const renderCoordinate = (value: string | undefined, coordinateType: 'zone' | 'aisle' | 'rack' | 'level') => {
+    const displayValue = value || '—';
+    const linkHandler = getCoordinateLink(coordinateType);
+
+    if (linkHandler && displayValue !== '—' && displayValue !== '00') {
+      return (
+        <Link
+          component="button"
+          variant="body1"
+          onClick={linkHandler}
+          sx={{
+            cursor: 'pointer',
+            textDecoration: 'underline',
+            '&:hover': {
+              textDecoration: 'underline',
+            },
+          }}
+        >
+          {displayValue}
+        </Link>
+      );
+    }
+
+    return <Typography variant="body1">{displayValue}</Typography>;
+  };
 
   return (
     <Grid container spacing={3}>
@@ -91,32 +191,74 @@ export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps
           <Divider sx={{ mb: 2 }} />
 
           <Stack spacing={2}>
+            {/* Parent Location Link */}
+            {location.parentLocationId && (
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Parent Location
+                </Typography>
+                <Box mt={0.5}>
+                  {parentLocation ? (
+                    <Link
+                      component="button"
+                      variant="body1"
+                      onClick={navigateToParent}
+                      sx={{
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                        '&:hover': {
+                          textDecoration: 'underline',
+                        },
+                      }}
+                    >
+                      {parentLocation.code || parentLocation.name || parentLocation.barcode}
+                    </Link>
+                  ) : (
+                    <Link
+                      component="button"
+                      variant="body1"
+                      onClick={navigateToParent}
+                      sx={{
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                        '&:hover': {
+                          textDecoration: 'underline',
+                        },
+                      }}
+                    >
+                      View Parent Location
+                    </Link>
+                  )}
+                </Box>
+              </Box>
+            )}
+
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Zone
               </Typography>
-              <Typography variant="body1">{location.coordinates.zone || '—'}</Typography>
+              {renderCoordinate(location.coordinates.zone, 'zone')}
             </Box>
 
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Aisle
               </Typography>
-              <Typography variant="body1">{location.coordinates.aisle || '—'}</Typography>
+              {renderCoordinate(location.coordinates.aisle, 'aisle')}
             </Box>
 
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Rack
               </Typography>
-              <Typography variant="body1">{location.coordinates.rack || '—'}</Typography>
+              {renderCoordinate(location.coordinates.rack, 'rack')}
             </Box>
 
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Level
               </Typography>
-              <Typography variant="body1">{location.coordinates.level || '—'}</Typography>
+              {renderCoordinate(location.coordinates.level, 'level')}
             </Box>
           </Stack>
         </Paper>
@@ -235,6 +377,26 @@ export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps
         </Paper>
       </Grid>
 
+      {/* Child Locations Section */}
+      {location.type?.toUpperCase() !== 'BIN' && (
+        <Grid item xs={12}>
+          <LocationChildrenList
+            items={childrenData?.items || []}
+            isLoading={childrenLoading}
+            error={childrenError}
+          />
+        </Grid>
+      )}
+
+      {/* Stock Details Section */}
+      <Grid item xs={12}>
+        <LocationStockList
+          stockItems={stockData?.stockItems || []}
+          isLoading={stockLoading}
+          error={stockError}
+        />
+      </Grid>
+
       {/* Actions Section */}
       {user?.tenantId && (
         <Grid item xs={12}>
@@ -246,6 +408,7 @@ export const LocationDetail = ({ location, onStatusUpdate }: LocationDetailProps
 
             <LocationActions
               locationId={location.locationId}
+              location={location}
               status={location.status as LocationStatus}
               tenantId={user.tenantId}
               onCompleted={onStatusUpdate}

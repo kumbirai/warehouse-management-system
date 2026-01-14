@@ -41,7 +41,27 @@ public class CheckStockExpirationQueryHandler {
                 query.getTenantId().getValue());
 
         // 1. Query stock items from read model
+        // First try to find stock items at the specific location
         List<StockItemView> stockItemViews = viewRepository.findByTenantIdAndProductIdAndLocationId(query.getTenantId(), query.getProductId(), query.getLocationId());
+
+        // If no stock found at location, query all stock items for the product
+        // This handles cases where expired stock might not be assigned to locations (by design)
+        // but we still need to check if it exists and is expired
+        // Note: Expired stock items may have been created with a locationId in the consignment
+        // but later unassigned, so we check all stock items for the product
+        if (stockItemViews.isEmpty()) {
+            log.debug("No stock items found at location: {} for product: {}, querying all stock items for product", query.getLocationId().getValueAsString(),
+                    query.getProductId().getValueAsString());
+            List<StockItemView> allStockItems = viewRepository.findByTenantIdAndProductId(query.getTenantId(), query.getProductId());
+            
+            // Filter to only items that match the location (including null locationId for unassigned items)
+            // This allows checking expired stock that may not be assigned to locations
+            stockItemViews = allStockItems.stream()
+                    .filter(item -> item.getLocationId() == null || item.getLocationId().equals(query.getLocationId()))
+                    .collect(java.util.stream.Collectors.toList());
+            
+            log.debug("Found {} stock item(s) for product: {} (including unassigned items)", stockItemViews.size(), query.getProductId().getValueAsString());
+        }
 
         if (stockItemViews.isEmpty()) {
             log.debug("No stock items found for product: {} at location: {}", query.getProductId().getValueAsString(), query.getLocationId().getValueAsString());

@@ -222,7 +222,8 @@ public class KafkaConfig {
     public ConsumerFactory<String, Object> consumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        // GROUP_ID_CONFIG removed - each listener MUST specify its own unique group ID in @KafkaListener annotation
+        // This prevents rebalancing issues when multiple listeners share the same consumer factory
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         // Do not set VALUE_DESERIALIZER_CLASS_CONFIG when configuring deserializer programmatically
 

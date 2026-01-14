@@ -2,10 +2,12 @@ package com.ccbsa.wms.gateway.api.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,5 +19,10 @@ public class CreateLocationRequest {
     private String parentLocationId;
     private Integer capacity;
     private LocationDimensions dimensions;
+    // Coordinate-based model fields (optional - used for direct coordinate specification)
+    private String zone;
+    private String aisle;
+    private String rack;
+    private String level;
 }
 

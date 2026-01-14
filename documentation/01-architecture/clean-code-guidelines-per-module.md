@@ -1299,6 +1299,7 @@ com.ccbsa.wms.{service}.application/
 ├── dto/                               # DTOs and mappers
 │   ├── command/                       # Command DTOs
 │   ├── query/                         # Query DTOs
+│   ├── common/                        # Shared DTOs used by both command and query
 │   └── mapper/                        # DTO mappers
 └── exception/                         # Exception handlers
 ```
@@ -1548,6 +1549,66 @@ public ResponseEntity<ApiResponse<ConsignmentQueryResultDTO>> getConsignment(
 - **Signs**: Inconsistent error responses, different status codes
 - **Solution**: Use centralized global exception handler extending `BaseGlobalExceptionHandler`
 
+#### ✅ **DO: Shared DTOs Pattern**
+
+- **Use `dto.common` package** for DTOs that are **identical in structure** and used by **both command and query** DTOs
+- **Avoid duplicate DTOs** with the same name in both `dto.command` and `dto.query` packages
+- **Keep DTOs separate** when they have different structures (e.g., validation annotations, different field types) even if they represent the same domain concept
+
+**When to use `dto.common`:**
+- DTOs that are **identical in structure** and used by both command and query DTOs
+- Nested/value DTOs that represent the same domain concept without variation
+- Examples: `LocationCoordinatesDTO` (zone, aisle, rack, level - same in both contexts)
+
+**When to keep separate:**
+- DTOs with **different structures** for command vs query (e.g., validation annotations, different field types)
+- DTOs used **only in one package** (command or query)
+- DTOs that represent **different concerns** even if they share a name
+
+**Example:**
+
+```java
+// ✅ CORRECT: Shared DTO in dto.common package
+package com.ccbsa.wms.location.application.dto.common;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public final class LocationCoordinatesDTO {
+    private String zone;
+    private String aisle;
+    private String rack;
+    private String level;
+}
+
+// ✅ CORRECT: Used in both command and query DTOs
+// In CreateLocationResultDTO (command):
+import com.ccbsa.wms.location.application.dto.common.LocationCoordinatesDTO;
+private LocationCoordinatesDTO coordinates;
+
+// In LocationQueryResultDTO (query):
+import com.ccbsa.wms.location.application.dto.common.LocationCoordinatesDTO;
+private LocationCoordinatesDTO coordinates;
+```
+
+**Anti-Pattern:**
+
+```java
+// ❌ WRONG: Duplicate DTOs with same name in different packages
+// dto.command.LocationCoordinatesDTO
+public final class LocationCoordinatesDTO { ... }
+
+// dto.query.LocationCoordinatesDTO  
+public final class LocationCoordinatesDTO { ... }
+
+// Forces FQCN usage in mapper:
+private com.ccbsa.wms.location.application.dto.query.LocationCoordinatesDTO toQueryCoordinatesDTO(...) {
+    return new com.ccbsa.wms.location.application.dto.query.LocationCoordinatesDTO(...);
+}
+```
+
 ### Correlation ID Handling
 
 **CRITICAL**: All incoming requests must extract and set correlation ID for traceability.
@@ -1568,6 +1629,7 @@ public ResponseEntity<ApiResponse<ConsignmentQueryResultDTO>> getConsignment(
 7. **Tight Coupling**: Hard dependencies on concrete implementations
 8. **Exposing Domain Entities**: Returning aggregates instead of DTOs
 9. **Missing Exception Handler**: Not extending `BaseGlobalExceptionHandler`
+10. **Duplicate Shared DTOs**: Same DTO class in both `dto.command` and `dto.query` packages - use `dto.common` instead
 
 ---
 

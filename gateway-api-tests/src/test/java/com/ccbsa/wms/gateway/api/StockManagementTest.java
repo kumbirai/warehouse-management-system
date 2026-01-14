@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Assumptions;
@@ -34,7 +35,6 @@ import com.ccbsa.wms.gateway.api.dto.CreateConsignmentRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateConsignmentResponse;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationResponse;
-import com.ccbsa.wms.gateway.api.dto.CreateProductRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateProductResponse;
 import com.ccbsa.wms.gateway.api.dto.CancelStockMovementRequest;
 import com.ccbsa.wms.gateway.api.dto.CompleteStockMovementResultDTO;
@@ -61,6 +61,7 @@ import com.ccbsa.wms.gateway.api.dto.ValidateConsignmentResponse;
 import com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.ProductTestDataBuilder;
+import com.ccbsa.wms.gateway.api.fixture.TestDataManager;
 import com.ccbsa.wms.gateway.api.fixture.StockAdjustmentTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.StockAllocationTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.StockItemTestDataBuilder;
@@ -112,90 +113,62 @@ public class StockManagementTest extends BaseIntegrationTest {
             tenantAdminAuth = loginAsTenantAdmin();
             testTenantId = tenantAdminAuth.getTenantId();
 
-            // Create product and locations for tests
-            CreateProductRequest productRequest = ProductTestDataBuilder.buildCreateProductRequest();
-            EntityExchangeResult<ApiResponse<CreateProductResponse>> productExchangeResult =
-                    authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, productRequest).exchange().expectStatus().isCreated()
-                            .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
-                            }).returnResult();
+            // Try to reuse product from repository, otherwise create new
+            CreateProductResponse product = TestDataManager.getOrCreateProduct(
+                    tenantAdminAuth.getAccessToken(), testTenantId,
+                    ProductTestDataBuilder::buildCreateProductRequest,
+                    req -> {
+                        EntityExchangeResult<ApiResponse<CreateProductResponse>> productExchangeResult =
+                                authenticatedPost("/api/v1/products", tenantAdminAuth.getAccessToken(), testTenantId, req).exchange().expectStatus().isCreated()
+                                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateProductResponse>>() {
+                                        }).returnResult();
 
-            ApiResponse<CreateProductResponse> productApiResponse = productExchangeResult.getResponseBody();
-            assertThat(productApiResponse).isNotNull();
-            assertThat(productApiResponse.isSuccess()).isTrue();
-            CreateProductResponse product = productApiResponse != null ? productApiResponse.getData() : null;
-            assertThat(product).isNotNull();
+                        ApiResponse<CreateProductResponse> productApiResponse = productExchangeResult.getResponseBody();
+                        assertThat(productApiResponse).isNotNull();
+                        assertThat(productApiResponse.isSuccess()).isTrue();
+                        CreateProductResponse p = productApiResponse.getData();
+                        assertThat(p).isNotNull();
+                        return p;
+                    });
             testProductId = product.getProductId();
             testProductIdUUID = UUID.fromString(testProductId);
             testProductCode = product.getProductCode(); // Use product code for consignment line items
 
-            // Create warehouse first
-            CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
-            EntityExchangeResult<ApiResponse<CreateLocationResponse>> warehouseExchangeResult =
-                    authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, warehouseRequest).exchange().expectStatus()
-                            .isCreated().expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                            }).returnResult();
-
-            ApiResponse<CreateLocationResponse> warehouseApiResponse = warehouseExchangeResult.getResponseBody();
-            assertThat(warehouseApiResponse).isNotNull();
-            assertThat(warehouseApiResponse.isSuccess()).isTrue();
-            CreateLocationResponse warehouse = warehouseApiResponse != null ? warehouseApiResponse.getData() : null;
-            assertThat(warehouse).isNotNull();
-            testWarehouseId = warehouse.getLocationId();
+            // Try to reuse warehouse from repository, otherwise create new
+            Optional<CreateLocationResponse> existingWarehouse = TestDataManager.getLocationByType("WAREHOUSE", testTenantId);
+            CreateLocationResponse warehouse;
+            if (existingWarehouse.isPresent()) {
+                warehouse = existingWarehouse.get();
+                testWarehouseId = warehouse.getLocationId();
+            } else {
+                // Create warehouse using BaseIntegrationTest helper which automatically saves to repository
+                warehouse = createLocation(tenantAdminAuth.getAccessToken(), testTenantId);
+                testWarehouseId = warehouse.getLocationId();
+            }
 
             // Create full location hierarchy: WAREHOUSE -> ZONE -> AISLE -> RACK -> BIN
+            // Use BaseIntegrationTest helper which automatically checks repository and saves
             // Create zone
             CreateLocationRequest zoneRequest = LocationTestDataBuilder.buildZoneRequest(testWarehouseId);
-            EntityExchangeResult<ApiResponse<CreateLocationResponse>> zoneExchangeResult =
-                    authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, zoneRequest).exchange().expectStatus().isCreated()
-                            .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                            }).returnResult();
-
-            ApiResponse<CreateLocationResponse> zoneApiResponse = zoneExchangeResult.getResponseBody();
-            assertThat(zoneApiResponse).isNotNull();
-            assertThat(zoneApiResponse.isSuccess()).isTrue();
-            CreateLocationResponse zone = zoneApiResponse != null ? zoneApiResponse.getData() : null;
+            CreateLocationResponse zone = createLocation(tenantAdminAuth.getAccessToken(), testTenantId, zoneRequest);
             assertThat(zone).isNotNull();
             String zoneId = zone.getLocationId();
 
             // Create aisle
             CreateLocationRequest aisleRequest = LocationTestDataBuilder.buildAisleRequest(zoneId);
-            EntityExchangeResult<ApiResponse<CreateLocationResponse>> aisleExchangeResult =
-                    authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, aisleRequest).exchange().expectStatus().isCreated()
-                            .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                            }).returnResult();
-
-            ApiResponse<CreateLocationResponse> aisleApiResponse = aisleExchangeResult.getResponseBody();
-            assertThat(aisleApiResponse).isNotNull();
-            assertThat(aisleApiResponse.isSuccess()).isTrue();
-            CreateLocationResponse aisle = aisleApiResponse != null ? aisleApiResponse.getData() : null;
+            CreateLocationResponse aisle = createLocation(tenantAdminAuth.getAccessToken(), testTenantId, aisleRequest);
             assertThat(aisle).isNotNull();
             String aisleId = aisle.getLocationId();
 
             // Create rack
             CreateLocationRequest rackRequest = LocationTestDataBuilder.buildRackRequest(aisleId);
-            EntityExchangeResult<ApiResponse<CreateLocationResponse>> rackExchangeResult =
-                    authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, rackRequest).exchange().expectStatus().isCreated()
-                            .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                            }).returnResult();
-
-            ApiResponse<CreateLocationResponse> rackApiResponse = rackExchangeResult.getResponseBody();
-            assertThat(rackApiResponse).isNotNull();
-            assertThat(rackApiResponse.isSuccess()).isTrue();
-            CreateLocationResponse rack = rackApiResponse != null ? rackApiResponse.getData() : null;
+            CreateLocationResponse rack = createLocation(tenantAdminAuth.getAccessToken(), testTenantId, rackRequest);
             assertThat(rack).isNotNull();
             String rackId = rack.getLocationId();
 
             // Create first bin location (for stock allocations - must be at BIN level)
             CreateLocationRequest binRequest1 = LocationTestDataBuilder.buildBinRequest(rackId);
-            EntityExchangeResult<ApiResponse<CreateLocationResponse>> binExchangeResult1 =
-                    authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, binRequest1).exchange().expectStatus().isCreated()
-                            .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                            }).returnResult();
-
-            ApiResponse<CreateLocationResponse> binApiResponse1 = binExchangeResult1.getResponseBody();
-            assertThat(binApiResponse1).isNotNull();
-            assertThat(binApiResponse1.isSuccess()).isTrue();
-            CreateLocationResponse bin1 = binApiResponse1 != null ? binApiResponse1.getData() : null;
+            CreateLocationResponse bin1 = createLocation(tenantAdminAuth.getAccessToken(), testTenantId, binRequest1);
             assertThat(bin1).isNotNull();
             testLocationId = bin1.getLocationId();
             testLocationIdUUID = UUID.fromString(testLocationId);
@@ -203,29 +176,13 @@ public class StockManagementTest extends BaseIntegrationTest {
 
             // Create second rack for second bin
             CreateLocationRequest rackRequest2 = LocationTestDataBuilder.buildRackRequest(aisleId);
-            EntityExchangeResult<ApiResponse<CreateLocationResponse>> rackExchangeResult2 =
-                    authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, rackRequest2).exchange().expectStatus().isCreated()
-                            .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                            }).returnResult();
-
-            ApiResponse<CreateLocationResponse> rackApiResponse2 = rackExchangeResult2.getResponseBody();
-            assertThat(rackApiResponse2).isNotNull();
-            assertThat(rackApiResponse2.isSuccess()).isTrue();
-            CreateLocationResponse rack2 = rackApiResponse2 != null ? rackApiResponse2.getData() : null;
+            CreateLocationResponse rack2 = createLocation(tenantAdminAuth.getAccessToken(), testTenantId, rackRequest2);
             assertThat(rack2).isNotNull();
             String rackId2 = rack2.getLocationId();
 
             // Create second bin location for movement tests
             CreateLocationRequest binRequest2 = LocationTestDataBuilder.buildBinRequest(rackId2);
-            EntityExchangeResult<ApiResponse<CreateLocationResponse>> binExchangeResult2 =
-                    authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, binRequest2).exchange().expectStatus().isCreated()
-                            .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                            }).returnResult();
-
-            ApiResponse<CreateLocationResponse> binApiResponse2 = binExchangeResult2.getResponseBody();
-            assertThat(binApiResponse2).isNotNull();
-            assertThat(binApiResponse2.isSuccess()).isTrue();
-            CreateLocationResponse bin2 = binApiResponse2 != null ? binApiResponse2.getData() : null;
+            CreateLocationResponse bin2 = createLocation(tenantAdminAuth.getAccessToken(), testTenantId, binRequest2);
             assertThat(bin2).isNotNull();
             testLocationId2 = bin2.getLocationId();
             testLocationId2UUID = UUID.fromString(testLocationId2);
@@ -596,6 +553,16 @@ public class StockManagementTest extends BaseIntegrationTest {
         boolean stockItemsCreated = waitForStockItems(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
         assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
+        // Wait for stock items to be assigned to locations via FEFO (async via events)
+        // This is necessary because allocation at a specific location requires stock items to be assigned to that location
+        boolean stockItemsAssigned = waitForStockItemsAssignedToLocations(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 30, 500, 50);
+        assertThat(stockItemsAssigned).as("Stock items should be assigned to locations via FEFO within 30 seconds").isTrue();
+
+        // Wait for stock to be available at the specific location we'll allocate from
+        // FEFO may assign stock to different bins, so we need to ensure our test location has stock
+        boolean stockAtLocation = waitForStockAtLocation(testProductId, testLocationId, tenantAdminAuth.getAccessToken(), testTenantId, 30, 500, 50);
+        assertThat(stockAtLocation).as("Stock should be available at test location within 30 seconds").isTrue();
+
         // Use UUID to ensure unique reference ID across test runs
         String orderId = "ORDER-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
@@ -692,8 +659,8 @@ public class StockManagementTest extends BaseIntegrationTest {
         int finalRequiredQuantity = initialRequiredQuantity;
 
         EntityExchangeResult<ApiResponse<List<StockLevelResponse>>> stockLevelsResult =
-                authenticatedGet("/api/v1/stock-management/stock-levels?productId=" + testProductId, tenantAdminAuth.getAccessToken(), testTenantId).exchange()
-                        .expectStatus().isOk().expectBody(new ParameterizedTypeReference<ApiResponse<List<StockLevelResponse>>>() {
+                authenticatedGet("/api/v1/stock-management/stock-levels?productId=" + testProductId, tenantAdminAuth.getAccessToken(), testTenantId).exchange().expectStatus()
+                        .isOk().expectBody(new ParameterizedTypeReference<ApiResponse<List<StockLevelResponse>>>() {
                         }).returnResult();
 
         ApiResponse<List<StockLevelResponse>> stockLevelsApiResponse = stockLevelsResult.getResponseBody();
@@ -704,17 +671,16 @@ public class StockManagementTest extends BaseIntegrationTest {
         // Find a location with at least initialRequiredQuantity units available
         // Try to find location with initialRequiredQuantity, but if not found, use the location with most available stock
         final int requiredQty = initialRequiredQuantity; // Final variable for lambda
-        StockLevelResponse availableStock = stockLevels.stream()
-                .filter(level -> level.getLocationId() != null && level.getAvailableQuantity() != null && level.getAvailableQuantity() >= requiredQty).findFirst()
-                .orElse(null);
+        StockLevelResponse availableStock =
+                stockLevels.stream().filter(level -> level.getLocationId() != null && level.getAvailableQuantity() != null && level.getAvailableQuantity() >= requiredQty)
+                        .findFirst().orElse(null);
 
         boolean foundLocation = false;
         if (availableStock == null && !stockLevels.isEmpty()) {
             // If no location has initialRequiredQuantity, find the one with the most available stock
-            availableStock =
-                    stockLevels.stream().filter(level -> level.getLocationId() != null && level.getAvailableQuantity() != null && level.getAvailableQuantity() > 0)
-                            .max((a, b) -> Integer.compare(a.getAvailableQuantity() != null ? a.getAvailableQuantity() : 0,
-                                    b.getAvailableQuantity() != null ? b.getAvailableQuantity() : 0)).orElse(null);
+            availableStock = stockLevels.stream().filter(level -> level.getLocationId() != null && level.getAvailableQuantity() != null && level.getAvailableQuantity() > 0)
+                    .max((a, b) -> Integer.compare(a.getAvailableQuantity() != null ? a.getAvailableQuantity() : 0,
+                            b.getAvailableQuantity() != null ? b.getAvailableQuantity() : 0)).orElse(null);
 
             // If we found a location with stock, adjust the movement quantity to match available
             if (availableStock != null && availableStock.getAvailableQuantity() != null) {
@@ -732,8 +698,8 @@ public class StockManagementTest extends BaseIntegrationTest {
 
         // If still not found with minimum 10 units, try one more time with lower requirement
         if (!foundLocation && !stockLevels.isEmpty()) {
-            StockLevelResponse availableStockMin = stockLevels.stream()
-                    .filter(level -> level.getLocationId() != null && level.getAvailableQuantity() != null && level.getAvailableQuantity() >= 10) // Minimum 10 units for movement test
+            StockLevelResponse availableStockMin = stockLevels.stream().filter(level -> level.getLocationId() != null && level.getAvailableQuantity() != null
+                            && level.getAvailableQuantity() >= 10) // Minimum 10 units for movement test
                     .max((a, b) -> Integer.compare(a.getAvailableQuantity() != null ? a.getAvailableQuantity() : 0,
                             b.getAvailableQuantity() != null ? b.getAvailableQuantity() : 0)).orElse(null);
 
@@ -779,8 +745,14 @@ public class StockManagementTest extends BaseIntegrationTest {
         assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
         // Wait for stock items to be assigned to locations via FEFO (async via events)
-        boolean stockItemsAssigned = waitForStockItemsAssignedToLocations(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 30, 500, 1);
+        // This is necessary because allocation at a specific location requires stock items to be assigned to that location
+        boolean stockItemsAssigned = waitForStockItemsAssignedToLocations(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 30, 500, 50);
         assertThat(stockItemsAssigned).as("Stock items should be assigned to locations via FEFO within 30 seconds").isTrue();
+
+        // Wait for stock to be available at the specific location we'll allocate from
+        // FEFO may assign stock to different bins, so we need to ensure our test location has stock
+        boolean stockAtLocation = waitForStockAtLocation(testProductId, testLocationId, tenantAdminAuth.getAccessToken(), testTenantId, 30, 500, 50);
+        assertThat(stockAtLocation).as("Stock should be available at test location within 30 seconds").isTrue();
 
         // Allocate 50 units first (to reduce available stock)
         String orderId = "ORDER-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -821,10 +793,10 @@ public class StockManagementTest extends BaseIntegrationTest {
         boolean stockItemsCreated = waitForStockItems(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 15, 500);
         assertThat(stockItemsCreated).as("Stock items should be created from consignments within 15 seconds").isTrue();
 
-        // Allocate 150 units using FEFO
+        // Allocate 150 units using FEFO (no location specified - FEFO will select best location)
         // Use UUID to ensure unique reference ID across test runs
         String orderId = "ORDER-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        CreateStockAllocationRequest request = ConsignmentTestDataBuilder.buildCreateStockAllocationRequest(testProductId, testLocationId, 150, orderId);
+        CreateStockAllocationRequest request = StockAllocationTestDataBuilder.buildCreateStockAllocationRequestFEFO(testProductIdUUID, 150, orderId);
 
         // Act
         WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/stock-management/allocations", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
@@ -1289,6 +1261,10 @@ public class StockManagementTest extends BaseIntegrationTest {
         assertThat(responseData).isNotNull();
         List<StockItemResponse> stockItems = responseData.getStockItems();
         assertThat(stockItems).isNotNull();
+        // Save stock items to H2 for reuse
+        if (!stockItems.isEmpty()) {
+            TestDataManager.saveStockItems(stockItems, testTenantId);
+        }
         // Verify classification
         if (!stockItems.isEmpty()) {
             StockItemResponse stockItem = stockItems.get(0);
@@ -1346,7 +1322,10 @@ public class StockManagementTest extends BaseIntegrationTest {
             return;
         }
 
-        StockItemResponse stockItem = queryApiResponse.getData().getStockItems().get(0);
+        List<StockItemResponse> stockItems = queryApiResponse.getData().getStockItems();
+        // Save stock items to H2 for reuse
+        TestDataManager.saveStockItems(stockItems, testTenantId);
+        StockItemResponse stockItem = stockItems.get(0);
         String stockItemId = stockItem.getStockItemId();
 
         // Ensure testLocationId2 is not null
@@ -1496,20 +1475,20 @@ public class StockManagementTest extends BaseIntegrationTest {
             return;
         }
 
-        StockItemResponse stockItem = queryApiResponse.getData().getStockItems().get(0);
+        List<StockItemResponse> stockItems = queryApiResponse.getData().getStockItems();
+        // Save stock items to H2 for reuse
+        TestDataManager.saveStockItems(stockItems, testTenantId);
+        StockItemResponse stockItem = stockItems.get(0);
         String stockItemId = stockItem.getStockItemId();
 
-        // Create a non-BIN location (warehouse) to test validation
-        CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
-        EntityExchangeResult<ApiResponse<CreateLocationResponse>> warehouseResult =
-                authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, warehouseRequest).exchange().expectStatus().isCreated()
-                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                        }).returnResult();
-
-        ApiResponse<CreateLocationResponse> warehouseApiResponse = warehouseResult.getResponseBody();
-        assertThat(warehouseApiResponse).isNotNull();
-        assertThat(warehouseApiResponse.isSuccess()).isTrue();
-        CreateLocationResponse warehouse = warehouseApiResponse.getData();
+        // Get or create a non-BIN location (warehouse) to test validation
+        // Reuse existing warehouse from repository if available
+        CreateLocationResponse warehouse = TestDataManager.getLocationByType("WAREHOUSE", testTenantId)
+                .orElseGet(() -> {
+                    // Create new warehouse if none found in repository
+                    CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
+                    return createLocation(tenantAdminAuth.getAccessToken(), testTenantId, warehouseRequest);
+                });
         String warehouseLocationId = warehouse.getLocationId();
 
         // Act - Try to assign warehouse (non-BIN) location to stock item
@@ -1535,17 +1514,14 @@ public class StockManagementTest extends BaseIntegrationTest {
         boolean stockItemsCreated = waitForStockItems(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
         assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
-        // Create a non-BIN location (warehouse) to test validation
-        CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
-        EntityExchangeResult<ApiResponse<CreateLocationResponse>> warehouseResult =
-                authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, warehouseRequest).exchange().expectStatus().isCreated()
-                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                        }).returnResult();
-
-        ApiResponse<CreateLocationResponse> warehouseApiResponse = warehouseResult.getResponseBody();
-        assertThat(warehouseApiResponse).isNotNull();
-        assertThat(warehouseApiResponse.isSuccess()).isTrue();
-        CreateLocationResponse warehouse = warehouseApiResponse.getData();
+        // Get or create a non-BIN location (warehouse) to test validation
+        // Reuse existing warehouse from repository if available
+        CreateLocationResponse warehouse = TestDataManager.getLocationByType("WAREHOUSE", testTenantId)
+                .orElseGet(() -> {
+                    // Create new warehouse if none found in repository
+                    CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
+                    return createLocation(tenantAdminAuth.getAccessToken(), testTenantId, warehouseRequest);
+                });
         String warehouseLocationId = warehouse.getLocationId();
 
         // Act - Try to allocate stock to warehouse (non-BIN) location
@@ -1582,9 +1558,13 @@ public class StockManagementTest extends BaseIntegrationTest {
             return;
         }
 
+        List<StockItemResponse> stockItems = queryApiResponse.getData().getStockItems();
+        // Save stock items to H2 for reuse
+        TestDataManager.saveStockItems(stockItems, testTenantId);
+
         // Filter for non-expired stock items (expired stock cannot be assigned locations)
         List<StockItemResponse> nonExpiredStockItems =
-                queryApiResponse.getData().getStockItems().stream().filter(item -> item.getClassification() == null || !"EXPIRED".equalsIgnoreCase(item.getClassification()))
+                stockItems.stream().filter(item -> item.getClassification() == null || !"EXPIRED".equalsIgnoreCase(item.getClassification()))
                         .collect(java.util.stream.Collectors.toList());
 
         if (nonExpiredStockItems.isEmpty()) {
@@ -1700,6 +1680,16 @@ public class StockManagementTest extends BaseIntegrationTest {
         boolean stockItemsCreated = waitForStockItems(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
         assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
+        // Wait for stock items to be assigned to locations via FEFO (async via events)
+        // This is necessary because allocation at a specific location requires stock items to be assigned to that location
+        boolean stockItemsAssigned = waitForStockItemsAssignedToLocations(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 30, 500, 50);
+        assertThat(stockItemsAssigned).as("Stock items should be assigned to locations via FEFO within 30 seconds").isTrue();
+
+        // Wait for stock to be available at the specific location we'll allocate from
+        // FEFO may assign stock to different bins, so we need to ensure our test location has stock
+        boolean stockAtLocation = waitForStockAtLocation(testProductId, testLocationId, tenantAdminAuth.getAccessToken(), testTenantId, 30, 500, 50);
+        assertThat(stockAtLocation).as("Stock should be available at test location within 30 seconds").isTrue();
+
         String orderId = "ORDER-" + faker.number().digits(5);
         CreateStockAllocationRequest request = StockAllocationTestDataBuilder.buildCreateStockAllocationRequest(testProductIdUUID, testLocationIdUUID, 50, orderId);
 
@@ -1814,6 +1804,16 @@ public class StockManagementTest extends BaseIntegrationTest {
         boolean stockItemsCreated = waitForStockItems(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
         assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
+        // Wait for stock items to be assigned to locations via FEFO (async via events)
+        // This is necessary because allocation at a specific location requires stock items to be assigned to that location
+        boolean stockItemsAssigned = waitForStockItemsAssignedToLocations(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 30, 500, 30);
+        assertThat(stockItemsAssigned).as("Stock items should be assigned to locations via FEFO within 30 seconds").isTrue();
+
+        // Wait for stock to be available at the specific location we'll allocate from
+        // FEFO may assign stock to different bins, so we need to ensure our test location has stock
+        boolean stockAtLocation = waitForStockAtLocation(testProductId, testLocationId, tenantAdminAuth.getAccessToken(), testTenantId, 30, 500, 30);
+        assertThat(stockAtLocation).as("Stock should be available at test location within 30 seconds").isTrue();
+
         String orderId = "ORDER-" + faker.number().digits(5);
         CreateStockAllocationRequest allocationRequest = StockAllocationTestDataBuilder.buildCreateStockAllocationRequest(testProductIdUUID, testLocationIdUUID, 30, orderId);
 
@@ -1858,6 +1858,16 @@ public class StockManagementTest extends BaseIntegrationTest {
         boolean stockItemsCreated = waitForStockItems(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
         assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
 
+        // Wait for stock items to be assigned to locations via FEFO (async via events)
+        // This is necessary because allocation at a specific location requires stock items to be assigned to that location
+        boolean stockItemsAssigned = waitForStockItemsAssignedToLocations(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 30, 500, 25);
+        assertThat(stockItemsAssigned).as("Stock items should be assigned to locations via FEFO within 30 seconds").isTrue();
+
+        // Wait for stock to be available at the specific location we'll allocate from
+        // FEFO may assign stock to different bins, so we need to ensure our test location has stock
+        boolean stockAtLocation = waitForStockAtLocation(testProductId, testLocationId, tenantAdminAuth.getAccessToken(), testTenantId, 30, 500, 25);
+        assertThat(stockAtLocation).as("Stock should be available at test location within 30 seconds").isTrue();
+
         String orderId = "ORDER-" + faker.number().digits(5);
         CreateStockAllocationRequest allocationRequest = StockAllocationTestDataBuilder.buildCreateStockAllocationRequest(testProductIdUUID, testLocationIdUUID, 25, orderId);
 
@@ -1899,6 +1909,11 @@ public class StockManagementTest extends BaseIntegrationTest {
         // Wait for stock item creation (async via Kafka events)
         boolean stockItemsCreated = waitForStockItems(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
         assertThat(stockItemsCreated).as("Stock items should be created from consignment within 10 seconds").isTrue();
+
+        // Wait for stock items to be assigned to locations via FEFO (async via events)
+        // This is necessary because allocation at a specific location requires stock items to be assigned to that location
+        boolean stockItemsAssigned = waitForStockItemsAssignedToLocations(testProductId, tenantAdminAuth.getAccessToken(), testTenantId, 30, 500, 20);
+        assertThat(stockItemsAssigned).as("Stock items should be assigned to locations via FEFO within 30 seconds").isTrue();
 
         String orderId = "ORDER-" + faker.number().digits(5);
         CreateStockAllocationRequest allocationRequest = StockAllocationTestDataBuilder.buildCreateStockAllocationRequest(testProductIdUUID, testLocationIdUUID, 20, orderId);
@@ -2072,21 +2087,30 @@ public class StockManagementTest extends BaseIntegrationTest {
                         }).returnResult();
 
         ApiResponse<StockItemsByClassificationResponse> stockItemsApiResponse = stockItemsResult.getResponseBody();
-        if (stockItemsApiResponse == null || stockItemsApiResponse.getData() == null || stockItemsApiResponse.getData().getStockItems() == null
-                || stockItemsApiResponse.getData().getStockItems().isEmpty()) {
+        if (stockItemsApiResponse == null || stockItemsApiResponse.getData() == null || stockItemsApiResponse.getData().getStockItems() == null || stockItemsApiResponse.getData()
+                .getStockItems().isEmpty()) {
             Assumptions.assumeTrue(false, "Stock item not available");
             return;
         }
-        StockItemResponse stockItem = stockItemsApiResponse.getData().getStockItems().get(0);
+        List<StockItemResponse> stockItems = stockItemsApiResponse.getData().getStockItems();
+        // Save stock items to H2 for reuse
+        TestDataManager.saveStockItems(stockItems, testTenantId);
+        StockItemResponse stockItem = stockItems.get(0);
         testStockItemId = stockItem.getStockItemId();
 
         // Assign stock item to source BIN location (stock must be at BIN level)
         AssignLocationToStockRequest assignRequest = StockItemTestDataBuilder.buildAssignLocationRequest(testLocationId1UUID.toString(), stockItem.getQuantity());
 
-        authenticatedPost("/api/v1/stock-management/stock-items/" + testStockItemId + "/assign-location", tenantAdminAuth.getAccessToken(), testTenantId,
-                assignRequest).exchange().expectStatus().isOk();
+        authenticatedPost("/api/v1/stock-management/stock-items/" + testStockItemId + "/assign-location", tenantAdminAuth.getAccessToken(), testTenantId, assignRequest).exchange()
+                .expectStatus().isOk();
 
-        CreateStockMovementRequest request = StockMovementTestDataBuilder.buildCreateStockMovementRequest(testStockItemId, testProductIdUUID, testLocationId1UUID, testLocationId2UUID, 10);
+        // Wait for location assignment to be processed and stock item to be available at the location
+        // This ensures the read model is updated before creating the stock movement
+        boolean stockItemAvailable = waitForStockItemAtLocation(testStockItemId, testLocationId1UUID.toString(), tenantAdminAuth.getAccessToken(), testTenantId, 10, 500);
+        assertThat(stockItemAvailable).as("Stock item should be available at location after assignment").isTrue();
+
+        CreateStockMovementRequest request =
+                StockMovementTestDataBuilder.buildCreateStockMovementRequest(testStockItemId, testProductIdUUID, testLocationId1UUID, testLocationId2UUID, 10);
 
         // Act
         WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/location-management/stock-movements", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
@@ -2126,19 +2150,16 @@ public class StockManagementTest extends BaseIntegrationTest {
     @Test
     @Order(44)
     public void testCreateStockMovement_NonBinSourceLocation_ShouldFail() {
-        // Arrange - Create non-BIN location (warehouse) to test validation
+        // Arrange - Get or create non-BIN location (warehouse) to test validation
         Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
 
-        CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
-        EntityExchangeResult<ApiResponse<CreateLocationResponse>> warehouseResult =
-                authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, warehouseRequest).exchange().expectStatus().isCreated()
-                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                        }).returnResult();
-
-        ApiResponse<CreateLocationResponse> warehouseApiResponse = warehouseResult.getResponseBody();
-        assertThat(warehouseApiResponse).isNotNull();
-        assertThat(warehouseApiResponse.isSuccess()).isTrue();
-        CreateLocationResponse warehouse = warehouseApiResponse.getData();
+        // Reuse existing warehouse from repository if available
+        CreateLocationResponse warehouse = TestDataManager.getLocationByType("WAREHOUSE", testTenantId)
+                .orElseGet(() -> {
+                    // Create new warehouse if none found in repository
+                    CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
+                    return createLocation(tenantAdminAuth.getAccessToken(), testTenantId, warehouseRequest);
+                });
         assertThat(warehouse).isNotNull();
         UUID warehouseLocationId = UUID.fromString(warehouse.getLocationId());
 
@@ -2156,26 +2177,23 @@ public class StockManagementTest extends BaseIntegrationTest {
     @Test
     @Order(45)
     public void testCreateStockMovement_NonBinDestinationLocation_ShouldFail() {
-        // Arrange - Create non-BIN location (warehouse) to test validation
+        // Arrange - Get or create non-BIN location (warehouse) to test validation
         Assumptions.assumeTrue(testStockItemId != null, "Stock item not available");
 
-        CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
-        EntityExchangeResult<ApiResponse<CreateLocationResponse>> warehouseResult =
-                authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, warehouseRequest).exchange().expectStatus().isCreated()
-                        .expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                        }).returnResult();
-
-        ApiResponse<CreateLocationResponse> warehouseApiResponse = warehouseResult.getResponseBody();
-        assertThat(warehouseApiResponse).isNotNull();
-        assertThat(warehouseApiResponse.isSuccess()).isTrue();
-        CreateLocationResponse warehouse = warehouseApiResponse.getData();
+        // Reuse existing warehouse from repository if available
+        CreateLocationResponse warehouse = TestDataManager.getLocationByType("WAREHOUSE", testTenantId)
+                .orElseGet(() -> {
+                    // Create new warehouse if none found in repository
+                    CreateLocationRequest warehouseRequest = LocationTestDataBuilder.buildWarehouseRequest();
+                    return createLocation(tenantAdminAuth.getAccessToken(), testTenantId, warehouseRequest);
+                });
         assertThat(warehouse).isNotNull();
         UUID warehouseLocationId = UUID.fromString(warehouse.getLocationId());
 
         // Act - Try to create stock movement with warehouse (non-BIN) as destination location
-        CreateStockMovementRequest request =
-                StockMovementTestDataBuilder.buildCreateStockMovementRequest(testStockItemId, testProductIdUUID, testLocationId1UUID, warehouseLocationId, // Non-BIN destination location
-                        10);
+        CreateStockMovementRequest request = StockMovementTestDataBuilder.buildCreateStockMovementRequest(testStockItemId, testProductIdUUID, testLocationId1UUID,
+                warehouseLocationId, // Non-BIN destination location
+                10);
 
         WebTestClient.ResponseSpec response = authenticatedPost("/api/v1/location-management/stock-movements", tenantAdminAuth.getAccessToken(), testTenantId, request).exchange();
 

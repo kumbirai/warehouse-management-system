@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import com.ccbsa.wms.gateway.api.util.BarcodeGenerator;
@@ -91,70 +92,71 @@ public class TestData {
 
     // ==================== LOCATION DATA ====================
 
+    // Thread-safe counters for generating unique sequential codes
+    private static final AtomicInteger warehouseCounter = new AtomicInteger(1);
+    private static final AtomicInteger zoneCounter = new AtomicInteger(1);
+    private static final AtomicInteger aisleCounter = new AtomicInteger(1);
+    private static final AtomicInteger rackCounter = new AtomicInteger(1);
+    private static final AtomicInteger binCounter = new AtomicInteger(1);
+
     /**
-     * Generates a unique warehouse code by including a UUID component.
+     * Generates a unique warehouse code using realistic naming conventions.
+     * Format: WH-01, WH-02, etc.
      * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
-     * <p>
-     * Note: The code may be sanitized and truncated when used as zone coordinates (max 10 chars),
-     * but the full code is preserved for location identification.
      */
     public static String warehouseCode() {
-        // Use UUID to ensure uniqueness, but keep it readable with a short prefix
-        // Format: WH-XX-XXXXXXXX (e.g., WH-16-91B2EA5A)
-        String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
-        return "WH-" + faker.number().digits(2) + "-" + uuid;
+        int num = warehouseCounter.getAndIncrement();
+        return String.format("WH-%02d", num);
     }
 
     /**
-     * Generates a unique zone code by including a UUID component.
+     * Generates a unique zone code using realistic naming conventions.
+     * Format: ZONE-A, ZONE-B, etc. (or ZONE-01, ZONE-02 if more than 26 zones)
      * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
-     * <p>
-     * Note: The code may be sanitized and truncated when used as zone coordinates (max 10 chars),
-     * but the full code is preserved for location identification.
      */
     public static String zoneCode() {
-        // Format: ZONE-X-XXXXXXXX (e.g., ZONE-A-91B2EA5A)
-        String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
-        return "ZONE-" + faker.bothify("?").toUpperCase() + "-" + uuid;
+        int num = zoneCounter.getAndIncrement();
+        if (num <= 26) {
+            // Use letters A-Z for first 26 zones
+            char letter = (char) ('A' + num - 1);
+            return "ZONE-" + letter;
+        } else {
+            // Use numbers for zones beyond 26
+            return String.format("ZONE-%02d", num);
+        }
     }
 
     /**
-     * Generates a unique aisle code by including a UUID component.
+     * Generates a unique aisle code using realistic naming conventions.
+     * Format: AISLE-01, AISLE-02, etc.
      * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
-     * <p>
-     * Note: The code may be sanitized and truncated when used as aisle coordinates (max 10 chars),
-     * but the full code is preserved for location identification.
      */
     public static String aisleCode() {
-        // Format: AISLE-XX-XXXXXXXX (e.g., AISLE-01-91B2EA5A)
-        String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
-        return "AISLE-" + faker.number().digits(2) + "-" + uuid;
+        int num = aisleCounter.getAndIncrement();
+        return String.format("AISLE-%02d", num);
     }
 
     /**
-     * Generates a unique rack code by including a UUID component.
+     * Generates a unique rack code using realistic naming conventions.
+     * Format: RACK-A1, RACK-A2, RACK-B1, etc.
      * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
-     * <p>
-     * Note: The code may be sanitized and truncated when used as rack coordinates (max 10 chars),
-     * but the full code is preserved for location identification.
      */
     public static String rackCode() {
-        // Format: RACK-XX-XXXXXXXX (e.g., RACK-A1-91B2EA5A)
-        String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
-        return "RACK-" + faker.bothify("?#").toUpperCase() + "-" + uuid;
+        int num = rackCounter.getAndIncrement();
+        // Cycle through letters A-Z and numbers 1-9
+        char letter = (char) ('A' + ((num - 1) / 9) % 26);
+        int digit = ((num - 1) % 9) + 1;
+        return "RACK-" + letter + digit;
     }
 
     /**
-     * Generates a unique bin code by including a UUID component.
+     * Generates a unique bin code using realistic naming conventions.
+     * Format: BIN-01, BIN-02, etc.
      * This ensures uniqueness across test runs and prevents CODE_ALREADY_EXISTS errors.
-     * <p>
-     * Note: The code may be sanitized and truncated when used as level coordinates (max 10 chars),
-     * but the full code is preserved for location identification.
      */
     public static String binCode() {
-        // Format: BIN-XX-XXXXXXXX (e.g., BIN-01-91B2EA5A)
-        String uuid = UUID.randomUUID().toString().substring(0, 8).replace("-", "").toUpperCase();
-        return "BIN-" + faker.number().digits(2) + "-" + uuid;
+        int num = binCounter.getAndIncrement();
+        return String.format("BIN-%02d", num);
     }
 
     public static int locationCapacity(String type) {

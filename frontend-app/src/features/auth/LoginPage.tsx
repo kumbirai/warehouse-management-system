@@ -1,9 +1,10 @@
-import {useEffect, useRef, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {Alert, Box, Button, Container, Link, Paper, TextField, Typography} from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Alert, Box, Button, Container, Link, Paper, TextField, Typography } from '@mui/material';
 import axios from 'axios';
-import {useAuth} from '../../hooks/useAuth';
-import {logger} from '../../utils/logger';
+import { useAuth } from '../../hooks/useAuth';
+import { logger } from '../../utils/logger';
+import { Routes } from '../../utils/navigationUtils';
 
 /**
  * Login page component.
@@ -23,7 +24,7 @@ export const LoginPage = () => {
   useEffect(() => {
     if (isAuthenticated && !loginSuccessRef.current) {
       logger.debug('[LoginPage] User already authenticated, redirecting to dashboard');
-      navigate('/dashboard');
+      navigate(Routes.dashboard);
     }
   }, [isAuthenticated, navigate]);
 
@@ -35,7 +36,7 @@ export const LoginPage = () => {
         loginSuccess: loginSuccessRef.current,
       });
       loginSuccessRef.current = false;
-      navigate('/dashboard');
+      navigate(Routes.dashboard);
     }
   }, [isAuthenticated, navigate]);
 

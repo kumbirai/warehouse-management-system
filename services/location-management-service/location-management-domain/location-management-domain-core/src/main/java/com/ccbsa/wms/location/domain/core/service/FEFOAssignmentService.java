@@ -62,6 +62,8 @@ public class FEFOAssignmentService {
         }
 
         // Filter to only BIN type locations (stock allocation must be at lowest hierarchy level)
+        // Note: This filtering is also done in AssignLocationsFEFOCommandHandler, but we do it here
+        // as a defensive check to ensure we only work with BIN locations
         List<Location> binLocations = availableLocations.stream().filter(location -> {
             if (location.getType() == null || location.getType().getValue() == null) {
                 return false;
@@ -69,8 +71,12 @@ public class FEFOAssignmentService {
             return "BIN".equalsIgnoreCase(location.getType().getValue().trim());
         }).collect(Collectors.toList());
 
+        // This should not happen if AssignLocationsFEFOCommandHandler filtered correctly,
+        // but handle it gracefully for robustness
         if (binLocations.isEmpty()) {
-            throw new IllegalStateException("No BIN type locations available. Stock allocation must be at BIN level (lowest hierarchy level).");
+            // Return empty assignments - this will be handled by the command handler
+            // which already checks for empty BIN locations before calling this service
+            return new HashMap<>();
         }
 
         // Filter out expired stock items - they cannot be assigned locations

@@ -159,6 +159,13 @@ stock-management:
   service:
     url: ${STOCK_MANAGEMENT_SERVICE_URL:http://stock-management-service}
 
+# Returns Service Configuration
+# Note: Uses Eureka service discovery via @LoadBalanced RestTemplate
+# Service name is resolved through Eureka registry (no port needed)
+returns:
+  service:
+    url: ${RETURNS_SERVICE_URL:http://returns-service}
+
 # Management endpoints
 management:
   endpoints:

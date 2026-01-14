@@ -1,8 +1,19 @@
 package com.ccbsa.wms.returns.application.api.exception;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.ccbsa.common.application.api.ApiError;
+import com.ccbsa.common.application.api.ApiResponse;
+import com.ccbsa.common.application.api.ApiResponseBuilder;
+import com.ccbsa.common.application.api.RequestContext;
 import com.ccbsa.common.application.api.exception.BaseGlobalExceptionHandler;
+import com.ccbsa.wms.returns.application.service.exception.PickingServiceException;
+import com.ccbsa.wms.returns.domain.core.exception.ReturnNotFoundException;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Global Exception Handler: GlobalExceptionHandler
@@ -26,6 +37,41 @@ import com.ccbsa.common.application.api.exception.BaseGlobalExceptionHandler;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
-    // Add service-specific exception handlers here as needed
+
+    /**
+     * Handles ReturnNotFoundException. Returns 404 Not Found.
+     *
+     * @param ex      The exception
+     * @param request The HTTP request
+     * @return Error response with 404 Not Found
+     */
+    @ExceptionHandler(ReturnNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleReturnNotFound(ReturnNotFoundException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        logger.warn("Return not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+
+        ApiError error = ApiError.builder("RETURN_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
+        return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
+    }
+
+    /**
+     * Handles PickingServiceException - indicates Picking Service is unavailable.
+     *
+     * @param ex      The exception
+     * @param request The HTTP request
+     * @return Error response with 503 Service Unavailable
+     */
+    @ExceptionHandler(PickingServiceException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePickingServiceException(PickingServiceException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        logger.error("Picking service error: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path, ex);
+
+        ApiError error = ApiError.builder("PICKING_SERVICE_UNAVAILABLE", ex.getMessage()).path(path).requestId(requestId).build();
+        return ApiResponseBuilder.error(HttpStatus.SERVICE_UNAVAILABLE, error);
+    }
 }
 

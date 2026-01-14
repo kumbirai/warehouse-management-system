@@ -290,4 +290,24 @@ public class LoadRepositoryAdapter implements LoadRepository {
 
         return Optional.of(PickingListId.of(loadEntity.get().getPickingList().getId()));
     }
+
+    @Override
+    public List<Load> findByPickingListIdAndTenantId(PickingListId pickingListId, TenantId tenantId) {
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null || !contextTenantId.getValue().equals(tenantId.getValue())) {
+            throw new IllegalStateException("TenantContext mismatch");
+        }
+
+        String schemaName = schemaResolver.resolveSchema();
+        schemaProvisioner.ensureSchemaReady(schemaName);
+        validateSchemaName(schemaName);
+
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Query loads directly from database to ensure fresh statuses (bypasses cache)
+        List<LoadEntity> entities = jpaRepository.findByPickingListIdAndTenantId(pickingListId.getValue(), tenantId.getValue());
+
+        return entities.stream().map(mapper::toDomain).toList();
+    }
 }

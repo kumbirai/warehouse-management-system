@@ -1,27 +1,27 @@
-import {useEffect, useRef} from 'react';
-import {useDispatch, useSelector} from 'react-redux';
-import {useNavigate} from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import {authService, UserContext} from '../services/authService';
-import {correlationIdService} from '../services/correlationIdService';
-import {clearUser, setLoading, setUser} from '../store/authSlice';
-import {RootState} from '../store';
-import {logger} from '../utils/logger';
+import { authService, UserContext } from '../services/authService';
+import { correlationIdService } from '../services/correlationIdService';
+import { clearUser, setLoading, setUser } from '../store/authSlice';
+import { RootState } from '../store';
+import { logger } from '../utils/logger';
 import {
-    LOCATION_MANAGER,
-    OPERATOR,
-    PICKER,
-    RECONCILIATION_CLERK,
-    RECONCILIATION_MANAGER,
-    RETURNS_CLERK,
-    RETURNS_MANAGER,
-    STOCK_CLERK,
-    STOCK_MANAGER,
-    SYSTEM_ADMIN,
-    TENANT_ADMIN,
-    USER,
-    VIEWER,
-    WAREHOUSE_MANAGER,
+  LOCATION_MANAGER,
+  OPERATOR,
+  PICKER,
+  RECONCILIATION_CLERK,
+  RECONCILIATION_MANAGER,
+  RETURNS_CLERK,
+  RETURNS_MANAGER,
+  STOCK_CLERK,
+  STOCK_MANAGER,
+  SYSTEM_ADMIN,
+  TENANT_ADMIN,
+  USER,
+  VIEWER,
+  WAREHOUSE_MANAGER,
 } from '../constants/roles';
 
 /**

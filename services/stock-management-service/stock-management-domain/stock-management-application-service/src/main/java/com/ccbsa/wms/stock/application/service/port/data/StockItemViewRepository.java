@@ -68,5 +68,14 @@ public interface StockItemViewRepository {
      * @return List of StockItemView
      */
     List<StockItemView> findByTenantIdAndProductIdAndLocationId(TenantId tenantId, ProductId productId, LocationId locationId);
+
+    /**
+     * Finds stock item views by tenant and location.
+     *
+     * @param tenantId   Tenant ID
+     * @param locationId Location ID
+     * @return List of StockItemView
+     */
+    List<StockItemView> findByTenantIdAndLocationId(TenantId tenantId, LocationId locationId);
 }
 

@@ -12,15 +12,14 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.ccbsa.common.application.api.ApiResponse;
 import com.ccbsa.wms.gateway.api.dto.AuthenticationResult;
-import com.ccbsa.wms.gateway.api.dto.CreateLocationRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateLocationResponse;
 import com.ccbsa.wms.gateway.api.dto.CreateReconciliationCountRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateReconciliationCountResponse;
-import com.ccbsa.wms.gateway.api.dto.CreateUserRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateUserResponse;
-import com.ccbsa.wms.gateway.api.fixture.LocationTestDataBuilder;
 import com.ccbsa.wms.gateway.api.fixture.ReconciliationTestDataBuilder;
-import com.ccbsa.wms.gateway.api.fixture.UserTestDataBuilder;
+import com.ccbsa.wms.gateway.api.fixture.TestDataManager;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,30 +43,18 @@ public class ReconciliationServiceTest extends BaseIntegrationTest {
             tenantAdminAuth = loginAsTenantAdmin();
             testTenantId = tenantAdminAuth.getTenantId();
 
-            // Create location and user for tests
-            CreateLocationRequest locationRequest = LocationTestDataBuilder.buildWarehouseRequest();
-            EntityExchangeResult<ApiResponse<CreateLocationResponse>> locationExchangeResult =
-                    authenticatedPost("/api/v1/location-management/locations", tenantAdminAuth.getAccessToken(), testTenantId, locationRequest).exchange().expectStatus()
-                            .isCreated().expectBody(new ParameterizedTypeReference<ApiResponse<CreateLocationResponse>>() {
-                            }).returnResult();
-
-            ApiResponse<CreateLocationResponse> locationApiResponse = locationExchangeResult.getResponseBody();
-            assertThat(locationApiResponse).isNotNull();
-            assertThat(locationApiResponse.isSuccess()).isTrue();
-            CreateLocationResponse location = locationApiResponse.getData();
-            assertThat(location).isNotNull();
+            // Try to reuse location from repository, otherwise create new
+            Optional<CreateLocationResponse> existingLocation = TestDataManager.getLocationByType("WAREHOUSE", testTenantId);
+            CreateLocationResponse location;
+            if (existingLocation.isPresent()) {
+                location = existingLocation.get();
+            } else {
+                location = createLocation(tenantAdminAuth.getAccessToken(), testTenantId);
+            }
             testLocationId = location.getLocationId();
 
-            CreateUserRequest userRequest = UserTestDataBuilder.buildCreateUserRequest(testTenantId);
-            EntityExchangeResult<ApiResponse<CreateUserResponse>> userExchangeResult =
-                    authenticatedPost("/api/v1/users", tenantAdminAuth.getAccessToken(), testTenantId, userRequest).exchange().expectStatus().isCreated()
-                            .expectBody(new ParameterizedTypeReference<ApiResponse<CreateUserResponse>>() {
-                            }).returnResult();
-
-            ApiResponse<CreateUserResponse> userApiResponse = userExchangeResult.getResponseBody();
-            assertThat(userApiResponse).isNotNull();
-            assertThat(userApiResponse.isSuccess()).isTrue();
-            CreateUserResponse user = userApiResponse.getData();
+            // Use createUser() helper which checks repository first and saves new users
+            CreateUserResponse user = createUser(tenantAdminAuth.getAccessToken(), testTenantId);
             assertThat(user).isNotNull();
             testUserId = user.getUserId();
         }

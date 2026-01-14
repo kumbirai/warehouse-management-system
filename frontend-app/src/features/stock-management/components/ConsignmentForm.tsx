@@ -1,17 +1,31 @@
-import {Alert, Box, Button, Grid, IconButton, InputAdornment, Paper, TextField, Typography,} from '@mui/material';
-import {useEffect, useState} from 'react';
-import {z} from 'zod';
-import {Controller, useFieldArray, useForm} from 'react-hook-form';
-import {zodResolver} from '@hookform/resolvers/zod';
-import {Add as AddIcon, Delete as DeleteIcon, QrCodeScanner as QrCodeIcon,} from '@mui/icons-material';
-import {CreateConsignmentRequest} from '../types/stockManagement';
-import {BarcodeScanner} from './BarcodeScanner';
-import {useValidateBarcode} from '../hooks/useValidateBarcode';
-import {FormActions} from '../../../components/common';
-import {WarehouseSelector} from './WarehouseSelector';
-import {UserSelector} from './UserSelector';
-import {useAppSelector} from '../../../store/hooks';
-import {selectUser} from '../../../store/authSlice';
+import {
+  Alert,
+  Box,
+  Button,
+  Grid,
+  IconButton,
+  InputAdornment,
+  Paper,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { useEffect, useState } from 'react';
+import { z } from 'zod';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  QrCodeScanner as QrCodeIcon,
+} from '@mui/icons-material';
+import { CreateConsignmentRequest } from '../types/stockManagement';
+import { BarcodeScanner } from './BarcodeScanner';
+import { useValidateBarcode } from '../hooks/useValidateBarcode';
+import { FormActions } from '../../../components/common';
+import { WarehouseSelector } from './WarehouseSelector';
+import { UserSelector } from './UserSelector';
+import { useAppSelector } from '../../../store/hooks';
+import { selectUser } from '../../../store/authSlice';
 
 /**
  * Formats a Date object to a local datetime string in the format required by datetime-local input.

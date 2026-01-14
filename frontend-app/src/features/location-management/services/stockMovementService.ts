@@ -1,5 +1,5 @@
 import apiClient from '../../../services/apiClient';
-import {ApiResponse} from '../../../types/api';
+import { ApiResponse } from '../../../types/api';
 
 /**
  * Stock Movement Service

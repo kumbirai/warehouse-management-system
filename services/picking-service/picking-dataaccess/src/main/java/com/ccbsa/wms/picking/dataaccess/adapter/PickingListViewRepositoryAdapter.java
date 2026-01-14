@@ -248,13 +248,13 @@ public class PickingListViewRepositoryAdapter implements PickingListViewReposito
         // Initialize loads collection to avoid lazy loading issues
         entities.forEach(entity -> {
             if (entity.getLoads() != null) {
-                @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT",
-                        justification = "size() call is intentional to force initialization of lazy-loaded collections")
+                @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT", justification = "size() call is intentional to force initialization of lazy-loaded "
+                        + "collections")
                 int loadsSize = entity.getLoads().size(); // Initialize collection
                 entity.getLoads().forEach(load -> {
                     if (load.getOrders() != null) {
-                        @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT",
-                                justification = "size() call is intentional to force initialization of lazy-loaded collections")
+                        @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT", justification = "size() call is intentional to force initialization of lazy-loaded "
+                                + "collections")
                         int ordersSize = load.getOrders().size(); // Initialize orders collection
                         // Sizes are intentionally not used - collection initialization is the side effect
                     }

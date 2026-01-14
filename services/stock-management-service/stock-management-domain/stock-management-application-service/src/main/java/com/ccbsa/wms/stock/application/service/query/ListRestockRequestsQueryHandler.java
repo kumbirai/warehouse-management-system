@@ -66,10 +66,7 @@ public class ListRestockRequestsQueryHandler {
         List<RestockRequestQueryResult> results = paginated.stream().map(this::mapToQueryResult).collect(Collectors.toList());
 
         // 5. Build result with defensive copy of list
-        return ListRestockRequestsQueryResult.builder()
-                .requests(new java.util.ArrayList<>(results))
-                .totalCount(filtered.size())
-                .build();
+        return ListRestockRequestsQueryResult.builder().requests(new java.util.ArrayList<>(results)).totalCount(filtered.size()).build();
     }
 
     private RestockRequestQueryResult mapToQueryResult(RestockRequest request) {

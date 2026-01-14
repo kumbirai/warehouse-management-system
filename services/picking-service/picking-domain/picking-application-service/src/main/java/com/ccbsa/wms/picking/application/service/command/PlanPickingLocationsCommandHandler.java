@@ -67,12 +67,22 @@ public class PlanPickingLocationsCommandHandler {
         // 4. Create picking tasks with optimized sequence
         List<PickingTask> pickingTasks = createPickingTasks(load, stockByProduct);
 
-        // 5. Save picking tasks
+        // Log if no picking tasks were created (insufficient stock)
+        if (pickingTasks.isEmpty()) {
+            log.warn("No picking tasks created for load: {} - insufficient stock available. Product quantities needed: {}", load.getId().getValueAsString(), productQuantities);
+        } else {
+            log.info("Created {} picking task(s) for load: {}", pickingTasks.size(), load.getId().getValueAsString());
+        }
+
+        // 5. Save picking tasks (even if empty - load can still be planned without tasks)
         pickingTaskRepository.saveAll(pickingTasks);
 
         // 6. Plan the load (updates status and publishes event)
+        // Note: Load can be planned even with no picking tasks (e.g., insufficient stock scenario)
         List<String> pickingTaskIds = pickingTasks.stream().map(task -> task.getId().getValueAsString()).toList();
-        load.plan(pickingTaskIds);
+        String pickingListIdStr = command.getPickingListId() != null ? command.getPickingListId().getValueAsString() : null;
+        log.debug("Planning load: {} with {} picking task(s), pickingListId: {}", load.getId().getValueAsString(), pickingTaskIds.size(), pickingListIdStr);
+        load.plan(pickingTaskIds, pickingListIdStr);
 
         // 7. Get domain events BEFORE saving
         List<DomainEvent<?>> domainEvents = List.copyOf(load.getDomainEvents());
@@ -93,11 +103,7 @@ public class PlanPickingLocationsCommandHandler {
 
         // 11. Return result (create defensive copy of task IDs list)
         List<PickingTaskId> taskIds = pickingTasks.stream().map(PickingTask::getId).toList();
-        return PlanPickingLocationsResult.builder()
-                .loadId(load.getId())
-                .pickingTaskIds(new java.util.ArrayList<>(taskIds))
-                .totalTasks(pickingTasks.size())
-                .build();
+        return PlanPickingLocationsResult.builder().loadId(load.getId()).pickingTaskIds(new java.util.ArrayList<>(taskIds)).totalTasks(pickingTasks.size()).build();
     }
 
     private Map<String, Integer> collectProductQuantities(Load load) {

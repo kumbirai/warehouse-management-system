@@ -29,11 +29,12 @@ public final class LocationQueryResult {
     private final String type;
     private final String path;
     private final String description;
+    private final LocationId parentLocationId;
     private final LocalDateTime createdAt;
     private final LocalDateTime lastModifiedAt;
 
     public LocationQueryResult(LocationId locationId, LocationBarcode barcode, LocationCoordinates coordinates, LocationStatus status, LocationCapacity capacity, String code,
-                               String name, String type, String path, String description, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
+                               String name, String type, String path, String description, LocationId parentLocationId, LocalDateTime createdAt, LocalDateTime lastModifiedAt) {
         if (locationId == null) {
             throw new IllegalArgumentException("LocationId is required");
         }
@@ -56,6 +57,7 @@ public final class LocationQueryResult {
         this.type = type;
         this.path = path;
         this.description = description;
+        this.parentLocationId = parentLocationId;
         this.createdAt = createdAt;
         this.lastModifiedAt = lastModifiedAt;
     }

@@ -1,7 +1,7 @@
-import {Navigate} from 'react-router-dom';
-import {useAuth} from '../hooks/useAuth';
-import {AdminDashboard} from '../features/admin/AdminDashboard';
-import {UserDashboard} from '../features/user/UserDashboard';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { AdminDashboard } from '../features/admin/AdminDashboard';
+import { UserDashboard } from '../features/user/UserDashboard';
 
 /**
  * Dashboard router component.

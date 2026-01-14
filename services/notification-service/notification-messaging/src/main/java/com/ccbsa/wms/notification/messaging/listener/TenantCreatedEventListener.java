@@ -53,7 +53,7 @@ public class TenantCreatedEventListener {
         log.info("TenantCreatedEventListener initialized and ready to consume TenantCreatedEvent from topic 'tenant-events' with groupId 'notification-service'");
     }
 
-    @KafkaListener(topics = "tenant-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    @KafkaListener(topics = "tenant-events", groupId = "notification-service-tenant-created", containerFactory = "externalEventKafkaListenerContainerFactory")
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
                        @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {

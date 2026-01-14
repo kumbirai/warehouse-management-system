@@ -14,11 +14,14 @@ import com.ccbsa.wms.gateway.api.dto.LoginResponse;
 import com.ccbsa.wms.gateway.api.util.CookieExtractor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Helper class for authentication operations in integration tests.
  */
+@RequiredArgsConstructor
 public class AuthenticationHelper {
 
     private static final String LOGIN_ENDPOINT = "/api/v1/bff/auth/login";
@@ -26,11 +29,6 @@ public class AuthenticationHelper {
     private static final String LOGOUT_ENDPOINT = "/api/v1/bff/auth/logout";
     private final WebTestClient webTestClient;
     private final ObjectMapper objectMapper;
-
-    public AuthenticationHelper(WebTestClient webTestClient, ObjectMapper objectMapper) {
-        this.webTestClient = webTestClient;
-        this.objectMapper = objectMapper;
-    }
 
     /**
      * Login with username and password.

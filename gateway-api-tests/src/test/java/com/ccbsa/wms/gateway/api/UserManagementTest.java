@@ -22,8 +22,11 @@ import com.ccbsa.wms.gateway.api.fixture.UserTestDataBuilder;
 import com.ccbsa.wms.gateway.api.helper.TenantHelper;
 import com.ccbsa.wms.gateway.api.util.RequestHeaderHelper;
 
+import lombok.extern.slf4j.Slf4j;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class UserManagementTest extends BaseIntegrationTest {
 
@@ -503,7 +506,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testCreateUser_Success_TenantAdmin() {
         // Skip if credentials not set
         if (shouldSkipTenantAdminTests()) {
-            System.out.println("Skipping TENANT_ADMIN test - credentials not set");
+            log.debug("Skipping TENANT_ADMIN test - credentials not set");
             return;
         }
 
@@ -549,7 +552,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testCreateUser_DifferentTenant_Forbidden() {
         // Skip if credentials not set
         if (shouldSkipTenantAdminTests()) {
-            System.out.println("Skipping TENANT_ADMIN test - credentials not set");
+            log.debug("Skipping TENANT_ADMIN test - credentials not set");
             return;
         }
 
@@ -574,7 +577,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testGetUserById_Success_TenantAdmin() {
         // Skip if credentials not set
         if (shouldSkipTenantAdminTests()) {
-            System.out.println("Skipping TENANT_ADMIN test - credentials not set");
+            log.debug("Skipping TENANT_ADMIN test - credentials not set");
             return;
         }
 
@@ -613,7 +616,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testListUsers_OwnTenantOnly_TenantAdmin() {
         // Skip if credentials not set
         if (shouldSkipTenantAdminTests()) {
-            System.out.println("Skipping TENANT_ADMIN test - credentials not set");
+            log.debug("Skipping TENANT_ADMIN test - credentials not set");
             return;
         }
 
@@ -641,7 +644,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testTenantAdmin_CannotAccessOtherTenantUsers() {
         // Skip if credentials not set
         if (shouldSkipTenantAdminTests()) {
-            System.out.println("Skipping TENANT_ADMIN test - credentials not set");
+            log.debug("Skipping TENANT_ADMIN test - credentials not set");
             return;
         }
 
@@ -674,7 +677,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testUpdateUserProfile_Success_TenantAdmin() {
         // Skip if credentials not set
         if (shouldSkipTenantAdminTests()) {
-            System.out.println("Skipping TENANT_ADMIN test - credentials not set");
+            log.debug("Skipping TENANT_ADMIN test - credentials not set");
             return;
         }
 
@@ -707,7 +710,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testAssignRole_Success_TenantAdmin() {
         // Skip if credentials not set
         if (shouldSkipTenantAdminTests()) {
-            System.out.println("Skipping TENANT_ADMIN test - credentials not set");
+            log.debug("Skipping TENANT_ADMIN test - credentials not set");
             return;
         }
 
@@ -737,7 +740,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testAssignMultipleRoles_Success_TenantAdmin() {
         // Skip if credentials not set
         if (shouldSkipTenantAdminTests()) {
-            System.out.println("Skipping TENANT_ADMIN test - credentials not set");
+            log.debug("Skipping TENANT_ADMIN test - credentials not set");
             return;
         }
 
@@ -778,7 +781,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testRemoveRole_Success_TenantAdmin() {
         // Skip if credentials not set
         if (shouldSkipTenantAdminTests()) {
-            System.out.println("Skipping TENANT_ADMIN test - credentials not set");
+            log.debug("Skipping TENANT_ADMIN test - credentials not set");
             return;
         }
 
@@ -811,7 +814,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testActivateUser_Success_TenantAdmin() {
         // Skip if credentials not set
         if (shouldSkipTenantAdminTests()) {
-            System.out.println("Skipping TENANT_ADMIN test - credentials not set");
+            log.debug("Skipping TENANT_ADMIN test - credentials not set");
             return;
         }
 
@@ -843,7 +846,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testDeactivateUser_Success_TenantAdmin() {
         // Skip if credentials not set
         if (shouldSkipTenantAdminTests()) {
-            System.out.println("Skipping TENANT_ADMIN test - credentials not set");
+            log.debug("Skipping TENANT_ADMIN test - credentials not set");
             return;
         }
 
@@ -872,7 +875,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testSuspendUser_Success_TenantAdmin() {
         // Skip if credentials not set
         if (shouldSkipTenantAdminTests()) {
-            System.out.println("Skipping TENANT_ADMIN test - credentials not set");
+            log.debug("Skipping TENANT_ADMIN test - credentials not set");
             return;
         }
 
@@ -903,7 +906,7 @@ public class UserManagementTest extends BaseIntegrationTest {
     public void testUserStatusTransitions_Success_TenantAdmin() {
         // Skip if credentials not set
         if (shouldSkipTenantAdminTests()) {
-            System.out.println("Skipping TENANT_ADMIN test - credentials not set");
+            log.debug("Skipping TENANT_ADMIN test - credentials not set");
             return;
         }
 

@@ -50,6 +50,11 @@ import { PickingTaskExecutionPage } from './features/picking/pages/PickingTaskEx
 import { LoadDetailPage } from './features/picking/pages/LoadDetailPage';
 import { ExpiringStockDashboard } from './features/stock-management/pages/ExpiringStockDashboard';
 import { RestockRequestsDashboard } from './features/stock-management/pages/RestockRequestsDashboard';
+import { PartialOrderAcceptancePage } from './features/returns-management/pages/PartialOrderAcceptancePage';
+import { FullOrderReturnPage } from './features/returns-management/pages/FullOrderReturnPage';
+import { DamageAssessmentPage } from './features/returns-management/pages/DamageAssessmentPage';
+import { ReturnLocationAssignmentDashboard } from './features/returns-management/pages/ReturnLocationAssignmentDashboard';
+import { ReturnsReconciliationDashboard } from './features/returns-management/pages/ReturnsReconciliationDashboard';
 import {
   LOCATION_MANAGER,
   OPERATOR,
@@ -730,6 +735,113 @@ function App() {
             ]}
           >
             <RestockRequestsDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/returns/partial-acceptance"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+            ]}
+          >
+            <PartialOrderAcceptancePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/returns/full-return"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+            ]}
+          >
+            <FullOrderReturnPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/returns/damage-assessment"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+            ]}
+          >
+            <DamageAssessmentPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/returns/location-assignment"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              LOCATION_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+              VIEWER,
+            ]}
+          >
+            <ReturnLocationAssignmentDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/returns/reconciliation"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+              VIEWER,
+            ]}
+          >
+            <ReturnsReconciliationDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/returns/:returnId"
+        element={
+          <ProtectedRoute
+            requiredRoles={[
+              SYSTEM_ADMIN,
+              TENANT_ADMIN,
+              WAREHOUSE_MANAGER,
+              STOCK_MANAGER,
+              LOCATION_MANAGER,
+              OPERATOR,
+              STOCK_CLERK,
+              VIEWER,
+            ]}
+          >
+            <ReturnLocationAssignmentDashboard />
           </ProtectedRoute>
         }
       />

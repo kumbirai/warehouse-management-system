@@ -353,11 +353,10 @@ public class PickingList extends TenantAwareAggregateRoot<PickingListId> {
 
         /**
          * Initializes default values for optional fields.
+         * Note: Status is NOT initialized here - it should be set by the create() method.
          */
         private void initializeDefaults() {
-            if (pickingList.status == null) {
-                pickingList.status = PickingListStatus.RECEIVED;
-            }
+            // Status is set by create() method, not here
         }
 
         /**

@@ -1,10 +1,10 @@
-import {useNavigate, useParams} from 'react-router-dom';
-import {Button} from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Button } from '@mui/material';
 
-import {DetailPageLayout} from '../../../components/layouts';
-import {getBreadcrumbs, Routes} from '../../../utils/navigationUtils';
-import {StockItemDetail} from '../components/StockItemDetail';
-import {useStockItem} from '../hooks/useStockItem';
+import { DetailPageLayout } from '../../../components/layouts';
+import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
+import { StockItemDetail } from '../components/StockItemDetail';
+import { useStockItem } from '../hooks/useStockItem';
 
 /**
  * StockItemDetailPage

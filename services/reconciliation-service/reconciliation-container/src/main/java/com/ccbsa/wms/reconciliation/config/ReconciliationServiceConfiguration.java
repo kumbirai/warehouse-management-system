@@ -85,7 +85,7 @@ public class ReconciliationServiceConfiguration {
     public ConsumerFactory<String, Object> externalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "reconciliation-service");
+        // GROUP_ID_CONFIG removed - each listener specifies its own unique group ID in @KafkaListener annotation
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");

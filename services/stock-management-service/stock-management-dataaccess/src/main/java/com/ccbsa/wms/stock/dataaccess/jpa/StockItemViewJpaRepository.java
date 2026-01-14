@@ -62,5 +62,14 @@ public interface StockItemViewJpaRepository extends JpaRepository<StockItemViewE
      * @return List of StockItemViewEntity
      */
     List<StockItemViewEntity> findByTenantIdAndProductIdAndLocationId(String tenantId, UUID productId, UUID locationId);
+
+    /**
+     * Finds stock item views by tenant ID and location ID.
+     *
+     * @param tenantId   Tenant ID
+     * @param locationId Location ID
+     * @return List of StockItemViewEntity
+     */
+    List<StockItemViewEntity> findByTenantIdAndLocationId(String tenantId, UUID locationId);
 }
 

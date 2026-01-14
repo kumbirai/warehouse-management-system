@@ -1,7 +1,7 @@
-import {useMemo} from 'react';
-import {useLocations} from '../../location-management/hooks/useLocations';
-import {useAppSelector} from '../../../store/hooks';
-import {selectUser} from '../../../store/authSlice';
+import { useMemo } from 'react';
+import { useLocations } from '../../location-management/hooks/useLocations';
+import { useAppSelector } from '../../../store/hooks';
+import { selectUser } from '../../../store/authSlice';
 
 /**
  * Hook to get location description by location ID

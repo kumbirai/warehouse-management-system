@@ -1,5 +1,6 @@
 package com.ccbsa.wms.location.application.dto.mapper;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -25,7 +26,7 @@ import com.ccbsa.wms.location.application.dto.command.CreateLocationCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.CreateLocationResultDTO;
 import com.ccbsa.wms.location.application.dto.command.CreateStockMovementCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.CreateStockMovementResultDTO;
-import com.ccbsa.wms.location.application.dto.command.LocationCoordinatesDTO;
+import com.ccbsa.wms.location.application.dto.common.LocationCoordinatesDTO;
 import com.ccbsa.wms.location.application.dto.command.UnblockLocationResultDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationCommandDTO;
 import com.ccbsa.wms.location.application.dto.command.UpdateLocationStatusCommandDTO;
@@ -361,6 +362,10 @@ public class LocationDTOMapper {
         dto.setPath(result.getPath());
 
         dto.setDescription(result.getDescription());
+        // Map parentLocationId if present
+        if (result.getParentLocationId() != null) {
+            dto.setParentLocationId(result.getParentLocationId().getValueAsString());
+        }
         dto.setCreatedAt(result.getCreatedAt());
         dto.setLastModifiedAt(result.getLastModifiedAt());
         return dto;
@@ -369,8 +374,8 @@ public class LocationDTOMapper {
     /**
      * Converts LocationCoordinates to query LocationCoordinatesDTO.
      */
-    private com.ccbsa.wms.location.application.dto.query.LocationCoordinatesDTO toQueryCoordinatesDTO(LocationCoordinates coordinates) {
-        return new com.ccbsa.wms.location.application.dto.query.LocationCoordinatesDTO(coordinates.getZone(), coordinates.getAisle(), coordinates.getRack(),
+    private LocationCoordinatesDTO toQueryCoordinatesDTO(LocationCoordinates coordinates) {
+        return new LocationCoordinatesDTO(coordinates.getZone(), coordinates.getAisle(), coordinates.getRack(),
                 coordinates.getLevel());
     }
 
@@ -477,7 +482,7 @@ public class LocationDTOMapper {
      */
     public CheckLocationAvailabilityQuery toCheckLocationAvailabilityQuery(String locationId, String tenantId, Integer requiredQuantity) {
         return CheckLocationAvailabilityQuery.builder().locationId(LocationId.of(UUID.fromString(locationId))).tenantId(TenantId.of(tenantId))
-                .requiredQuantity(java.math.BigDecimal.valueOf(requiredQuantity)).build();
+                .requiredQuantity(BigDecimal.valueOf(requiredQuantity)).build();
     }
 
     /**

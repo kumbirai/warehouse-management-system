@@ -1,4 +1,4 @@
-package com.ccbsa.wms.location.application.dto.query;
+package com.ccbsa.wms.location.application.dto.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,8 @@ import lombok.Setter;
 /**
  * DTO: LocationCoordinatesDTO
  * <p>
- * Nested DTO for location coordinates (used in query DTOs).
+ * Shared DTO for location coordinates used in both command and query DTOs.
+ * Represents the physical coordinates of a warehouse location (zone, aisle, rack, level).
  */
 @Getter
 @Setter
@@ -22,4 +23,3 @@ public final class LocationCoordinatesDTO {
     private String rack;
     private String level;
 }
-

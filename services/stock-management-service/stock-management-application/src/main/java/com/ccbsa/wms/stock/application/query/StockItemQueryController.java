@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
@@ -41,6 +42,7 @@ import com.ccbsa.wms.stock.application.service.query.GetExpiringStockQueryHandle
 import com.ccbsa.wms.stock.application.service.query.GetFEFOStockItemsQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.GetStockItemQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.GetStockItemsByClassificationQueryHandler;
+import com.ccbsa.wms.stock.application.service.query.GetStockItemsByLocationQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.GetStockItemsByProductAndLocationQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.GetStockItemsByProductQueryHandler;
 import com.ccbsa.wms.stock.application.service.query.GetStockItemsQueryHandler;
@@ -52,6 +54,7 @@ import com.ccbsa.wms.stock.application.service.query.dto.GetFEFOStockItemsQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemQueryResult;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemsByClassificationQuery;
+import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemsByLocationQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemsByProductAndLocationQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemsByProductQuery;
 import com.ccbsa.wms.stock.application.service.query.dto.GetStockItemsQuery;
@@ -80,6 +83,7 @@ import lombok.extern.slf4j.Slf4j;
 public class StockItemQueryController {
     private final GetStockItemQueryHandler getStockItemQueryHandler;
     private final GetStockItemsByClassificationQueryHandler getStockItemsByClassificationQueryHandler;
+    private final GetStockItemsByLocationQueryHandler getStockItemsByLocationQueryHandler;
     private final GetStockItemsByProductAndLocationQueryHandler getStockItemsByProductAndLocationQueryHandler;
     private final GetStockItemsByProductQueryHandler getStockItemsByProductQueryHandler;
     private final GetStockItemsQueryHandler getStockItemsQueryHandler;
@@ -90,6 +94,7 @@ public class StockItemQueryController {
     private final ProductServicePort productServicePort;
 
     public StockItemQueryController(GetStockItemQueryHandler getStockItemQueryHandler, GetStockItemsByClassificationQueryHandler getStockItemsByClassificationQueryHandler,
+                                    GetStockItemsByLocationQueryHandler getStockItemsByLocationQueryHandler,
                                     GetStockItemsByProductAndLocationQueryHandler getStockItemsByProductAndLocationQueryHandler,
                                     GetStockItemsByProductQueryHandler getStockItemsByProductQueryHandler, GetStockItemsQueryHandler getStockItemsQueryHandler,
                                     GetFEFOStockItemsQueryHandler fefoStockItemsQueryHandler,
@@ -98,6 +103,7 @@ public class StockItemQueryController {
                                     ProductServicePort productServicePort) {
         this.getStockItemQueryHandler = getStockItemQueryHandler;
         this.getStockItemsByClassificationQueryHandler = getStockItemsByClassificationQueryHandler;
+        this.getStockItemsByLocationQueryHandler = getStockItemsByLocationQueryHandler;
         this.getStockItemsByProductAndLocationQueryHandler = getStockItemsByProductAndLocationQueryHandler;
         this.getStockItemsByProductQueryHandler = getStockItemsByProductQueryHandler;
         this.getStockItemsQueryHandler = getStockItemsQueryHandler;
@@ -212,14 +218,14 @@ public class StockItemQueryController {
             // If locationId is not provided, use the by-product endpoint logic
             if (locationId == null || locationId.isEmpty()) {
                 GetStockItemsByProductQuery query =
-                        GetStockItemsByProductQuery.builder().tenantId(TenantId.of(tenantId)).productId(ProductId.of(java.util.UUID.fromString(productId))).build();
+                        GetStockItemsByProductQuery.builder().tenantId(TenantId.of(tenantId)).productId(ProductId.of(UUID.fromString(productId))).build();
 
                 results = getStockItemsByProductQueryHandler.handle(query);
             } else {
                 // Map to query with locationId
                 GetStockItemsByProductAndLocationQuery query =
-                        GetStockItemsByProductAndLocationQuery.builder().tenantId(TenantId.of(tenantId)).productId(ProductId.of(java.util.UUID.fromString(productId)))
-                                .locationId(LocationId.of(java.util.UUID.fromString(locationId))).build();
+                        GetStockItemsByProductAndLocationQuery.builder().tenantId(TenantId.of(tenantId)).productId(ProductId.of(UUID.fromString(productId)))
+                                .locationId(LocationId.of(UUID.fromString(locationId))).build();
 
                 // Execute query
                 results = getStockItemsByProductAndLocationQueryHandler.handle(query);
@@ -250,7 +256,7 @@ public class StockItemQueryController {
         try {
             // Map to query
             GetStockItemsByProductQuery query =
-                    GetStockItemsByProductQuery.builder().tenantId(TenantId.of(tenantId)).productId(ProductId.of(java.util.UUID.fromString(productId))).build();
+                    GetStockItemsByProductQuery.builder().tenantId(TenantId.of(tenantId)).productId(ProductId.of(UUID.fromString(productId))).build();
 
             // Execute query
             List<GetStockItemQueryResult> results = getStockItemsByProductQueryHandler.handle(query);
@@ -262,6 +268,39 @@ public class StockItemQueryController {
         } catch (IllegalArgumentException e) {
             return ApiResponseBuilder.error(org.springframework.http.HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Invalid request parameters: " + e.getMessage());
         } catch (Exception e) {
+            return ApiResponseBuilder.error(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR",
+                    "An unexpected error occurred while retrieving stock items");
+        }
+    }
+
+    @GetMapping("/stock-items/by-location")
+    @Operation(summary = "Get Stock Items by Location", description = "Gets all stock items at a specific location")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'STOCK_MANAGER', 'OPERATOR', 'STOCK_CLERK', 'LOCATION_MANAGER', 'SERVICE')")
+    public ResponseEntity<ApiResponse<StockItemsByClassificationResponseDTO>> getStockItemsByLocation(@RequestHeader("X-Tenant-Id") String tenantId,
+                                                                                                      @RequestParam("locationId") String locationId) {
+        try {
+            // Map to query
+            GetStockItemsByLocationQuery query = GetStockItemsByLocationQuery.builder()
+                    .tenantId(TenantId.of(tenantId))
+                    .locationId(LocationId.of(UUID.fromString(locationId)))
+                    .build();
+
+            // Execute query
+            List<GetStockItemQueryResult> results = getStockItemsByLocationQueryHandler.handle(query);
+
+            // Map results to DTOs
+            @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE", justification = "dtos is used in builder - SpotBugs false positive")
+            List<StockItemQueryDTO> dtos = results.stream().map(this::mapToDTO).collect(Collectors.toList());
+
+            // Wrap in response DTO to match existing endpoint format
+            StockItemsByClassificationResponseDTO response = StockItemsByClassificationResponseDTO.builder().stockItems(dtos).build();
+
+            return ApiResponseBuilder.ok(response);
+        } catch (IllegalArgumentException e) {
+            // Handle validation errors (e.g., invalid UUID format)
+            return ApiResponseBuilder.error(org.springframework.http.HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Invalid request parameters: " + e.getMessage());
+        } catch (Exception e) {
+            // Handle unexpected errors
             return ApiResponseBuilder.error(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR",
                     "An unexpected error occurred while retrieving stock items");
         }
@@ -308,10 +347,8 @@ public class StockItemQueryController {
                             .build()).collect(Collectors.toList());
 
             // Create defensive copy for builder
-            StockAvailabilityFefoResponseDTO response = StockAvailabilityFefoResponseDTO.builder()
-                    .productCode(request.getProductCode())
-                    .stockItems(new java.util.ArrayList<>(stockItemDTOs))
-                    .build();
+            StockAvailabilityFefoResponseDTO response =
+                    StockAvailabilityFefoResponseDTO.builder().productCode(request.getProductCode()).stockItems(new java.util.ArrayList<>(stockItemDTOs)).build();
 
             return ApiResponseBuilder.ok(response);
         } catch (IllegalArgumentException e) {
@@ -400,10 +437,8 @@ public class StockItemQueryController {
             }
 
             // Query stock availability for all products (create defensive copy of map)
-            QueryStockAvailabilityForProductsQuery query = QueryStockAvailabilityForProductsQuery.builder()
-                    .tenantId(tenantIdValue)
-                    .productQuantities(new java.util.HashMap<>(productQuantities))
-                    .build();
+            QueryStockAvailabilityForProductsQuery query =
+                    QueryStockAvailabilityForProductsQuery.builder().tenantId(tenantIdValue).productQuantities(new java.util.HashMap<>(productQuantities)).build();
 
             Map<ProductId, List<GetStockItemQueryResult>> results = queryStockAvailabilityForProductsQueryHandler.handle(query);
 
@@ -435,13 +470,9 @@ public class StockItemQueryController {
 
             // Create defensive copy of map and lists for builder
             Map<String, List<StockAvailabilityItemDTO>> defensiveCopy = new java.util.HashMap<>();
-            stockByProduct.forEach((key, value) ->
-                    defensiveCopy.put(key, new java.util.ArrayList<>(value))
-            );
+            stockByProduct.forEach((key, value) -> defensiveCopy.put(key, new java.util.ArrayList<>(value)));
 
-            StockAvailabilityResponseDTO response = StockAvailabilityResponseDTO.builder()
-                    .stockByProduct(defensiveCopy)
-                    .build();
+            StockAvailabilityResponseDTO response = StockAvailabilityResponseDTO.builder().stockByProduct(defensiveCopy).build();
 
             return ApiResponseBuilder.ok(response);
         } catch (IllegalArgumentException e) {
@@ -481,7 +512,7 @@ public class StockItemQueryController {
                     .orElseThrow(() -> new IllegalArgumentException("Product not found for code: " + productCode));
 
             ProductId productIdValue = ProductId.of(productInfo.getProductId());
-            LocationId locationIdValue = LocationId.of(java.util.UUID.fromString(locationId));
+            LocationId locationIdValue = LocationId.of(UUID.fromString(locationId));
 
             // Create query
             CheckStockExpirationQuery query = CheckStockExpirationQuery.builder().tenantId(tenantIdValue).productId(productIdValue).locationId(locationIdValue).build();

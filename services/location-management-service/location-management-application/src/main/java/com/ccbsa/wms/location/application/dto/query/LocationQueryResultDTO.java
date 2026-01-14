@@ -1,7 +1,9 @@
 package com.ccbsa.wms.location.application.dto.query;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.ccbsa.wms.location.application.dto.common.LocationCoordinatesDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -35,6 +37,7 @@ public final class LocationQueryResultDTO {
     @JsonIgnore // Hide from JSON serialization - use getCapacity()/setCapacity() for Integer instead
     private LocationCapacityDTO capacityDTO;
     private String description;
+    private String parentLocationId;
     private LocalDateTime createdAt;
     private LocalDateTime lastModifiedAt;
 
@@ -62,8 +65,8 @@ public final class LocationQueryResultDTO {
     public void setCapacity(Integer capacity) {
         // When deserializing, create a LocationCapacityDTO with the Integer as maximumQuantity
         if (capacity != null) {
-            this.capacityDTO = new LocationCapacityDTO(java.math.BigDecimal.ZERO, // currentQuantity defaults to 0
-                    java.math.BigDecimal.valueOf(capacity) // maximumQuantity from Integer
+            this.capacityDTO = new LocationCapacityDTO(BigDecimal.ZERO, // currentQuantity defaults to 0
+                    BigDecimal.valueOf(capacity) // maximumQuantity from Integer
             );
         }
     }

@@ -119,7 +119,8 @@ public class CreatePickingTaskCommandHandler {
         return CreatePickingTaskResult.builder().taskId(firstTask.getId()).status(firstTask.getStatus().name()).orderId(orderId.getValueAsString()).build();
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "Defensive validation is intentional - validates command integrity even if constructor validation exists")
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE", justification = "Defensive validation is intentional - validates "
+            + "command integrity even if constructor validation exists")
     private void validateCommand(CreatePickingTaskCommand command) {
         if (command == null) {
             throw new IllegalArgumentException("Command cannot be null");

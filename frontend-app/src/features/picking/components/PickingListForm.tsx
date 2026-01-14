@@ -1,5 +1,4 @@
 import {
-  Alert,
   Box,
   Button,
   Card,
@@ -22,6 +21,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import { CreatePickingListRequest } from '../types/pickingTypes';
 import { OrderFormSection } from './OrderFormSection';
+import { useToast } from '../../../hooks/useToast';
 
 const orderLineItemSchema = z.object({
   productCode: z.string().min(1, 'Product code is required'),
@@ -67,7 +67,7 @@ const STEPS = ['Load Information', 'Orders', 'Review'];
 
 export const PickingListForm = ({ onSubmit, isSubmitting = false }: PickingListFormProps) => {
   const [activeStep, setActiveStep] = useState(0);
-  const [draftSaved, setDraftSaved] = useState(false);
+  const { success } = useToast();
 
   const {
     control,
@@ -125,9 +125,8 @@ export const PickingListForm = ({ onSubmit, isSubmitting = false }: PickingListF
   const saveDraft = useCallback(() => {
     const formValues = watch();
     localStorage.setItem('pickingListDraft', JSON.stringify(formValues));
-    setDraftSaved(true);
-    setTimeout(() => setDraftSaved(false), 2000);
-  }, [watch]);
+    success('Draft saved successfully');
+  }, [watch, success]);
 
   const handleNext = async () => {
     let isValid = false;
@@ -345,12 +344,6 @@ export const PickingListForm = ({ onSubmit, isSubmitting = false }: PickingListF
           Save Draft
         </Button>
       </Box>
-
-      {draftSaved && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          Draft saved successfully
-        </Alert>
-      )}
 
       <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
         {STEPS.map(label => (

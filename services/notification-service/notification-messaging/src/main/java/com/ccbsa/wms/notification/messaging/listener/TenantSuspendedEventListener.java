@@ -39,7 +39,7 @@ public class TenantSuspendedEventListener {
     private final CreateNotificationCommandHandler createNotificationCommandHandler;
     private final TenantServicePort tenantServicePort;
 
-    @KafkaListener(topics = "tenant-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    @KafkaListener(topics = "tenant-events", groupId = "notification-service-tenant-suspended", containerFactory = "externalEventKafkaListenerContainerFactory")
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
                        @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         log.info("Received event on topic {}: eventData keys={}, headerType={}, @class={}", topic, eventData.keySet(), eventType, eventData.get("@class"));

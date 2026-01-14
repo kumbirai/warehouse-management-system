@@ -125,8 +125,8 @@ public class PickingListReferenceGeneratorAdapter implements PickingListReferenc
         });
     }
 
-    @SuppressFBWarnings(value = {"SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE", "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING"},
-            justification = "Schema name is validated against expected patterns and escaped")
+    @SuppressFBWarnings(value = {"SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
+            "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING"}, justification = "Schema name is validated against expected patterns and escaped")
     private void executeSetSearchPath(Connection connection, String schemaName) {
         try (PreparedStatement stmt = connection.prepareStatement(String.format("SET search_path TO %s", escapeIdentifier(schemaName)))) {
             stmt.execute();
@@ -137,8 +137,8 @@ public class PickingListReferenceGeneratorAdapter implements PickingListReferenc
         }
     }
 
-    @SuppressFBWarnings(value = {"SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE", "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING"},
-            justification = "Schema name is validated against expected patterns and escaped")
+    @SuppressFBWarnings(value = {"SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
+            "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING"}, justification = "Schema name is validated against expected patterns and escaped")
     private void createCounterTableIfNotExists(Connection connection, String schemaName) throws SQLException {
         String escapedSchema = escapeIdentifier(schemaName);
         String sql = String.format("CREATE TABLE IF NOT EXISTS %s.picking_list_reference_counters (" + "key VARCHAR(255) PRIMARY KEY, " + "sequence INTEGER NOT NULL DEFAULT 0, "
@@ -149,8 +149,8 @@ public class PickingListReferenceGeneratorAdapter implements PickingListReferenc
         }
     }
 
-    @SuppressFBWarnings(value = {"SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE", "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING"},
-            justification = "Schema name is validated against expected patterns and escaped")
+    @SuppressFBWarnings(value = {"SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE",
+            "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING"}, justification = "Schema name is validated against expected patterns and escaped")
     private int getCurrentSequence(Connection connection, String key, String schemaName) throws SQLException {
         String escapedSchema = escapeIdentifier(schemaName);
         String sql = String.format("SELECT sequence FROM %s.picking_list_reference_counters WHERE key = ?", escapedSchema);
@@ -166,8 +166,9 @@ public class PickingListReferenceGeneratorAdapter implements PickingListReferenc
         return 0; // First sequence for this key
     }
 
-    @SuppressFBWarnings(value = {"SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE", "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING", "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"},
-            justification = "Schema name is validated against expected patterns and escaped. Try-with-resources null check is implicit and safe")
+    @SuppressFBWarnings(value = {"SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE", "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING",
+            "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"}, justification = "Schema name is validated against expected patterns and escaped. Try-with-resources null check is "
+            + "implicit and safe")
     private void updateCounter(Connection connection, String key, int sequence, String schemaName) throws SQLException {
         String escapedSchema = escapeIdentifier(schemaName);
         // Try UPDATE first

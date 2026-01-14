@@ -211,8 +211,7 @@ public class PickingListRepositoryAdapter implements PickingListRepository {
     }
 
     @Override
-    @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE",
-            justification = "Local variable may appear unused but is necessary for query execution side effects")
+    @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE", justification = "Local variable may appear unused but is necessary for query execution side effects")
     public Optional<PickingList> findByIdAndTenantId(PickingListId id, TenantId tenantId) {
         TenantId contextTenantId = TenantContext.getTenantId();
         if (contextTenantId == null) {
@@ -310,8 +309,9 @@ public class PickingListRepositoryAdapter implements PickingListRepository {
                 // Hibernate will merge the loaded lineItems with the already-loaded orders
                 // The query execution loads lineItems into persistence context
                 // Force execution and initialization by accessing the collection
-                @SuppressFBWarnings(value = {"RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT", "DLS_DEAD_LOCAL_STORE"},
-                        justification = "size() call is intentional to force query execution and initialize lazy-loaded collections. Variable intentionally unused.")
+                @SuppressFBWarnings(value = {"RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT",
+                        "DLS_DEAD_LOCAL_STORE"}, justification = "size() call is intentional to force query execution and initialize lazy-loaded collections. Variable "
+                        + "intentionally unused.")
                 int size = ordersWithLineItems.size(); // Force execution and initialization
                 // size is intentionally unused - query execution is the side effect
             }

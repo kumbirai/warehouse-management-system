@@ -1,5 +1,5 @@
 import { Button } from '@mui/material';
-import { Edit as EditIcon } from '@mui/icons-material';
+import { Add as AddIcon, Edit as EditIcon } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { DetailPageLayout } from '../../../components/layouts';
@@ -44,6 +44,62 @@ export const LocationDetailPage = () => {
       ['SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER'].includes(role)
     ) ?? false;
 
+  const canCreate =
+    user?.roles?.some(role =>
+      ['SYSTEM_ADMIN', 'TENANT_ADMIN', 'WAREHOUSE_MANAGER', 'LOCATION_MANAGER'].includes(role)
+    ) ?? false;
+
+  // Determine next location type and parent for create button
+  const getCreateButtonInfo = () => {
+    if (!location) return null;
+
+    const locationType = location.type?.toUpperCase();
+    let nextType: string;
+    let parentLocationId: string;
+    let buttonLabel: string;
+
+    if (locationType === 'BIN') {
+      // For bins, create sibling (same parent)
+      nextType = 'BIN';
+      parentLocationId = location.parentLocationId || '';
+      buttonLabel = 'Create Sibling Bin';
+    } else {
+      // For non-bins, create child
+      switch (locationType) {
+        case 'WAREHOUSE':
+          nextType = 'ZONE';
+          break;
+        case 'ZONE':
+          nextType = 'AISLE';
+          break;
+        case 'AISLE':
+          nextType = 'RACK';
+          break;
+        case 'RACK':
+          nextType = 'BIN';
+          break;
+        default:
+          return null;
+      }
+      parentLocationId = location.locationId;
+      buttonLabel = `Create Child ${nextType}`;
+    }
+
+    return { nextType, parentLocationId, buttonLabel };
+  };
+
+  const createButtonInfo = getCreateButtonInfo();
+
+  const handleCreate = () => {
+    if (!createButtonInfo) return;
+
+    // Navigate to create page with query parameters
+    const params = new URLSearchParams();
+    params.set('parentLocationId', createButtonInfo.parentLocationId);
+    params.set('type', createButtonInfo.nextType);
+    navigate(`${Routes.locationCreate}?${params.toString()}`);
+  };
+
   return (
     <DetailPageLayout
       breadcrumbs={getBreadcrumbs.locationDetail(location?.code || '...')}
@@ -53,6 +109,15 @@ export const LocationDetailPage = () => {
           <Button variant="outlined" onClick={() => navigate(Routes.locations)}>
             Back to List
           </Button>
+          {canCreate && createButtonInfo && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreate}
+            >
+              {createButtonInfo.buttonLabel}
+            </Button>
+          )}
           {canEdit && locationId && (
             <Button
               variant="outlined"

@@ -956,7 +956,8 @@ public class ReturnInitiatedEvent extends ReturnsEvent<Return> {
 
 ### Domain Service
 
-While domain services are generally avoided in favor of rich domain models, we may need a domain service for complex return quantity calculations or validations that span multiple aggregates.
+While domain services are generally avoided in favor of rich domain models, we may need a domain service for complex return quantity calculations or validations that span multiple
+aggregates.
 
 **For now, keep logic within Return aggregate.**
 
@@ -1358,6 +1359,7 @@ public class Return extends AggregateRoot<ReturnId> {
 ```
 
 Due to character limits, I'll continue with the remaining sections in the next response. The plan continues with:
+
 - ReturnLineItem implementation
 - Application Service layer (Commands, Handlers, Ports)
 - Application Layer (REST Controllers, DTOs)
@@ -1606,7 +1608,8 @@ public class ReturnLineItem extends BaseEntity<ReturnLineItemId> {
 
 #### 2.1 Command DTO
 
-**File:** `services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/dto/HandlePartialOrderAcceptanceCommand.java`
+**File:**
+`services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/dto/HandlePartialOrderAcceptanceCommand.java`
 
 ```java
 package com.ccbsa.wms.returns.application.service.command.dto;
@@ -1651,7 +1654,8 @@ public class HandlePartialOrderAcceptanceCommand {
 
 #### 2.2 Result DTO
 
-**File:** `services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/dto/HandlePartialOrderAcceptanceResult.java`
+**File:**
+`services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/dto/HandlePartialOrderAcceptanceResult.java`
 
 ```java
 package com.ccbsa.wms.returns.application.service.command.dto;
@@ -1878,7 +1882,8 @@ public class HandlePartialOrderAcceptanceResult {
 
 #### 2.3 Command Handler
 
-**File:** `services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/HandlePartialOrderAcceptanceCommandHandler.java`
+**File:**
+`services/returns-service/returns-domain/returns-application-service/src/main/java/com/ccbsa/wms/returns/application/service/command/HandlePartialOrderAcceptanceCommandHandler.java`
 
 ```java
 package com.ccbsa.wms.returns.application.service.command;
@@ -2112,6 +2117,7 @@ public interface PickingServicePort {
 ---
 
 Due to length constraints, the plan continues with:
+
 - Layer 3: Application Layer (REST Controllers, DTOs, Mappers)
 - Layer 4: Data Access Layer (JPA Entities, Repository Adapters)
 - Layer 5: Messaging (Event Publishers, Listeners)
@@ -2670,6 +2676,7 @@ void initiatePartialReturn_WithAllItemsReturned_ShouldThrowException() {
 ### AC1: System records accepted quantities per order line ✅
 
 **Implementation:**
+
 - `ReturnLineItem` stores `acceptedQuantity`
 - `HandlePartialOrderAcceptanceCommand` includes accepted quantities per line
 - Database persistence via `ReturnEntity` and `ReturnLineItemEntity`
@@ -2677,6 +2684,7 @@ void initiatePartialReturn_WithAllItemsReturned_ShouldThrowException() {
 ### AC2: System identifies returned quantities ✅
 
 **Implementation:**
+
 - `ReturnLineItem.calculateReturnedQuantity()` computes: picked - accepted
 - Returned quantity automatically calculated and validated
 - Stored in domain model and database
@@ -2684,6 +2692,7 @@ void initiatePartialReturn_WithAllItemsReturned_ShouldThrowException() {
 ### AC3: System updates order status accordingly ✅
 
 **Implementation:**
+
 - `ReturnInitiatedEvent` published after successful creation
 - Stock Management Service listens and updates stock levels
 - Order status updated via event choreography
@@ -2691,6 +2700,7 @@ void initiatePartialReturn_WithAllItemsReturned_ShouldThrowException() {
 ### AC4: System initiates returns process for unaccepted items ✅
 
 **Implementation:**
+
 - `Return.initiatePartialReturn()` creates Return aggregate
 - Line items with returnedQuantity > 0 flagged for return processing
 - Return reason required for returned items
@@ -2698,6 +2708,7 @@ void initiatePartialReturn_WithAllItemsReturned_ShouldThrowException() {
 ### AC5: System publishes ReturnInitiatedEvent for partial returns ✅
 
 **Implementation:**
+
 - Event published in `Return.initiatePartialReturn()`
 - Event includes return metadata (totals, line counts)
 - Event consumed by Stock Management, Location Management, Notification services
@@ -2705,6 +2716,7 @@ void initiatePartialReturn_WithAllItemsReturned_ShouldThrowException() {
 ### AC6: System records customer signature and acceptance timestamp ✅
 
 **Implementation:**
+
 - `CustomerSignature` value object stores signature data (Base64) and timestamp
 - Validation ensures signature is not null or empty
 - Signature stored in database via `ReturnEntity`
@@ -2712,6 +2724,7 @@ void initiatePartialReturn_WithAllItemsReturned_ShouldThrowException() {
 ### AC7: System supports multiple product lines per order ✅
 
 **Implementation:**
+
 - `Return` aggregate contains `List<ReturnLineItem>`
 - Each line item represents one product
 - Validation ensures at least one line item exists
@@ -2721,6 +2734,7 @@ void initiatePartialReturn_WithAllItemsReturned_ShouldThrowException() {
 ## Implementation Checklist
 
 ### Domain Core ✅
+
 - [x] Return aggregate
 - [x] ReturnLineItem entity
 - [x] Value objects (ReturnId, ReturnStatus, ReturnReason, CustomerSignature)
@@ -2728,6 +2742,7 @@ void initiatePartialReturn_WithAllItemsReturned_ShouldThrowException() {
 - [x] Business logic validation
 
 ### Application Service ✅
+
 - [x] HandlePartialOrderAcceptanceCommand
 - [x] HandlePartialOrderAcceptanceResult
 - [x] HandlePartialOrderAcceptanceCommandHandler
@@ -2735,6 +2750,7 @@ void initiatePartialReturn_WithAllItemsReturned_ShouldThrowException() {
 - [x] PickingServicePort port
 
 ### Application Layer ✅
+
 - [x] HandlePartialOrderAcceptanceRequestDTO
 - [x] HandlePartialOrderAcceptanceResponseDTO
 - [x] ReturnCommandController
@@ -2742,12 +2758,14 @@ void initiatePartialReturn_WithAllItemsReturned_ShouldThrowException() {
 - [x] OpenAPI documentation
 
 ### Data Access (Covered in separate implementation)
+
 - [ ] ReturnEntity
 - [ ] ReturnLineItemEntity
 - [ ] ReturnRepositoryAdapter
 - [ ] JPA mappings
 
 ### Frontend ✅
+
 - [x] PartialOrderAcceptancePage component
 - [x] useHandlePartialOrderAcceptance hook
 - [x] partialOrderAcceptanceService
@@ -2756,6 +2774,7 @@ void initiatePartialReturn_WithAllItemsReturned_ShouldThrowException() {
 - [x] Signature capture
 
 ### Testing
+
 - [ ] Domain core unit tests
 - [ ] Command handler unit tests
 - [ ] REST controller integration tests
@@ -2763,6 +2782,7 @@ void initiatePartialReturn_WithAllItemsReturned_ShouldThrowException() {
 - [ ] E2E tests
 
 ### Documentation ✅
+
 - [x] Implementation plan
 - [x] API documentation (OpenAPI)
 - [x] Architecture decisions

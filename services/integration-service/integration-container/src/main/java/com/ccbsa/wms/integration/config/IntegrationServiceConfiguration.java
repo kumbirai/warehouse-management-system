@@ -15,10 +15,19 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.core5.util.Timeout;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.util.backoff.BackOff;
 import org.springframework.util.backoff.ExponentialBackOff;
+import org.springframework.web.client.RestTemplate;
 
 import com.ccbsa.common.messaging.config.KafkaConfig;
 import com.ccbsa.wms.common.dataaccess.config.MultiTenantDataAccessConfig;
@@ -85,7 +94,7 @@ public class IntegrationServiceConfiguration {
     public ConsumerFactory<String, Object> externalEventConsumerFactory(@Qualifier("kafkaObjectMapper") ObjectMapper kafkaObjectMapper) {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "integration-service");
+        // GROUP_ID_CONFIG removed - each listener specifies its own unique group ID in @KafkaListener annotation
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -145,6 +154,41 @@ public class IntegrationServiceConfiguration {
         backOff.setMaxInterval(maxInterval);
         backOff.setMaxElapsedTime(maxInterval * maxRetries);
         return backOff;
+    }
+
+    /**
+     * RestTemplate bean for external service calls (e.g., Returns Service, D365).
+     * <p>
+     * Configured with @LoadBalanced to enable Eureka service discovery. Uses service names
+     * (e.g., http://returns-service) which are resolved via Eureka registry.
+     * <p>
+     * Configured with connection pooling and timeouts for production use.
+     *
+     * @param builder RestTemplateBuilder
+     * @return RestTemplate configured with LoadBalancer for service discovery
+     */
+    @Bean
+    @LoadBalanced
+    public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        // Create connection pool manager
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+        connectionManager.setMaxTotal(200);
+        connectionManager.setDefaultMaxPerRoute(50);
+
+        // Configure request timeouts using HttpClient 5 API
+        @SuppressWarnings("deprecation") RequestConfig requestConfig =
+                RequestConfig.custom().setConnectTimeout(Timeout.ofSeconds(10)).setResponseTimeout(Timeout.ofSeconds(30)).setConnectionRequestTimeout(Timeout.ofSeconds(10))
+                        .build();
+
+        // Create HTTP client with connection pooling
+        HttpClient httpClient =
+                HttpClientBuilder.create().setConnectionManager(connectionManager).setDefaultRequestConfig(requestConfig).evictIdleConnections(Timeout.ofSeconds(30))
+                        .evictExpiredConnections().build();
+
+        // Create request factory with pooled HTTP client
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+
+        return builder.requestFactory(() -> requestFactory).build();
     }
 }
 

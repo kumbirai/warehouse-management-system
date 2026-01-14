@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Console Appender - Direct all logging to console -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Root logger - Set to INFO level and output to console -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+    <!-- Application package logging - Can be adjusted as needed -->
+    <logger name="com.ccbsa.wms" level="DEBUG" />
+    
+    <!-- Spring Framework logging - Reduce noise -->
+    <logger name="org.springframework" level="INFO" />
+    
+    <!-- Spring Security logging - WARN to avoid exposing security details -->
+    <logger name="org.springframework.security" level="WARN" />
+    
+    <!-- Keycloak logging - WARN to reduce authentication noise -->
+    <logger name="org.keycloak" level="WARN" />
+    
+    <!-- HTTP Client logging - INFO for visibility -->
+    <logger name="org.springframework.web" level="INFO" />
+    <logger name="org.springframework.web.client" level="INFO" />
+</configuration>

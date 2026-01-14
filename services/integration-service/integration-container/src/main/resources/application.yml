@@ -118,6 +118,22 @@ eureka:
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
 
+# Returns Service Configuration
+# Note: Uses Eureka service discovery via @LoadBalanced RestTemplate
+# Service name is resolved through Eureka registry (no port needed)
+returns:
+  service:
+    url: ${RETURNS_SERVICE_URL:http://returns-service}
+
+# D365 Configuration
+d365:
+  token-endpoint: ${D365_TOKEN_ENDPOINT:}
+  client-id: ${D365_CLIENT_ID:}
+  client-secret: ${D365_CLIENT_SECRET:}
+  resource: ${D365_RESOURCE:}
+  odata:
+    base-url: ${D365_ODATA_BASE_URL:}
+
 # Management endpoints
 management:
   endpoints:

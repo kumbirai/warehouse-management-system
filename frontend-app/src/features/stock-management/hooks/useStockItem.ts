@@ -1,6 +1,6 @@
-import {useQuery} from '@tanstack/react-query';
-import {useAuth} from '../../../hooks/useAuth';
-import {stockManagementService} from '../services/stockManagementService';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../../../hooks/useAuth';
+import { stockManagementService } from '../services/stockManagementService';
 
 /**
  * Hook: useStockItem

@@ -299,6 +299,9 @@ public class CreateLocationCommandHandler {
     private String generatePath(Location location, CreateLocationCommand command) {
         String locationCode = location.getCode() != null ? location.getCode().getValue() : null;
         if (locationCode == null || locationCode.trim().isEmpty()) {
+            if (location.getBarcode() == null) {
+                throw new IllegalStateException("Location barcode is required when code is not available");
+            }
             locationCode = location.getBarcode().getValue();
         }
 
@@ -338,6 +341,9 @@ public class CreateLocationCommandHandler {
 
         String locationCode = parentLocation.getCode() != null ? parentLocation.getCode().getValue() : null;
         if (locationCode == null || locationCode.trim().isEmpty()) {
+            if (parentLocation.getBarcode() == null) {
+                throw new IllegalStateException("Parent location barcode is required when code is not available");
+            }
             locationCode = parentLocation.getBarcode().getValue();
         }
 

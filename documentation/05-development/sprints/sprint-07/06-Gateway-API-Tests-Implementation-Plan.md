@@ -9,7 +9,8 @@
 
 ## Overview
 
-This implementation plan covers **comprehensive end-to-end API testing** for all Returns Management Service endpoints introduced in Sprint 7. The tests validate the complete flow from HTTP request to database persistence and event publishing.
+This implementation plan covers **comprehensive end-to-end API testing** for all Returns Management Service endpoints introduced in Sprint 7. The tests validate the complete flow
+from HTTP request to database persistence and event publishing.
 
 ### Scope
 
@@ -1153,12 +1154,14 @@ mvn clean verify jacoco:report
 ## Implementation Checklist
 
 ### Test Data Builders
+
 - [ ] Create `ReturnsTestDataBuilder`
 - [ ] Create `DamageAssessmentTestDataBuilder`
 - [ ] Create `ReconciliationTestDataBuilder`
 - [ ] Create helper methods for common scenarios
 
 ### DTOs for Tests
+
 - [ ] Create `ProcessPartialReturnRequest`
 - [ ] Create `ProcessFullReturnRequest`
 - [ ] Create `RecordDamageAssessmentRequest`
@@ -1166,6 +1169,7 @@ mvn clean verify jacoco:report
 - [ ] Create query result DTOs
 
 ### Returns Service Tests
+
 - [ ] Test partial return processing (US-7.1.1)
 - [ ] Test full return processing (US-7.2.1)
 - [ ] Test validation scenarios
@@ -1173,12 +1177,14 @@ mvn clean verify jacoco:report
 - [ ] Test filtering and pagination
 
 ### Damage Assessment Tests
+
 - [ ] Test damage assessment creation (US-7.3.1)
 - [ ] Test photo evidence validation
 - [ ] Test insurance claim requirements
 - [ ] Test condition breakdown calculation
 
 ### Reconciliation Tests
+
 - [ ] Test D365 sync after partial return (US-7.5.1)
 - [ ] Test D365 sync after full return
 - [ ] Test retry mechanism
@@ -1186,12 +1192,14 @@ mvn clean verify jacoco:report
 - [ ] Test reconciliation summary
 
 ### Test Helpers
+
 - [ ] Create `ReturnsHelper` for common operations
 - [ ] Create `ReconciliationHelper` for D365 operations
 - [ ] Add async waiting utilities
 - [ ] Add assertion helpers
 
 ### CI Integration
+
 - [ ] Configure Maven Surefire plugin
 - [ ] Set up parallel test execution
 - [ ] Configure test coverage reporting

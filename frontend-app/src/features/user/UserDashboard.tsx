@@ -1,9 +1,9 @@
-import {Box, Button, Card, CardContent, Grid, Paper, Typography} from '@mui/material';
-import {Link as RouterLink} from 'react-router-dom';
-import {useAuth} from '../../hooks/useAuth';
-import {DashboardPageLayout} from '../../components/layouts';
-import {ExpiryAlertCard} from '../stock-management/components/ExpiryAlertCard';
-import {Routes} from '../../utils/navigationUtils';
+import { Box, Button, Card, CardContent, Grid, Paper, Typography } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+import { DashboardPageLayout } from '../../components/layouts';
+import { ExpiryAlertCard } from '../stock-management/components/ExpiryAlertCard';
+import { Routes } from '../../utils/navigationUtils';
 
 /**
  * Tenant User dashboard component.
@@ -198,14 +198,96 @@ export const UserDashboard = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Returns
+                Expiring Stock
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Process returns and manage return documentation.
+                Monitor stock expiration dates and generate alerts for expiring inventory.
               </Typography>
-              <Button sx={{ mt: 2 }} size="small" variant="outlined" disabled>
-                Coming Soon
+              <Button
+                sx={{ mt: 2 }}
+                size="small"
+                variant="contained"
+                component={RouterLink}
+                to={Routes.expiringStock}
+              >
+                View Expiring Stock
               </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Restock Requests
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Monitor and manage automated restock requests when stock falls below minimum levels.
+              </Typography>
+              <Button
+                sx={{ mt: 2 }}
+                size="small"
+                variant="contained"
+                component={RouterLink}
+                to={Routes.restockRequests}
+              >
+                View Restock Requests
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Returns Management
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Process returns, record damage assessments, assign locations, and reconcile with
+                D365.
+              </Typography>
+              <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Button
+                  size="small"
+                  variant="contained"
+                  component={RouterLink}
+                  to={Routes.partialOrderAcceptance}
+                >
+                  Partial Acceptance
+                </Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  component={RouterLink}
+                  to={Routes.fullOrderReturn}
+                >
+                  Full Return
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  component={RouterLink}
+                  to={Routes.damageAssessment}
+                >
+                  Damage Assessment
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  component={RouterLink}
+                  to={Routes.returnLocationAssignment}
+                >
+                  Location Assignment
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  component={RouterLink}
+                  to={Routes.returnsReconciliation}
+                >
+                  D365 Reconciliation
+                </Button>
+              </Box>
             </CardContent>
           </Card>
         </Grid>

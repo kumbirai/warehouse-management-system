@@ -1,8 +1,8 @@
-import axios, {AxiosError, AxiosInstance, InternalAxiosRequestConfig} from 'axios';
-import {LoginResponse} from './authService';
-import {logger} from '../utils/logger';
-import {tokenStorage} from './tokenStorage';
-import {correlationIdService} from './correlationIdService';
+import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { LoginResponse } from './authService';
+import { logger } from '../utils/logger';
+import { tokenStorage } from './tokenStorage';
+import { correlationIdService } from './correlationIdService';
 
 /**
  * Extended AxiosInstance with internal refresh promise tracking.

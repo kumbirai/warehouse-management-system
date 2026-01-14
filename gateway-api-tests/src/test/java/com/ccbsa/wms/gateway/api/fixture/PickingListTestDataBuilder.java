@@ -44,8 +44,9 @@ public class PickingListTestDataBuilder {
 
     public static CreatePickingListRequest buildCreatePickingListRequestWithMultipleOrders() {
         List<LoadRequest> loads = new ArrayList<>();
-        LoadRequest load1 = buildLoadRequest("LOAD-001");
-        LoadRequest load2 = buildLoadRequest("LOAD-002");
+        // Use unique load numbers to avoid duplicate key constraint violations
+        LoadRequest load1 = buildLoadRequest(); // Uses faker to generate unique load number
+        LoadRequest load2 = buildLoadRequest(); // Uses faker to generate unique load number
         loads.add(load1);
         loads.add(load2);
 

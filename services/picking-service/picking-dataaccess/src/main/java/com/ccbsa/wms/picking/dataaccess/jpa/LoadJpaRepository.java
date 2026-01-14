@@ -23,4 +23,6 @@ public interface LoadJpaRepository extends JpaRepository<LoadEntity, UUID> {
     List<LoadEntity> findByTenantIdAndStatusOrderByCreatedAtDesc(String tenantId, LoadStatus status, Pageable pageable);
 
     List<LoadEntity> findByTenantIdOrderByCreatedAtDesc(String tenantId, Pageable pageable);
+
+    List<LoadEntity> findByPickingListIdAndTenantId(UUID pickingListId, String tenantId);
 }

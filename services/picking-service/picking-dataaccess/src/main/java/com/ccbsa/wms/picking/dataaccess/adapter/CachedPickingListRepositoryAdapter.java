@@ -10,6 +10,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.ccbsa.common.cache.decorator.CachedRepositoryDecorator;
+import com.ccbsa.common.cache.key.CacheKeyGenerator;
+import com.ccbsa.common.domain.AggregateRoot;
 import com.ccbsa.common.domain.valueobject.TenantId;
 import com.ccbsa.wms.picking.application.service.port.repository.PickingListRepository;
 import com.ccbsa.wms.picking.domain.core.entity.PickingList;
@@ -38,14 +40,43 @@ public class CachedPickingListRepositoryAdapter extends CachedRepositoryDecorato
 
     @Override
     public void save(PickingList pickingList) {
+        // Save to database first (source of truth)
         baseRepository.save(pickingList);
+        
+        // Update cache after database save (write-through pattern)
+        // We update cache directly here since we've already saved to database
         if (pickingList.getTenantId() != null && pickingList.getId() != null) {
             UUID entityId = pickingList.getId().getValue();
             if (entityId != null) {
-                saveWithCache(pickingList.getTenantId(), entityId, pickingList, obj -> pickingList);
+                String cacheKey = CacheKeyGenerator.forEntity(pickingList.getTenantId(), "picking-lists", entityId);
+                try {
+                    // Clear domain events before caching (domain events are transient)
+                    if (pickingList instanceof AggregateRoot) {
+                        ((AggregateRoot<?>) pickingList).clearDomainEvents();
+                    }
+                    // Update cache with saved entity
+                    redisTemplate.opsForValue().set(cacheKey, pickingList, Duration.ofMinutes(30));
+                    log.trace("Cache updated (write-through) for picking list: {}", entityId);
+                } catch (Exception e) {
+                    // Cache update failure shouldn't break the application
+                    log.warn("Cache update failed for picking list: {}. Error: {}", entityId, e.getMessage());
+                }
             } else {
                 log.warn("Cannot cache picking list with null entityId. PickingListId: {}", pickingList.getId());
             }
+        }
+    }
+    
+    /**
+     * Evicts cache entry for a picking list.
+     * Useful for explicit cache invalidation when status changes.
+     *
+     * @param pickingListId Picking list ID
+     * @param tenantId Tenant ID
+     */
+    public void evictCache(PickingListId pickingListId, TenantId tenantId) {
+        if (pickingListId != null && pickingListId.getValue() != null && tenantId != null) {
+            evictFromCache(tenantId, pickingListId.getValue());
         }
     }
 

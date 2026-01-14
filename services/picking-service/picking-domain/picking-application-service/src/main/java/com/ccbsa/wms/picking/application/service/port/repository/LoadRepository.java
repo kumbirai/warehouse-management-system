@@ -60,4 +60,14 @@ public interface LoadRepository {
      * @return Optional PickingListId if found
      */
     Optional<PickingListId> findPickingListIdByLoadId(LoadId loadId, TenantId tenantId);
+
+    /**
+     * Finds all loads for a picking list by picking list ID and tenant ID.
+     * This method queries loads directly from the database to ensure fresh data.
+     *
+     * @param pickingListId Picking list identifier
+     * @param tenantId      Tenant identifier
+     * @return List of Load aggregates for the picking list
+     */
+    List<Load> findByPickingListIdAndTenantId(PickingListId pickingListId, TenantId tenantId);
 }

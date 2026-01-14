@@ -269,14 +269,6 @@ export const ConsignmentDetail = ({
           </Paper>
         </Grid>
       )}
-
-      {consignment.status === 'CONFIRMED' && (
-        <Grid item xs={12}>
-          <Alert severity="success">
-            This consignment has been confirmed and stock has been updated.
-          </Alert>
-        </Grid>
-      )}
     </Grid>
   );
 };

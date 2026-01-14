@@ -34,6 +34,7 @@
 ### Business Context
 
 After processing returns (partial, full, or damage assessments), the system must intelligently assign returned products to appropriate warehouse locations based on:
+
 - Product condition (GOOD, DAMAGED, EXPIRED, QUARANTINE, WRITE_OFF)
 - Location type (Available stock, Quarantine zone, Disposal area)
 - Warehouse capacity and organization
@@ -524,31 +525,31 @@ const LocationAssignmentConfirmation: React.FC<LocationAssignmentConfirmationPro
 #### User Flow
 
 1. **View Pending Returns**
-   - Navigate to Returns > Location Assignment
-   - See summary of pending returns by condition
-   - Filter by return type, condition, or date
+    - Navigate to Returns > Location Assignment
+    - See summary of pending returns by condition
+    - Filter by return type, condition, or date
 
 2. **Auto-Assignment (Default)**
-   - Click "Auto-assign" button for a return
-   - System intelligently assigns locations based on:
-     - Product condition
-     - FEFO for good condition returns
-     - Quarantine zones for damaged products
-     - Disposal areas for expired/write-off
-   - View assignment confirmation with location details
-   - Confirm or modify assignments
+    - Click "Auto-assign" button for a return
+    - System intelligently assigns locations based on:
+        - Product condition
+        - FEFO for good condition returns
+        - Quarantine zones for damaged products
+        - Disposal areas for expired/write-off
+    - View assignment confirmation with location details
+    - Confirm or modify assignments
 
 3. **Manual Assignment (Override)**
-   - Click "Manual assign" for custom routing
-   - Select specific locations for each line item
-   - System validates capacity and location type
-   - Confirm assignments
+    - Click "Manual assign" for custom routing
+    - Select specific locations for each line item
+    - System validates capacity and location type
+    - Confirm assignments
 
 4. **Assignment Confirmation**
-   - Review all assigned locations grouped by type
-   - See location codes and capacity utilization
-   - Confirm to trigger location assignment events
-   - Generate location labels for warehouse staff
+    - Review all assigned locations grouped by type
+    - See location codes and capacity utilization
+    - Confirm to trigger location assignment events
+    - Generate location labels for warehouse staff
 
 ---
 
@@ -559,7 +560,7 @@ const LocationAssignmentConfirmation: React.FC<LocationAssignmentConfirmationPro
 This user story is implemented primarily through **event-driven choreography**:
 
 1. **ReturnInitiatedEvent** (from Returns Service) → Location Management Service
-2. **ReturnProcessedEvent** (from Returns Service) → Location Management Service  
+2. **ReturnProcessedEvent** (from Returns Service) → Location Management Service
 3. **DamageRecordedEvent** (from Returns Service) → Location Management Service
 4. Location Management Service processes event and auto-assigns locations
 5. **ReturnLocationAssignedEvent** (from Location Management Service) → Stock Management Service
@@ -604,7 +605,8 @@ public class ReturnEventListener {
 
 ### Location Assignment Strategy (Domain Service)
 
-**Location:** `services/location-management-service/location-management-domain/location-management-domain-core/src/main/java/com/ccbsa/wms/location/domain/core/service/ReturnLocationAssignmentStrategy.java`
+**Location:**
+`services/location-management-service/location-management-domain/location-management-domain-core/src/main/java/com/ccbsa/wms/location/domain/core/service/ReturnLocationAssignmentStrategy.java`
 
 ```java
 public class ReturnLocationAssignmentStrategy {
@@ -724,7 +726,8 @@ public class ReturnLocationAssignmentStrategy {
 
 ### Domain Event
 
-**Location:** `services/location-management-service/location-management-domain/location-management-domain-core/src/main/java/com/ccbsa/wms/location/domain/core/event/ReturnLocationAssignedEvent.java`
+**Location:**
+`services/location-management-service/location-management-domain/location-management-domain-core/src/main/java/com/ccbsa/wms/location/domain/core/event/ReturnLocationAssignedEvent.java`
 
 ```java
 @Getter
@@ -756,6 +759,7 @@ public class ReturnLocationAssignedEvent extends DomainEvent<ReturnLocationAssig
 ```
 
 **Consumed By:**
+
 - **Stock Management Service** - Updates stock levels at assigned locations
 - **Returns Service** - Updates return status to LOCATION_ASSIGNED
 - **Notification Service** - Notifies warehouse staff of location assignments
@@ -871,14 +875,14 @@ void assignLocationByCondition_DamagedCondition_ShouldAssignToQuarantine() {
 
 ## Acceptance Criteria Validation
 
-| # | Acceptance Criterion | Implementation Status | Validation |
-|---|---------------------|----------------------|------------|
-| 1 | System automatically assigns good condition products to available stock locations using FEFO | ✅ Implemented | ReturnLocationAssignmentStrategy.assignToAvailableStock() uses FEFO repository query |
-| 2 | System routes damaged products to quarantine zone for inspection | ✅ Implemented | DAMAGED and QUARANTINE conditions routed to assignToQuarantineZone() |
-| 3 | System segregates expired products to dedicated disposal locations | ✅ Implemented | EXPIRED condition routed to assignToDisposalArea() with dedicated location type |
-| 4 | System assigns write-off products to disposal/scrap locations | ✅ Implemented | WRITE_OFF condition routed to assignToScrapLocation() |
-| 5 | System publishes LocationAssignedEvent after successful assignment | ✅ Implemented | ReturnLocationAssignedEvent published with all assignment details |
-| 6 | System validates location capacity before assignment | ✅ Implemented | location.hasCapacityFor(quantity) check in all assignment methods |
+| # | Acceptance Criterion                                                                         | Implementation Status | Validation                                                                           |
+|---|----------------------------------------------------------------------------------------------|-----------------------|--------------------------------------------------------------------------------------|
+| 1 | System automatically assigns good condition products to available stock locations using FEFO | ✅ Implemented         | ReturnLocationAssignmentStrategy.assignToAvailableStock() uses FEFO repository query |
+| 2 | System routes damaged products to quarantine zone for inspection                             | ✅ Implemented         | DAMAGED and QUARANTINE conditions routed to assignToQuarantineZone()                 |
+| 3 | System segregates expired products to dedicated disposal locations                           | ✅ Implemented         | EXPIRED condition routed to assignToDisposalArea() with dedicated location type      |
+| 4 | System assigns write-off products to disposal/scrap locations                                | ✅ Implemented         | WRITE_OFF condition routed to assignToScrapLocation()                                |
+| 5 | System publishes LocationAssignedEvent after successful assignment                           | ✅ Implemented         | ReturnLocationAssignedEvent published with all assignment details                    |
+| 6 | System validates location capacity before assignment                                         | ✅ Implemented         | location.hasCapacityFor(quantity) check in all assignment methods                    |
 
 ---
 

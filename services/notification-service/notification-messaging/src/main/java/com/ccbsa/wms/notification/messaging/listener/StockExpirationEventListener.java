@@ -41,7 +41,7 @@ public class StockExpirationEventListener {
 
     private final CreateNotificationCommandHandler createNotificationCommandHandler;
 
-    @KafkaListener(topics = "stock-management-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    @KafkaListener(topics = "stock-management-events", groupId = "notification-service-stock-expiration", containerFactory = "externalEventKafkaListenerContainerFactory")
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
                        @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
         boolean shouldAcknowledge = false;

@@ -35,10 +35,11 @@ spring:
         format_sql: true
   
   # Flyway Configuration
-  # Note: Flyway is disabled at startup since migrations are run programmatically
+  # Note: Flyway is enabled at startup to create validation tables in the public schema
+  # for Hibernate schema validation. Migrations are also run programmatically
   # in TenantSchemaCreatedEventListener when tenant schemas are created.
   flyway:
-    enabled: false
+    enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
   

@@ -38,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UserCreatedEventListener {
     private final CreateNotificationCommandHandler createNotificationCommandHandler;
 
-    @KafkaListener(topics = "user-events", groupId = "notification-service", containerFactory = "externalEventKafkaListenerContainerFactory")
+    @KafkaListener(topics = "user-events", groupId = "notification-service-user-created", containerFactory = "externalEventKafkaListenerContainerFactory")
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handle(@Payload Map<String, Object> eventData, @Header(value = "__TypeId__", required = false) String eventType,
                        @Header(value = KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {

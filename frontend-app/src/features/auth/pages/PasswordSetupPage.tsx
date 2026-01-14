@@ -1,9 +1,21 @@
-import {useState} from 'react';
-import {useNavigate, useSearchParams} from 'react-router-dom';
-import {Alert, Box, Button, Container, IconButton, InputAdornment, Link, Paper, TextField, Typography,} from '@mui/material';
-import {Visibility, VisibilityOff} from '@mui/icons-material';
-import {setupPassword, validatePasswordStrength} from '../services/passwordSetupService';
+import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  IconButton,
+  InputAdornment,
+  Link,
+  Paper,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { setupPassword, validatePasswordStrength } from '../services/passwordSetupService';
 import { logger } from '../../../utils/logger';
+import { Routes } from '../../../utils/navigationUtils';
 
 /**
  * Password setup page.
@@ -57,10 +69,7 @@ export const PasswordSetupPage = () => {
       await setupPassword(token, password, confirmPassword, key || undefined);
       setIsSuccess(true);
     } catch (err: unknown) {
-      logger.error(
-        'Password setup error',
-        err instanceof Error ? err : new Error(String(err))
-      );
+      logger.error('Password setup error', err instanceof Error ? err : new Error(String(err)));
       const errorMessage =
         err instanceof Error
           ? err.message
@@ -90,7 +99,7 @@ export const PasswordSetupPage = () => {
               Your password has been set successfully! You can now log in with your new password.
             </Alert>
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Button variant="contained" onClick={() => navigate('/login')}>
+              <Button variant="contained" onClick={() => navigate(Routes.login)}>
                 Go to Login
               </Button>
             </Box>
@@ -191,7 +200,7 @@ export const PasswordSetupPage = () => {
               <Link
                 component="button"
                 variant="body2"
-                onClick={() => navigate('/login')}
+                onClick={() => navigate(Routes.login)}
                 sx={{ cursor: 'pointer' }}
               >
                 Back to Login

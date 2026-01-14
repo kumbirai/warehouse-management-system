@@ -1,8 +1,9 @@
-import {useEffect, useState} from 'react';
-import {useNavigate, useSearchParams} from 'react-router-dom';
-import {Alert, Box, Button, CircularProgress, Container, Paper, Typography} from '@mui/material';
-import {verifyEmail} from '../services/verificationService';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Alert, Box, Button, CircularProgress, Container, Paper, Typography } from '@mui/material';
+import { verifyEmail } from '../services/verificationService';
 import { logger } from '../../../utils/logger';
+import { Routes } from '../../../utils/navigationUtils';
 
 /**
  * Email verification page.
@@ -100,7 +101,7 @@ export const EmailVerificationPage = () => {
                 {message}
               </Alert>
               <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-                <Button variant="contained" onClick={() => navigate('/login')}>
+                <Button variant="contained" onClick={() => navigate(Routes.login)}>
                   Go to Login
                 </Button>
               </Box>
@@ -116,7 +117,7 @@ export const EmailVerificationPage = () => {
                 <Typography variant="body2" color="text.secondary">
                   If you need a new verification email, please contact your system administrator.
                 </Typography>
-                <Button variant="outlined" onClick={() => navigate('/login')}>
+                <Button variant="outlined" onClick={() => navigate(Routes.login)}>
                   Back to Login
                 </Button>
               </Box>

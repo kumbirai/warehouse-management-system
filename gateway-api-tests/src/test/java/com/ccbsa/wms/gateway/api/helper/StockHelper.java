@@ -11,18 +11,17 @@ import com.ccbsa.wms.gateway.api.dto.CreateConsignmentRequest;
 import com.ccbsa.wms.gateway.api.dto.CreateConsignmentResponse;
 import com.ccbsa.wms.gateway.api.fixture.ConsignmentTestDataBuilder;
 
+import lombok.RequiredArgsConstructor;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Helper for stock-related test operations.
  */
+@RequiredArgsConstructor
 public class StockHelper {
 
     private final WebTestClient webTestClient;
-
-    public StockHelper(WebTestClient webTestClient) {
-        this.webTestClient = webTestClient;
-    }
 
     /**
      * Create consignment and return consignment ID.

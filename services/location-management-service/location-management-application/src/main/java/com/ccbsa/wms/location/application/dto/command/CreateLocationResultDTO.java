@@ -2,6 +2,8 @@ package com.ccbsa.wms.location.application.dto.command;
 
 import java.time.LocalDateTime;
 
+import com.ccbsa.wms.location.application.dto.common.LocationCoordinatesDTO;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

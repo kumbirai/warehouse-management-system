@@ -27,18 +27,6 @@ public final class QueryStockAvailabilityForProductsQuery {
     private final Map<ProductId, Integer> productQuantities; // ProductId -> required quantity
 
     /**
-     * Returns a defensive copy of the product quantities map to prevent external modification.
-     *
-     * @return unmodifiable copy of the product quantities map
-     */
-    public Map<ProductId, Integer> getProductQuantities() {
-        if (productQuantities == null) {
-            return Collections.emptyMap();
-        }
-        return Collections.unmodifiableMap(new HashMap<>(productQuantities));
-    }
-
-    /**
      * Static factory method with validation.
      */
     public static QueryStockAvailabilityForProductsQuery of(TenantId tenantId, Map<ProductId, Integer> productQuantities) {
@@ -50,9 +38,18 @@ public final class QueryStockAvailabilityForProductsQuery {
         }
         // Create defensive copy in builder
         Map<ProductId, Integer> defensiveCopy = new HashMap<>(productQuantities);
-        return QueryStockAvailabilityForProductsQuery.builder()
-                .tenantId(tenantId)
-                .productQuantities(defensiveCopy)
-                .build();
+        return QueryStockAvailabilityForProductsQuery.builder().tenantId(tenantId).productQuantities(defensiveCopy).build();
+    }
+
+    /**
+     * Returns a defensive copy of the product quantities map to prevent external modification.
+     *
+     * @return unmodifiable copy of the product quantities map
+     */
+    public Map<ProductId, Integer> getProductQuantities() {
+        if (productQuantities == null) {
+            return Collections.emptyMap();
+        }
+        return Collections.unmodifiableMap(new HashMap<>(productQuantities));
     }
 }

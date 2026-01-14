@@ -52,35 +52,58 @@ public class AssignLocationsFEFOCommandHandler {
         validateCommand(command);
 
         // 2. Get available locations
+        log.debug("Querying available locations for FEFO assignment: tenantId={}, stockItemCount={}", command.getTenantId().getValue(), command.getStockItems().size());
         List<Location> availableLocations = locationRepository.findAvailableLocations(command.getTenantId());
+        log.debug("Found {} available location(s) for tenantId={}", availableLocations.size(), command.getTenantId().getValue());
 
         // Handle case where no locations are available
         // This is acceptable - stock items can remain unassigned and be assigned later
         // or allocated from unassigned items (handled in allocation logic)
         if (availableLocations.isEmpty()) {
             log.warn("No available locations found for FEFO assignment. Stock items will remain unassigned. "
-                            + "tenantId={}, stockItemCount={}. Stock items can be assigned later when locations become available.", command.getTenantId().getValue(),
-                    command.getStockItems().size());
+                            + "tenantId={}, stockItemCount={}. Stock items can be assigned later when locations become available. "
+                            + "Ensure locations are created with AVAILABLE or RESERVED status.", command.getTenantId().getValue(), command.getStockItems().size());
             // Return empty assignments - stock items remain unassigned
             return AssignLocationsFEResult.builder().assignments(Collections.emptyMap()).build();
         }
 
-        // 2a. Validate all locations are BIN type (stock allocation must be at lowest hierarchy level)
-        List<Location> nonBinLocations = availableLocations.stream().filter(location -> {
+        // 2a. Filter to BIN type locations (stock allocation must be at lowest hierarchy level)
+        // The FEFOAssignmentService will also filter to BIN locations, but we do it here for better logging
+        List<Location> binLocations = availableLocations.stream().filter(location -> {
             if (location.getType() == null || location.getType().getValue() == null) {
-                return true; // Locations without type are considered non-BIN
+                return false; // Locations without type are not BIN
             }
-            return !"BIN".equalsIgnoreCase(location.getType().getValue().trim());
+            return "BIN".equalsIgnoreCase(location.getType().getValue().trim());
         }).collect(Collectors.toList());
 
-        if (!nonBinLocations.isEmpty()) {
-            String nonBinLocationIds = nonBinLocations.stream().map(loc -> loc.getId().getValueAsString()).collect(Collectors.joining(", "));
-            throw new IllegalArgumentException(String.format("Stock allocation must be at BIN level (lowest hierarchy level). Found non-BIN locations: %s", nonBinLocationIds));
+        log.debug("Filtered to {} BIN type location(s) from {} total available location(s) for tenantId={}", binLocations.size(), availableLocations.size(),
+                command.getTenantId().getValue());
+
+        if (binLocations.isEmpty()) {
+            List<Location> nonBinLocations = availableLocations.stream().filter(location -> {
+                if (location.getType() == null || location.getType().getValue() == null) {
+                    return true; // Locations without type
+                }
+                return !"BIN".equalsIgnoreCase(location.getType().getValue().trim());
+            }).collect(Collectors.toList());
+
+            String locationTypes = nonBinLocations.stream().map(loc -> {
+                String type = loc.getType() != null && loc.getType().getValue() != null ? loc.getType().getValue() : "NULL";
+                return String.format("%s(%s)", loc.getId().getValueAsString(), type);
+            }).collect(Collectors.joining(", "));
+
+            log.warn("No BIN type locations found for FEFO assignment. tenantId={}, stockItemCount={}, availableLocationCount={}, locationTypes={}. "
+                            + "Stock items will remain unassigned. Ensure BIN type locations are created for stock assignment.", command.getTenantId().getValue(),
+                    command.getStockItems().size(), availableLocations.size(), locationTypes);
+            // Return empty assignments - stock items remain unassigned
+            return AssignLocationsFEResult.builder().assignments(Collections.emptyMap()).build();
         }
 
         // 3. Assign locations using FEFO algorithm
         // Note: This may return partial assignments if some stock items cannot be assigned
-        Map<String, LocationId> assignments = fefoAssignmentService.assignLocationsFEFO(command.getStockItems(), availableLocations);
+        log.debug("Calling FEFO assignment service: stockItemCount={}, binLocationCount={}", command.getStockItems().size(), binLocations.size());
+        Map<String, LocationId> assignments = fefoAssignmentService.assignLocationsFEFO(command.getStockItems(), binLocations);
+        log.debug("FEFO assignment completed: assignedCount={}, requestedCount={}", assignments.size(), command.getStockItems().size());
 
         // Log if not all stock items were assigned
         if (assignments.size() < command.getStockItems().size()) {

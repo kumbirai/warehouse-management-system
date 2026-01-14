@@ -48,7 +48,8 @@ public class GetLocationQueryHandler {
         // 3. Map view to query result
         return LocationQueryResult.builder().locationId(locationView.getLocationId()).barcode(locationView.getBarcode()).coordinates(locationView.getCoordinates())
                 .status(locationView.getStatus()).capacity(locationView.getCapacity()).code(locationView.getCode()).name(locationView.getName()).type(locationView.getType())
-                .path(path).description(locationView.getDescription()).createdAt(locationView.getCreatedAt()).lastModifiedAt(locationView.getLastModifiedAt()).build();
+                .path(path).description(locationView.getDescription()).parentLocationId(locationView.getParentLocationId())
+                .createdAt(locationView.getCreatedAt()).lastModifiedAt(locationView.getLastModifiedAt()).build();
     }
 
     /**

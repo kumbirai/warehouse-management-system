@@ -87,6 +87,12 @@ export const Routes = {
   expiringStock: '/stock-management/expiring',
   restockRequests: '/stock-management/restock-requests',
   returns: '/returns',
+  returnDetail: (id: string) => `/returns/${id}`,
+  partialOrderAcceptance: '/returns/partial-acceptance',
+  fullOrderReturn: '/returns/full-return',
+  damageAssessment: '/returns/damage-assessment',
+  returnLocationAssignment: '/returns/location-assignment',
+  returnsReconciliation: '/returns/reconciliation',
   reconciliation: '/reconciliation',
   reports: '/reports',
 };
@@ -306,6 +312,39 @@ export const getBreadcrumbs = {
     { label: 'Locations', href: Routes.locations },
     { label: warehouseName },
   ],
+
+  // Returns Management
+  returnsList: () => [{ label: 'Dashboard', href: Routes.dashboard }, { label: 'Returns' }],
+  returnDetail: (returnId: string) => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Returns', href: Routes.returns },
+    { label: returnId.substring(0, 8) + '...' },
+  ],
+  partialOrderAcceptance: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Returns', href: Routes.returns },
+    { label: 'Partial Order Acceptance' },
+  ],
+  fullOrderReturn: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Returns', href: Routes.returns },
+    { label: 'Full Order Return' },
+  ],
+  damageAssessment: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Returns', href: Routes.returns },
+    { label: 'Damage Assessment' },
+  ],
+  returnLocationAssignment: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Returns', href: Routes.returns },
+    { label: 'Location Assignment' },
+  ],
+  returnsReconciliation: () => [
+    { label: 'Dashboard', href: Routes.dashboard },
+    { label: 'Returns', href: Routes.returns },
+    { label: 'D365 Reconciliation' },
+  ],
 };
 
 /**
@@ -338,5 +377,6 @@ export const getListPageRoute = (currentPath: string): string => {
     return Routes.consignments;
   if (currentPath.includes('/stock-management/stock-items') || currentPath.includes('/stock-items'))
     return Routes.stockItems;
+  if (currentPath.includes('/returns')) return Routes.returns;
   return Routes.dashboard;
 };

@@ -1,14 +1,14 @@
-import {useState} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {Box, Button, FormControl, InputLabel, MenuItem, Select} from '@mui/material';
-import {FilterList as FilterIcon} from '@mui/icons-material';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Button, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { FilterList as FilterIcon } from '@mui/icons-material';
 
-import {ListPageLayout} from '../../../components/layouts';
-import {getBreadcrumbs, Routes} from '../../../utils/navigationUtils';
-import {StockItemList} from '../components/StockItemList';
-import {useStockItemsByClassification} from '../hooks/useStockItemsByClassification';
-import {StockClassification} from '../types/stockManagement';
-import {FilterBar} from '../../../components/common';
+import { ListPageLayout } from '../../../components/layouts';
+import { getBreadcrumbs, Routes } from '../../../utils/navigationUtils';
+import { StockItemList } from '../components/StockItemList';
+import { useStockItemsByClassification } from '../hooks/useStockItemsByClassification';
+import { StockClassification } from '../types/stockManagement';
+import { FilterBar } from '../../../components/common';
 
 /**
  * StockItemListPage

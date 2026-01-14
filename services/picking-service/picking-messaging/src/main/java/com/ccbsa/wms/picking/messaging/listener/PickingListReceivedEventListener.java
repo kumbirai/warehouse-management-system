@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PickingListReceivedEventListener {
     private final PlanPickingLocationsCommandHandler planPickingLocationsCommandHandler;
 
-    @KafkaListener(topics = "picking-events", groupId = "picking-service", containerFactory = "internalEventKafkaListenerContainerFactory")
+    @KafkaListener(topics = "picking-events", groupId = "picking-service-list-received", containerFactory = "internalEventKafkaListenerContainerFactory")
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handle(@org.springframework.messaging.handler.annotation.Payload Map<String, Object> eventData,
                        @org.springframework.messaging.handler.annotation.Header(value = "__TypeId__", required = false) String eventType,

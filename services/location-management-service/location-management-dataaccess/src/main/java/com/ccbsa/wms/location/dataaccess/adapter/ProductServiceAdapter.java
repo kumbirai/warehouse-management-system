@@ -80,6 +80,16 @@ public class ProductServiceAdapter implements ProductServicePort {
             throw new ProductServiceException(
                     String.format("Product service error (status %s): %s", e.getStatusCode(), e.getResponseBodyAsString() != null ? e.getResponseBodyAsString() : e.getMessage()),
                     e);
+        } catch (IllegalArgumentException e) {
+            // Handle LoadBalancer service discovery failures
+            if (e.getMessage() != null && e.getMessage().contains("Service Instance cannot be null")) {
+                log.error("Product service not found in service registry (Eureka). Please ensure product-service is running and registered with Eureka: productCode={}, serviceUrl={}",
+                        productCode.getValue(), productServiceUrl, e);
+                throw new ProductServiceException(
+                        "Product service is not available. The service may not be running or not registered with service discovery. Please contact system administrator.", e);
+            }
+            log.error("Invalid argument when calling product-service: productCode={}, error={}", productCode.getValue(), e.getMessage(), e);
+            throw new ProductServiceException(String.format("Product service error: %s", e.getMessage()), e);
         } catch (RestClientException e) {
             log.error("Failed to get product by code from product-service: productCode={}, error={}", productCode.getValue(), e.getMessage(), e);
             throw new ProductServiceException("Product service is temporarily unavailable. Please try again later.", e);
@@ -125,6 +135,16 @@ public class ProductServiceAdapter implements ProductServicePort {
             throw new ProductServiceException(
                     String.format("Product service error (status %s): %s", e.getStatusCode(), e.getResponseBodyAsString() != null ? e.getResponseBodyAsString() : e.getMessage()),
                     e);
+        } catch (IllegalArgumentException e) {
+            // Handle LoadBalancer service discovery failures
+            if (e.getMessage() != null && e.getMessage().contains("Service Instance cannot be null")) {
+                log.error("Product service not found in service registry (Eureka). Please ensure product-service is running and registered with Eureka: productId={}, serviceUrl={}",
+                        productId.getValueAsString(), productServiceUrl, e);
+                throw new ProductServiceException(
+                        "Product service is not available. The service may not be running or not registered with service discovery. Please contact system administrator.", e);
+            }
+            log.error("Invalid argument when calling product-service: productId={}, error={}", productId.getValueAsString(), e.getMessage(), e);
+            throw new ProductServiceException(String.format("Product service error: %s", e.getMessage()), e);
         } catch (RestClientException e) {
             log.error("Failed to get product by ID from product-service: productId={}, error={}", productId.getValueAsString(), e.getMessage(), e);
             throw new ProductServiceException("Product service is temporarily unavailable. Please try again later.", e);

@@ -15,6 +15,7 @@ import com.ccbsa.common.application.api.ApiResponseBuilder;
 import com.ccbsa.common.application.api.RequestContext;
 import com.ccbsa.common.application.api.exception.BaseGlobalExceptionHandler;
 import com.ccbsa.wms.picking.domain.core.exception.ExpiredStockException;
+import com.ccbsa.wms.picking.domain.core.exception.OrderNotFoundException;
 import com.ccbsa.wms.picking.domain.core.exception.PickingListNotFoundException;
 import com.ccbsa.wms.picking.domain.core.exception.PickingTaskNotFoundException;
 
@@ -50,6 +51,17 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         logger.warn("Picking task not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
 
         ApiError error = ApiError.builder("PICKING_TASK_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
+        return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
+    }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOrderNotFoundException(OrderNotFoundException ex, HttpServletRequest request) {
+        String requestId = RequestContext.getRequestId(request);
+        String path = RequestContext.getRequestPath(request);
+
+        logger.warn("Order not found: {} - RequestId: {}, Path: {}", ex.getMessage(), requestId, path);
+
+        ApiError error = ApiError.builder("ORDER_NOT_FOUND", ex.getMessage()).path(path).requestId(requestId).build();
         return ApiResponseBuilder.error(HttpStatus.NOT_FOUND, error);
     }
 

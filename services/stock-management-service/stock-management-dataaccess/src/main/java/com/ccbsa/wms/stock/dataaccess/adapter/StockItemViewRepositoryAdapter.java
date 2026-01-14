@@ -245,5 +245,38 @@ public class StockItemViewRepositoryAdapter implements StockItemViewRepository {
         // Map to views
         return entities.stream().map(mapper::toView).collect(Collectors.toList());
     }
+
+    @Override
+    public List<StockItemView> findByTenantIdAndLocationId(TenantId tenantId, LocationId locationId) {
+        // Verify TenantContext is set
+        TenantId contextTenantId = TenantContext.getTenantId();
+        if (contextTenantId == null) {
+            log.error("TenantContext is not set when querying stock item views by location!");
+            throw new IllegalStateException("TenantContext must be set before querying stock item views");
+        }
+
+        // Verify tenantId matches
+        if (!contextTenantId.getValue().equals(tenantId.getValue())) {
+            log.error("TenantContext mismatch! Context: {}, Query: {}", contextTenantId.getValue(), tenantId.getValue());
+            throw new IllegalStateException("TenantContext tenantId does not match query tenantId");
+        }
+
+        // Resolve schema and set search_path
+        String schemaName = schemaResolver.resolveSchema();
+        log.debug("Resolved schema name: '{}' for tenantId: '{}', locationId: '{}'", schemaName, tenantId.getValue(), locationId.getValue());
+
+        schemaProvisioner.ensureSchemaReady(schemaName);
+        validateSchemaName(schemaName);
+
+        Session session = entityManager.unwrap(Session.class);
+        setSearchPath(session, schemaName);
+
+        // Query view entities by location
+        List<StockItemViewEntity> entities = jpaRepository.findByTenantIdAndLocationId(tenantId.getValue(), locationId.getValue());
+        log.debug("Found {} stock item view entities for tenantId: '{}', locationId: '{}'", entities.size(), tenantId.getValue(), locationId.getValue());
+
+        // Map to views
+        return entities.stream().map(mapper::toView).collect(Collectors.toList());
+    }
 }
 

@@ -38,6 +38,9 @@ public enum CacheNamespace {
     // Integration Service
     INTEGRATION_CONFIGS("integration-configs"),
 
+    // Returns Service
+    RETURNS("returns"), DAMAGE_ASSESSMENTS("damage-assessments"),
+
     // Global (Cross-Tenant)
     GLOBAL_TENANT_METADATA("global-tenant-metadata");
 
